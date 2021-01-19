@@ -6,4 +6,4 @@ class TestBasic():
         self.pipeline = pcs.Pipeline()
 
     def test_import(self):
-        assert self.pipeline.test is False
+        assert self.pipeline.preprocess is False

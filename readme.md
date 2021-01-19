@@ -5,7 +5,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/license-mit-blue.svg">
   <img src="https://img.shields.io/badge/python-3.6--3.8-blue">
-  <a href="https://github.com/Yu-group/pcs-pipeline/actions"><img src="https://github.com/csinva/imodels/workflows/tests/badge.svg"></a>
+  <a href="https://github.com/Yu-group/pcs-pipeline/actions"><img src="https://github.com/Yu-group/pcs-pipeline/workflows/tests/badge.svg"></a>
   <img src="https://img.shields.io/github/checks-status/Yu-group/pcs-pipeline/master">
 </p>  
 
