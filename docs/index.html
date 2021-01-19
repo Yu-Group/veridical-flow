@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.7.2" />
+<title>pcs API documentation</title>
+<meta name="description" content="&lt;h1 align=&#34;center&#34;&gt; Interpretable machine-learning models (imodels) 🔍&lt;/h1&gt;
+&lt;p align=&#34;center&#34;&gt; Python package for concise, transparent, and accurate …" />
+<link href='https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css' rel='stylesheet'>
+<link href='https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/8.0.0/sanitize.min.css' rel='stylesheet'>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css" rel="stylesheet">
+<style>.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{font-weight:bold}#index h4 + ul{margin-bottom:.6em}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>pcs</code></h1>
+</header>
+<section id="section-intro">
+<h1 align="center"> Interpretable machine-learning models (imodels) 🔍</h1>
+<p align="center"> Python package for concise, transparent, and accurate predictive modeling. All sklearn-compatible and easily customizable.
+</p>
+<p align="center">
+<a href="https://csinva.github.io/imodels/">Docs</a> •
+<a href="#imodels-overview">imodels overview</a> •
+<a href="#demo-notebooks">Demo notebooks</a>
+</p>
+<p align="center">
+<img src="https://img.shields.io/badge/License-MIT-orange.svg">
+<a href="https://github.com/csinva/imodels/actions"><img src="https://github.com/csinva/imodels/workflows/tests/badge.svg"></a>
+<img src="https://img.shields.io/pypi/v/imodels?color=blue">
+<img src="https://img.shields.io/badge/python-3.6%20%7C%203.7%20%7C%203.8-blue">
+</p>
+<h2 id="imodels-overview">imodels overview</h2>
+<p>Implementations of different popular interpretable models can be easily used and installed:</p>
+<pre><code class="python">from imodels import BayesianRuleListClassifier, GreedyRuleListClassifier, SkopeRulesClassifier
+from imodels import SLIMRegressor, RuleFitRegressor
+
+model = BayesianRuleListClassifier()  # initialize a model
+model.fit(X_train, y_train)   # fit model
+preds = model.predict(X_test) # discrete predictions: shape is (n_test, 1)
+preds_proba = model.predict_proba(X_test) # predicted probabilities: shape is (n_test, n_classes)
+</code></pre>
+<p>Install with <code>pip install imodels</code> (see <a href="https://github.com/csinva/imodels/blob/master/docs/troubleshooting.md">here</a> for help). Contains the following models:</p>
+<table>
+<thead>
+<tr>
+<th align="left">Model</th>
+<th>Reference</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="left">Rulefit rule set</td>
+<td><a href="https://csinva.io/imodels/rule_set/rule_fit.html">🗂️</a>, <a href="https://github.com/christophM/rulefit">🔗</a>, <a href="http://statweb.stanford.edu/~jhf/ftp/RuleFit.pdf">📄</a></td>
+<td>Extracts rules from a decision tree then builds a sparse linear model with them</td>
+</tr>
+<tr>
+<td align="left">Skope rule set</td>
+<td><a href="https://csinva.io/imodels/rule_set/skope_rules.html">🗂️</a>, <a href="https://github.com/scikit-learn-contrib/skope-rules">🔗</a></td>
+<td>Extracts rules from gradient-boosted trees, deduplicates them, then forms a linear combination of them based on their OOB precision</td>
+</tr>
+<tr>
+<td align="left">Boosted rule set</td>
+<td><a href="https://csinva.io/imodels/rule_set/boosted_rules.html">🗂️</a>, <a href="https://github.com/jaimeps/adaboost-implementation">🔗</a>, <a href="https://www.sciencedirect.com/science/article/pii/S002200009791504X">📄</a></td>
+<td>Uses Adaboost to sequentially learn a set of rules</td>
+</tr>
+<tr>
+<td align="left">Bayesian rule list</td>
+<td><a href="https://csinva.io/imodels/rule_list/bayesian_rule_list/bayesian_rule_list.html">🗂️</a>, <a href="https://github.com/tmadl/sklearn-expertsys">🔗</a>, <a href="https://arxiv.org/abs/1602.08610">📄</a></td>
+<td>Learns a compact rule list by sampling rule lists (rather than using a greedy heuristic)</td>
+</tr>
+<tr>
+<td align="left">Greedy rule list</td>
+<td><a href="https://csinva.io/imodels/rule_list/greedy_rule_list.html">🗂️</a>, <a href="https://medium.com/@penggongting/implementing-decision-tree-from-scratch-in-python-c732e7c69aea">🔗</a></td>
+<td>Uses CART to learn a list (only a single path), rather than a decision tree</td>
+</tr>
+<tr>
+<td align="left">OneR rule list</td>
+<td><a href="https://csinva.io/imodels/rule_list/one_r.html">🗂️</a>, <a href="https://link.springer.com/article/10.1023/A:1022631118932">📄</a></td>
+<td>Learns rule list restricted to only one feature</td>
+</tr>
+<tr>
+<td align="left">Optimal rule tree</td>
+<td><a href="https://csinva.io/imodels/tree/optimal_classification_tree/index.html">🗂️</a>, <a href="https://github.com/pan5431333/pyoptree">🔗</a>, <a href="https://link.springer.com/article/10.1007/s10994-017-5633-9">📄</a></td>
+<td>(In progress) Learns succinct trees using global optimization rather than greedy heuristics</td>
+</tr>
+<tr>
+<td align="left">Iterative random forest</td>
+<td><a href="https://csinva.io/imodels/tree/iterative_random_forest/iterative_random_forest.html">🗂️</a>, <a href="https://github.com/Yu-Group/iterative-Random-Forest">🔗</a>, <a href="https://www.pnas.org/content/115/8/1943">📄</a></td>
+<td>(In progress) Repeatedly fit random forest, giving features with high importance a higher chance of being selected.</td>
+</tr>
+<tr>
+<td align="left">Sparse integer linear model</td>
+<td><a href="https://csinva.io/imodels/algebraic/slim.html">🗂️</a>, <a href="https://link.springer.com/article/10.1007/s10994-015-5528-6">📄</a></td>
+<td>Forces coefficients to be integers</td>
+</tr>
+<tr>
+<td align="left">Rule sets</td>
+<td>⌛</td>
+<td>(Coming soon) Many popular rule sets including SLIPPER, Lightweight Rule Induction, MLRules</td>
+</tr>
+</tbody>
+</table>
+<p align="center">
+Docs <a href="https://csinva.io/imodels/">🗂️</a>, Reference code implementation 🔗, Research paper 📄
+</br>
+More models coming soon!
+</p>
+<p>The final form of the above models takes one of the following forms, which aim to be simultaneously simple to understand and highly predictive:</p>
+<table>
+<thead>
+<tr>
+<th align="center">Rule set</th>
+<th align="center">Rule list</th>
+<th align="center">Rule tree</th>
+<th align="center">Algebraic models</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center"><img src="https://csinva.io/imodels/img/rule_set.jpg" width="100%"></td>
+<td align="center"><img src="https://csinva.io/imodels/img/rule_list.jpg"></td>
+<td align="center"><img src="https://csinva.io/imodels/img/rule_tree.jpg"></td>
+<td align="center"><img src="https://csinva.io/imodels/img/algebraic_models.jpg"></td>
+</tr>
+</tbody>
+</table>
+<p>Different models and algorithms vary not only in their final form but also in different choices made during modeling. In particular, many models differ in the 3 steps given by the table below.</p>
+<ul>
+<li>ex. RuleFit and SkopeRules differ only in the way they prune rules: RuleFit uses a linear model whereas SkopeRules heuristically deduplicates rules sharing overlap.</li>
+<li>ex. Bayesian rule lists and greedy rule lists differ in how they select rules; bayesian rule lists perform a global optimization over possible rule lists while Greedy rule lists pick splits sequentially to maximize a given criterion.</li>
+</ul>
+<p>See the docs for individual models for futher descriptions.</p>
+<table>
+<thead>
+<tr>
+<th align="center">Rule candidate generation</th>
+<th align="center">Rule selection</th>
+<th align="center">Rule pruning / combination</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center"><img src="https://csinva.io/imodels/img/rule_candidates.jpg" width="100%"></td>
+<td align="center"><img src="https://csinva.io/imodels/img/rule_overfit.jpg"></td>
+<td align="center"><img src="https://csinva.io/imodels/img/rule_pruned.jpg"></td>
+</tr>
+</tbody>
+</table>
+<p>The code here contains many useful and customizable functions for rule-based learning in the <a href="https://csinva.io/imodels/util/index.html">util folder</a>. This includes functions / classes for rule deduplication, rule screening, and converting between trees, rulesets, and neural networks.</p>
+<h2 id="demo-notebooks">Demo notebooks</h2>
+<p>Demos are contained in the <a href="notebooks">notebooks</a> folder.</p>
+<ul>
+<li><a href="notebooks/imodels_demo.ipynb">imodels_demo.ipynb</a>, demos the imodels package. It shows how to fit, predict, and visualize with different interpretable models</li>
+<li><a href="https://github.com/csinva/iai-clinical-decision-rule/blob/master/notebooks/05_fit_interpretable_models.ipynb">this notebook</a> shows an example of using <code>imodels</code> for deriving a clinical decision rule</li>
+<li>we also include some demos of posthoc analysis, which occurs after fitting models</li>
+<li><a href="notebooks/2_posthoc.ipynb">posthoc.ipynb</a> - shows different simple analyses to interpret a trained model</li>
+<li><a href="notebooks/3_uncertainty.ipynb">uncertainty.ipynb</a> - basic code to get uncertainty estimates for a model</li>
+</ul>
+<h2 id="support-for-different-tasks">Support for different tasks</h2>
+<p>Different models support different machine-learning tasks. Current support for different models is given below:</p>
+<table>
+<thead>
+<tr>
+<th align="left">Model</th>
+<th align="center">Binary classification</th>
+<th align="center">Multi-class classification</th>
+<th align="center">Regression</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="left">Rulefit rule set</td>
+<td align="center">✔️</td>
+<td align="center"></td>
+<td align="center">✔️</td>
+</tr>
+<tr>
+<td align="left">Skope rule set</td>
+<td align="center">✔️</td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr>
+<td align="left">Boosted rule set</td>
+<td align="center">✔️</td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr>
+<td align="left">Bayesian rule list</td>
+<td align="center">✔️</td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr>
+<td align="left">Greedy rule list</td>
+<td align="center">✔️</td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr>
+<td align="left">OneR rule list</td>
+<td align="center">✔️</td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr>
+<td align="left">Optimal rule tree</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr>
+<td align="left">Iterative random forest</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr>
+<td align="left">Sparse integer linear model</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">✔️</td>
+</tr>
+</tbody>
+</table>
+<h2 id="references">References</h2>
+<ul>
+<li>Readings<ul>
+<li>Interpretable ML good quick overview: murdoch et al. 2019, <a href="https://arxiv.org/pdf/1901.04592.pdf">pdf</a></li>
+<li>Interpretable ML book: molnar 2019, <a href="https://christophm.github.io/interpretable-ml-book/">pdf</a></li>
+<li>Case for interpretable models rather than post-hoc explanation: rudin 2019, <a href="https://arxiv.org/pdf/1811.10154.pdf">pdf</a></li>
+<li>Review on evaluating interpretability: doshi-velez &amp; kim 2017, <a href="https://arxiv.org/pdf/1702.08608.pdf">pdf</a></li>
+</ul>
+</li>
+<li>Reference implementations (also linked above): the code here heavily derives from the wonderful work of previous projects. We seek to to extract out, unify, and maintain key parts of these projects.<ul>
+<li><a href="https://github.com/tmadl/sklearn-expertsys">sklearn-expertsys</a> - by <a href="https://github.com/tmadl">@tmadl</a> and <a href="https://github.com/kenben">@kenben</a> based on original code by <a href="http://lethalletham.com/">Ben Letham</a></li>
+<li><a href="https://github.com/christophM/rulefit">rulefit</a> - by <a href="https://github.com/christophM">@christophM</a></li>
+<li><a href="https://github.com/scikit-learn-contrib/skope-rules">skope-rules</a> - by the <a href="https://github.com/scikit-learn-contrib/skope-rules/blob/master/AUTHORS.rst">skope-rules team</a> (including <a href="https://github.com/ngoix">@ngoix</a>, <a href="https://github.com/floriangardin">@floriangardin</a>, <a href="https://github.com/datajms">@datajms</a>, <a href="">Bibi Ndiaye</a>, <a href="">Ronan Gautier</a>)</li>
+</ul>
+</li>
+<li>Compatible packages<ul>
+<li><a href="https://github.com/scikit-learn/scikit-learn">sklearn</a></li>
+<li><a href="https://github.com/parrt/dtreeviz">dtreeviz</a></li>
+</ul>
+</li>
+<li>Related packages<ul>
+<li><a href="https://github.com/trevorstephens/gplearn/tree/ad57cb18caafdb02cca861aea712f1bf3ed5016e">gplearn</a> for symbolic regression/classification</li>
+<li><a href="https://github.com/dswah/pyGAM">pygam</a> for generative additive models</li>
+</ul>
+</li>
+<li>Updates<ul>
+<li>For updates, star the repo, <a href="https://github.com/csinva/csinva.github.io">see this related repo</a>, or follow <a href="https://twitter.com/csinva_">@csinva_</a></li>
+<li>Please make sure to give authors of original methods / base implementations appropriate credit!</li>
+<li>Pull requests <a href="https://github.com/csinva/imodels/blob/master/docs/contributing.md">very welcome</a>!</li>
+</ul>
+</li>
+</ul>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">&#34;&#34;&#34;
+.. include:: ../readme.md
+&#34;&#34;&#34;
+# Python `imodels` package for interpretable models compatible with scikit-learn.
+# Github repo available [here](https://github.com/csinva/interpretability-implementations-demos).
+
+from .main import Pipeline</code></pre>
+</details>
+</section>
+<section>
+<h2 class="section-title" id="header-submodules">Sub-modules</h2>
+<dl>
+<dt><code class="name"><a title="pcs.main" href="main.html">pcs.main</a></code></dt>
+<dd>
+<section class="desc"></section>
+</dd>
+</dl>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index 🔍</h1>
+<div class="toc">
+<ul>
+<li><a href="#imodels-overview">imodels overview</a></li>
+<li><a href="#demo-notebooks">Demo notebooks</a></li>
+<li><a href="#support-for-different-tasks">Support for different tasks</a></li>
+<li><a href="#references">References</a></li>
+</ul>
+</div>
+<ul id="index">
+<li><h3><a href="#header-submodules">Sub-modules</a></h3>
+<ul>
+<li><code><a title="pcs.main" href="main.html">pcs.main</a></code></li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.7.2</a>.</p>
+</footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad()</script>
+</body>
+</html><link rel="stylesheet" href="github.css">
