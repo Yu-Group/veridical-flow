@@ -1,11 +1,11 @@
-import pcs
+import pcsp
 
 
 class TestBasic():
     def setup(self):
-        self.pipeline = pcs.PCSPipeline()
-        self.perturbation_set = pcs.PerturbationSet()
-        self.perturbation = pcs.Perturbation()
+        self.pipeline = pcsp.PCSPipeline()
+        self.perturbation_set = pcsp.PerturbationSet()
+        self.perturbation = pcsp.Perturbation()
 
     def test_import(self):
         assert self.pipeline.preprocess is False

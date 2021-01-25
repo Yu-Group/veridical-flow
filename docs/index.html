@@ -4,10 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 <meta name="generator" content="pdoc 0.7.2" />
-<title>pcs API documentation</title>
+<title>pcsp API documentation</title>
 <meta name="description" content="&lt;h1 align=&#34;center&#34;&gt; PCS Pipeline &lt;/h1&gt;
-&lt;p align=&#34;center&#34;&gt; A framework for doing stability analysis with PCS. (Under development)
-&lt;/p&gt; …" />
+&lt;p align=&#34;center&#34;&gt; A framework for doing stability analysis with PCS. (Under development, not ready for use)
+…" />
 <link href='https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css' rel='stylesheet'>
 <link href='https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/8.0.0/sanitize.min.css' rel='stylesheet'>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css" rel="stylesheet">
@@ -23,7 +23,7 @@
 </header>
 <section id="section-intro">
 <h1 align="center"> PCS Pipeline </h1>
-<p align="center"> A framework for doing stability analysis with PCS. (Under development)
+<p align="center"> A framework for doing stability analysis with PCS. (Under development, not ready for use)
 </p>
 <p align="center">
 <img src="https://img.shields.io/badge/license-mit-blue.svg">
@@ -36,16 +36,16 @@
 </p>
 </p>
 <h1 id="sample-usage">Sample usage</h1>
-<p>Install with <code>pip install pcsp</code></p>
+<p>Install with <code>pip install pcsp</code> (see <a href="https://github.com/Yu-Group/pcs-pipeline/blob/master/docs/troubleshooting.md">here</a> for help)</p>
 <pre><code class="python">import pcsp
-from pcsp import Pipeline
-
+from pcsp import PCSPipeline # replaces sklearn.Pipeline
 </code></pre>
 <h1 id="references">References</h1>
 <ul>
 <li>built on scikit-learn</li>
 <li>compatible with <a href="https://dvc.org/">dvc</a> - data version control</li>
 <li>uses <a href="https://joblib.readthedocs.io/en/latest/">joblib</a> - run functions as pipeline jobs</li>
+<li>pull requests <a href="https://github.com/Yu-Group/pcs-pipeline/blob/master/docs/contributing.md">very welcome</a>!</li>
 </ul>
 <details class="source">
 <summary>
@@ -62,15 +62,15 @@ from .pipeline import *</code></pre>
 <section>
 <h2 class="section-title" id="header-submodules">Sub-modules</h2>
 <dl>
-<dt><code class="name"><a title="pcs.perturbation" href="perturbation.html">pcs.perturbation</a></code></dt>
+<dt><code class="name"><a title="pcsp.perturbation" href="perturbation.html">pcsp.perturbation</a></code></dt>
 <dd>
 <section class="desc"><p>A perturbation that can be used as a step in a pipeline</p></section>
 </dd>
-<dt><code class="name"><a title="pcs.perturbation_set" href="perturbation_set.html">pcs.perturbation_set</a></code></dt>
+<dt><code class="name"><a title="pcsp.perturbation_set" href="perturbation_set.html">pcsp.perturbation_set</a></code></dt>
 <dd>
 <section class="desc"><p>Set of perturbations to be used in pipeline</p></section>
 </dd>
-<dt><code class="name"><a title="pcs.pipeline" href="pipeline.html">pcs.pipeline</a></code></dt>
+<dt><code class="name"><a title="pcsp.pipeline" href="pipeline.html">pcsp.pipeline</a></code></dt>
 <dd>
 <section class="desc"><p>Class that stores the entire pipeline of steps in a data-science workflow</p></section>
 </dd>
@@ -94,9 +94,9 @@ from .pipeline import *</code></pre>
 <ul id="index">
 <li><h3><a href="#header-submodules">Sub-modules</a></h3>
 <ul>
-<li><code><a title="pcs.perturbation" href="perturbation.html">pcs.perturbation</a></code></li>
-<li><code><a title="pcs.perturbation_set" href="perturbation_set.html">pcs.perturbation_set</a></code></li>
-<li><code><a title="pcs.pipeline" href="pipeline.html">pcs.pipeline</a></code></li>
+<li><code><a title="pcsp.perturbation" href="perturbation.html">pcsp.perturbation</a></code></li>
+<li><code><a title="pcsp.perturbation_set" href="perturbation_set.html">pcsp.perturbation_set</a></code></li>
+<li><code><a title="pcsp.pipeline" href="pipeline.html">pcsp.pipeline</a></code></li>
 </ul>
 </li>
 </ul>

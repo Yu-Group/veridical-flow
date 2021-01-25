@@ -19,7 +19,7 @@ Install with `pip install pcsp` (see [here](https://github.com/Yu-Group/pcs-pipe
 
 ```python
 import pcsp
-from pcsp import Pipeline
+from pcsp import PCSPipeline # replaces sklearn.Pipeline
 ```
 
 # References

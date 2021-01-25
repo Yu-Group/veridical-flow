@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 <meta name="generator" content="pdoc 0.7.2" />
-<title>pcs.pipeline API documentation</title>
+<title>pcsp.pipeline API documentation</title>
 <meta name="description" content="Class that stores the entire pipeline of steps in a data-science workflow" />
 <link href='https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css' rel='stylesheet'>
 <link href='https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/8.0.0/sanitize.min.css' rel='stylesheet'>
@@ -17,7 +17,7 @@
 <main>
 <article id="content">
 <header>
-<h1 class="title">Module <code>pcs.pipeline</code></h1>
+<h1 class="title">Module <code>pcsp.pipeline</code></h1>
 </header>
 <section id="section-intro">
 <p>Class that stores the entire pipeline of steps in a data-science workflow</p>
@@ -28,8 +28,9 @@
 <pre><code class="python">&#39;&#39;&#39;Class that stores the entire pipeline of steps in a data-science workflow
 &#39;&#39;&#39;
 import joblib
+from sklearn.pipeline import Pipeline
 
-class Pipeline:
+class PCSPipeline(Pipeline):
     def __init__(self):
         self.preprocess = False
 
@@ -49,16 +50,81 @@ class Pipeline:
 <section>
 <h2 class="section-title" id="header-classes">Classes</h2>
 <dl>
-<dt id="pcs.pipeline.Pipeline"><code class="flex name class">
-<span>class <span class="ident">Pipeline</span></span>
+<dt id="pcsp.pipeline.PCSPipeline"><code class="flex name class">
+<span>class <span class="ident">PCSPipeline</span></span>
 </code></dt>
 <dd>
-<section class="desc"></section>
+<section class="desc"><p>Pipeline of transforms with a final estimator.</p>
+<p>Sequentially apply a list of transforms and a final estimator.
+Intermediate steps of the pipeline must be 'transforms', that is, they
+must implement fit and transform methods.
+The final estimator only needs to implement fit.
+The transformers in the pipeline can be cached using <code>memory</code> argument.</p>
+<p>The purpose of the pipeline is to assemble several steps that can be
+cross-validated together while setting different parameters.
+For this, it enables setting parameters of the various steps using their
+names and the parameter name separated by a '__', as in the example below.
+A step's estimator may be replaced entirely by setting the parameter
+with its name to another estimator, or a transformer removed by setting
+it to 'passthrough' or <code>None</code>.</p>
+<p>Read more in the :ref:<code>User Guide &lt;pipeline&gt;</code>.</p>
+<div class="admonition versionadded">
+<p class="admonition-title">Added in version:&ensp;0.5</p>
+</div>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>steps</code></strong> :&ensp;<code>list</code></dt>
+<dd>List of (name, transform) tuples (implementing fit/transform) that are
+chained, in the order in which they are chained, with the last object
+an estimator.</dd>
+<dt><strong><code>memory</code></strong> :&ensp;<code>str</code> or <code>object</code> <code>with</code> <code>the</code> <code>joblib.Memory</code> <code>interface</code>, default=<code>None</code></dt>
+<dd>Used to cache the fitted transformers of the pipeline. By default,
+no caching is performed. If a string is given, it is the path to
+the caching directory. Enabling caching triggers a clone of
+the transformers before fitting. Therefore, the transformer
+instance given to the pipeline cannot be inspected
+directly. Use the attribute <code>named_steps</code> or <code>steps</code> to
+inspect estimators within the pipeline. Caching the
+transformers is advantageous when fitting is time consuming.</dd>
+<dt><strong><code>verbose</code></strong> :&ensp;<code>bool</code>, default=<code>False</code></dt>
+<dd>If True, the time elapsed while fitting each step will be printed as it
+is completed.</dd>
+</dl>
+<h2 id="attributes">Attributes</h2>
+<dl>
+<dt><strong><code>named_steps</code></strong> :&ensp;:<code>class</code>:<code>~</code>sklearn.utils.Bunch``</dt>
+<dd>Dictionary-like object, with the following attributes.
+Read-only attribute to access any step parameter by user given name.
+Keys are step names and values are steps parameters.</dd>
+</dl>
+<h2 id="see-also">See Also</h2>
+<dl>
+<dt><code>sklearn.pipeline.make_pipeline</code></dt>
+<dd>Convenience function for simplified
+<code>pipeline construction.</code></dd>
+</dl>
+<h2 id="examples">Examples</h2>
+<pre><code>&gt;&gt;&gt; from sklearn.svm import SVC
+&gt;&gt;&gt; from sklearn.preprocessing import StandardScaler
+&gt;&gt;&gt; from sklearn.datasets import make_classification
+&gt;&gt;&gt; from sklearn.model_selection import train_test_split
+&gt;&gt;&gt; from sklearn.pipeline import Pipeline
+&gt;&gt;&gt; X, y = make_classification(random_state=0)
+&gt;&gt;&gt; X_train, X_test, y_train, y_test = train_test_split(X, y,
+...                                                     random_state=0)
+&gt;&gt;&gt; pipe = Pipeline([('scaler', StandardScaler()), ('svc', SVC())])
+&gt;&gt;&gt; # The pipeline can be used as any other estimator
+&gt;&gt;&gt; # and avoids leaking the test set into the train set
+&gt;&gt;&gt; pipe.fit(X_train, y_train)
+Pipeline(steps=[('scaler', StandardScaler()), ('svc', SVC())])
+&gt;&gt;&gt; pipe.score(X_test, y_test)
+0.88
+</code></pre></section>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class Pipeline:
+<pre><code class="python">class PCSPipeline(Pipeline):
     def __init__(self):
         self.preprocess = False
 
@@ -68,9 +134,15 @@ class Pipeline:
         &#39;&#39;&#39;
         pass</code></pre>
 </details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>sklearn.pipeline.Pipeline</li>
+<li>sklearn.utils.metaestimators._BaseComposition</li>
+<li>sklearn.base.BaseEstimator</li>
+</ul>
 <h3>Methods</h3>
 <dl>
-<dt id="pcs.pipeline.Pipeline.run"><code class="name flex">
+<dt id="pcsp.pipeline.PCSPipeline.run"><code class="name flex">
 <span>def <span class="ident">run</span></span>(<span>self)</span>
 </code></dt>
 <dd>
@@ -99,15 +171,15 @@ class Pipeline:
 <ul id="index">
 <li><h3>Super-module</h3>
 <ul>
-<li><code><a title="pcs" href="index.html">pcs</a></code></li>
+<li><code><a title="pcsp" href="index.html">pcsp</a></code></li>
 </ul>
 </li>
 <li><h3><a href="#header-classes">Classes</a></h3>
 <ul>
 <li>
-<h4><code><a title="pcs.pipeline.Pipeline" href="#pcs.pipeline.Pipeline">Pipeline</a></code></h4>
+<h4><code><a title="pcsp.pipeline.PCSPipeline" href="#pcsp.pipeline.PCSPipeline">PCSPipeline</a></code></h4>
 <ul class="">
-<li><code><a title="pcs.pipeline.Pipeline.run" href="#pcs.pipeline.Pipeline.run">run</a></code></li>
+<li><code><a title="pcsp.pipeline.PCSPipeline.run" href="#pcsp.pipeline.PCSPipeline.run">run</a></code></li>
 </ul>
 </li>
 </ul>
