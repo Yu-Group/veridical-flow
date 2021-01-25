@@ -27,18 +27,27 @@
 </summary>
 <pre><code class="python">&#39;&#39;&#39;Class that stores the entire pipeline of steps in a data-science workflow
 &#39;&#39;&#39;
-import joblib
 from sklearn.pipeline import Pipeline
+
 
 class PCSPipeline(Pipeline):
     def __init__(self):
+        self.steps = []
         self.preprocess = False
 
     def run(self):
         &#39;&#39;&#39;Runs the pipeline
 
         &#39;&#39;&#39;
-        pass</code></pre>
+        pass
+
+    def __getitem__(self, i):
+        &#39;&#39;&#39;Accesses ith step of pipeline
+        &#39;&#39;&#39;
+        return self.steps[i]
+
+    def __len__(self):
+        return len(self.steps)</code></pre>
 </details>
 </section>
 <section>
@@ -126,13 +135,22 @@ Pipeline(steps=[('scaler', StandardScaler()), ('svc', SVC())])
 </summary>
 <pre><code class="python">class PCSPipeline(Pipeline):
     def __init__(self):
+        self.steps = []
         self.preprocess = False
 
     def run(self):
         &#39;&#39;&#39;Runs the pipeline
 
         &#39;&#39;&#39;
-        pass</code></pre>
+        pass
+
+    def __getitem__(self, i):
+        &#39;&#39;&#39;Accesses ith step of pipeline
+        &#39;&#39;&#39;
+        return self.steps[i]
+
+    def __len__(self):
+        return len(self.steps)</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
