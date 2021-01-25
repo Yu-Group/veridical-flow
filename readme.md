@@ -15,7 +15,7 @@
 
 # Sample usage
 
-Install with `pip install pcsp`
+Install with `pip install pcsp` (see [here](https://github.com/Yu-Group/pcs-pipeline/blob/master/docs/troubleshooting.md) for help)
 
 ```python
 import pcsp
@@ -26,3 +26,4 @@ from pcsp import Pipeline
 - built on scikit-learn
 - compatible with [dvc](https://dvc.org/) - data version control
 - uses [joblib](https://joblib.readthedocs.io/en/latest/) - run functions as pipeline jobs
+- pull requests <a href="https://github.com/Yu-Group/pcs-pipeline/blob/master/docs/contributing.md">very welcome</a>!

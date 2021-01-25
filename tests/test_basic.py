@@ -3,7 +3,7 @@ import pcs
 
 class TestBasic():
     def setup(self):
-        self.pipeline = pcs.Pipeline()
+        self.pipeline = pcs.PCSPipeline()
         self.perturbation_set = pcs.PerturbationSet()
         self.perturbation = pcs.Perturbation()
 

@@ -16,7 +16,7 @@ setuptools.setup(
         'matplotlib',
         'pandas',
         'joblib',
-        'scikit-learn>=0.23.0',  # 0.23+ only works on py3.6+)
+        'scikit-learn >=0.23.0',  # 0.23+ only works on py3.6+)
         'pytest',
     ],
     python_requires='>=3.6',
