@@ -31,10 +31,6 @@
 <a href="https://github.com/Yu-group/pcs-pipeline/actions"><img src="https://github.com/Yu-group/pcs-pipeline/workflows/tests/badge.svg"></a>
 <img src="https://img.shields.io/github/checks-status/Yu-group/pcs-pipeline/master">
 </p>
-<p><p align="center">
-
-</p>
-</p>
 <h1 id="sample-usage">Sample usage</h1>
 <p>Install with <code>pip install pcsp</code> (see <a href="https://github.com/Yu-Group/pcs-pipeline/blob/master/docs/troubleshooting.md">here</a> for help)</p>
 <pre><code class="python">import pcsp
@@ -55,13 +51,14 @@ PCA()
 </code></pre>
 <blockquote>
 <p><strong>Examples</strong></p>
-<p><a href="notebooks/digits_classification.ipynb">Digit classification pipeline example</a></p>
+<p><a href="https://github.com/Yu-Group/pcs-pipeline/tree/master/notebooks/digits_classification.ipynb">Digit classification example</a></p>
+<p><a href="https://github.com/Yu-Group/pcs-pipeline/tree/master/notebooks/synthetic_classification.ipynb">Synthetic classification example</a></p>
 </blockquote>
 <h1 id="references">References</h1>
 <ul>
-<li>built on scikit-learn</li>
+<li>built on <a href="https://scikit-learn.org/stable/index.html">scikit-learn</a></li>
 <li>compatible with <a href="https://dvc.org/">dvc</a> - data version control</li>
-<li>uses <a href="https://joblib.readthedocs.io/en/latest/">joblib</a> - run functions as pipeline jobs</li>
+<li>uses <a href="https://joblib.readthedocs.io/en/latest/">joblib</a> for caching</li>
 <li>pull requests <a href="https://github.com/Yu-Group/pcs-pipeline/blob/master/docs/contributing.md">very welcome</a>!</li>
 </ul>
 <details class="source">
@@ -71,19 +68,19 @@ PCA()
 <pre><code class="python">&#34;&#34;&#34;
 .. include:: ../readme.md
 &#34;&#34;&#34;
-from .perturbation import *
-from .perturbation_set import *
+from .module import *
+from .module_set import *
 from .pipeline import *</code></pre>
 </details>
 </section>
 <section>
 <h2 class="section-title" id="header-submodules">Sub-modules</h2>
 <dl>
-<dt><code class="name"><a title="pcsp.perturbation" href="perturbation.html">pcsp.perturbation</a></code></dt>
+<dt><code class="name"><a title="pcsp.module" href="module.html">pcsp.module</a></code></dt>
 <dd>
 <section class="desc"><p>A perturbation that can be used as a step in a pipeline</p></section>
 </dd>
-<dt><code class="name"><a title="pcsp.perturbation_set" href="perturbation_set.html">pcsp.perturbation_set</a></code></dt>
+<dt><code class="name"><a title="pcsp.module_set" href="module_set.html">pcsp.module_set</a></code></dt>
 <dd>
 <section class="desc"><p>Set of perturbations to be used in pipeline</p></section>
 </dd>
@@ -115,8 +112,8 @@ from .pipeline import *</code></pre>
 <ul id="index">
 <li><h3><a href="#header-submodules">Sub-modules</a></h3>
 <ul>
-<li><code><a title="pcsp.perturbation" href="perturbation.html">pcsp.perturbation</a></code></li>
-<li><code><a title="pcsp.perturbation_set" href="perturbation_set.html">pcsp.perturbation_set</a></code></li>
+<li><code><a title="pcsp.module" href="module.html">pcsp.module</a></code></li>
+<li><code><a title="pcsp.module_set" href="module_set.html">pcsp.module_set</a></code></li>
 <li><code><a title="pcsp.pipeline" href="pipeline.html">pcsp.pipeline</a></code></li>
 </ul>
 </li>

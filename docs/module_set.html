@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 <meta name="generator" content="pdoc 0.7.2" />
-<title>pcsp.perturbation API documentation</title>
-<meta name="description" content="A perturbation that can be used as a step in a pipeline" />
+<title>pcsp.module_set API documentation</title>
+<meta name="description" content="Set of perturbations to be used in pipeline" />
 <link href='https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css' rel='stylesheet'>
 <link href='https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/8.0.0/sanitize.min.css' rel='stylesheet'>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css" rel="stylesheet">
@@ -17,27 +17,51 @@
 <main>
 <article id="content">
 <header>
-<h1 class="title">Module <code>pcsp.perturbation</code></h1>
+<h1 class="title">Module <code>pcsp.module_set</code></h1>
 </header>
 <section id="section-intro">
-<p>A perturbation that can be used as a step in a pipeline</p>
+<p>Set of perturbations to be used in pipeline</p>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">&#39;&#39;&#39;A perturbation that can be used as a step in a pipeline
+<pre><code class="python">&#39;&#39;&#39;Set of perturbations to be used in pipeline
 &#39;&#39;&#39;
-from abc import abstractmethod
 
-class Perturbation:
-    def __init__(self):
-        self.name = &#39;&#39;
 
-    @abstractmethod
+class ModuleSet:
+    def __init__(self, name: str = &#39;&#39;, modules: list = []):
+        self.name = name
+        self.modules = modules
+
+    def fit(self, *args, **kwargs):
+        for mod in self.modules:
+            mod.fit(*args, **kwargs)
+
     def transform(self, *args, **kwargs):
-        &#39;&#39;&#39;This function transforms its input in some way
+        results = []
+        for mod in self.modules:
+            result = mod.transform(*args, **kwargs)
+            results.append(result)
+        return results
+
+    def predict(self, *args, **kwargs):
+        results = []
+        for mod in self.modules:
+            result = mod.predict(*args, **kwargs)
+            results.append(result)
+        return results
+
+    def __getitem__(self, i):
+        &#39;&#39;&#39;Accesses ith item in the module set
         &#39;&#39;&#39;
-        pass</code></pre>
+        return self.modules[i]
+
+    def __len__(self):
+        return len(self.modules)
+
+    def __str__(self):
+        return self.name + &#39;: &#39; + &#39;,&#39;.join([str(mod) for mod in self.modules])</code></pre>
 </details>
 </section>
 <section>
@@ -49,8 +73,9 @@ class Perturbation:
 <section>
 <h2 class="section-title" id="header-classes">Classes</h2>
 <dl>
-<dt id="pcsp.perturbation.Perturbation"><code class="flex name class">
-<span>class <span class="ident">Perturbation</span></span>
+<dt id="pcsp.module_set.ModuleSet"><code class="flex name class">
+<span>class <span class="ident">ModuleSet</span></span>
+<span>(</span><span>name='', modules=[])</span>
 </code></dt>
 <dd>
 <section class="desc"></section>
@@ -58,32 +83,88 @@ class Perturbation:
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class Perturbation:
-    def __init__(self):
-        self.name = &#39;&#39;
+<pre><code class="python">class ModuleSet:
+    def __init__(self, name: str = &#39;&#39;, modules: list = []):
+        self.name = name
+        self.modules = modules
 
-    @abstractmethod
+    def fit(self, *args, **kwargs):
+        for mod in self.modules:
+            mod.fit(*args, **kwargs)
+
     def transform(self, *args, **kwargs):
-        &#39;&#39;&#39;This function transforms its input in some way
+        results = []
+        for mod in self.modules:
+            result = mod.transform(*args, **kwargs)
+            results.append(result)
+        return results
+
+    def predict(self, *args, **kwargs):
+        results = []
+        for mod in self.modules:
+            result = mod.predict(*args, **kwargs)
+            results.append(result)
+        return results
+
+    def __getitem__(self, i):
+        &#39;&#39;&#39;Accesses ith item in the module set
         &#39;&#39;&#39;
-        pass</code></pre>
+        return self.modules[i]
+
+    def __len__(self):
+        return len(self.modules)
+
+    def __str__(self):
+        return self.name + &#39;: &#39; + &#39;,&#39;.join([str(mod) for mod in self.modules])</code></pre>
 </details>
 <h3>Methods</h3>
 <dl>
-<dt id="pcsp.perturbation.Perturbation.transform"><code class="name flex">
-<span>def <span class="ident">transform</span></span>(<span>self, *args, **kwargs)</span>
+<dt id="pcsp.module_set.ModuleSet.fit"><code class="name flex">
+<span>def <span class="ident">fit</span></span>(<span>self, *args, **kwargs)</span>
 </code></dt>
 <dd>
-<section class="desc"><p>This function transforms its input in some way</p></section>
+<section class="desc"></section>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">@abstractmethod
-def transform(self, *args, **kwargs):
-    &#39;&#39;&#39;This function transforms its input in some way
-    &#39;&#39;&#39;
-    pass</code></pre>
+<pre><code class="python">def fit(self, *args, **kwargs):
+    for mod in self.modules:
+        mod.fit(*args, **kwargs)</code></pre>
+</details>
+</dd>
+<dt id="pcsp.module_set.ModuleSet.predict"><code class="name flex">
+<span>def <span class="ident">predict</span></span>(<span>self, *args, **kwargs)</span>
+</code></dt>
+<dd>
+<section class="desc"></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def predict(self, *args, **kwargs):
+    results = []
+    for mod in self.modules:
+        result = mod.predict(*args, **kwargs)
+        results.append(result)
+    return results</code></pre>
+</details>
+</dd>
+<dt id="pcsp.module_set.ModuleSet.transform"><code class="name flex">
+<span>def <span class="ident">transform</span></span>(<span>self, *args, **kwargs)</span>
+</code></dt>
+<dd>
+<section class="desc"></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def transform(self, *args, **kwargs):
+    results = []
+    for mod in self.modules:
+        result = mod.transform(*args, **kwargs)
+        results.append(result)
+    return results</code></pre>
 </details>
 </dd>
 </dl>
@@ -105,9 +186,11 @@ def transform(self, *args, **kwargs):
 <li><h3><a href="#header-classes">Classes</a></h3>
 <ul>
 <li>
-<h4><code><a title="pcsp.perturbation.Perturbation" href="#pcsp.perturbation.Perturbation">Perturbation</a></code></h4>
+<h4><code><a title="pcsp.module_set.ModuleSet" href="#pcsp.module_set.ModuleSet">ModuleSet</a></code></h4>
 <ul class="">
-<li><code><a title="pcsp.perturbation.Perturbation.transform" href="#pcsp.perturbation.Perturbation.transform">transform</a></code></li>
+<li><code><a title="pcsp.module_set.ModuleSet.fit" href="#pcsp.module_set.ModuleSet.fit">fit</a></code></li>
+<li><code><a title="pcsp.module_set.ModuleSet.predict" href="#pcsp.module_set.ModuleSet.predict">predict</a></code></li>
+<li><code><a title="pcsp.module_set.ModuleSet.transform" href="#pcsp.module_set.ModuleSet.transform">transform</a></code></li>
 </ul>
 </li>
 </ul>

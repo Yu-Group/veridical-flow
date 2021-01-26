@@ -7,10 +7,7 @@
   <img src="https://img.shields.io/badge/python-3.6--3.8-blue">
   <a href="https://github.com/Yu-group/pcs-pipeline/actions"><img src="https://github.com/Yu-group/pcs-pipeline/workflows/tests/badge.svg"></a>
   <img src="https://img.shields.io/github/checks-status/Yu-group/pcs-pipeline/master">
-</p>  
-<p align="center">
-    <a href="https://yu-group.github.io/pcs-pipeline/">Docs</a>
-</p>  
+</p> 
 
 
 # Sample usage
@@ -46,12 +43,14 @@ PCA()
 
 > **Examples**
 >
->  [Digit classification pipeline example](notebooks/digits_classification.ipynb)
+> [Digit classification example](https://github.com/Yu-Group/pcs-pipeline/tree/master/notebooks/digits_classification.ipynb)
+>
+> [Synthetic classification example](https://github.com/Yu-Group/pcs-pipeline/tree/master/notebooks/synthetic_classification.ipynb)
 
 
 # References
 
-- built on scikit-learn
+- built on [scikit-learn](https://scikit-learn.org/stable/index.html)
 - compatible with [dvc](https://dvc.org/) - data version control
-- uses [joblib](https://joblib.readthedocs.io/en/latest/) - run functions as pipeline jobs
+- uses [joblib](https://joblib.readthedocs.io/en/latest/) for caching
 - pull requests <a href="https://github.com/Yu-Group/pcs-pipeline/blob/master/docs/contributing.md">very welcome</a>!

@@ -4,13 +4,13 @@ import pcsp
 class TestBasic():
     def setup(self):
         self.pipeline = pcsp.PCSPipeline()
-        self.perturbation_set = pcsp.PerturbationSet()
-        self.perturbation = pcsp.Perturbation()
+        self.module_set = pcsp.ModuleSet()
+        self.module = pcsp.Module()
 
     def test_class_initializations(self):
         assert self.pipeline.steps is not None
-        assert self.perturbation_set.perturbations is not None
-        assert self.perturbation is not None
+        assert self.module_set.modules is not None
+        assert self.module is not None
 
     def test_iteration(self):
         '''Tests that iterating over pipeline is same as iterating over its steps
