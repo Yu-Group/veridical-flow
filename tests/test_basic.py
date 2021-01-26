@@ -1,4 +1,5 @@
 import pcsp
+from pcsp.module_set import unpack_to_tuple, pack_to_list
 
 
 class TestBasic():
@@ -21,3 +22,11 @@ class TestBasic():
         for i, x in enumerate(self.pipeline):
             assert x == i, 'iterating over pipeline steps'
         assert self.pipeline[1:] == [1, 2], 'slicing pipeline'
+
+    def test_packing(self):
+        '''Test that packing / unpacking work appropriately
+        '''
+        start = [[0, 10], [1, 11], [2, 12]]
+        X, y = unpack_to_tuple(start)
+        packed = pack_to_list((X, y))
+        assert start == packed, 'unpacking/packing works'

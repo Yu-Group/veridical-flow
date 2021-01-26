@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 <meta name="generator" content="pdoc 0.7.2" />
 <title>pcsp.module_set API documentation</title>
-<meta name="description" content="Set of perturbations to be used in pipeline" />
+<meta name="description" content="Set of modules to be parallelized over in a pipeline.
+Function arguments are each a list" />
 <link href='https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css' rel='stylesheet'>
 <link href='https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/8.0.0/sanitize.min.css' rel='stylesheet'>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css" rel="stylesheet">
@@ -20,12 +21,14 @@
 <h1 class="title">Module <code>pcsp.module_set</code></h1>
 </header>
 <section id="section-intro">
-<p>Set of perturbations to be used in pipeline</p>
+<p>Set of modules to be parallelized over in a pipeline.
+Function arguments are each a list</p>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">&#39;&#39;&#39;Set of perturbations to be used in pipeline
+<pre><code class="python">&#39;&#39;&#39;Set of modules to be parallelized over in a pipeline.
+Function arguments are each a list
 &#39;&#39;&#39;
 
 
@@ -52,6 +55,22 @@ class ModuleSet:
             results.append(result)
         return results
 
+    def predict_proba(self, *args, **kwargs):
+        results = []
+        for mod in self.modules:
+            result = mod.predict(*args, **kwargs)
+            results.append(result)
+        return results
+
+    def __call__(self, *args, **kwargs):
+        # print(&#39;args&#39;, len(args), len(args[0]))
+        results = []
+        for mod_num, mod in enumerate(self.modules):
+            result = mod(*args, **kwargs)
+            results.append(result)
+            # results[mod_num] = result
+        return unpack_to_tuple(results)
+
     def __getitem__(self, i):
         &#39;&#39;&#39;Accesses ith item in the module set
         &#39;&#39;&#39;
@@ -61,7 +80,39 @@ class ModuleSet:
         return len(self.modules)
 
     def __str__(self):
-        return self.name + &#39;: &#39; + &#39;,&#39;.join([str(mod) for mod in self.modules])</code></pre>
+        return self.name + &#39;: &#39; + &#39;,&#39;.join([str(mod) for mod in self.modules])
+
+
+def unpack_to_tuple(lists_packed: list):
+    &#39;&#39;&#39;Convert from lists to unpacked  tuple
+    Ex. [[x1, y1], [x2, y2], [x3, y3]] -&gt; ([x1, x2, x3], [y1, y2, y3])
+    Allows us to write X, y = ([x1, x2, x3], [y1, y2, y3])
+    &#39;&#39;&#39;
+    n_packed = len(lists_packed)
+    if n_packed == 0:
+        return []
+    n_unpacked = len(lists_packed[0])
+    lists_unpacked = [[] for _ in range(n_unpacked)]
+    for i in range(n_packed):
+        for j in range(n_unpacked):
+            lists_unpacked[j].append(lists_packed[i][j])
+    return tuple(lists_unpacked)
+
+
+def pack_to_list(lists_tuple: tuple):
+    &#39;&#39;&#39;Convert from tuple to packed list
+    Ex. ([x1, x2, x3], [y1, y2, y3]) -&gt; [[x1, y1], [x2, y2], [x3, y3]]
+    Allows us to call function with arguments in a loop
+    &#39;&#39;&#39;
+    n_unpacked = len(lists_tuple)
+    if n_unpacked == 0:
+        return []
+    n_packed = len(lists_tuple[0])
+    lists_packed = [[] for _ in range(n_packed)]
+    for i in range(n_packed):
+        for j in range(n_unpacked):
+            lists_packed[i].append(lists_tuple[j][i])
+    return lists_packed</code></pre>
 </details>
 </section>
 <section>
@@ -69,6 +120,64 @@ class ModuleSet:
 <section>
 </section>
 <section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="pcsp.module_set.pack_to_list"><code class="name flex">
+<span>def <span class="ident">pack_to_list</span></span>(<span>lists_tuple)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Convert from tuple to packed list
+Ex. ([x1, x2, x3], [y1, y2, y3]) -&gt; [[x1, y1], [x2, y2], [x3, y3]]
+Allows us to call function with arguments in a loop</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def pack_to_list(lists_tuple: tuple):
+    &#39;&#39;&#39;Convert from tuple to packed list
+    Ex. ([x1, x2, x3], [y1, y2, y3]) -&gt; [[x1, y1], [x2, y2], [x3, y3]]
+    Allows us to call function with arguments in a loop
+    &#39;&#39;&#39;
+    n_unpacked = len(lists_tuple)
+    if n_unpacked == 0:
+        return []
+    n_packed = len(lists_tuple[0])
+    lists_packed = [[] for _ in range(n_packed)]
+    for i in range(n_packed):
+        for j in range(n_unpacked):
+            lists_packed[i].append(lists_tuple[j][i])
+    return lists_packed</code></pre>
+</details>
+</dd>
+<dt id="pcsp.module_set.unpack_to_tuple"><code class="name flex">
+<span>def <span class="ident">unpack_to_tuple</span></span>(<span>lists_packed)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Convert from lists to unpacked
+tuple
+Ex. [[x1, y1], [x2, y2], [x3, y3]] -&gt; ([x1, x2, x3], [y1, y2, y3])
+Allows us to write X, y = ([x1, x2, x3], [y1, y2, y3])</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def unpack_to_tuple(lists_packed: list):
+    &#39;&#39;&#39;Convert from lists to unpacked  tuple
+    Ex. [[x1, y1], [x2, y2], [x3, y3]] -&gt; ([x1, x2, x3], [y1, y2, y3])
+    Allows us to write X, y = ([x1, x2, x3], [y1, y2, y3])
+    &#39;&#39;&#39;
+    n_packed = len(lists_packed)
+    if n_packed == 0:
+        return []
+    n_unpacked = len(lists_packed[0])
+    lists_unpacked = [[] for _ in range(n_unpacked)]
+    for i in range(n_packed):
+        for j in range(n_unpacked):
+            lists_unpacked[j].append(lists_packed[i][j])
+    return tuple(lists_unpacked)</code></pre>
+</details>
+</dd>
+</dl>
 </section>
 <section>
 <h2 class="section-title" id="header-classes">Classes</h2>
@@ -105,6 +214,22 @@ class ModuleSet:
             result = mod.predict(*args, **kwargs)
             results.append(result)
         return results
+
+    def predict_proba(self, *args, **kwargs):
+        results = []
+        for mod in self.modules:
+            result = mod.predict(*args, **kwargs)
+            results.append(result)
+        return results
+
+    def __call__(self, *args, **kwargs):
+        # print(&#39;args&#39;, len(args), len(args[0]))
+        results = []
+        for mod_num, mod in enumerate(self.modules):
+            result = mod(*args, **kwargs)
+            results.append(result)
+            # results[mod_num] = result
+        return unpack_to_tuple(results)
 
     def __getitem__(self, i):
         &#39;&#39;&#39;Accesses ith item in the module set
@@ -150,6 +275,23 @@ class ModuleSet:
     return results</code></pre>
 </details>
 </dd>
+<dt id="pcsp.module_set.ModuleSet.predict_proba"><code class="name flex">
+<span>def <span class="ident">predict_proba</span></span>(<span>self, *args, **kwargs)</span>
+</code></dt>
+<dd>
+<section class="desc"></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def predict_proba(self, *args, **kwargs):
+    results = []
+    for mod in self.modules:
+        result = mod.predict(*args, **kwargs)
+        results.append(result)
+    return results</code></pre>
+</details>
+</dd>
 <dt id="pcsp.module_set.ModuleSet.transform"><code class="name flex">
 <span>def <span class="ident">transform</span></span>(<span>self, *args, **kwargs)</span>
 </code></dt>
@@ -183,6 +325,12 @@ class ModuleSet:
 <li><code><a title="pcsp" href="index.html">pcsp</a></code></li>
 </ul>
 </li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="pcsp.module_set.pack_to_list" href="#pcsp.module_set.pack_to_list">pack_to_list</a></code></li>
+<li><code><a title="pcsp.module_set.unpack_to_tuple" href="#pcsp.module_set.unpack_to_tuple">unpack_to_tuple</a></code></li>
+</ul>
+</li>
 <li><h3><a href="#header-classes">Classes</a></h3>
 <ul>
 <li>
@@ -190,6 +338,7 @@ class ModuleSet:
 <ul class="">
 <li><code><a title="pcsp.module_set.ModuleSet.fit" href="#pcsp.module_set.ModuleSet.fit">fit</a></code></li>
 <li><code><a title="pcsp.module_set.ModuleSet.predict" href="#pcsp.module_set.ModuleSet.predict">predict</a></code></li>
+<li><code><a title="pcsp.module_set.ModuleSet.predict_proba" href="#pcsp.module_set.ModuleSet.predict_proba">predict_proba</a></code></li>
 <li><code><a title="pcsp.module_set.ModuleSet.transform" href="#pcsp.module_set.ModuleSet.transform">transform</a></code></li>
 </ul>
 </li>
