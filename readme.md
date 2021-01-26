@@ -22,7 +22,35 @@ import pcsp
 from pcsp import PCSPipeline # replaces sklearn.Pipeline
 ```
 
+# Documentation
+
+Builds heavily on the [sklearn-pipeline](https://scikit-learn.org/stable/modules/compose.html), but extends it to facilitate stability analysis.
+
+## Pipeline
+
+The [`Pipeline`](https://scikit-learn.org/stable/modules/generated/sklearn.pipeline.Pipeline.html#sklearn.pipeline.Pipeline) is built using a list of `(key, value)` pairs, where the `key` is a string containing the name you want to give this step and `value` is an estimator object:
+
+```python
+from pcsp import PCSPipeline # replaces sklearn.Pipeline
+pipe = PCSPipeline()
+```
+
+The estimators of a pipeline are stored as a list in the steps attribute, but can be accessed by index or name by indexing (with [idx]) the Pipeline:
+
+```python
+>>> pipe.steps[0]
+('reduce_dim', PCA())
+>>> pipe[0]
+PCA()
+```
+
+> **Examples**
+>
+>  [Digit classification pipeline example](notebooks/digits_classification.ipynb)
+
+
 # References
+
 - built on scikit-learn
 - compatible with [dvc](https://dvc.org/) - data version control
 - uses [joblib](https://joblib.readthedocs.io/en/latest/) - run functions as pipeline jobs

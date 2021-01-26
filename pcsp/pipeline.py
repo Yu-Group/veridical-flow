@@ -1,18 +1,16 @@
 '''Class that stores the entire pipeline of steps in a data-science workflow
 '''
-from sklearn.pipeline import Pipeline
 
 
-class PCSPipeline(Pipeline):
-    def __init__(self):
-        self.steps = []
-        self.preprocess = False
+class PCSPipeline:
+    def __init__(self, steps: list=[]):
+        self.steps = steps
 
-    def run(self):
+    def fit(self, *args, **kwargs):
         '''Runs the pipeline
-
         '''
-        pass
+        for step in self.steps:
+            step.fit(*args, **kwargs)
 
     def __getitem__(self, i):
         '''Accesses ith step of pipeline

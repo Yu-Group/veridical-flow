@@ -27,11 +27,17 @@
 </summary>
 <pre><code class="python">&#39;&#39;&#39;A perturbation that can be used as a step in a pipeline
 &#39;&#39;&#39;
+from abc import abstractmethod
 
-
-class Perturbation():
+class Perturbation:
     def __init__(self):
-        self.name = &#39;&#39;</code></pre>
+        self.name = &#39;&#39;
+
+    @abstractmethod
+    def transform(self, *args, **kwargs):
+        &#39;&#39;&#39;This function transforms its input in some way
+        &#39;&#39;&#39;
+        pass</code></pre>
 </details>
 </section>
 <section>
@@ -52,10 +58,35 @@ class Perturbation():
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class Perturbation():
+<pre><code class="python">class Perturbation:
     def __init__(self):
-        self.name = &#39;&#39;</code></pre>
+        self.name = &#39;&#39;
+
+    @abstractmethod
+    def transform(self, *args, **kwargs):
+        &#39;&#39;&#39;This function transforms its input in some way
+        &#39;&#39;&#39;
+        pass</code></pre>
 </details>
+<h3>Methods</h3>
+<dl>
+<dt id="pcsp.perturbation.Perturbation.transform"><code class="name flex">
+<span>def <span class="ident">transform</span></span>(<span>self, *args, **kwargs)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>This function transforms its input in some way</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@abstractmethod
+def transform(self, *args, **kwargs):
+    &#39;&#39;&#39;This function transforms its input in some way
+    &#39;&#39;&#39;
+    pass</code></pre>
+</details>
+</dd>
+</dl>
 </dd>
 </dl>
 </section>
@@ -75,6 +106,9 @@ class Perturbation():
 <ul>
 <li>
 <h4><code><a title="pcsp.perturbation.Perturbation" href="#pcsp.perturbation.Perturbation">Perturbation</a></code></h4>
+<ul class="">
+<li><code><a title="pcsp.perturbation.Perturbation.transform" href="#pcsp.perturbation.Perturbation.transform">transform</a></code></li>
+</ul>
 </li>
 </ul>
 </li>

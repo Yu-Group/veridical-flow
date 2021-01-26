@@ -7,8 +7,8 @@ class TestBasic():
         self.perturbation_set = pcsp.PerturbationSet()
         self.perturbation = pcsp.Perturbation()
 
-    def test_import(self):
-        assert self.pipeline.preprocess is False
+    def test_class_initializations(self):
+        assert self.pipeline.steps is not None
         assert self.perturbation_set.perturbations is not None
         assert self.perturbation is not None
 
