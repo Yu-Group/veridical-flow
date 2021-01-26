@@ -25,6 +25,20 @@ class ModuleSet:
             results.append(result)
         return results
 
+    def predict_proba(self, *args, **kwargs):
+        results = []
+        for mod in self.modules:
+            result = mod.predict(*args, **kwargs)
+            results.append(result)
+        return results
+
+    def __call__(self, *args, **kwargs):
+        results = []
+        for mod in self.modules:
+            result = mod(*args, **kwargs)
+            results.append(result)
+        return results
+
     def __getitem__(self, i):
         '''Accesses ith item in the module set
         '''
