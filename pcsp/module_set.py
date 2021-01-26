@@ -33,10 +33,10 @@ class ModuleSet:
         return results
 
     def __call__(self, *args, **kwargs):
-        results = []
-        for mod in self.modules:
+        results = {}
+        for mod_num, mod in enumerate(self.modules):
             result = mod(*args, **kwargs)
-            results.append(result)
+            results[mod_num] = result
         return results
 
     def __getitem__(self, i):

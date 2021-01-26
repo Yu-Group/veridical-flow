@@ -3,14 +3,20 @@
 
 
 class PCSPipeline:
-    def __init__(self, steps: list=[]):
+    def __init__(self, steps: list = []):
         self.steps = steps
+        self.cache = []
 
-    def fit(self, *args, **kwargs):
+    def run(self, *args, **kwargs):
         '''Runs the pipeline
         '''
-        for step in self.steps:
-            step.fit(*args, **kwargs)
+        for i, step in enumerate(self.steps):
+            try:
+                step_name = step.name
+            except:
+                step_name = f'Step {i}'
+            outputs = step(*args, **kwargs)
+            self.cache.append((step_name, outputs))
 
     def __getitem__(self, i):
         '''Accesses ith step of pipeline
