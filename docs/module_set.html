@@ -32,14 +32,57 @@ Function arguments are each a list
 &#39;&#39;&#39;
 
 
+def s(x):
+    if type(x) in [list, tuple]:
+        return len(x)
+    else:
+        return x.shape
+
+
 class ModuleSet:
     def __init__(self, name: str = &#39;&#39;, modules: list = []):
         self.name = name
         self.modules = modules
 
     def fit(self, *args, **kwargs):
-        for mod in self.modules:
-            mod.fit(*args, **kwargs)
+        &#39;&#39;&#39;todo: support kwargs
+        &#39;&#39;&#39;
+        funcs = [mod.fit for mod in self.modules]
+        return self.apply_func(funcs, *args, **kwargs)
+
+    def apply_func(self, funcs, *args, **kwargs):
+        &#39;&#39;&#39;
+
+        Params
+        ------
+        *args: Tuple[List]
+            should be unpacked list
+            e.g. ([x1, x2, x3], [y1, y2, y3])
+
+        Returns
+        -------
+        results: Tuple[List]
+            e.g. ([x1, x2, x3], [y1, y2, y3])
+        &#39;&#39;&#39;
+        # print(&#39;intro args&#39;, s(args))
+        # if len(args) == 1:
+        #     args = args[0]
+        # args = args[0]
+        # print(&#39;args_tuple&#39;, s(args), s(args[0]), &#39;kwargs&#39;, kwargs)  # , args[0][0].shape)
+        # args should look like ([x1, x2, x3], [y1, y2, y3])
+        args_list = to_list(args)
+        # args_list should look like [[x1, y1], [x2, y2], [x3, y3]]
+        # print(&#39;args_list&#39;, s(args_list), s(args_list[0]))  # , args_list[0][0].shape, &#39;kwargs&#39;, kwargs)
+        results = []
+        for arg in args_list:
+            # print(&#39;arg&#39;, s(arg), s(arg[0]))  # , s(arg[0]), s(arg[1]))  # , arg[0].shape)  # , arg[1].shape)
+            for func in funcs:
+                result = func(*arg)
+                results.append(result)
+        # print(results)
+        # print(&#39;result&#39;, s(result), s(result[0]), s(result[1]), s(result[0][0]))
+        # print(&#39;len(results)&#39;, len(results), len(results[0]), s(results[0][0]), s(results[0][1]))
+        return to_tuple(results)
 
     def transform(self, *args, **kwargs):
         results = []
@@ -49,27 +92,29 @@ class ModuleSet:
         return results
 
     def predict(self, *args, **kwargs):
-        results = []
-        for mod in self.modules:
-            result = mod.predict(*args, **kwargs)
-            results.append(result)
-        return results
+        funcs = [mod.predict for mod in self.modules]
+        return self.apply_func(funcs, *args, **kwargs)
 
     def predict_proba(self, *args, **kwargs):
-        results = []
-        for mod in self.modules:
-            result = mod.predict(*args, **kwargs)
-            results.append(result)
-        return results
+        funcs = [mod.predict for mod in self.modules]
+        return self.apply_func(funcs, *args, **kwargs)
+
+    def repeat(self, x):
+        &#39;&#39;&#39;
+
+        Parameters
+        ----------
+        x: list to be repeated
+
+        Returns
+        -------
+        List repeated number of times as self.modules
+        &#39;&#39;&#39;
+
+        return x * len(self.modules)
 
     def __call__(self, *args, **kwargs):
-        # print(&#39;args&#39;, len(args), len(args[0]))
-        results = []
-        for mod_num, mod in enumerate(self.modules):
-            result = mod(*args, **kwargs)
-            results.append(result)
-            # results[mod_num] = result
-        return unpack_to_tuple(results)
+        return self.apply_func(self.modules, *args, **kwargs)
 
     def __getitem__(self, i):
         &#39;&#39;&#39;Accesses ith item in the module set
@@ -83,35 +128,43 @@ class ModuleSet:
         return self.name + &#39;: &#39; + &#39;,&#39;.join([str(mod) for mod in self.modules])
 
 
-def unpack_to_tuple(lists_packed: list):
+def to_tuple(lists: list):
     &#39;&#39;&#39;Convert from lists to unpacked  tuple
     Ex. [[x1, y1], [x2, y2], [x3, y3]] -&gt; ([x1, x2, x3], [y1, y2, y3])
+    Ex. [[x1, y1]] -&gt; ([x1], [y1])
+    Ex. [m1, m2, m3] -&gt; [m1, m2, m3]
     Allows us to write X, y = ([x1, x2, x3], [y1, y2, y3])
     &#39;&#39;&#39;
-    n_packed = len(lists_packed)
-    if n_packed == 0:
-        return []
-    n_unpacked = len(lists_packed[0])
-    lists_unpacked = [[] for _ in range(n_unpacked)]
-    for i in range(n_packed):
-        for j in range(n_unpacked):
-            lists_unpacked[j].append(lists_packed[i][j])
-    return tuple(lists_unpacked)
+    n_mods = len(lists)
+    if n_mods &lt;= 1:
+        return lists
+    if not type(lists[0]) == list:
+        return lists
+    n_tup = len(lists[0])
+    tup = [[] for _ in range(n_tup)]
+    for i in range(n_mods):
+        for j in range(n_tup):
+            tup[j].append(lists[i][j])
+    return tuple(tup)
 
 
-def pack_to_list(lists_tuple: tuple):
+def to_list(tup: tuple):
     &#39;&#39;&#39;Convert from tuple to packed list
     Ex. ([x1, x2, x3], [y1, y2, y3]) -&gt; [[x1, y1], [x2, y2], [x3, y3]]
+    Ex. ([x1], [y1]) -&gt; [[x1, y1]]
+    Ex. ([x1, x2, x3]) -&gt; [[x1], [x2], [x3]]
     Allows us to call function with arguments in a loop
     &#39;&#39;&#39;
-    n_unpacked = len(lists_tuple)
-    if n_unpacked == 0:
-        return []
-    n_packed = len(lists_tuple[0])
-    lists_packed = [[] for _ in range(n_packed)]
-    for i in range(n_packed):
-        for j in range(n_unpacked):
-            lists_packed[i].append(lists_tuple[j][i])
+    n_tup = len(tup)
+    if n_tup == 0:
+        return tup
+    elif n_tup == 1:
+        return [[x] for x in tup[0]]
+    n_mods = len(tup[0])
+    lists_packed = [[] for _ in range(n_mods)]
+    for i in range(n_mods):
+        for j in range(n_tup):
+            lists_packed[i].append(tup[j][i])
     return lists_packed</code></pre>
 </details>
 </section>
@@ -122,59 +175,87 @@ def pack_to_list(lists_tuple: tuple):
 <section>
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
-<dt id="pcsp.module_set.pack_to_list"><code class="name flex">
-<span>def <span class="ident">pack_to_list</span></span>(<span>lists_tuple)</span>
+<dt id="pcsp.module_set.s"><code class="name flex">
+<span>def <span class="ident">s</span></span>(<span>x)</span>
+</code></dt>
+<dd>
+<section class="desc"></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def s(x):
+    if type(x) in [list, tuple]:
+        return len(x)
+    else:
+        return x.shape</code></pre>
+</details>
+</dd>
+<dt id="pcsp.module_set.to_list"><code class="name flex">
+<span>def <span class="ident">to_list</span></span>(<span>tup)</span>
 </code></dt>
 <dd>
 <section class="desc"><p>Convert from tuple to packed list
 Ex. ([x1, x2, x3], [y1, y2, y3]) -&gt; [[x1, y1], [x2, y2], [x3, y3]]
+Ex. ([x1], [y1]) -&gt; [[x1, y1]]
+Ex. ([x1, x2, x3]) -&gt; [[x1], [x2], [x3]]
 Allows us to call function with arguments in a loop</p></section>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def pack_to_list(lists_tuple: tuple):
+<pre><code class="python">def to_list(tup: tuple):
     &#39;&#39;&#39;Convert from tuple to packed list
     Ex. ([x1, x2, x3], [y1, y2, y3]) -&gt; [[x1, y1], [x2, y2], [x3, y3]]
+    Ex. ([x1], [y1]) -&gt; [[x1, y1]]
+    Ex. ([x1, x2, x3]) -&gt; [[x1], [x2], [x3]]
     Allows us to call function with arguments in a loop
     &#39;&#39;&#39;
-    n_unpacked = len(lists_tuple)
-    if n_unpacked == 0:
-        return []
-    n_packed = len(lists_tuple[0])
-    lists_packed = [[] for _ in range(n_packed)]
-    for i in range(n_packed):
-        for j in range(n_unpacked):
-            lists_packed[i].append(lists_tuple[j][i])
+    n_tup = len(tup)
+    if n_tup == 0:
+        return tup
+    elif n_tup == 1:
+        return [[x] for x in tup[0]]
+    n_mods = len(tup[0])
+    lists_packed = [[] for _ in range(n_mods)]
+    for i in range(n_mods):
+        for j in range(n_tup):
+            lists_packed[i].append(tup[j][i])
     return lists_packed</code></pre>
 </details>
 </dd>
-<dt id="pcsp.module_set.unpack_to_tuple"><code class="name flex">
-<span>def <span class="ident">unpack_to_tuple</span></span>(<span>lists_packed)</span>
+<dt id="pcsp.module_set.to_tuple"><code class="name flex">
+<span>def <span class="ident">to_tuple</span></span>(<span>lists)</span>
 </code></dt>
 <dd>
 <section class="desc"><p>Convert from lists to unpacked
 tuple
 Ex. [[x1, y1], [x2, y2], [x3, y3]] -&gt; ([x1, x2, x3], [y1, y2, y3])
+Ex. [[x1, y1]] -&gt; ([x1], [y1])
+Ex. [m1, m2, m3] -&gt; [m1, m2, m3]
 Allows us to write X, y = ([x1, x2, x3], [y1, y2, y3])</p></section>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def unpack_to_tuple(lists_packed: list):
+<pre><code class="python">def to_tuple(lists: list):
     &#39;&#39;&#39;Convert from lists to unpacked  tuple
     Ex. [[x1, y1], [x2, y2], [x3, y3]] -&gt; ([x1, x2, x3], [y1, y2, y3])
+    Ex. [[x1, y1]] -&gt; ([x1], [y1])
+    Ex. [m1, m2, m3] -&gt; [m1, m2, m3]
     Allows us to write X, y = ([x1, x2, x3], [y1, y2, y3])
     &#39;&#39;&#39;
-    n_packed = len(lists_packed)
-    if n_packed == 0:
-        return []
-    n_unpacked = len(lists_packed[0])
-    lists_unpacked = [[] for _ in range(n_unpacked)]
-    for i in range(n_packed):
-        for j in range(n_unpacked):
-            lists_unpacked[j].append(lists_packed[i][j])
-    return tuple(lists_unpacked)</code></pre>
+    n_mods = len(lists)
+    if n_mods &lt;= 1:
+        return lists
+    if not type(lists[0]) == list:
+        return lists
+    n_tup = len(lists[0])
+    tup = [[] for _ in range(n_tup)]
+    for i in range(n_mods):
+        for j in range(n_tup):
+            tup[j].append(lists[i][j])
+    return tuple(tup)</code></pre>
 </details>
 </dd>
 </dl>
@@ -198,8 +279,44 @@ Allows us to write X, y = ([x1, x2, x3], [y1, y2, y3])</p></section>
         self.modules = modules
 
     def fit(self, *args, **kwargs):
-        for mod in self.modules:
-            mod.fit(*args, **kwargs)
+        &#39;&#39;&#39;todo: support kwargs
+        &#39;&#39;&#39;
+        funcs = [mod.fit for mod in self.modules]
+        return self.apply_func(funcs, *args, **kwargs)
+
+    def apply_func(self, funcs, *args, **kwargs):
+        &#39;&#39;&#39;
+
+        Params
+        ------
+        *args: Tuple[List]
+            should be unpacked list
+            e.g. ([x1, x2, x3], [y1, y2, y3])
+
+        Returns
+        -------
+        results: Tuple[List]
+            e.g. ([x1, x2, x3], [y1, y2, y3])
+        &#39;&#39;&#39;
+        # print(&#39;intro args&#39;, s(args))
+        # if len(args) == 1:
+        #     args = args[0]
+        # args = args[0]
+        # print(&#39;args_tuple&#39;, s(args), s(args[0]), &#39;kwargs&#39;, kwargs)  # , args[0][0].shape)
+        # args should look like ([x1, x2, x3], [y1, y2, y3])
+        args_list = to_list(args)
+        # args_list should look like [[x1, y1], [x2, y2], [x3, y3]]
+        # print(&#39;args_list&#39;, s(args_list), s(args_list[0]))  # , args_list[0][0].shape, &#39;kwargs&#39;, kwargs)
+        results = []
+        for arg in args_list:
+            # print(&#39;arg&#39;, s(arg), s(arg[0]))  # , s(arg[0]), s(arg[1]))  # , arg[0].shape)  # , arg[1].shape)
+            for func in funcs:
+                result = func(*arg)
+                results.append(result)
+        # print(results)
+        # print(&#39;result&#39;, s(result), s(result[0]), s(result[1]), s(result[0][0]))
+        # print(&#39;len(results)&#39;, len(results), len(results[0]), s(results[0][0]), s(results[0][1]))
+        return to_tuple(results)
 
     def transform(self, *args, **kwargs):
         results = []
@@ -209,27 +326,29 @@ Allows us to write X, y = ([x1, x2, x3], [y1, y2, y3])</p></section>
         return results
 
     def predict(self, *args, **kwargs):
-        results = []
-        for mod in self.modules:
-            result = mod.predict(*args, **kwargs)
-            results.append(result)
-        return results
+        funcs = [mod.predict for mod in self.modules]
+        return self.apply_func(funcs, *args, **kwargs)
 
     def predict_proba(self, *args, **kwargs):
-        results = []
-        for mod in self.modules:
-            result = mod.predict(*args, **kwargs)
-            results.append(result)
-        return results
+        funcs = [mod.predict for mod in self.modules]
+        return self.apply_func(funcs, *args, **kwargs)
+
+    def repeat(self, x):
+        &#39;&#39;&#39;
+
+        Parameters
+        ----------
+        x: list to be repeated
+
+        Returns
+        -------
+        List repeated number of times as self.modules
+        &#39;&#39;&#39;
+
+        return x * len(self.modules)
 
     def __call__(self, *args, **kwargs):
-        # print(&#39;args&#39;, len(args), len(args[0]))
-        results = []
-        for mod_num, mod in enumerate(self.modules):
-            result = mod(*args, **kwargs)
-            results.append(result)
-            # results[mod_num] = result
-        return unpack_to_tuple(results)
+        return self.apply_func(self.modules, *args, **kwargs)
 
     def __getitem__(self, i):
         &#39;&#39;&#39;Accesses ith item in the module set
@@ -244,18 +363,74 @@ Allows us to write X, y = ([x1, x2, x3], [y1, y2, y3])</p></section>
 </details>
 <h3>Methods</h3>
 <dl>
+<dt id="pcsp.module_set.ModuleSet.apply_func"><code class="name flex">
+<span>def <span class="ident">apply_func</span></span>(<span>self, funcs, *args, **kwargs)</span>
+</code></dt>
+<dd>
+<section class="desc"><h2 id="params">Params</h2>
+<dl>
+<dt><strong><code>*args</code></strong> :&ensp;<code>Tuple</code>[<code>List</code>]</dt>
+<dd>should be unpacked list
+e.g. ([x1, x2, x3], [y1, y2, y3])</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><strong><code>results</code></strong> :&ensp;<code>Tuple</code>[<code>List</code>]</dt>
+<dd>e.g. ([x1, x2, x3], [y1, y2, y3])</dd>
+</dl></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def apply_func(self, funcs, *args, **kwargs):
+    &#39;&#39;&#39;
+
+    Params
+    ------
+    *args: Tuple[List]
+        should be unpacked list
+        e.g. ([x1, x2, x3], [y1, y2, y3])
+
+    Returns
+    -------
+    results: Tuple[List]
+        e.g. ([x1, x2, x3], [y1, y2, y3])
+    &#39;&#39;&#39;
+    # print(&#39;intro args&#39;, s(args))
+    # if len(args) == 1:
+    #     args = args[0]
+    # args = args[0]
+    # print(&#39;args_tuple&#39;, s(args), s(args[0]), &#39;kwargs&#39;, kwargs)  # , args[0][0].shape)
+    # args should look like ([x1, x2, x3], [y1, y2, y3])
+    args_list = to_list(args)
+    # args_list should look like [[x1, y1], [x2, y2], [x3, y3]]
+    # print(&#39;args_list&#39;, s(args_list), s(args_list[0]))  # , args_list[0][0].shape, &#39;kwargs&#39;, kwargs)
+    results = []
+    for arg in args_list:
+        # print(&#39;arg&#39;, s(arg), s(arg[0]))  # , s(arg[0]), s(arg[1]))  # , arg[0].shape)  # , arg[1].shape)
+        for func in funcs:
+            result = func(*arg)
+            results.append(result)
+    # print(results)
+    # print(&#39;result&#39;, s(result), s(result[0]), s(result[1]), s(result[0][0]))
+    # print(&#39;len(results)&#39;, len(results), len(results[0]), s(results[0][0]), s(results[0][1]))
+    return to_tuple(results)</code></pre>
+</details>
+</dd>
 <dt id="pcsp.module_set.ModuleSet.fit"><code class="name flex">
 <span>def <span class="ident">fit</span></span>(<span>self, *args, **kwargs)</span>
 </code></dt>
 <dd>
-<section class="desc"></section>
+<section class="desc"><p>todo: support kwargs</p></section>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def fit(self, *args, **kwargs):
-    for mod in self.modules:
-        mod.fit(*args, **kwargs)</code></pre>
+    &#39;&#39;&#39;todo: support kwargs
+    &#39;&#39;&#39;
+    funcs = [mod.fit for mod in self.modules]
+    return self.apply_func(funcs, *args, **kwargs)</code></pre>
 </details>
 </dd>
 <dt id="pcsp.module_set.ModuleSet.predict"><code class="name flex">
@@ -268,11 +443,8 @@ Allows us to write X, y = ([x1, x2, x3], [y1, y2, y3])</p></section>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def predict(self, *args, **kwargs):
-    results = []
-    for mod in self.modules:
-        result = mod.predict(*args, **kwargs)
-        results.append(result)
-    return results</code></pre>
+    funcs = [mod.predict for mod in self.modules]
+    return self.apply_func(funcs, *args, **kwargs)</code></pre>
 </details>
 </dd>
 <dt id="pcsp.module_set.ModuleSet.predict_proba"><code class="name flex">
@@ -285,11 +457,41 @@ Allows us to write X, y = ([x1, x2, x3], [y1, y2, y3])</p></section>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def predict_proba(self, *args, **kwargs):
-    results = []
-    for mod in self.modules:
-        result = mod.predict(*args, **kwargs)
-        results.append(result)
-    return results</code></pre>
+    funcs = [mod.predict for mod in self.modules]
+    return self.apply_func(funcs, *args, **kwargs)</code></pre>
+</details>
+</dd>
+<dt id="pcsp.module_set.ModuleSet.repeat"><code class="name flex">
+<span>def <span class="ident">repeat</span></span>(<span>self, x)</span>
+</code></dt>
+<dd>
+<section class="desc"><h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>x</code></strong> :&ensp;<code>list</code> <code>to</code> <code>be</code> <code>repeated</code></dt>
+<dd>&nbsp;</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>List</code> <code>repeated</code> <code>number</code> of <code>times</code> <code>as</code> <code>self.modules</code></dt>
+<dd>&nbsp;</dd>
+</dl></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def repeat(self, x):
+    &#39;&#39;&#39;
+
+    Parameters
+    ----------
+    x: list to be repeated
+
+    Returns
+    -------
+    List repeated number of times as self.modules
+    &#39;&#39;&#39;
+
+    return x * len(self.modules)</code></pre>
 </details>
 </dd>
 <dt id="pcsp.module_set.ModuleSet.transform"><code class="name flex">
@@ -327,18 +529,21 @@ Allows us to write X, y = ([x1, x2, x3], [y1, y2, y3])</p></section>
 </li>
 <li><h3><a href="#header-functions">Functions</a></h3>
 <ul class="">
-<li><code><a title="pcsp.module_set.pack_to_list" href="#pcsp.module_set.pack_to_list">pack_to_list</a></code></li>
-<li><code><a title="pcsp.module_set.unpack_to_tuple" href="#pcsp.module_set.unpack_to_tuple">unpack_to_tuple</a></code></li>
+<li><code><a title="pcsp.module_set.s" href="#pcsp.module_set.s">s</a></code></li>
+<li><code><a title="pcsp.module_set.to_list" href="#pcsp.module_set.to_list">to_list</a></code></li>
+<li><code><a title="pcsp.module_set.to_tuple" href="#pcsp.module_set.to_tuple">to_tuple</a></code></li>
 </ul>
 </li>
 <li><h3><a href="#header-classes">Classes</a></h3>
 <ul>
 <li>
 <h4><code><a title="pcsp.module_set.ModuleSet" href="#pcsp.module_set.ModuleSet">ModuleSet</a></code></h4>
-<ul class="">
+<ul class="two-column">
+<li><code><a title="pcsp.module_set.ModuleSet.apply_func" href="#pcsp.module_set.ModuleSet.apply_func">apply_func</a></code></li>
 <li><code><a title="pcsp.module_set.ModuleSet.fit" href="#pcsp.module_set.ModuleSet.fit">fit</a></code></li>
 <li><code><a title="pcsp.module_set.ModuleSet.predict" href="#pcsp.module_set.ModuleSet.predict">predict</a></code></li>
 <li><code><a title="pcsp.module_set.ModuleSet.predict_proba" href="#pcsp.module_set.ModuleSet.predict_proba">predict_proba</a></code></li>
+<li><code><a title="pcsp.module_set.ModuleSet.repeat" href="#pcsp.module_set.ModuleSet.repeat">repeat</a></code></li>
 <li><code><a title="pcsp.module_set.ModuleSet.transform" href="#pcsp.module_set.ModuleSet.transform">transform</a></code></li>
 </ul>
 </li>
