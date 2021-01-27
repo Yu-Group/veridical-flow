@@ -30,11 +30,13 @@
 <img src="https://img.shields.io/badge/python-3.6--3.8-blue">
 <a href="https://github.com/Yu-group/pcs-pipeline/actions"><img src="https://github.com/Yu-group/pcs-pipeline/workflows/tests/badge.svg"></a>
 <img src="https://img.shields.io/github/checks-status/Yu-group/pcs-pipeline/master">
+<img src="https://img.shields.io/pypi/v/pcsp?color=orange">
 </p>
 <h1 id="sample-usage">Sample usage</h1>
 <p>Install with <code>pip install pcsp</code> (see <a href="https://github.com/Yu-Group/pcs-pipeline/blob/master/docs/troubleshooting.md">here</a> for help)</p>
 <pre><code class="python">import pcsp
 from pcsp import PCSPipeline # replaces sklearn.Pipeline
+from pcsp import ModuleSet   # drop-in replacement for any function with a set of functions
 </code></pre>
 <h1 id="documentation">Documentation</h1>
 <p>Builds heavily on the <a href="https://scikit-learn.org/stable/modules/compose.html">sklearn-pipeline</a>, but extends it to facilitate stability analysis.</p>
@@ -45,9 +47,9 @@ pipe = PCSPipeline()
 </code></pre>
 <p>The estimators of a pipeline are stored as a list in the steps attribute, but can be accessed by index or name by indexing (with [idx]) the Pipeline:</p>
 <pre><code class="python">&gt;&gt;&gt; pipe.steps[0]
-('reduce_dim', PCA())
+...
 &gt;&gt;&gt; pipe[0]
-PCA()
+...
 </code></pre>
 <blockquote>
 <p><strong>Examples</strong></p>

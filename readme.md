@@ -7,6 +7,7 @@
   <img src="https://img.shields.io/badge/python-3.6--3.8-blue">
   <a href="https://github.com/Yu-group/pcs-pipeline/actions"><img src="https://github.com/Yu-group/pcs-pipeline/workflows/tests/badge.svg"></a>
   <img src="https://img.shields.io/github/checks-status/Yu-group/pcs-pipeline/master">
+  <img src="https://img.shields.io/pypi/v/pcsp?color=orange">
 </p> 
 
 
@@ -17,6 +18,7 @@ Install with `pip install pcsp` (see [here](https://github.com/Yu-Group/pcs-pipe
 ```python
 import pcsp
 from pcsp import PCSPipeline # replaces sklearn.Pipeline
+from pcsp import ModuleSet   # drop-in replacement for any function with a set of functions
 ```
 
 # Documentation
@@ -36,9 +38,9 @@ The estimators of a pipeline are stored as a list in the steps attribute, but ca
 
 ```python
 >>> pipe.steps[0]
-('reduce_dim', PCA())
+...
 >>> pipe[0]
-PCA()
+...
 ```
 
 > **Examples**
