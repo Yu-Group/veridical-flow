@@ -1,5 +1,5 @@
 import pcsp
-from pcsp.module_set import unpack_to_tuple, pack_to_list
+from pcsp.module_set import to_tuple, to_list
 
 
 class TestBasic():
@@ -27,6 +27,6 @@ class TestBasic():
         '''Test that packing / unpacking work appropriately
         '''
         start = [[0, 10], [1, 11], [2, 12]]
-        X, y = unpack_to_tuple(start)
-        packed = pack_to_list((X, y))
+        X, y = to_tuple(start)
+        packed = to_list((X, y))
         assert start == packed, 'unpacking/packing works'
