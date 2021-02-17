@@ -30,59 +30,94 @@ Function arguments are each a list</p>
 <pre><code class="python">&#39;&#39;&#39;Set of modules to be parallelized over in a pipeline.
 Function arguments are each a list
 &#39;&#39;&#39;
-
-
-def s(x):
-    if type(x) in [list, tuple]:
-        return len(x)
-    else:
-        return x.shape
-
+from pcsp.convert import *
 
 class ModuleSet:
-    def __init__(self, name: str = &#39;&#39;, modules: list = []):
+    def __init__(self, name: str, modules, module_keys: list=None):
+        &#39;&#39;&#39;
+        todo: include prev and next and change functions to include that. 
+        Params
+        -------
+        name: str
+            name of this moduleset
+        modules: list or dict
+            dictionary of functions that we want to associate with 
+        module_keys: list (optional)
+            list of names corresponding to each module
+        &#39;&#39;&#39;
         self.name = name
-        self.modules = modules
+        if type(modules) is dict:
+            self.modules = modules
+        elif type(modules) is list:
+            if module_keys is not None:
+                assert type(module_keys) is list, &#39;modules passed as list but module_names is not a list&#39;
+                assert len(modules) == len(module_keys), &#39;modules list and module_names list differ&#39;
+            else:
+                module_keys = [f&#39;{name}_{i}&#39; for i in range(len(modules))]
+            self.modules = dict(zip(module_keys, modules))
+        
 
     def fit(self, *args, **kwargs):
         &#39;&#39;&#39;todo: support kwargs
         &#39;&#39;&#39;
-        funcs = [mod.fit for mod in self.modules]
-        return self.apply_func(funcs, *args, **kwargs)
+        # funcs = [mod.fit for mod in self.modules.items()]
+        for k1, v1 in self.modules.items():
+            self.modules[k1] = v1.fit
+        return self.apply_func(*args, matching=&#39;cartesian&#39;, order=&#39;typical&#39;, **kwargs)
 
-    def apply_func(self, funcs, *args, **kwargs):
+    def apply_func(self, *args, matching=&#39;cartesian&#39;, order=&#39;typical&#39;, **kwargs):
         &#39;&#39;&#39;
 
         Params
         ------
-        *args: Tuple[List]
-            should be unpacked list
-            e.g. ([x1, x2, x3], [y1, y2, y3])
-
+        *args: Two types currently allowed: 
+            - Tuple[List] e.g. ([X1 ,X2],[y1, y2]).
+                apply_func will then combine *args into a dictionary of format: 
+                {data_0 : [X1, y1], data_1: [X2, y2]} and run modules on each item in dictionary
+            - Dictionaries: takes multiple dicts and combines them into one.
+                Then runs modules on each item in combined dict. 
+        
         Returns
         -------
-        results: Tuple[List]
-            e.g. ([x1, x2, x3], [y1, y2, y3])
+        results: dict
+            with items being determined by functions in module set.
+            Functions and input dictionaries are currently matched using  matching = &#39;cartesian&#39; format.
+                e.g. inputs:    module = {LR : logistic}, data = {train_1 : [X1,y1], train2 : [X2,y2]}
+                     output:    output_dict = {(train_1, LR)  : fitted logistic, (train_2, LR) :  fitted logistic}.
+            Currently matching = &#39;subset&#39; is not used...
         &#39;&#39;&#39;
-        # print(&#39;intro args&#39;, s(args))
-        # if len(args) == 1:
-        #     args = args[0]
-        # args = args[0]
-        # print(&#39;args_tuple&#39;, s(args), s(args[0]), &#39;kwargs&#39;, kwargs)  # , args[0][0].shape)
-        # args should look like ([x1, x2, x3], [y1, y2, y3])
-        args_list = to_list(args)
-        # args_list should look like [[x1, y1], [x2, y2], [x3, y3]]
-        # print(&#39;args_list&#39;, s(args_list), s(args_list[0]))  # , args_list[0][0].shape, &#39;kwargs&#39;, kwargs)
-        results = []
-        for arg in args_list:
-            # print(&#39;arg&#39;, s(arg), s(arg[0]))  # , s(arg[0]), s(arg[1]))  # , arg[0].shape)  # , arg[1].shape)
-            for func in funcs:
-                result = func(*arg)
-                results.append(result)
-        # print(results)
-        # print(&#39;result&#39;, s(result), s(result[0]), s(result[1]), s(result[0][0]))
-        # print(&#39;len(results)&#39;, len(results), len(results[0]), s(results[0][0]), s(results[0][1]))
-        return to_tuple(results)
+        dict_present = False
+        for ele in args:
+            if isinstance(ele, dict):
+                dict_present = True  # Checking if dict is present
+
+        # if dictionary is present, create dictionary with default data_0 key
+        if not dict_present:
+            data_dict = create_dict(*args)
+            if matching == &#39;cartesian&#39;:
+                output_dict = cartesian_dict(data_dict, self.modules, order=order)
+            elif matching == &#39;subset&#39;:
+                output_dict = subset_dict(data_dict, self.modules, order=order)
+            else:
+                output_dict = {}
+            self.modules = output_dict
+            return sep_dicts(output_dict)
+        
+        # if dictionary is not present, combine dicts based on keys
+        else:
+            data_dict = combine_dicts(*args)
+            if (matching == &#39;cartesian&#39;):
+                output_dict = cartesian_dict(data_dict, self.modules, order=order)
+            elif (matching == &#39;subset&#39;):
+                output_dict = subset_dict(data_dict, self.modules, order=order)
+            else:
+                output_dict = {}
+            self.modules = output_dict
+            # output_dict = cartesian_dict(combine_dicts(*args))
+            return output_dict
+            # data_dict = append_dict(*args)
+            # output_dict = cartesian_dict(*args,self.modules)
+
 
     def transform(self, *args, **kwargs):
         results = []
@@ -92,29 +127,23 @@ class ModuleSet:
         return results
 
     def predict(self, *args, **kwargs):
-        funcs = [mod.predict for mod in self.modules]
-        return self.apply_func(funcs, *args, **kwargs)
+        for k1, v1 in self.modules.items():
+            self.modules[k1] = v1.predict
+        return self.apply_func(*args, matching=&#39;cartesian&#39;, order=&#39;backwards&#39;, **kwargs)
 
     def predict_proba(self, *args, **kwargs):
-        funcs = [mod.predict for mod in self.modules]
-        return self.apply_func(funcs, *args, **kwargs)
+        for k1, v1 in self.modules.items():
+            self.modules[k1] = v1.predict
+        return self.apply_func(*args, matching=&#39;cartesian&#39;, order=&#39;backwards&#39;, **kwargs)
 
-    def repeat(self, x):
-        &#39;&#39;&#39;
-
-        Parameters
-        ----------
-        x: list to be repeated
-
-        Returns
-        -------
-        List repeated number of times as self.modules
-        &#39;&#39;&#39;
-
-        return x * len(self.modules)
+    def evaluate(self, *args, **kwargs):
+        validation_dict = combine_subset_dicts(*args, order=&#39;typical&#39;)
+        return self.apply_func(validation_dict, matching=&#39;cartesian&#39;, order=&#39;typical&#39;, **kwargs)
+        # for k1, v1 in self.modules.items():
+        #    return self.apply_func(*args,matching = &#39;subset&#39;,order = &#39;typical&#39;,**kwargs)
 
     def __call__(self, *args, **kwargs):
-        return self.apply_func(self.modules, *args, **kwargs)
+        return self.apply_func(*args, matching=&#39;cartesian&#39;, order=&#39;typical&#39;, **kwargs)
 
     def __getitem__(self, i):
         &#39;&#39;&#39;Accesses ith item in the module set
@@ -125,47 +154,7 @@ class ModuleSet:
         return len(self.modules)
 
     def __str__(self):
-        return self.name + &#39;: &#39; + &#39;,&#39;.join([str(mod) for mod in self.modules])
-
-
-def to_tuple(lists: list):
-    &#39;&#39;&#39;Convert from lists to unpacked  tuple
-    Ex. [[x1, y1], [x2, y2], [x3, y3]] -&gt; ([x1, x2, x3], [y1, y2, y3])
-    Ex. [[x1, y1]] -&gt; ([x1], [y1])
-    Ex. [m1, m2, m3] -&gt; [m1, m2, m3]
-    Allows us to write X, y = ([x1, x2, x3], [y1, y2, y3])
-    &#39;&#39;&#39;
-    n_mods = len(lists)
-    if n_mods &lt;= 1:
-        return lists
-    if not type(lists[0]) == list:
-        return lists
-    n_tup = len(lists[0])
-    tup = [[] for _ in range(n_tup)]
-    for i in range(n_mods):
-        for j in range(n_tup):
-            tup[j].append(lists[i][j])
-    return tuple(tup)
-
-
-def to_list(tup: tuple):
-    &#39;&#39;&#39;Convert from tuple to packed list
-    Ex. ([x1, x2, x3], [y1, y2, y3]) -&gt; [[x1, y1], [x2, y2], [x3, y3]]
-    Ex. ([x1], [y1]) -&gt; [[x1, y1]]
-    Ex. ([x1, x2, x3]) -&gt; [[x1], [x2], [x3]]
-    Allows us to call function with arguments in a loop
-    &#39;&#39;&#39;
-    n_tup = len(tup)
-    if n_tup == 0:
-        return tup
-    elif n_tup == 1:
-        return [[x] for x in tup[0]]
-    n_mods = len(tup[0])
-    lists_packed = [[] for _ in range(n_mods)]
-    for i in range(n_mods):
-        for j in range(n_tup):
-            lists_packed[i].append(tup[j][i])
-    return lists_packed</code></pre>
+        return self.name + &#39;: &#39; + &#39;,&#39;.join([str(mod) for mod in self.modules])</code></pre>
 </details>
 </section>
 <section>
@@ -173,150 +162,116 @@ def to_list(tup: tuple):
 <section>
 </section>
 <section>
-<h2 class="section-title" id="header-functions">Functions</h2>
-<dl>
-<dt id="pcsp.module_set.s"><code class="name flex">
-<span>def <span class="ident">s</span></span>(<span>x)</span>
-</code></dt>
-<dd>
-<section class="desc"></section>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def s(x):
-    if type(x) in [list, tuple]:
-        return len(x)
-    else:
-        return x.shape</code></pre>
-</details>
-</dd>
-<dt id="pcsp.module_set.to_list"><code class="name flex">
-<span>def <span class="ident">to_list</span></span>(<span>tup)</span>
-</code></dt>
-<dd>
-<section class="desc"><p>Convert from tuple to packed list
-Ex. ([x1, x2, x3], [y1, y2, y3]) -&gt; [[x1, y1], [x2, y2], [x3, y3]]
-Ex. ([x1], [y1]) -&gt; [[x1, y1]]
-Ex. ([x1, x2, x3]) -&gt; [[x1], [x2], [x3]]
-Allows us to call function with arguments in a loop</p></section>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def to_list(tup: tuple):
-    &#39;&#39;&#39;Convert from tuple to packed list
-    Ex. ([x1, x2, x3], [y1, y2, y3]) -&gt; [[x1, y1], [x2, y2], [x3, y3]]
-    Ex. ([x1], [y1]) -&gt; [[x1, y1]]
-    Ex. ([x1, x2, x3]) -&gt; [[x1], [x2], [x3]]
-    Allows us to call function with arguments in a loop
-    &#39;&#39;&#39;
-    n_tup = len(tup)
-    if n_tup == 0:
-        return tup
-    elif n_tup == 1:
-        return [[x] for x in tup[0]]
-    n_mods = len(tup[0])
-    lists_packed = [[] for _ in range(n_mods)]
-    for i in range(n_mods):
-        for j in range(n_tup):
-            lists_packed[i].append(tup[j][i])
-    return lists_packed</code></pre>
-</details>
-</dd>
-<dt id="pcsp.module_set.to_tuple"><code class="name flex">
-<span>def <span class="ident">to_tuple</span></span>(<span>lists)</span>
-</code></dt>
-<dd>
-<section class="desc"><p>Convert from lists to unpacked
-tuple
-Ex. [[x1, y1], [x2, y2], [x3, y3]] -&gt; ([x1, x2, x3], [y1, y2, y3])
-Ex. [[x1, y1]] -&gt; ([x1], [y1])
-Ex. [m1, m2, m3] -&gt; [m1, m2, m3]
-Allows us to write X, y = ([x1, x2, x3], [y1, y2, y3])</p></section>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def to_tuple(lists: list):
-    &#39;&#39;&#39;Convert from lists to unpacked  tuple
-    Ex. [[x1, y1], [x2, y2], [x3, y3]] -&gt; ([x1, x2, x3], [y1, y2, y3])
-    Ex. [[x1, y1]] -&gt; ([x1], [y1])
-    Ex. [m1, m2, m3] -&gt; [m1, m2, m3]
-    Allows us to write X, y = ([x1, x2, x3], [y1, y2, y3])
-    &#39;&#39;&#39;
-    n_mods = len(lists)
-    if n_mods &lt;= 1:
-        return lists
-    if not type(lists[0]) == list:
-        return lists
-    n_tup = len(lists[0])
-    tup = [[] for _ in range(n_tup)]
-    for i in range(n_mods):
-        for j in range(n_tup):
-            tup[j].append(lists[i][j])
-    return tuple(tup)</code></pre>
-</details>
-</dd>
-</dl>
 </section>
 <section>
 <h2 class="section-title" id="header-classes">Classes</h2>
 <dl>
 <dt id="pcsp.module_set.ModuleSet"><code class="flex name class">
 <span>class <span class="ident">ModuleSet</span></span>
-<span>(</span><span>name='', modules=[])</span>
+<span>(</span><span>name, modules, module_keys=None)</span>
 </code></dt>
 <dd>
-<section class="desc"></section>
+<section class="desc"><p>todo: include prev and next and change functions to include that.
+Params</p>
+<hr>
+<dl>
+<dt><strong><code>name</code></strong> :&ensp;<code>str</code></dt>
+<dd>name of this moduleset</dd>
+<dt><strong><code>modules</code></strong> :&ensp;<code>list</code> or <code>dict</code></dt>
+<dd>dictionary of functions that we want to associate with</dd>
+<dt><strong><code>module_keys</code></strong> :&ensp;<code>list</code> (optional)</dt>
+<dd>list of names corresponding to each module</dd>
+</dl></section>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class ModuleSet:
-    def __init__(self, name: str = &#39;&#39;, modules: list = []):
+    def __init__(self, name: str, modules, module_keys: list=None):
+        &#39;&#39;&#39;
+        todo: include prev and next and change functions to include that. 
+        Params
+        -------
+        name: str
+            name of this moduleset
+        modules: list or dict
+            dictionary of functions that we want to associate with 
+        module_keys: list (optional)
+            list of names corresponding to each module
+        &#39;&#39;&#39;
         self.name = name
-        self.modules = modules
+        if type(modules) is dict:
+            self.modules = modules
+        elif type(modules) is list:
+            if module_keys is not None:
+                assert type(module_keys) is list, &#39;modules passed as list but module_names is not a list&#39;
+                assert len(modules) == len(module_keys), &#39;modules list and module_names list differ&#39;
+            else:
+                module_keys = [f&#39;{name}_{i}&#39; for i in range(len(modules))]
+            self.modules = dict(zip(module_keys, modules))
+        
 
     def fit(self, *args, **kwargs):
         &#39;&#39;&#39;todo: support kwargs
         &#39;&#39;&#39;
-        funcs = [mod.fit for mod in self.modules]
-        return self.apply_func(funcs, *args, **kwargs)
+        # funcs = [mod.fit for mod in self.modules.items()]
+        for k1, v1 in self.modules.items():
+            self.modules[k1] = v1.fit
+        return self.apply_func(*args, matching=&#39;cartesian&#39;, order=&#39;typical&#39;, **kwargs)
 
-    def apply_func(self, funcs, *args, **kwargs):
+    def apply_func(self, *args, matching=&#39;cartesian&#39;, order=&#39;typical&#39;, **kwargs):
         &#39;&#39;&#39;
 
         Params
         ------
-        *args: Tuple[List]
-            should be unpacked list
-            e.g. ([x1, x2, x3], [y1, y2, y3])
-
+        *args: Two types currently allowed: 
+            - Tuple[List] e.g. ([X1 ,X2],[y1, y2]).
+                apply_func will then combine *args into a dictionary of format: 
+                {data_0 : [X1, y1], data_1: [X2, y2]} and run modules on each item in dictionary
+            - Dictionaries: takes multiple dicts and combines them into one.
+                Then runs modules on each item in combined dict. 
+        
         Returns
         -------
-        results: Tuple[List]
-            e.g. ([x1, x2, x3], [y1, y2, y3])
+        results: dict
+            with items being determined by functions in module set.
+            Functions and input dictionaries are currently matched using  matching = &#39;cartesian&#39; format.
+                e.g. inputs:    module = {LR : logistic}, data = {train_1 : [X1,y1], train2 : [X2,y2]}
+                     output:    output_dict = {(train_1, LR)  : fitted logistic, (train_2, LR) :  fitted logistic}.
+            Currently matching = &#39;subset&#39; is not used...
         &#39;&#39;&#39;
-        # print(&#39;intro args&#39;, s(args))
-        # if len(args) == 1:
-        #     args = args[0]
-        # args = args[0]
-        # print(&#39;args_tuple&#39;, s(args), s(args[0]), &#39;kwargs&#39;, kwargs)  # , args[0][0].shape)
-        # args should look like ([x1, x2, x3], [y1, y2, y3])
-        args_list = to_list(args)
-        # args_list should look like [[x1, y1], [x2, y2], [x3, y3]]
-        # print(&#39;args_list&#39;, s(args_list), s(args_list[0]))  # , args_list[0][0].shape, &#39;kwargs&#39;, kwargs)
-        results = []
-        for arg in args_list:
-            # print(&#39;arg&#39;, s(arg), s(arg[0]))  # , s(arg[0]), s(arg[1]))  # , arg[0].shape)  # , arg[1].shape)
-            for func in funcs:
-                result = func(*arg)
-                results.append(result)
-        # print(results)
-        # print(&#39;result&#39;, s(result), s(result[0]), s(result[1]), s(result[0][0]))
-        # print(&#39;len(results)&#39;, len(results), len(results[0]), s(results[0][0]), s(results[0][1]))
-        return to_tuple(results)
+        dict_present = False
+        for ele in args:
+            if isinstance(ele, dict):
+                dict_present = True  # Checking if dict is present
+
+        # if dictionary is present, create dictionary with default data_0 key
+        if not dict_present:
+            data_dict = create_dict(*args)
+            if matching == &#39;cartesian&#39;:
+                output_dict = cartesian_dict(data_dict, self.modules, order=order)
+            elif matching == &#39;subset&#39;:
+                output_dict = subset_dict(data_dict, self.modules, order=order)
+            else:
+                output_dict = {}
+            self.modules = output_dict
+            return sep_dicts(output_dict)
+        
+        # if dictionary is not present, combine dicts based on keys
+        else:
+            data_dict = combine_dicts(*args)
+            if (matching == &#39;cartesian&#39;):
+                output_dict = cartesian_dict(data_dict, self.modules, order=order)
+            elif (matching == &#39;subset&#39;):
+                output_dict = subset_dict(data_dict, self.modules, order=order)
+            else:
+                output_dict = {}
+            self.modules = output_dict
+            # output_dict = cartesian_dict(combine_dicts(*args))
+            return output_dict
+            # data_dict = append_dict(*args)
+            # output_dict = cartesian_dict(*args,self.modules)
+
 
     def transform(self, *args, **kwargs):
         results = []
@@ -326,29 +281,23 @@ Allows us to write X, y = ([x1, x2, x3], [y1, y2, y3])</p></section>
         return results
 
     def predict(self, *args, **kwargs):
-        funcs = [mod.predict for mod in self.modules]
-        return self.apply_func(funcs, *args, **kwargs)
+        for k1, v1 in self.modules.items():
+            self.modules[k1] = v1.predict
+        return self.apply_func(*args, matching=&#39;cartesian&#39;, order=&#39;backwards&#39;, **kwargs)
 
     def predict_proba(self, *args, **kwargs):
-        funcs = [mod.predict for mod in self.modules]
-        return self.apply_func(funcs, *args, **kwargs)
+        for k1, v1 in self.modules.items():
+            self.modules[k1] = v1.predict
+        return self.apply_func(*args, matching=&#39;cartesian&#39;, order=&#39;backwards&#39;, **kwargs)
 
-    def repeat(self, x):
-        &#39;&#39;&#39;
-
-        Parameters
-        ----------
-        x: list to be repeated
-
-        Returns
-        -------
-        List repeated number of times as self.modules
-        &#39;&#39;&#39;
-
-        return x * len(self.modules)
+    def evaluate(self, *args, **kwargs):
+        validation_dict = combine_subset_dicts(*args, order=&#39;typical&#39;)
+        return self.apply_func(validation_dict, matching=&#39;cartesian&#39;, order=&#39;typical&#39;, **kwargs)
+        # for k1, v1 in self.modules.items():
+        #    return self.apply_func(*args,matching = &#39;subset&#39;,order = &#39;typical&#39;,**kwargs)
 
     def __call__(self, *args, **kwargs):
-        return self.apply_func(self.modules, *args, **kwargs)
+        return self.apply_func(*args, matching=&#39;cartesian&#39;, order=&#39;typical&#39;, **kwargs)
 
     def __getitem__(self, i):
         &#39;&#39;&#39;Accesses ith item in the module set
@@ -364,57 +313,104 @@ Allows us to write X, y = ([x1, x2, x3], [y1, y2, y3])</p></section>
 <h3>Methods</h3>
 <dl>
 <dt id="pcsp.module_set.ModuleSet.apply_func"><code class="name flex">
-<span>def <span class="ident">apply_func</span></span>(<span>self, funcs, *args, **kwargs)</span>
+<span>def <span class="ident">apply_func</span></span>(<span>self, *args, matching='cartesian', order='typical', **kwargs)</span>
 </code></dt>
 <dd>
 <section class="desc"><h2 id="params">Params</h2>
 <dl>
-<dt><strong><code>*args</code></strong> :&ensp;<code>Tuple</code>[<code>List</code>]</dt>
-<dd>should be unpacked list
-e.g. ([x1, x2, x3], [y1, y2, y3])</dd>
+<dt><strong><code>*args</code></strong> :&ensp;<code>Two</code> <code>types</code> <code>currently</code> <code>allowed</code>:</dt>
+<dd>
+<ul>
+<li>Tuple[List] e.g. ([X1 ,X2],[y1, y2]).
+apply_func will then combine *args into a dictionary of format:
+{data_0 : [X1, y1], data_1: [X2, y2]} and run modules on each item in dictionary</li>
+<li>Dictionaries: takes multiple dicts and combines them into one.
+Then runs modules on each item in combined dict.</li>
+</ul>
+</dd>
 </dl>
 <h2 id="returns">Returns</h2>
 <dl>
-<dt><strong><code>results</code></strong> :&ensp;<code>Tuple</code>[<code>List</code>]</dt>
-<dd>e.g. ([x1, x2, x3], [y1, y2, y3])</dd>
+<dt><strong><code>results</code></strong> :&ensp;<code>dict</code></dt>
+<dd>with items being determined by functions in module set.
+Functions and input dictionaries are currently matched using
+matching = 'cartesian' format.
+e.g. inputs:
+module = {LR : logistic}, data = {train_1 : [X1,y1], train2 : [X2,y2]}
+output:
+output_dict = {(train_1, LR)
+: fitted logistic, (train_2, LR) :
+fitted logistic}.
+Currently matching = 'subset' is not used&hellip;</dd>
 </dl></section>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def apply_func(self, funcs, *args, **kwargs):
+<pre><code class="python">def apply_func(self, *args, matching=&#39;cartesian&#39;, order=&#39;typical&#39;, **kwargs):
     &#39;&#39;&#39;
 
     Params
     ------
-    *args: Tuple[List]
-        should be unpacked list
-        e.g. ([x1, x2, x3], [y1, y2, y3])
-
+    *args: Two types currently allowed: 
+        - Tuple[List] e.g. ([X1 ,X2],[y1, y2]).
+            apply_func will then combine *args into a dictionary of format: 
+            {data_0 : [X1, y1], data_1: [X2, y2]} and run modules on each item in dictionary
+        - Dictionaries: takes multiple dicts and combines them into one.
+            Then runs modules on each item in combined dict. 
+    
     Returns
     -------
-    results: Tuple[List]
-        e.g. ([x1, x2, x3], [y1, y2, y3])
+    results: dict
+        with items being determined by functions in module set.
+        Functions and input dictionaries are currently matched using  matching = &#39;cartesian&#39; format.
+            e.g. inputs:    module = {LR : logistic}, data = {train_1 : [X1,y1], train2 : [X2,y2]}
+                 output:    output_dict = {(train_1, LR)  : fitted logistic, (train_2, LR) :  fitted logistic}.
+        Currently matching = &#39;subset&#39; is not used...
     &#39;&#39;&#39;
-    # print(&#39;intro args&#39;, s(args))
-    # if len(args) == 1:
-    #     args = args[0]
-    # args = args[0]
-    # print(&#39;args_tuple&#39;, s(args), s(args[0]), &#39;kwargs&#39;, kwargs)  # , args[0][0].shape)
-    # args should look like ([x1, x2, x3], [y1, y2, y3])
-    args_list = to_list(args)
-    # args_list should look like [[x1, y1], [x2, y2], [x3, y3]]
-    # print(&#39;args_list&#39;, s(args_list), s(args_list[0]))  # , args_list[0][0].shape, &#39;kwargs&#39;, kwargs)
-    results = []
-    for arg in args_list:
-        # print(&#39;arg&#39;, s(arg), s(arg[0]))  # , s(arg[0]), s(arg[1]))  # , arg[0].shape)  # , arg[1].shape)
-        for func in funcs:
-            result = func(*arg)
-            results.append(result)
-    # print(results)
-    # print(&#39;result&#39;, s(result), s(result[0]), s(result[1]), s(result[0][0]))
-    # print(&#39;len(results)&#39;, len(results), len(results[0]), s(results[0][0]), s(results[0][1]))
-    return to_tuple(results)</code></pre>
+    dict_present = False
+    for ele in args:
+        if isinstance(ele, dict):
+            dict_present = True  # Checking if dict is present
+
+    # if dictionary is present, create dictionary with default data_0 key
+    if not dict_present:
+        data_dict = create_dict(*args)
+        if matching == &#39;cartesian&#39;:
+            output_dict = cartesian_dict(data_dict, self.modules, order=order)
+        elif matching == &#39;subset&#39;:
+            output_dict = subset_dict(data_dict, self.modules, order=order)
+        else:
+            output_dict = {}
+        self.modules = output_dict
+        return sep_dicts(output_dict)
+    
+    # if dictionary is not present, combine dicts based on keys
+    else:
+        data_dict = combine_dicts(*args)
+        if (matching == &#39;cartesian&#39;):
+            output_dict = cartesian_dict(data_dict, self.modules, order=order)
+        elif (matching == &#39;subset&#39;):
+            output_dict = subset_dict(data_dict, self.modules, order=order)
+        else:
+            output_dict = {}
+        self.modules = output_dict
+        # output_dict = cartesian_dict(combine_dicts(*args))
+        return output_dict</code></pre>
+</details>
+</dd>
+<dt id="pcsp.module_set.ModuleSet.evaluate"><code class="name flex">
+<span>def <span class="ident">evaluate</span></span>(<span>self, *args, **kwargs)</span>
+</code></dt>
+<dd>
+<section class="desc"></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def evaluate(self, *args, **kwargs):
+    validation_dict = combine_subset_dicts(*args, order=&#39;typical&#39;)
+    return self.apply_func(validation_dict, matching=&#39;cartesian&#39;, order=&#39;typical&#39;, **kwargs)</code></pre>
 </details>
 </dd>
 <dt id="pcsp.module_set.ModuleSet.fit"><code class="name flex">
@@ -429,8 +425,10 @@ e.g. ([x1, x2, x3], [y1, y2, y3])</dd>
 <pre><code class="python">def fit(self, *args, **kwargs):
     &#39;&#39;&#39;todo: support kwargs
     &#39;&#39;&#39;
-    funcs = [mod.fit for mod in self.modules]
-    return self.apply_func(funcs, *args, **kwargs)</code></pre>
+    # funcs = [mod.fit for mod in self.modules.items()]
+    for k1, v1 in self.modules.items():
+        self.modules[k1] = v1.fit
+    return self.apply_func(*args, matching=&#39;cartesian&#39;, order=&#39;typical&#39;, **kwargs)</code></pre>
 </details>
 </dd>
 <dt id="pcsp.module_set.ModuleSet.predict"><code class="name flex">
@@ -443,8 +441,9 @@ e.g. ([x1, x2, x3], [y1, y2, y3])</dd>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def predict(self, *args, **kwargs):
-    funcs = [mod.predict for mod in self.modules]
-    return self.apply_func(funcs, *args, **kwargs)</code></pre>
+    for k1, v1 in self.modules.items():
+        self.modules[k1] = v1.predict
+    return self.apply_func(*args, matching=&#39;cartesian&#39;, order=&#39;backwards&#39;, **kwargs)</code></pre>
 </details>
 </dd>
 <dt id="pcsp.module_set.ModuleSet.predict_proba"><code class="name flex">
@@ -457,41 +456,9 @@ e.g. ([x1, x2, x3], [y1, y2, y3])</dd>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def predict_proba(self, *args, **kwargs):
-    funcs = [mod.predict for mod in self.modules]
-    return self.apply_func(funcs, *args, **kwargs)</code></pre>
-</details>
-</dd>
-<dt id="pcsp.module_set.ModuleSet.repeat"><code class="name flex">
-<span>def <span class="ident">repeat</span></span>(<span>self, x)</span>
-</code></dt>
-<dd>
-<section class="desc"><h2 id="parameters">Parameters</h2>
-<dl>
-<dt><strong><code>x</code></strong> :&ensp;<code>list</code> <code>to</code> <code>be</code> <code>repeated</code></dt>
-<dd>&nbsp;</dd>
-</dl>
-<h2 id="returns">Returns</h2>
-<dl>
-<dt><code>List</code> <code>repeated</code> <code>number</code> of <code>times</code> <code>as</code> <code>self.modules</code></dt>
-<dd>&nbsp;</dd>
-</dl></section>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def repeat(self, x):
-    &#39;&#39;&#39;
-
-    Parameters
-    ----------
-    x: list to be repeated
-
-    Returns
-    -------
-    List repeated number of times as self.modules
-    &#39;&#39;&#39;
-
-    return x * len(self.modules)</code></pre>
+    for k1, v1 in self.modules.items():
+        self.modules[k1] = v1.predict
+    return self.apply_func(*args, matching=&#39;cartesian&#39;, order=&#39;backwards&#39;, **kwargs)</code></pre>
 </details>
 </dd>
 <dt id="pcsp.module_set.ModuleSet.transform"><code class="name flex">
@@ -527,23 +494,16 @@ e.g. ([x1, x2, x3], [y1, y2, y3])</dd>
 <li><code><a title="pcsp" href="index.html">pcsp</a></code></li>
 </ul>
 </li>
-<li><h3><a href="#header-functions">Functions</a></h3>
-<ul class="">
-<li><code><a title="pcsp.module_set.s" href="#pcsp.module_set.s">s</a></code></li>
-<li><code><a title="pcsp.module_set.to_list" href="#pcsp.module_set.to_list">to_list</a></code></li>
-<li><code><a title="pcsp.module_set.to_tuple" href="#pcsp.module_set.to_tuple">to_tuple</a></code></li>
-</ul>
-</li>
 <li><h3><a href="#header-classes">Classes</a></h3>
 <ul>
 <li>
 <h4><code><a title="pcsp.module_set.ModuleSet" href="#pcsp.module_set.ModuleSet">ModuleSet</a></code></h4>
 <ul class="two-column">
 <li><code><a title="pcsp.module_set.ModuleSet.apply_func" href="#pcsp.module_set.ModuleSet.apply_func">apply_func</a></code></li>
+<li><code><a title="pcsp.module_set.ModuleSet.evaluate" href="#pcsp.module_set.ModuleSet.evaluate">evaluate</a></code></li>
 <li><code><a title="pcsp.module_set.ModuleSet.fit" href="#pcsp.module_set.ModuleSet.fit">fit</a></code></li>
 <li><code><a title="pcsp.module_set.ModuleSet.predict" href="#pcsp.module_set.ModuleSet.predict">predict</a></code></li>
 <li><code><a title="pcsp.module_set.ModuleSet.predict_proba" href="#pcsp.module_set.ModuleSet.predict_proba">predict_proba</a></code></li>
-<li><code><a title="pcsp.module_set.ModuleSet.repeat" href="#pcsp.module_set.ModuleSet.repeat">repeat</a></code></li>
 <li><code><a title="pcsp.module_set.ModuleSet.transform" href="#pcsp.module_set.ModuleSet.transform">transform</a></code></li>
 </ul>
 </li>

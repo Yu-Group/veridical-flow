@@ -1,6 +1,14 @@
 '''Useful functions for converting between different types (dicts, lists, tuples, etc.)
 '''
 
+def s(x):
+    '''Gets shape of a list/tuple/ndarray
+    '''
+    if type(x) in [list, tuple]:
+        return len(x)
+    else:
+        return x.shape
+    
 def to_tuple(lists: list):
     '''Convert from lists to unpacked  tuple
     Ex. [[x1, y1], [x2, y2], [x3, y3]] -> ([x1, x2, x3], [y1, y2, y3])

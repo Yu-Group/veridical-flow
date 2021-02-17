@@ -3,24 +3,30 @@ Function arguments are each a list
 '''
 from pcsp.convert import *
 
-def s(x):
-    if type(x) in [list, tuple]:
-        return len(x)
-    else:
-        return x.shape
-
-
 class ModuleSet:
-    def __init__(self, name: str = '', modules: dict = {}):
+    def __init__(self, name: str, modules, module_keys: list=None):
         '''
         todo: include prev and next and change functions to include that. 
         Params
         -------
-        modules: dicts
+        name: str
+            name of this moduleset
+        modules: list or dict
             dictionary of functions that we want to associate with 
+        module_keys: list (optional)
+            list of names corresponding to each module
         '''
         self.name = name
-        self.modules = modules
+        if type(modules) is dict:
+            self.modules = modules
+        elif type(modules) is list:
+            if module_keys is not None:
+                assert type(module_keys) is list, 'modules passed as list but module_names is not a list'
+                assert len(modules) == len(module_keys), 'modules list and module_names list differ'
+            else:
+                module_keys = [f'{name}_{i}' for i in range(len(modules))]
+            self.modules = dict(zip(module_keys, modules))
+        
 
     def fit(self, *args, **kwargs):
         '''todo: support kwargs
@@ -36,34 +42,39 @@ class ModuleSet:
         Params
         ------
         *args: Two types currently allowed: 
-            a) Tuple[List] e.g. ([X1,X2],[y1,y2]). apply_func will then combine *args into a dictionary of format: 
-            {data_0 : [X1,y1], data_1: [X2,y2]} and run modules on each item in dictionary
-            b) Dictionaries: takes multiple dicts and combines them into one. Then runs modules on each item in combined dict. 
+            - Tuple[List] e.g. ([X1 ,X2],[y1, y2]).
+                apply_func will then combine *args into a dictionary of format: 
+                {data_0 : [X1, y1], data_1: [X2, y2]} and run modules on each item in dictionary
+            - Dictionaries: takes multiple dicts and combines them into one.
+                Then runs modules on each item in combined dict. 
         
         Returns
         -------
         results: dict
             with items being determined by functions in module set.
             Functions and input dictionaries are currently matched using  matching = 'cartesian' format.
-            e.g. module = {LR : logistic}, data = {train_1 : [X1,y1], train2 : [X2,y2]}
-            then output will be output_dict = {(train_1,LR)  : fitted logsistic, (train_2,LR) :  fitted logistic}.
-            Currently matching          = 'subset is not used...
+                e.g. inputs:    module = {LR : logistic}, data = {train_1 : [X1,y1], train2 : [X2,y2]}
+                     output:    output_dict = {(train_1, LR)  : fitted logistic, (train_2, LR) :  fitted logistic}.
+            Currently matching = 'subset' is not used...
         '''
         dict_present = False
         for ele in args:
             if isinstance(ele, dict):
                 dict_present = True  # Checking if dict is present
 
+        # if dictionary is present, create dictionary with default data_0 key
         if not dict_present:
             data_dict = create_dict(*args)
-            if (matching == 'cartesian'):
+            if matching == 'cartesian':
                 output_dict = cartesian_dict(data_dict, self.modules, order=order)
-            elif (matching == 'subset'):
+            elif matching == 'subset':
                 output_dict = subset_dict(data_dict, self.modules, order=order)
             else:
                 output_dict = {}
             self.modules = output_dict
             return sep_dicts(output_dict)
+        
+        # if dictionary is not present, combine dicts based on keys
         else:
             data_dict = combine_dicts(*args)
             if (matching == 'cartesian'):
@@ -101,21 +112,6 @@ class ModuleSet:
         return self.apply_func(validation_dict, matching='cartesian', order='typical', **kwargs)
         # for k1, v1 in self.modules.items():
         #    return self.apply_func(*args,matching = 'subset',order = 'typical',**kwargs)
-
-    def repeat(self, x):
-        '''
-
-        Parameters
-        ----------
-        x: list
-            to be repeated
-
-        Returns
-        -------
-        List repeated number of times as self.modules
-        '''
-
-        return x * len(self.modules)
 
     def __call__(self, *args, **kwargs):
         return self.apply_func(*args, matching='cartesian', order='typical', **kwargs)
