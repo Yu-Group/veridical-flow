@@ -5,7 +5,7 @@ from pcsp.module_set import to_tuple, to_list
 class TestBasic():
     def setup(self):
         self.pipeline = pcsp.PCSPipeline()
-        self.module_set = pcsp.ModuleSet()
+        self.module_set = pcsp.ModuleSet(name='s', modules={})
         self.module = pcsp.Module()
 
     def test_class_initializations(self):
