@@ -77,7 +77,7 @@ class ModuleSet:
             self.modules = output_dict
             
             # add PREV_KEY
-            self.__prev__ = None
+            self.__prev__ = 'Start'
             dicts_separated = sep_dicts(output_dict)
             if type(dicts_separated) == dict:
                 dicts_separated[PREV_KEY] = self

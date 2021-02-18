@@ -180,7 +180,7 @@ def create_dict(*args):
     return output_dict
 
 
-def cartesian_dict(data, modules, order=&#39;typical&#39;):
+def cartesian_dict(data, modules, order: str=&#39;typical&#39;):
     &#39;&#39;&#39;returns cartesian product of two dictionaries
     Params
     ------
@@ -277,36 +277,36 @@ def subset_dict(data, modules, order=&#39;typical&#39;):
     cart = {}
     for k1, v1 in data.items():
         for k2, v2 in modules.items():
-            if (set(k1).issubset(k2)):
+            if set(k1).issubset(k2):
                 if not isinstance(k1, tuple):
                     if isinstance(v1, tuple):
-                        if (order == &#39;typical&#39;):
+                        if order == &#39;typical&#39;:
                             cart.update({(k1, k2): v2(*v1)})
                         else:
                             cart.update({(*k2, k1): v2(*v1)})  # *k2
                     elif isinstance(v1, list):
-                        if (order == &#39;typical&#39;):
+                        if order == &#39;typical&#39;:
                             cart.update({(k1, k2): v2(*v1)})
                         else:
                             cart.update({(*k2, k1): v2(*v1)})  # *k2
                     else:
-                        if (order == &#39;typical&#39;):
+                        if order == &#39;typical&#39;:
                             cart.update({(k1, k2): v2(v1)})
                         else:
                             cart.update({(*k2, k1): v2(v1)})  # *k2
                 else:
                     if isinstance(v1, tuple):
-                        if (order == &#39;typical&#39;):
+                        if order == &#39;typical&#39;:
                             cart.update({(*k1, k2): v2(*v1)})  # *k1
                         else:
                             cart.update({(k2, k1): v2(*v1)})
                     elif isinstance(v1, list):
-                        if (order == &#39;typical&#39;):
+                        if order == &#39;typical&#39;:
                             cart.update({(*k1, k2): v2(*v1)})  # *k1
                         else:
                             cart.update({(k2, k1): v2(*v1)})
                     else:
-                        if (order == &#39;typical&#39;):
+                        if order == &#39;typical&#39;:
                             cart.update({(*k1, k2): v2(v1)})  # *k1
                         else:
                             cart.update({(k2, k1): v2(v1)})
@@ -337,7 +337,7 @@ else new key will be (k2,k1). order != typical is used for predict function.</dd
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def cartesian_dict(data, modules, order=&#39;typical&#39;):
+<pre><code class="python">def cartesian_dict(data, modules, order: str=&#39;typical&#39;):
     &#39;&#39;&#39;returns cartesian product of two dictionaries
     Params
     ------
@@ -572,36 +572,36 @@ Assumes every value has same length of tuple</p></section>
     cart = {}
     for k1, v1 in data.items():
         for k2, v2 in modules.items():
-            if (set(k1).issubset(k2)):
+            if set(k1).issubset(k2):
                 if not isinstance(k1, tuple):
                     if isinstance(v1, tuple):
-                        if (order == &#39;typical&#39;):
+                        if order == &#39;typical&#39;:
                             cart.update({(k1, k2): v2(*v1)})
                         else:
                             cart.update({(*k2, k1): v2(*v1)})  # *k2
                     elif isinstance(v1, list):
-                        if (order == &#39;typical&#39;):
+                        if order == &#39;typical&#39;:
                             cart.update({(k1, k2): v2(*v1)})
                         else:
                             cart.update({(*k2, k1): v2(*v1)})  # *k2
                     else:
-                        if (order == &#39;typical&#39;):
+                        if order == &#39;typical&#39;:
                             cart.update({(k1, k2): v2(v1)})
                         else:
                             cart.update({(*k2, k1): v2(v1)})  # *k2
                 else:
                     if isinstance(v1, tuple):
-                        if (order == &#39;typical&#39;):
+                        if order == &#39;typical&#39;:
                             cart.update({(*k1, k2): v2(*v1)})  # *k1
                         else:
                             cart.update({(k2, k1): v2(*v1)})
                     elif isinstance(v1, list):
-                        if (order == &#39;typical&#39;):
+                        if order == &#39;typical&#39;:
                             cart.update({(*k1, k2): v2(*v1)})  # *k1
                         else:
                             cart.update({(k2, k1): v2(*v1)})
                     else:
-                        if (order == &#39;typical&#39;):
+                        if order == &#39;typical&#39;:
                             cart.update({(*k1, k2): v2(v1)})  # *k1
                         else:
                             cart.update({(k2, k1): v2(v1)})

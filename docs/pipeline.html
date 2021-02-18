@@ -28,9 +28,10 @@
 <pre><code class="python">&#39;&#39;&#39;Class that stores the entire pipeline of steps in a data-science workflow
 &#39;&#39;&#39;
 import itertools
-
+import networkx as nx
 import pandas as pd
-
+from pcsp.module_set import PREV_KEY
+import matplotlib.pyplot as plt
 
 class PCSPipeline:
     def __init__(self, steps: list = []):
@@ -68,7 +69,63 @@ class PCSPipeline:
             for step in self.steps:
                 name_lists.append([f&#39;{step.name}_{i}_{str(mod)[:8]}&#39;
                                    for i, mod in enumerate(step)])
-            return list(itertools.product(*name_lists))</code></pre>
+            return list(itertools.product(*name_lists))
+        
+
+def build_graph(node, draw=True):
+    &#39;&#39;&#39;Helper function that just calls build_graph_recur with an empty graph
+    Params
+    ------
+    node: dict or ModuleSet
+
+    Returns
+    -------
+    G: nx.Digraph()
+    &#39;&#39;&#39;
+    
+    def build_graph_recur(node, G):
+        &#39;&#39;&#39;Builds a graph up using __prev__ and PREV_KEY pointers
+        Params
+        ------
+        node: dict or ModuleSet
+        G: nx.Digraph()
+
+        Returns
+        -------
+        G: nx.Digraph()
+        &#39;&#39;&#39;
+        # base case: reached starting node
+        if type(node) is str:
+            return G
+
+        # initial case: starting at dict
+        elif type(node) is dict:
+            s_node = &#39;End&#39;
+            nodes_prev = node[PREV_KEY]
+            if type(nodes_prev) is not list:
+                nodes_prev = [nodes_prev]
+            for node_prev in nodes_prev:
+                G.add_edge(node_prev, s_node)
+                G = build_graph_recur(node_prev, G)
+            return G
+
+        # main case: at a moduleset
+        elif &#39;ModuleSet&#39; in str(type(node)):
+            print(node)
+            nodes_prev = node.__prev__
+            if type(nodes_prev) is not list:
+                nodes_prev = [nodes_prev]
+            for node_prev in nodes_prev:
+                G.add_edge(node_prev, node)
+                G = build_graph_recur(node_prev, G)
+            return G    
+
+    G = nx.DiGraph()
+    G = build_graph_recur(node, G)
+    if draw:
+        nx.draw(G, with_labels=True, node_color=&#39;#CCCCCC&#39;)
+        plt.tight_layout()
+    return G</code></pre>
 </details>
 </section>
 <section>
@@ -76,6 +133,85 @@ class PCSPipeline:
 <section>
 </section>
 <section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="pcsp.pipeline.build_graph"><code class="name flex">
+<span>def <span class="ident">build_graph</span></span>(<span>node, draw=True)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Helper function that just calls build_graph_recur with an empty graph
+Params</p>
+<hr>
+<dl>
+<dt><strong><code>node</code></strong> :&ensp;<code>dict</code> or <code>ModuleSet</code></dt>
+<dd>&nbsp;</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><strong><code>G</code></strong> :&ensp;<code>nx.Digraph</code>()</dt>
+<dd>&nbsp;</dd>
+</dl></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def build_graph(node, draw=True):
+    &#39;&#39;&#39;Helper function that just calls build_graph_recur with an empty graph
+    Params
+    ------
+    node: dict or ModuleSet
+
+    Returns
+    -------
+    G: nx.Digraph()
+    &#39;&#39;&#39;
+    
+    def build_graph_recur(node, G):
+        &#39;&#39;&#39;Builds a graph up using __prev__ and PREV_KEY pointers
+        Params
+        ------
+        node: dict or ModuleSet
+        G: nx.Digraph()
+
+        Returns
+        -------
+        G: nx.Digraph()
+        &#39;&#39;&#39;
+        # base case: reached starting node
+        if type(node) is str:
+            return G
+
+        # initial case: starting at dict
+        elif type(node) is dict:
+            s_node = &#39;End&#39;
+            nodes_prev = node[PREV_KEY]
+            if type(nodes_prev) is not list:
+                nodes_prev = [nodes_prev]
+            for node_prev in nodes_prev:
+                G.add_edge(node_prev, s_node)
+                G = build_graph_recur(node_prev, G)
+            return G
+
+        # main case: at a moduleset
+        elif &#39;ModuleSet&#39; in str(type(node)):
+            print(node)
+            nodes_prev = node.__prev__
+            if type(nodes_prev) is not list:
+                nodes_prev = [nodes_prev]
+            for node_prev in nodes_prev:
+                G.add_edge(node_prev, node)
+                G = build_graph_recur(node_prev, G)
+            return G    
+
+    G = nx.DiGraph()
+    G = build_graph_recur(node, G)
+    if draw:
+        nx.draw(G, with_labels=True, node_color=&#39;#CCCCCC&#39;)
+        plt.tight_layout()
+    return G</code></pre>
+</details>
+</dd>
+</dl>
 </section>
 <section>
 <h2 class="section-title" id="header-classes">Classes</h2>
@@ -189,6 +325,11 @@ class PCSPipeline:
 <li><h3>Super-module</h3>
 <ul>
 <li><code><a title="pcsp" href="index.html">pcsp</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="pcsp.pipeline.build_graph" href="#pcsp.pipeline.build_graph">build_graph</a></code></li>
 </ul>
 </li>
 <li><h3><a href="#header-classes">Classes</a></h3>

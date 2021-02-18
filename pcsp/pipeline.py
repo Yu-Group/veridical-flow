@@ -1,9 +1,10 @@
 '''Class that stores the entire pipeline of steps in a data-science workflow
 '''
 import itertools
-
+import networkx as nx
 import pandas as pd
-
+from pcsp.module_set import PREV_KEY
+import matplotlib.pyplot as plt
 
 class PCSPipeline:
     def __init__(self, steps: list = []):
@@ -42,3 +43,60 @@ class PCSPipeline:
                 name_lists.append([f'{step.name}_{i}_{str(mod)[:8]}'
                                    for i, mod in enumerate(step)])
             return list(itertools.product(*name_lists))
+        
+
+def build_graph(node, draw=True):
+    '''Helper function that just calls build_graph_recur with an empty graph
+    Params
+    ------
+    node: dict or ModuleSet
+
+    Returns
+    -------
+    G: nx.Digraph()
+    '''
+    
+    def build_graph_recur(node, G):
+        '''Builds a graph up using __prev__ and PREV_KEY pointers
+        Params
+        ------
+        node: dict or ModuleSet
+        G: nx.Digraph()
+
+        Returns
+        -------
+        G: nx.Digraph()
+        '''
+        # base case: reached starting node
+        if type(node) is str:
+            return G
+
+        # initial case: starting at dict
+        elif type(node) is dict:
+            s_node = 'End'
+            nodes_prev = node[PREV_KEY]
+            if type(nodes_prev) is not list:
+                nodes_prev = [nodes_prev]
+            for node_prev in nodes_prev:
+                G.add_edge(node_prev, s_node)
+                G = build_graph_recur(node_prev, G)
+            return G
+
+        # main case: at a moduleset
+        elif 'ModuleSet' in str(type(node)):
+            print(node)
+            nodes_prev = node.__prev__
+            if type(nodes_prev) is not list:
+                nodes_prev = [nodes_prev]
+            for node_prev in nodes_prev:
+                G.add_edge(node_prev, node)
+                G = build_graph_recur(node_prev, G)
+            return G    
+
+    G = nx.DiGraph()
+    G = build_graph_recur(node, G)
+    if draw:
+        nx.draw(G, with_labels=True, node_color='#CCCCCC')
+        plt.tight_layout()
+    return G
+
