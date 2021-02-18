@@ -30,6 +30,7 @@ Function arguments are each a list</p>
 <pre><code class="python">&#39;&#39;&#39;Set of modules to be parallelized over in a pipeline.
 Function arguments are each a list
 &#39;&#39;&#39;
+PREV_KEY = &#39;__prev__&#39;
 from pcsp.convert import *
 
 class ModuleSet:
@@ -100,21 +101,44 @@ class ModuleSet:
                 output_dict = subset_dict(data_dict, self.modules, order=order)
             else:
                 output_dict = {}
+                
+            # store output_dict in modules
             self.modules = output_dict
-            return sep_dicts(output_dict)
+            
+            # add PREV_KEY
+            self.__prev__ = None
+            dicts_separated = sep_dicts(output_dict)
+            if type(dicts_separated) == dict:
+                dicts_separated[PREV_KEY] = self
+            else:
+                for d in dicts_separated:
+                    d[PREV_KEY] = self
+            return dicts_separated
         
         # if dictionary is not present, combine dicts based on keys
         else:
+#             print(&#39;\n&#39;  + self.name + str(len(args)))
+#             print(PREV_KEY in args[0])
+#             print(args[0].keys())
             data_dict = combine_dicts(*args)
-            if (matching == &#39;cartesian&#39;):
+#             print(data_dict.keys())
+            if matching == &#39;cartesian&#39;:
                 output_dict = cartesian_dict(data_dict, self.modules, order=order)
-            elif (matching == &#39;subset&#39;):
+            elif matching == &#39;subset&#39;:
                 output_dict = subset_dict(data_dict, self.modules, order=order)
             else:
                 output_dict = {}
+                
+            # add PREV_KEY
+#             print(&#39;prev&#39;, str(data_dict[PREV_KEY]))
+            self.__prev__ = data_dict[PREV_KEY]
+            output_dict[PREV_KEY] = self
+            
+            # store output_dict in modules
             self.modules = output_dict
-            # output_dict = cartesian_dict(combine_dicts(*args))
+            
             return output_dict
+            # output_dict = cartesian_dict(combine_dicts(*args))
             # data_dict = append_dict(*args)
             # output_dict = cartesian_dict(*args,self.modules)
 
@@ -137,6 +161,8 @@ class ModuleSet:
         return self.apply_func(*args, matching=&#39;cartesian&#39;, order=&#39;backwards&#39;, **kwargs)
 
     def evaluate(self, *args, **kwargs):
+        &#39;&#39;&#39;Combines dicts before calling apply_func
+        &#39;&#39;&#39;
         validation_dict = combine_subset_dicts(*args, order=&#39;typical&#39;)
         return self.apply_func(validation_dict, matching=&#39;cartesian&#39;, order=&#39;typical&#39;, **kwargs)
         # for k1, v1 in self.modules.items():
@@ -154,7 +180,7 @@ class ModuleSet:
         return len(self.modules)
 
     def __str__(self):
-        return self.name + &#39;: &#39; + &#39;,&#39;.join([str(mod) for mod in self.modules])</code></pre>
+        return &#39;ModuleSet(&#39; + self.name  + &#39;)&#39;</code></pre>
 </details>
 </section>
 <section>
@@ -254,21 +280,44 @@ Params</p>
                 output_dict = subset_dict(data_dict, self.modules, order=order)
             else:
                 output_dict = {}
+                
+            # store output_dict in modules
             self.modules = output_dict
-            return sep_dicts(output_dict)
+            
+            # add PREV_KEY
+            self.__prev__ = None
+            dicts_separated = sep_dicts(output_dict)
+            if type(dicts_separated) == dict:
+                dicts_separated[PREV_KEY] = self
+            else:
+                for d in dicts_separated:
+                    d[PREV_KEY] = self
+            return dicts_separated
         
         # if dictionary is not present, combine dicts based on keys
         else:
+#             print(&#39;\n&#39;  + self.name + str(len(args)))
+#             print(PREV_KEY in args[0])
+#             print(args[0].keys())
             data_dict = combine_dicts(*args)
-            if (matching == &#39;cartesian&#39;):
+#             print(data_dict.keys())
+            if matching == &#39;cartesian&#39;:
                 output_dict = cartesian_dict(data_dict, self.modules, order=order)
-            elif (matching == &#39;subset&#39;):
+            elif matching == &#39;subset&#39;:
                 output_dict = subset_dict(data_dict, self.modules, order=order)
             else:
                 output_dict = {}
+                
+            # add PREV_KEY
+#             print(&#39;prev&#39;, str(data_dict[PREV_KEY]))
+            self.__prev__ = data_dict[PREV_KEY]
+            output_dict[PREV_KEY] = self
+            
+            # store output_dict in modules
             self.modules = output_dict
-            # output_dict = cartesian_dict(combine_dicts(*args))
+            
             return output_dict
+            # output_dict = cartesian_dict(combine_dicts(*args))
             # data_dict = append_dict(*args)
             # output_dict = cartesian_dict(*args,self.modules)
 
@@ -291,6 +340,8 @@ Params</p>
         return self.apply_func(*args, matching=&#39;cartesian&#39;, order=&#39;backwards&#39;, **kwargs)
 
     def evaluate(self, *args, **kwargs):
+        &#39;&#39;&#39;Combines dicts before calling apply_func
+        &#39;&#39;&#39;
         validation_dict = combine_subset_dicts(*args, order=&#39;typical&#39;)
         return self.apply_func(validation_dict, matching=&#39;cartesian&#39;, order=&#39;typical&#39;, **kwargs)
         # for k1, v1 in self.modules.items():
@@ -308,7 +359,7 @@ Params</p>
         return len(self.modules)
 
     def __str__(self):
-        return self.name + &#39;: &#39; + &#39;,&#39;.join([str(mod) for mod in self.modules])</code></pre>
+        return &#39;ModuleSet(&#39; + self.name  + &#39;)&#39;</code></pre>
 </details>
 <h3>Methods</h3>
 <dl>
@@ -347,68 +398,92 @@ Currently matching = 'subset' is not used&hellip;</dd>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def apply_func(self, *args, matching=&#39;cartesian&#39;, order=&#39;typical&#39;, **kwargs):
-    &#39;&#39;&#39;
+<pre><code class="python">    def apply_func(self, *args, matching=&#39;cartesian&#39;, order=&#39;typical&#39;, **kwargs):
+        &#39;&#39;&#39;
 
-    Params
-    ------
-    *args: Two types currently allowed: 
-        - Tuple[List] e.g. ([X1 ,X2],[y1, y2]).
-            apply_func will then combine *args into a dictionary of format: 
-            {data_0 : [X1, y1], data_1: [X2, y2]} and run modules on each item in dictionary
-        - Dictionaries: takes multiple dicts and combines them into one.
-            Then runs modules on each item in combined dict. 
-    
-    Returns
-    -------
-    results: dict
-        with items being determined by functions in module set.
-        Functions and input dictionaries are currently matched using  matching = &#39;cartesian&#39; format.
-            e.g. inputs:    module = {LR : logistic}, data = {train_1 : [X1,y1], train2 : [X2,y2]}
-                 output:    output_dict = {(train_1, LR)  : fitted logistic, (train_2, LR) :  fitted logistic}.
-        Currently matching = &#39;subset&#39; is not used...
-    &#39;&#39;&#39;
-    dict_present = False
-    for ele in args:
-        if isinstance(ele, dict):
-            dict_present = True  # Checking if dict is present
+        Params
+        ------
+        *args: Two types currently allowed: 
+            - Tuple[List] e.g. ([X1 ,X2],[y1, y2]).
+                apply_func will then combine *args into a dictionary of format: 
+                {data_0 : [X1, y1], data_1: [X2, y2]} and run modules on each item in dictionary
+            - Dictionaries: takes multiple dicts and combines them into one.
+                Then runs modules on each item in combined dict. 
+        
+        Returns
+        -------
+        results: dict
+            with items being determined by functions in module set.
+            Functions and input dictionaries are currently matched using  matching = &#39;cartesian&#39; format.
+                e.g. inputs:    module = {LR : logistic}, data = {train_1 : [X1,y1], train2 : [X2,y2]}
+                     output:    output_dict = {(train_1, LR)  : fitted logistic, (train_2, LR) :  fitted logistic}.
+            Currently matching = &#39;subset&#39; is not used...
+        &#39;&#39;&#39;
+        dict_present = False
+        for ele in args:
+            if isinstance(ele, dict):
+                dict_present = True  # Checking if dict is present
 
-    # if dictionary is present, create dictionary with default data_0 key
-    if not dict_present:
-        data_dict = create_dict(*args)
-        if matching == &#39;cartesian&#39;:
-            output_dict = cartesian_dict(data_dict, self.modules, order=order)
-        elif matching == &#39;subset&#39;:
-            output_dict = subset_dict(data_dict, self.modules, order=order)
+        # if dictionary is present, create dictionary with default data_0 key
+        if not dict_present:
+            data_dict = create_dict(*args)
+            if matching == &#39;cartesian&#39;:
+                output_dict = cartesian_dict(data_dict, self.modules, order=order)
+            elif matching == &#39;subset&#39;:
+                output_dict = subset_dict(data_dict, self.modules, order=order)
+            else:
+                output_dict = {}
+                
+            # store output_dict in modules
+            self.modules = output_dict
+            
+            # add PREV_KEY
+            self.__prev__ = None
+            dicts_separated = sep_dicts(output_dict)
+            if type(dicts_separated) == dict:
+                dicts_separated[PREV_KEY] = self
+            else:
+                for d in dicts_separated:
+                    d[PREV_KEY] = self
+            return dicts_separated
+        
+        # if dictionary is not present, combine dicts based on keys
         else:
-            output_dict = {}
-        self.modules = output_dict
-        return sep_dicts(output_dict)
-    
-    # if dictionary is not present, combine dicts based on keys
-    else:
-        data_dict = combine_dicts(*args)
-        if (matching == &#39;cartesian&#39;):
-            output_dict = cartesian_dict(data_dict, self.modules, order=order)
-        elif (matching == &#39;subset&#39;):
-            output_dict = subset_dict(data_dict, self.modules, order=order)
-        else:
-            output_dict = {}
-        self.modules = output_dict
-        # output_dict = cartesian_dict(combine_dicts(*args))
-        return output_dict</code></pre>
+#             print(&#39;\n&#39;  + self.name + str(len(args)))
+#             print(PREV_KEY in args[0])
+#             print(args[0].keys())
+            data_dict = combine_dicts(*args)
+#             print(data_dict.keys())
+            if matching == &#39;cartesian&#39;:
+                output_dict = cartesian_dict(data_dict, self.modules, order=order)
+            elif matching == &#39;subset&#39;:
+                output_dict = subset_dict(data_dict, self.modules, order=order)
+            else:
+                output_dict = {}
+                
+            # add PREV_KEY
+#             print(&#39;prev&#39;, str(data_dict[PREV_KEY]))
+            self.__prev__ = data_dict[PREV_KEY]
+            output_dict[PREV_KEY] = self
+            
+            # store output_dict in modules
+            self.modules = output_dict
+            
+            return output_dict</code></pre>
 </details>
 </dd>
 <dt id="pcsp.module_set.ModuleSet.evaluate"><code class="name flex">
 <span>def <span class="ident">evaluate</span></span>(<span>self, *args, **kwargs)</span>
 </code></dt>
 <dd>
-<section class="desc"></section>
+<section class="desc"><p>Combines dicts before calling apply_func</p></section>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def evaluate(self, *args, **kwargs):
+    &#39;&#39;&#39;Combines dicts before calling apply_func
+    &#39;&#39;&#39;
     validation_dict = combine_subset_dicts(*args, order=&#39;typical&#39;)
     return self.apply_func(validation_dict, matching=&#39;cartesian&#39;, order=&#39;typical&#39;, **kwargs)</code></pre>
 </details>

@@ -1,6 +1,7 @@
 '''Set of modules to be parallelized over in a pipeline.
 Function arguments are each a list
 '''
+PREV_KEY = '__prev__'
 from pcsp.convert import *
 
 class ModuleSet:
@@ -71,21 +72,44 @@ class ModuleSet:
                 output_dict = subset_dict(data_dict, self.modules, order=order)
             else:
                 output_dict = {}
+                
+            # store output_dict in modules
             self.modules = output_dict
-            return sep_dicts(output_dict)
+            
+            # add PREV_KEY
+            self.__prev__ = None
+            dicts_separated = sep_dicts(output_dict)
+            if type(dicts_separated) == dict:
+                dicts_separated[PREV_KEY] = self
+            else:
+                for d in dicts_separated:
+                    d[PREV_KEY] = self
+            return dicts_separated
         
         # if dictionary is not present, combine dicts based on keys
         else:
+#             print('\n'  + self.name + str(len(args)))
+#             print(PREV_KEY in args[0])
+#             print(args[0].keys())
             data_dict = combine_dicts(*args)
-            if (matching == 'cartesian'):
+#             print(data_dict.keys())
+            if matching == 'cartesian':
                 output_dict = cartesian_dict(data_dict, self.modules, order=order)
-            elif (matching == 'subset'):
+            elif matching == 'subset':
                 output_dict = subset_dict(data_dict, self.modules, order=order)
             else:
                 output_dict = {}
+                
+            # add PREV_KEY
+#             print('prev', str(data_dict[PREV_KEY]))
+            self.__prev__ = data_dict[PREV_KEY]
+            output_dict[PREV_KEY] = self
+            
+            # store output_dict in modules
             self.modules = output_dict
-            # output_dict = cartesian_dict(combine_dicts(*args))
+            
             return output_dict
+            # output_dict = cartesian_dict(combine_dicts(*args))
             # data_dict = append_dict(*args)
             # output_dict = cartesian_dict(*args,self.modules)
 
@@ -108,6 +132,8 @@ class ModuleSet:
         return self.apply_func(*args, matching='cartesian', order='backwards', **kwargs)
 
     def evaluate(self, *args, **kwargs):
+        '''Combines dicts before calling apply_func
+        '''
         validation_dict = combine_subset_dicts(*args, order='typical')
         return self.apply_func(validation_dict, matching='cartesian', order='typical', **kwargs)
         # for k1, v1 in self.modules.items():
@@ -125,4 +151,4 @@ class ModuleSet:
         return len(self.modules)
 
     def __str__(self):
-        return self.name + ': ' + ','.join([str(mod) for mod in self.modules])
+        return 'ModuleSet(' + self.name  + ')'

@@ -14,6 +14,7 @@ setuptools.setup(
         'numpy',
         'scipy',
         'matplotlib',
+        'networkx',
         'pandas',
         'joblib',
         'scikit-learn >=0.23.0',  # 0.23+ only works on py3.6+)
