@@ -5,22 +5,39 @@ import networkx as nx
 import pandas as pd
 from pcsp.module_set import PREV_KEY
 import matplotlib.pyplot as plt
+import joblib
 
 class PCSPipeline:
-    def __init__(self, steps: list = []):
+    def __init__(self, steps: list = [], cache_dir=None):
+        '''Helper function that just calls build_graph_recur with an empty graph
+        Params
+        ------
+        steps: list
+            a list of ModuleSet instances
+        cache_dir: str, default=None
+            The directory to use as data store by joblib. If None, won't do
+            caching.
+
+        Returns
+        -------
+        G: nx.Digraph()
+        '''
         self.steps = steps
-        self.cache = []
+        # set up the cache
+        self.memory = joblib.Memory(location=cache_dir)
 
     def run(self, *args, **kwargs):
         '''Runs the pipeline
         '''
+        run_step_cached = self.memory.cache(_run_step)
         for i, step in enumerate(self.steps):
             try:
                 step_name = step.name
             except:
                 step_name = f'Step {i}'
-            outputs = step(*args, **kwargs)
-            self.cache.append((step_name, outputs))
+            print(step_name)
+            outputs, fitted_step = run_step_cached(step, *args, **kwargs)
+            self.steps[i] = fitted_step
 
     def __getitem__(self, i):
         '''Accesses ith step of pipeline
@@ -100,3 +117,8 @@ def build_graph(node, draw=True):
         plt.tight_layout()
     return G
 
+def _run_step(step, *args, **kwargs):
+    if step._fitted:
+        return step.modules, step
+    outputs = step(*args, **kwargs)
+    return outputs, step

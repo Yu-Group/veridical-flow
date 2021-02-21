@@ -31,3 +31,6 @@ dist
 
 **.gslides
 **.xml
+
+# joblib cache directories
+notebooks/joblib/

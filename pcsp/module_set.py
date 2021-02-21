@@ -3,6 +3,7 @@ Function arguments are each a list
 '''
 PREV_KEY = '__prev__'
 from pcsp.convert import *
+import joblib
 
 class ModuleSet:
     def __init__(self, name: str, modules, module_keys: list=None):
@@ -18,6 +19,7 @@ class ModuleSet:
             list of names corresponding to each module
         '''
         self.name = name
+        self._fitted = False
         if type(modules) is dict:
             self.modules = modules
         elif type(modules) is list:
@@ -27,15 +29,20 @@ class ModuleSet:
             else:
                 module_keys = [f'{name}_{i}' for i in range(len(modules))]
             self.modules = dict(zip(module_keys, modules))
-        
 
     def fit(self, *args, **kwargs):
         '''todo: support kwargs
         '''
         # funcs = [mod.fit for mod in self.modules.items()]
+        if self._fitted:
+            return self.modules
+        # atm, module is not necessarily a Module object
         for k1, v1 in self.modules.items():
-            self.modules[k1] = v1.fit
-        return self.apply_func(*args, matching='cartesian', order='typical', **kwargs)
+            if hasattr(v1, 'fit'):
+                self.modules[k1] = v1.fit
+        outputs = self.apply_func(*args, matching='cartesian', order='typical', **kwargs)
+        self._fitted = True
+        return outputs
 
     def apply_func(self, *args, matching='cartesian', order='typical', **kwargs):
         '''
@@ -63,7 +70,7 @@ class ModuleSet:
             if isinstance(ele, dict):
                 dict_present = True  # Checking if dict is present
 
-        # if dictionary is present, create dictionary with default data_0 key
+        # if dictionary is not present, create dictionary with default data_0 key
         if not dict_present:
             data_dict = create_dict(*args)
             if matching == 'cartesian':
@@ -86,7 +93,7 @@ class ModuleSet:
                     d[PREV_KEY] = self
             return dicts_separated
         
-        # if dictionary is not present, combine dicts based on keys
+        # if dictionary is present, combine dicts based on keys
         else:
 #             print('\n'  + self.name + str(len(args)))
 #             print(PREV_KEY in args[0])
@@ -135,12 +142,12 @@ class ModuleSet:
         '''Combines dicts before calling apply_func
         '''
         validation_dict = combine_subset_dicts(*args, order='typical')
-        return self.apply_func(validation_dict, matching='cartesian', order='typical', **kwargs)
+        return self.fit(validation_dict, **kwargs)
         # for k1, v1 in self.modules.items():
         #    return self.apply_func(*args,matching = 'subset',order = 'typical',**kwargs)
 
     def __call__(self, *args, **kwargs):
-        return self.apply_func(*args, matching='cartesian', order='typical', **kwargs)
+        return self.fit(*args, **kwargs)
 
     def __getitem__(self, i):
         '''Accesses ith item in the module set
