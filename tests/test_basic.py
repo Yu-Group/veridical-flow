@@ -1,5 +1,6 @@
 import pcsp
 from pcsp.convert import to_tuple, to_list
+from pcsp import PCSPipeline, ModuleSet, Module # must install pcsp first (pip install pcsp)
 
 
 class TestBasic():

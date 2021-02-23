@@ -32,6 +32,7 @@ Function arguments are each a list
 &#39;&#39;&#39;
 PREV_KEY = &#39;__prev__&#39;
 from pcsp.convert import *
+import joblib
 
 class ModuleSet:
     def __init__(self, name: str, modules, module_keys: list=None):
@@ -47,6 +48,7 @@ class ModuleSet:
             list of names corresponding to each module
         &#39;&#39;&#39;
         self.name = name
+        self._fitted = False
         if type(modules) is dict:
             self.modules = modules
         elif type(modules) is list:
@@ -56,15 +58,20 @@ class ModuleSet:
             else:
                 module_keys = [f&#39;{name}_{i}&#39; for i in range(len(modules))]
             self.modules = dict(zip(module_keys, modules))
-        
 
     def fit(self, *args, **kwargs):
         &#39;&#39;&#39;todo: support kwargs
         &#39;&#39;&#39;
         # funcs = [mod.fit for mod in self.modules.items()]
+        if self._fitted:
+            return self.modules
+        # atm, module is not necessarily a Module object
         for k1, v1 in self.modules.items():
-            self.modules[k1] = v1.fit
-        return self.apply_func(*args, matching=&#39;cartesian&#39;, order=&#39;typical&#39;, **kwargs)
+            if hasattr(v1, &#39;fit&#39;):
+                self.modules[k1] = v1.fit
+        outputs = self.apply_func(*args, matching=&#39;cartesian&#39;, order=&#39;typical&#39;, **kwargs)
+        self._fitted = True
+        return outputs
 
     def apply_func(self, *args, matching=&#39;cartesian&#39;, order=&#39;typical&#39;, **kwargs):
         &#39;&#39;&#39;
@@ -92,7 +99,7 @@ class ModuleSet:
             if isinstance(ele, dict):
                 dict_present = True  # Checking if dict is present
 
-        # if dictionary is present, create dictionary with default data_0 key
+        # if dictionary is not present, create dictionary with default data_0 key
         if not dict_present:
             data_dict = create_dict(*args)
             if matching == &#39;cartesian&#39;:
@@ -115,7 +122,7 @@ class ModuleSet:
                     d[PREV_KEY] = self
             return dicts_separated
         
-        # if dictionary is not present, combine dicts based on keys
+        # if dictionary is present, combine dicts based on keys
         else:
 #             print(&#39;\n&#39;  + self.name + str(len(args)))
 #             print(PREV_KEY in args[0])
@@ -164,12 +171,12 @@ class ModuleSet:
         &#39;&#39;&#39;Combines dicts before calling apply_func
         &#39;&#39;&#39;
         validation_dict = combine_subset_dicts(*args, order=&#39;typical&#39;)
-        return self.apply_func(validation_dict, matching=&#39;cartesian&#39;, order=&#39;typical&#39;, **kwargs)
+        return self.fit(validation_dict, **kwargs)
         # for k1, v1 in self.modules.items():
         #    return self.apply_func(*args,matching = &#39;subset&#39;,order = &#39;typical&#39;,**kwargs)
 
     def __call__(self, *args, **kwargs):
-        return self.apply_func(*args, matching=&#39;cartesian&#39;, order=&#39;typical&#39;, **kwargs)
+        return self.fit(*args, **kwargs)
 
     def __getitem__(self, i):
         &#39;&#39;&#39;Accesses ith item in the module set
@@ -226,6 +233,7 @@ Params</p>
             list of names corresponding to each module
         &#39;&#39;&#39;
         self.name = name
+        self._fitted = False
         if type(modules) is dict:
             self.modules = modules
         elif type(modules) is list:
@@ -235,15 +243,20 @@ Params</p>
             else:
                 module_keys = [f&#39;{name}_{i}&#39; for i in range(len(modules))]
             self.modules = dict(zip(module_keys, modules))
-        
 
     def fit(self, *args, **kwargs):
         &#39;&#39;&#39;todo: support kwargs
         &#39;&#39;&#39;
         # funcs = [mod.fit for mod in self.modules.items()]
+        if self._fitted:
+            return self.modules
+        # atm, module is not necessarily a Module object
         for k1, v1 in self.modules.items():
-            self.modules[k1] = v1.fit
-        return self.apply_func(*args, matching=&#39;cartesian&#39;, order=&#39;typical&#39;, **kwargs)
+            if hasattr(v1, &#39;fit&#39;):
+                self.modules[k1] = v1.fit
+        outputs = self.apply_func(*args, matching=&#39;cartesian&#39;, order=&#39;typical&#39;, **kwargs)
+        self._fitted = True
+        return outputs
 
     def apply_func(self, *args, matching=&#39;cartesian&#39;, order=&#39;typical&#39;, **kwargs):
         &#39;&#39;&#39;
@@ -271,7 +284,7 @@ Params</p>
             if isinstance(ele, dict):
                 dict_present = True  # Checking if dict is present
 
-        # if dictionary is present, create dictionary with default data_0 key
+        # if dictionary is not present, create dictionary with default data_0 key
         if not dict_present:
             data_dict = create_dict(*args)
             if matching == &#39;cartesian&#39;:
@@ -294,7 +307,7 @@ Params</p>
                     d[PREV_KEY] = self
             return dicts_separated
         
-        # if dictionary is not present, combine dicts based on keys
+        # if dictionary is present, combine dicts based on keys
         else:
 #             print(&#39;\n&#39;  + self.name + str(len(args)))
 #             print(PREV_KEY in args[0])
@@ -343,12 +356,12 @@ Params</p>
         &#39;&#39;&#39;Combines dicts before calling apply_func
         &#39;&#39;&#39;
         validation_dict = combine_subset_dicts(*args, order=&#39;typical&#39;)
-        return self.apply_func(validation_dict, matching=&#39;cartesian&#39;, order=&#39;typical&#39;, **kwargs)
+        return self.fit(validation_dict, **kwargs)
         # for k1, v1 in self.modules.items():
         #    return self.apply_func(*args,matching = &#39;subset&#39;,order = &#39;typical&#39;,**kwargs)
 
     def __call__(self, *args, **kwargs):
-        return self.apply_func(*args, matching=&#39;cartesian&#39;, order=&#39;typical&#39;, **kwargs)
+        return self.fit(*args, **kwargs)
 
     def __getitem__(self, i):
         &#39;&#39;&#39;Accesses ith item in the module set
@@ -424,7 +437,7 @@ Currently matching = 'subset' is not used&hellip;</dd>
             if isinstance(ele, dict):
                 dict_present = True  # Checking if dict is present
 
-        # if dictionary is present, create dictionary with default data_0 key
+        # if dictionary is not present, create dictionary with default data_0 key
         if not dict_present:
             data_dict = create_dict(*args)
             if matching == &#39;cartesian&#39;:
@@ -447,7 +460,7 @@ Currently matching = 'subset' is not used&hellip;</dd>
                     d[PREV_KEY] = self
             return dicts_separated
         
-        # if dictionary is not present, combine dicts based on keys
+        # if dictionary is present, combine dicts based on keys
         else:
 #             print(&#39;\n&#39;  + self.name + str(len(args)))
 #             print(PREV_KEY in args[0])
@@ -485,7 +498,7 @@ Currently matching = 'subset' is not used&hellip;</dd>
     &#39;&#39;&#39;Combines dicts before calling apply_func
     &#39;&#39;&#39;
     validation_dict = combine_subset_dicts(*args, order=&#39;typical&#39;)
-    return self.apply_func(validation_dict, matching=&#39;cartesian&#39;, order=&#39;typical&#39;, **kwargs)</code></pre>
+    return self.fit(validation_dict, **kwargs)</code></pre>
 </details>
 </dd>
 <dt id="pcsp.module_set.ModuleSet.fit"><code class="name flex">
@@ -501,9 +514,15 @@ Currently matching = 'subset' is not used&hellip;</dd>
     &#39;&#39;&#39;todo: support kwargs
     &#39;&#39;&#39;
     # funcs = [mod.fit for mod in self.modules.items()]
+    if self._fitted:
+        return self.modules
+    # atm, module is not necessarily a Module object
     for k1, v1 in self.modules.items():
-        self.modules[k1] = v1.fit
-    return self.apply_func(*args, matching=&#39;cartesian&#39;, order=&#39;typical&#39;, **kwargs)</code></pre>
+        if hasattr(v1, &#39;fit&#39;):
+            self.modules[k1] = v1.fit
+    outputs = self.apply_func(*args, matching=&#39;cartesian&#39;, order=&#39;typical&#39;, **kwargs)
+    self._fitted = True
+    return outputs</code></pre>
 </details>
 </dd>
 <dt id="pcsp.module_set.ModuleSet.predict"><code class="name flex">

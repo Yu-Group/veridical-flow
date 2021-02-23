@@ -32,22 +32,39 @@ import networkx as nx
 import pandas as pd
 from pcsp.module_set import PREV_KEY
 import matplotlib.pyplot as plt
+import joblib
 
 class PCSPipeline:
-    def __init__(self, steps: list = []):
+    def __init__(self, steps: list = [], cache_dir=None):
+        &#39;&#39;&#39;Helper function that just calls build_graph_recur with an empty graph
+        Params
+        ------
+        steps: list
+            a list of ModuleSet instances
+        cache_dir: str, default=None
+            The directory to use as data store by joblib. If None, won&#39;t do
+            caching.
+
+        Returns
+        -------
+        G: nx.Digraph()
+        &#39;&#39;&#39;
         self.steps = steps
-        self.cache = []
+        # set up the cache
+        self.memory = joblib.Memory(location=cache_dir)
 
     def run(self, *args, **kwargs):
         &#39;&#39;&#39;Runs the pipeline
         &#39;&#39;&#39;
+        run_step_cached = self.memory.cache(_run_step)
         for i, step in enumerate(self.steps):
             try:
                 step_name = step.name
             except:
                 step_name = f&#39;Step {i}&#39;
-            outputs = step(*args, **kwargs)
-            self.cache.append((step_name, outputs))
+            print(step_name)
+            outputs, fitted_step = run_step_cached(step, *args, **kwargs)
+            self.steps[i] = fitted_step
 
     def __getitem__(self, i):
         &#39;&#39;&#39;Accesses ith step of pipeline
@@ -125,7 +142,13 @@ def build_graph(node, draw=True):
     if draw:
         nx.draw(G, with_labels=True, node_color=&#39;#CCCCCC&#39;)
         plt.tight_layout()
-    return G</code></pre>
+    return G
+
+def _run_step(step, *args, **kwargs):
+    if step._fitted:
+        return step.modules, step
+    outputs = step(*args, **kwargs)
+    return outputs, step</code></pre>
 </details>
 </section>
 <section>
@@ -218,29 +241,59 @@ Params</p>
 <dl>
 <dt id="pcsp.pipeline.PCSPipeline"><code class="flex name class">
 <span>class <span class="ident">PCSPipeline</span></span>
-<span>(</span><span>steps=[])</span>
+<span>(</span><span>steps=[], cache_dir=None)</span>
 </code></dt>
 <dd>
-<section class="desc"></section>
+<section class="desc"><p>Helper function that just calls build_graph_recur with an empty graph
+Params</p>
+<hr>
+<dl>
+<dt><strong><code>steps</code></strong> :&ensp;<code>list</code></dt>
+<dd>a list of ModuleSet instances</dd>
+<dt><strong><code>cache_dir</code></strong> :&ensp;<code>str</code>, default=<code>None</code></dt>
+<dd>The directory to use as data store by joblib. If None, won't do
+caching.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><strong><code>G</code></strong> :&ensp;<code>nx.Digraph</code>()</dt>
+<dd>&nbsp;</dd>
+</dl></section>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class PCSPipeline:
-    def __init__(self, steps: list = []):
+    def __init__(self, steps: list = [], cache_dir=None):
+        &#39;&#39;&#39;Helper function that just calls build_graph_recur with an empty graph
+        Params
+        ------
+        steps: list
+            a list of ModuleSet instances
+        cache_dir: str, default=None
+            The directory to use as data store by joblib. If None, won&#39;t do
+            caching.
+
+        Returns
+        -------
+        G: nx.Digraph()
+        &#39;&#39;&#39;
         self.steps = steps
-        self.cache = []
+        # set up the cache
+        self.memory = joblib.Memory(location=cache_dir)
 
     def run(self, *args, **kwargs):
         &#39;&#39;&#39;Runs the pipeline
         &#39;&#39;&#39;
+        run_step_cached = self.memory.cache(_run_step)
         for i, step in enumerate(self.steps):
             try:
                 step_name = step.name
             except:
                 step_name = f&#39;Step {i}&#39;
-            outputs = step(*args, **kwargs)
-            self.cache.append((step_name, outputs))
+            print(step_name)
+            outputs, fitted_step = run_step_cached(step, *args, **kwargs)
+            self.steps[i] = fitted_step
 
     def __getitem__(self, i):
         &#39;&#39;&#39;Accesses ith step of pipeline
@@ -302,13 +355,15 @@ Params</p>
 <pre><code class="python">def run(self, *args, **kwargs):
     &#39;&#39;&#39;Runs the pipeline
     &#39;&#39;&#39;
+    run_step_cached = self.memory.cache(_run_step)
     for i, step in enumerate(self.steps):
         try:
             step_name = step.name
         except:
             step_name = f&#39;Step {i}&#39;
-        outputs = step(*args, **kwargs)
-        self.cache.append((step_name, outputs))</code></pre>
+        print(step_name)
+        outputs, fitted_step = run_step_cached(step, *args, **kwargs)
+        self.steps[i] = fitted_step</code></pre>
 </details>
 </dd>
 </dl>
