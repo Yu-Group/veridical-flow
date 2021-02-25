@@ -101,7 +101,7 @@ def build_graph(node, draw=True):
 
         # main case: at a moduleset
         elif 'ModuleSet' in str(type(node)):
-            print(node)
+            # print(node)
             nodes_prev = node.__prev__
             if type(nodes_prev) is not list:
                 nodes_prev = [nodes_prev]
