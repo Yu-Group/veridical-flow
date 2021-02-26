@@ -45,9 +45,9 @@ The estimators of a pipeline are stored as a list in the steps attribute, but ca
 
 > **Examples**
 >
-> [Digit classification example](https://github.com/Yu-Group/pcs-pipeline/tree/master/notebooks/digits_classification.ipynb)
->
 > [Synthetic classification example](https://github.com/Yu-Group/pcs-pipeline/tree/master/notebooks/synthetic_classification.ipynb)
+>
+> [Digit classification example](https://github.com/Yu-Group/pcs-pipeline/tree/master/notebooks/digits_classification.ipynb)
 
 
 # References
