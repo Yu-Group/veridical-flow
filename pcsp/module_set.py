@@ -35,14 +35,14 @@ class ModuleSet:
         '''
         # funcs = [mod.fit for mod in self.modules.items()]
         if self._fitted:
-            return self.modules
+            return self
         # atm, module is not necessarily a Module object
         for k1, v1 in self.modules.items():
             if hasattr(v1, 'fit'):
                 self.modules[k1] = v1.fit
-        outputs = self.apply_func(*args, matching='cartesian', order='typical', **kwargs)
+        self.apply_func(*args, matching='cartesian', order='typical', **kwargs)
         self._fitted = True
-        return outputs
+        return self
 
     def apply_func(self, *args, matching='cartesian', order='typical', **kwargs):
         '''
@@ -82,6 +82,7 @@ class ModuleSet:
                 
             # store output_dict in modules
             self.modules = output_dict
+
             
             # add PREV_KEY
             self.__prev__ = 'Start'
@@ -147,7 +148,7 @@ class ModuleSet:
         #    return self.apply_func(*args,matching = 'subset',order = 'typical',**kwargs)
 
     def __call__(self, *args, **kwargs):
-        return self.fit(*args, **kwargs)
+        return self.apply_func(*args, matching='cartesian', order='typical', **kwargs)
 
     def __getitem__(self, i):
         '''Accesses ith item in the module set

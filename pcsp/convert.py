@@ -35,11 +35,24 @@ def to_list(tup: tuple):
     Ex. ([x1, x2, x3], [y1, y2, y3]) -> [[x1, y1], [x2, y2], [x3, y3]]
     Ex. ([x1], [y1]) -> [[x1, y1]]
     Ex. ([x1, x2, x3]) -> [[x1], [x2], [x3]]
+    Ex. (x1) -> [[x1]]
+    Ex. (x1, y1) -> [[x1, y1]]
+    Ex. (x1, x2, x3, y1, y2, y3) -> [[x1, y1], [x2, y2], [x3, y3]]
+    Ex. (x1, x2, x3, y1, y2) -> Error
     Allows us to call function with arguments in a loop
     '''
     n_tup = len(tup)
     if n_tup == 0:
-        return tup
+        return []
+    elif not isinstance(tup[0], list):
+        # the first element is data
+        if n_tup == 1:
+            return list(tup)
+        if n_tup % 2 != 0:
+            raise ValueError('Don\'t know how to handle uneven number of args '
+                             'without a list. Please wrap your args in a list.')
+        # assume first half of args is input and second half is outcome
+        return [list(el) for el in zip(tup[:(n_tup//2)], tup[(n_tup//2):])]
     elif n_tup == 1:
         return [[x] for x in tup[0]]
     n_mods = len(tup[0])
