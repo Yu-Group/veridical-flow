@@ -181,39 +181,41 @@ def cartesian_dict(data, modules, order: str='typical'):
             if k1 == PREV_KEY or k2 == PREV_KEY:
                 continue
 #             print(k1, k2)
-            if not isinstance(k1, tuple):
-                if isinstance(v1, tuple):
-                    if order == 'typical':
-                        cart.update({(k1, k2): v2(*v1)})
+            try:
+                if not isinstance(k1, tuple):
+                    if isinstance(v1, tuple):
+                        if order == 'typical':
+                            cart.update({(k1, k2): v2(*v1)})
+                        else:
+                            cart.update({(*k2, k1): v2(*v1)})  # *k2
+                    elif isinstance(v1, list):
+                        if order == 'typical':
+                            cart.update({(k1, k2): v2(*v1)})
+                        else:
+                            cart.update({(*k2, k1): v2(*v1)})  # *k2
                     else:
-                        cart.update({(*k2, k1): v2(*v1)})  # *k2
-                elif isinstance(v1, list):
-                    if order == 'typical':
-                        cart.update({(k1, k2): v2(*v1)})
-                    else:
-                        cart.update({(*k2, k1): v2(*v1)})  # *k2
+                        if order == 'typical':
+                            cart.update({(k1, k2): v2(v1)})
+                        else:
+                            cart.update({(*k2, k1): v2(v1)})  # *k2
                 else:
-                    if order == 'typical':
-                        cart.update({(k1, k2): v2(v1)})
+                    if isinstance(v1, tuple):
+                        if order == 'typical':
+                            cart.update({(*k1, k2): v2(*v1)})  # *k1
+                        else:
+                            cart.update({(k2, k1): v2(*v1)})
+                    elif isinstance(v1, list):
+                        if order == 'typical':
+                            cart.update({(*k1, k2): v2(*v1)})  # *k1
+                        else:
+                            cart.update({(k2, k1): v2(*v1)})
                     else:
-                        cart.update({(*k2, k1): v2(v1)})  # *k2
-            else:
-                if isinstance(v1, tuple):
-                    if order == 'typical':
-                        cart.update({(*k1, k2): v2(*v1)})  # *k1
-                    else:
-                        cart.update({(k2, k1): v2(*v1)})
-                elif isinstance(v1, list):
-                    if order == 'typical':
-                        cart.update({(*k1, k2): v2(*v1)})  # *k1
-                    else:
-                        cart.update({(k2, k1): v2(*v1)})
-                else:
-                    if order == 'typical':
-                        cart.update({(*k1, k2): v2(v1)})  # *k1
-                    else:
-                        cart.update({(k2, k1): v2(v1)})
-
+                        if order == 'typical':
+                            cart.update({(*k1, k2): v2(v1)})  # *k1
+                        else:
+                            cart.update({(k2, k1): v2(v1)})
+            except:
+                pass
     return cart
 
 
