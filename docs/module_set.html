@@ -186,6 +186,18 @@ class ModuleSet:
         &#39;&#39;&#39;
         return self.modules[i]
 
+    def __contains__(self, key):
+        &#39;&#39;&#39;Returns true if modules is a dict and key is one of its keys
+        &#39;&#39;&#39;
+        if isinstance(self.modules, dict):
+            return key in self.modules.keys()
+        return False
+
+    def keys(self):
+        if isinstance(self.modules, dict):
+            return self.modules.keys()
+        return {}.keys()
+
     def __len__(self):
         return len(self.modules)
 
@@ -370,6 +382,18 @@ list of names corresponding to each module</p></div>
         &#39;&#39;&#39;
         return self.modules[i]
 
+    def __contains__(self, key):
+        &#39;&#39;&#39;Returns true if modules is a dict and key is one of its keys
+        &#39;&#39;&#39;
+        if isinstance(self.modules, dict):
+            return key in self.modules.keys()
+        return False
+
+    def keys(self):
+        if isinstance(self.modules, dict):
+            return self.modules.keys()
+        return {}.keys()
+
     def __len__(self):
         return len(self.modules)
 
@@ -522,6 +546,21 @@ Currently matching = 'subset' is not used&hellip;</dd>
     return self</code></pre>
 </details>
 </dd>
+<dt id="pcsp.module_set.ModuleSet.keys"><code class="name flex">
+<span>def <span class="ident">keys</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def keys(self):
+    if isinstance(self.modules, dict):
+        return self.modules.keys()
+    return {}.keys()</code></pre>
+</details>
+</dd>
 <dt id="pcsp.module_set.ModuleSet.predict"><code class="name flex">
 <span>def <span class="ident">predict</span></span>(<span>self, *args, **kwargs)</span>
 </code></dt>
@@ -593,6 +632,7 @@ Currently matching = 'subset' is not used&hellip;</dd>
 <li><code><a title="pcsp.module_set.ModuleSet.apply_func" href="#pcsp.module_set.ModuleSet.apply_func">apply_func</a></code></li>
 <li><code><a title="pcsp.module_set.ModuleSet.evaluate" href="#pcsp.module_set.ModuleSet.evaluate">evaluate</a></code></li>
 <li><code><a title="pcsp.module_set.ModuleSet.fit" href="#pcsp.module_set.ModuleSet.fit">fit</a></code></li>
+<li><code><a title="pcsp.module_set.ModuleSet.keys" href="#pcsp.module_set.ModuleSet.keys">keys</a></code></li>
 <li><code><a title="pcsp.module_set.ModuleSet.predict" href="#pcsp.module_set.ModuleSet.predict">predict</a></code></li>
 <li><code><a title="pcsp.module_set.ModuleSet.predict_proba" href="#pcsp.module_set.ModuleSet.predict_proba">predict_proba</a></code></li>
 <li><code><a title="pcsp.module_set.ModuleSet.transform" href="#pcsp.module_set.ModuleSet.transform">transform</a></code></li>

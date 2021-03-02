@@ -155,6 +155,18 @@ class ModuleSet:
         '''
         return self.modules[i]
 
+    def __contains__(self, key):
+        '''Returns true if modules is a dict and key is one of its keys
+        '''
+        if isinstance(self.modules, dict):
+            return key in self.modules.keys()
+        return False
+
+    def keys(self):
+        if isinstance(self.modules, dict):
+            return self.modules.keys()
+        return {}.keys()
+
     def __len__(self):
         return len(self.modules)
 
