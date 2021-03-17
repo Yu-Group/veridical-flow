@@ -6,7 +6,7 @@ from pcsp.convert import *
 import joblib
 
 class ModuleSet:
-    def __init__(self, name: str, modules, module_keys: list=None):
+    def __init__(self, name: str, modules, module_keys: list=None,output : dict = {}):
         '''
         todo: include prev and next and change functions to include that. 
         Params
@@ -17,9 +17,12 @@ class ModuleSet:
             dictionary of functions that we want to associate with 
         module_keys: list (optional)
             list of names corresponding to each module
+        module_outputs: dict 
+            saved outputs corresponding to each module after passing in data. 
         '''
         self.name = name
         self._fitted = False
+        self.output = output
         if type(modules) is dict:
             self.modules = modules
         elif type(modules) is list:
@@ -29,7 +32,6 @@ class ModuleSet:
             else:
                 module_keys = [f'{name}_{i}' for i in range(len(modules))]
             self.modules = dict(zip(module_keys, modules))
-
     def fit(self, *args, **kwargs):
         '''todo: support kwargs
         '''
@@ -40,11 +42,11 @@ class ModuleSet:
         for k1, v1 in self.modules.items():
             if hasattr(v1, 'fit'):
                 self.modules[k1] = v1.fit
-        self.apply_func(*args, matching='cartesian', order='typical', **kwargs)
+        self.apply_func(*args, matching='cartesian', order='typical',use_output = False, replace = False,**kwargs)
         self._fitted = True
         return self
 
-    def apply_func(self, *args, matching='cartesian', order='typical', **kwargs):
+    def apply_func(self, *args, matching='cartesian', order='typical', use_output = False,replace = False,**kwargs):
         '''
 
         Params
@@ -74,16 +76,24 @@ class ModuleSet:
         if not dict_present:
             data_dict = create_dict(*args)
             if matching == 'cartesian':
-                output_dict = cartesian_dict(data_dict, self.modules, order=order)
+                if(use_output == False):
+                    output_dict = cartesian_dict(data_dict, self.modules, order=order)
+                else:
+                    output_dict = cartesian_dict(data_dict, self.output, order=order)
             elif matching == 'subset':
                 output_dict = subset_dict(data_dict, self.modules, order=order)
             else:
                 output_dict = {}
                 
             # store output_dict in modules
-            self.modules = output_dict
-
-            
+            #self.modules = output_dict
+            if replace == False: 
+                self.output.update(output_dict)
+            else:
+                self.output = output_dict    
+            #for key,val in output_dict.items(): 
+            #    print(key)
+            #    self.output[key] = val
             # add PREV_KEY
             self.__prev__ = 'Start'
             dicts_separated = sep_dicts(output_dict)
@@ -102,20 +112,32 @@ class ModuleSet:
             data_dict = combine_dicts(*args)
 #             print(data_dict.keys())
             if matching == 'cartesian':
-                output_dict = cartesian_dict(data_dict, self.modules, order=order)
+                if(use_output == False):
+                    output_dict = cartesian_dict(data_dict, self.modules, order=order)
+                else:
+                    output_dict = cartesian_dict(data_dict, self.output, order=order)
             elif matching == 'subset':
                 output_dict = subset_dict(data_dict, self.modules, order=order)
             else:
                 output_dict = {}
-                
+            #for key,val in output_dict.items(): 
+            #    print(key)
+            #for key,val in self.output.items():
+            #    print("sef keys:" + str(key))
+            #self.output.update(output_dict)
             # add PREV_KEY
 #             print('prev', str(data_dict[PREV_KEY]))
             self.__prev__ = data_dict[PREV_KEY]
             output_dict[PREV_KEY] = self
-            
+            if replace == False: 
+                self.output.update(output_dict)
+            else:
+                self.output = output_dict
             # store output_dict in modules
-            self.modules = output_dict
-            
+            #self.modules = output_dict
+            #for key,val in output_dict.items(): 
+            #    print(key)
+            #    self.output[key] = val
             return output_dict
             # output_dict = cartesian_dict(combine_dicts(*args))
             # data_dict = append_dict(*args)
@@ -130,9 +152,11 @@ class ModuleSet:
         return results
 
     def predict(self, *args, **kwargs):
-        for k1, v1 in self.modules.items():
-            self.modules[k1] = v1.predict
-        return self.apply_func(*args, matching='cartesian', order='backwards', **kwargs)
+        #for k1, v1 in self.modules.items():
+        #    self.modules[k1] = v1.predict
+        for k1,v1 in self.output.items():
+            self.output[k1] = v1.predict
+        return self.apply_func(*args, matching='cartesian', order='backwards', use_output = True,replace = True ,**kwargs)
 
     def predict_proba(self, *args, **kwargs):
         for k1, v1 in self.modules.items():
@@ -148,7 +172,7 @@ class ModuleSet:
         #    return self.apply_func(*args,matching = 'subset',order = 'typical',**kwargs)
 
     def __call__(self, *args, **kwargs):
-        return self.apply_func(*args, matching='cartesian', order='typical', **kwargs)
+        return self.apply_func(*args, matching='cartesian', order='typical',use_output = False,replace = False, **kwargs)
 
     def __getitem__(self, i):
         '''Accesses ith item in the module set
