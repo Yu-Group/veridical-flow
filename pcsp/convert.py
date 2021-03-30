@@ -2,6 +2,18 @@
 '''
 from pcsp.module_set import PREV_KEY
 
+def init_args(args_tuple: tuple, names=None):
+    ''' converts tuple of arguments to a list of dicts
+    '''
+    # print(type(args_tuple), args_tuple)
+    key = 'start'
+    output_dicts = []
+    for (i, ele) in enumerate(args_tuple):
+        output_dicts.append({
+            key: args_tuple[i]
+        })
+    return output_dicts
+
 def s(x):
     '''Gets shape of a list/tuple/ndarray
     '''
@@ -63,27 +75,43 @@ def to_list(tup: tuple):
     return lists_packed
 
 
-def sep_dicts(output: dict):
-    ''' converts dictionary with value being saved as a tuple/list into multiple dictionaries. 
+def sep_dicts(d: dict):
+    '''converts dictionary with value being saved as a tuple/list into multiple dictionaries 
     Assumes every value has same length of tuple  
+    
+    Params
+    ------
+    d: {k1: (x1, y1), k2: (x2, y2), ...,  '__prev__': p}
+    
+    Returns
+    -------
+    sep_dicts: [{k1: x1, k2: x2, ..., '__prev__': p}, {k1: y1, k2: y2, '__prev__': p}]
     '''
-    n_dict = len(output)
+    
     # empty dict -- return empty dict
-    if n_dict == 0:
+    n_dicts = len(d)
+    if n_dicts == 0:
         return {}
     else:
         # try separating dict into multiple dicts
         try:
-            n_tup = len(tuple(output.items())[0][1])  # first item in list
-            sep_dict = [dict() for x in range(n_tup)]
-            for key, value in output.items():
-                for i in range(n_tup):
-                    sep_dict[i][key] = value[i]
-            return sep_dict
+            n_tup = len(tuple(d.items())[0][1])  # first item in list
+#             print(n_dicts, n_tup)
+            sep_dicts = [dict() for x in range(n_tup)]
+            for key, value in d.items():
+                if not key == '__prev__':
+                    for i in range(n_tup):
+                        sep_dicts[i][key] = value[i]
+                        
+            # add back prev
+            prev = d['__prev__']
+            for i in range(len(sep_dicts)):
+                sep_dicts[i]['__prev__'] = prev
+            return sep_dicts
         
         # just return original dict
         except:
-            return output
+            return d
 
 
 def combine_dicts(*args):

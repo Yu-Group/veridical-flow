@@ -32,6 +32,7 @@ class ModuleSet:
             else:
                 module_keys = [f'{name}_{i}' for i in range(len(modules))]
             self.modules = dict(zip(module_keys, modules))
+
     def fit(self, *args, **kwargs):
         '''todo: support kwargs
         '''
@@ -46,16 +47,12 @@ class ModuleSet:
         self._fitted = True
         return self
 
-    def apply_func(self, *args, matching='cartesian', order='typical', use_output = False,replace = False,**kwargs):
+    def apply_func(self, *args, matching='cartesian', order='typical', use_output = False, replace = False,**kwargs):
         '''
 
         Params
         ------
-        *args: Two types currently allowed: 
-            - Tuple[List] e.g. ([X1 ,X2],[y1, y2]).
-                apply_func will then combine *args into a dictionary of format: 
-                {data_0 : [X1, y1], data_1: [X2, y2]} and run modules on each item in dictionary
-            - Dictionaries: takes multiple dicts and combines them into one.
+        *args: List[Dict]: takes multiple dicts and combines them into one.
                 Then runs modules on each item in combined dict. 
         
         Returns
@@ -67,81 +64,49 @@ class ModuleSet:
                      output:    output_dict = {(train_1, LR)  : fitted logistic, (train_2, LR) :  fitted logistic}.
             Currently matching = 'subset' is not used...
         '''
-        dict_present = False
-        for ele in args:
-            if isinstance(ele, dict):
-                dict_present = True  # Checking if dict is present
-
-        # if dictionary is not present, create dictionary with default data_0 key
-        if not dict_present:
-            data_dict = create_dict(*args)
-            if matching == 'cartesian':
-                if(use_output == False):
-                    output_dict = cartesian_dict(data_dict, self.modules, order=order)
-                else:
-                    output_dict = cartesian_dict(data_dict, self.output, order=order)
-            elif matching == 'subset':
-                output_dict = subset_dict(data_dict, self.modules, order=order)
-            else:
-                output_dict = {}
-                
-            # store output_dict in modules
-            #self.modules = output_dict
-            if replace == False: 
-                self.output.update(output_dict)
-            else:
-                self.output = output_dict    
-            #for key,val in output_dict.items(): 
-            #    print(key)
-            #    self.output[key] = val
-            # add PREV_KEY
-            self.__prev__ = 'Start'
-            dicts_separated = sep_dicts(output_dict)
-            if type(dicts_separated) == dict:
-                dicts_separated[PREV_KEY] = self
-            else:
-                for d in dicts_separated:
-                    d[PREV_KEY] = self
-            return dicts_separated
+        print('apply func!')
         
-        # if dictionary is present, combine dicts based on keys
-        else:
-#             print('\n'  + self.name + str(len(args)))
-#             print(PREV_KEY in args[0])
-#             print(args[0].keys())
-            data_dict = combine_dicts(*args)
+        for ele in args:
+            if not isinstance(ele, dict):
+                raise Exception('Need to run init_args before calling module_set!')
+        
+
+        data_dict = combine_dicts(*args)
 #             print(data_dict.keys())
-            if matching == 'cartesian':
-                if(use_output == False):
-                    output_dict = cartesian_dict(data_dict, self.modules, order=order)
-                else:
-                    output_dict = cartesian_dict(data_dict, self.output, order=order)
-            elif matching == 'subset':
-                output_dict = subset_dict(data_dict, self.modules, order=order)
+        if matching == 'cartesian':
+            if use_output:
+                output_dict = cartesian_dict(data_dict, self.output, order=order)
             else:
-                output_dict = {}
-            #for key,val in output_dict.items(): 
-            #    print(key)
-            #for key,val in self.output.items():
-            #    print("sef keys:" + str(key))
-            #self.output.update(output_dict)
-            # add PREV_KEY
+                output_dict = cartesian_dict(data_dict, self.modules, order=order)
+        elif matching == 'subset':
+            output_dict = subset_dict(data_dict, self.modules, order=order)
+        else:
+            output_dict = {}
+        #for key,val in output_dict.items(): 
+        #    print(key)
+        #for key,val in self.output.items():
+        #    print("sef keys:" + str(key))
+        #self.output.update(output_dict)
+        # add PREV_KEY
 #             print('prev', str(data_dict[PREV_KEY]))
-            self.__prev__ = data_dict[PREV_KEY]
-            output_dict[PREV_KEY] = self
-            if replace == False: 
-                self.output.update(output_dict)
-            else:
-                self.output = output_dict
-            # store output_dict in modules
-            #self.modules = output_dict
-            #for key,val in output_dict.items(): 
-            #    print(key)
-            #    self.output[key] = val
-            return output_dict
-            # output_dict = cartesian_dict(combine_dicts(*args))
-            # data_dict = append_dict(*args)
-            # output_dict = cartesian_dict(*args,self.modules)
+        self.__prev__ = data_dict[PREV_KEY]
+        output_dict[PREV_KEY] = self
+        if replace == False: 
+            self.output.update(output_dict)
+        else:
+            self.output = output_dict
+        # store output_dict in modules
+        #self.modules = output_dict
+        #for key,val in output_dict.items(): 
+        #    print(key)
+        #    self.output[key] = val
+#         print(output_dict)
+        dicts_separated = sep_dicts(output_dict)
+#         print('\n\nsep\n', dicts_separated)
+        return dicts_separated
+        # output_dict = cartesian_dict(combine_dicts(*args))
+        # data_dict = append_dict(*args)
+        # output_dict = cartesian_dict(*args,self.modules)
 
 
     def transform(self, *args, **kwargs):

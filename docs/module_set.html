@@ -3,18 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
-<meta name="generator" content="pdoc 0.9.2" />
+<meta name="generator" content="pdoc 0.7.2" />
 <title>pcsp.module_set API documentation</title>
 <meta name="description" content="Set of modules to be parallelized over in a pipeline.
 Function arguments are each a list" />
-<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
-<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
-<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
-<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
-<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<link href='https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css' rel='stylesheet'>
+<link href='https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/8.0.0/sanitize.min.css' rel='stylesheet'>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css" rel="stylesheet">
+<style>.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{font-weight:bold}#index h4 + ul{margin-bottom:.6em}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
 <style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
-<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
 </head>
 <body>
 <main>
@@ -37,7 +35,7 @@ from pcsp.convert import *
 import joblib
 
 class ModuleSet:
-    def __init__(self, name: str, modules, module_keys: list=None):
+    def __init__(self, name: str, modules, module_keys: list=None,output : dict = {}):
         &#39;&#39;&#39;
         todo: include prev and next and change functions to include that. 
         Params
@@ -48,9 +46,12 @@ class ModuleSet:
             dictionary of functions that we want to associate with 
         module_keys: list (optional)
             list of names corresponding to each module
+        module_outputs: dict 
+            saved outputs corresponding to each module after passing in data. 
         &#39;&#39;&#39;
         self.name = name
         self._fitted = False
+        self.output = output
         if type(modules) is dict:
             self.modules = modules
         elif type(modules) is list:
@@ -71,20 +72,16 @@ class ModuleSet:
         for k1, v1 in self.modules.items():
             if hasattr(v1, &#39;fit&#39;):
                 self.modules[k1] = v1.fit
-        self.apply_func(*args, matching=&#39;cartesian&#39;, order=&#39;typical&#39;, **kwargs)
+        self.apply_func(*args, matching=&#39;cartesian&#39;, order=&#39;typical&#39;,use_output = False, replace = False,**kwargs)
         self._fitted = True
         return self
 
-    def apply_func(self, *args, matching=&#39;cartesian&#39;, order=&#39;typical&#39;, **kwargs):
+    def apply_func(self, *args, matching=&#39;cartesian&#39;, order=&#39;typical&#39;, use_output = False, replace = False,**kwargs):
         &#39;&#39;&#39;
 
         Params
         ------
-        *args: Two types currently allowed: 
-            - Tuple[List] e.g. ([X1 ,X2],[y1, y2]).
-                apply_func will then combine *args into a dictionary of format: 
-                {data_0 : [X1, y1], data_1: [X2, y2]} and run modules on each item in dictionary
-            - Dictionaries: takes multiple dicts and combines them into one.
+        *args: List[Dict]: takes multiple dicts and combines them into one.
                 Then runs modules on each item in combined dict. 
         
         Returns
@@ -96,61 +93,49 @@ class ModuleSet:
                      output:    output_dict = {(train_1, LR)  : fitted logistic, (train_2, LR) :  fitted logistic}.
             Currently matching = &#39;subset&#39; is not used...
         &#39;&#39;&#39;
-        dict_present = False
-        for ele in args:
-            if isinstance(ele, dict):
-                dict_present = True  # Checking if dict is present
-
-        # if dictionary is not present, create dictionary with default data_0 key
-        if not dict_present:
-            data_dict = create_dict(*args)
-            if matching == &#39;cartesian&#39;:
-                output_dict = cartesian_dict(data_dict, self.modules, order=order)
-            elif matching == &#39;subset&#39;:
-                output_dict = subset_dict(data_dict, self.modules, order=order)
-            else:
-                output_dict = {}
-                
-            # store output_dict in modules
-            self.modules = output_dict
-
-            
-            # add PREV_KEY
-            self.__prev__ = &#39;Start&#39;
-            dicts_separated = sep_dicts(output_dict)
-            if type(dicts_separated) == dict:
-                dicts_separated[PREV_KEY] = self
-            else:
-                for d in dicts_separated:
-                    d[PREV_KEY] = self
-            return dicts_separated
+        print(&#39;apply func!&#39;)
         
-        # if dictionary is present, combine dicts based on keys
-        else:
-#             print(&#39;\n&#39;  + self.name + str(len(args)))
-#             print(PREV_KEY in args[0])
-#             print(args[0].keys())
-            data_dict = combine_dicts(*args)
+        for ele in args:
+            if not isinstance(ele, dict):
+                raise Exception(&#39;Need to run init_args before calling module_set!&#39;)
+        
+
+        data_dict = combine_dicts(*args)
 #             print(data_dict.keys())
-            if matching == &#39;cartesian&#39;:
-                output_dict = cartesian_dict(data_dict, self.modules, order=order)
-            elif matching == &#39;subset&#39;:
-                output_dict = subset_dict(data_dict, self.modules, order=order)
+        if matching == &#39;cartesian&#39;:
+            if use_output:
+                output_dict = cartesian_dict(data_dict, self.output, order=order)
             else:
-                output_dict = {}
-                
-            # add PREV_KEY
+                output_dict = cartesian_dict(data_dict, self.modules, order=order)
+        elif matching == &#39;subset&#39;:
+            output_dict = subset_dict(data_dict, self.modules, order=order)
+        else:
+            output_dict = {}
+        #for key,val in output_dict.items(): 
+        #    print(key)
+        #for key,val in self.output.items():
+        #    print(&#34;sef keys:&#34; + str(key))
+        #self.output.update(output_dict)
+        # add PREV_KEY
 #             print(&#39;prev&#39;, str(data_dict[PREV_KEY]))
-            self.__prev__ = data_dict[PREV_KEY]
-            output_dict[PREV_KEY] = self
-            
-            # store output_dict in modules
-            self.modules = output_dict
-            
-            return output_dict
-            # output_dict = cartesian_dict(combine_dicts(*args))
-            # data_dict = append_dict(*args)
-            # output_dict = cartesian_dict(*args,self.modules)
+        self.__prev__ = data_dict[PREV_KEY]
+        output_dict[PREV_KEY] = self
+        if replace == False: 
+            self.output.update(output_dict)
+        else:
+            self.output = output_dict
+        # store output_dict in modules
+        #self.modules = output_dict
+        #for key,val in output_dict.items(): 
+        #    print(key)
+        #    self.output[key] = val
+#         print(output_dict)
+        dicts_separated = sep_dicts(output_dict)
+#         print(&#39;\n\nsep\n&#39;, dicts_separated)
+        return dicts_separated
+        # output_dict = cartesian_dict(combine_dicts(*args))
+        # data_dict = append_dict(*args)
+        # output_dict = cartesian_dict(*args,self.modules)
 
 
     def transform(self, *args, **kwargs):
@@ -161,9 +146,11 @@ class ModuleSet:
         return results
 
     def predict(self, *args, **kwargs):
-        for k1, v1 in self.modules.items():
-            self.modules[k1] = v1.predict
-        return self.apply_func(*args, matching=&#39;cartesian&#39;, order=&#39;backwards&#39;, **kwargs)
+        #for k1, v1 in self.modules.items():
+        #    self.modules[k1] = v1.predict
+        for k1,v1 in self.output.items():
+            self.output[k1] = v1.predict
+        return self.apply_func(*args, matching=&#39;cartesian&#39;, order=&#39;backwards&#39;, use_output = True,replace = True ,**kwargs)
 
     def predict_proba(self, *args, **kwargs):
         for k1, v1 in self.modules.items():
@@ -179,7 +166,7 @@ class ModuleSet:
         #    return self.apply_func(*args,matching = &#39;subset&#39;,order = &#39;typical&#39;,**kwargs)
 
     def __call__(self, *args, **kwargs):
-        return self.apply_func(*args, matching=&#39;cartesian&#39;, order=&#39;typical&#39;, **kwargs)
+        return self.apply_func(*args, matching=&#39;cartesian&#39;, order=&#39;typical&#39;,use_output = False,replace = False, **kwargs)
 
     def __getitem__(self, i):
         &#39;&#39;&#39;Accesses ith item in the module set
@@ -216,24 +203,28 @@ class ModuleSet:
 <dl>
 <dt id="pcsp.module_set.ModuleSet"><code class="flex name class">
 <span>class <span class="ident">ModuleSet</span></span>
-<span>(</span><span>name: str, modules, module_keys: list = None)</span>
+<span>(</span><span>name, modules, module_keys=None, output={})</span>
 </code></dt>
 <dd>
-<div class="desc"><p>todo: include prev and next and change functions to include that.
+<section class="desc"><p>todo: include prev and next and change functions to include that.
 Params</p>
 <hr>
-<p>name: str
-name of this moduleset
-modules: list or dict
-dictionary of functions that we want to associate with
-module_keys: list (optional)
-list of names corresponding to each module</p></div>
+<dl>
+<dt><strong><code>name</code></strong> :&ensp;<code>str</code></dt>
+<dd>name of this moduleset</dd>
+<dt><strong><code>modules</code></strong> :&ensp;<code>list</code> or <code>dict</code></dt>
+<dd>dictionary of functions that we want to associate with</dd>
+<dt><strong><code>module_keys</code></strong> :&ensp;<code>list</code> (optional)</dt>
+<dd>list of names corresponding to each module</dd>
+<dt><strong><code>module_outputs</code></strong> :&ensp;<code>dict</code></dt>
+<dd>saved outputs corresponding to each module after passing in data.</dd>
+</dl></section>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class ModuleSet:
-    def __init__(self, name: str, modules, module_keys: list=None):
+    def __init__(self, name: str, modules, module_keys: list=None,output : dict = {}):
         &#39;&#39;&#39;
         todo: include prev and next and change functions to include that. 
         Params
@@ -244,9 +235,12 @@ list of names corresponding to each module</p></div>
             dictionary of functions that we want to associate with 
         module_keys: list (optional)
             list of names corresponding to each module
+        module_outputs: dict 
+            saved outputs corresponding to each module after passing in data. 
         &#39;&#39;&#39;
         self.name = name
         self._fitted = False
+        self.output = output
         if type(modules) is dict:
             self.modules = modules
         elif type(modules) is list:
@@ -267,20 +261,16 @@ list of names corresponding to each module</p></div>
         for k1, v1 in self.modules.items():
             if hasattr(v1, &#39;fit&#39;):
                 self.modules[k1] = v1.fit
-        self.apply_func(*args, matching=&#39;cartesian&#39;, order=&#39;typical&#39;, **kwargs)
+        self.apply_func(*args, matching=&#39;cartesian&#39;, order=&#39;typical&#39;,use_output = False, replace = False,**kwargs)
         self._fitted = True
         return self
 
-    def apply_func(self, *args, matching=&#39;cartesian&#39;, order=&#39;typical&#39;, **kwargs):
+    def apply_func(self, *args, matching=&#39;cartesian&#39;, order=&#39;typical&#39;, use_output = False, replace = False,**kwargs):
         &#39;&#39;&#39;
 
         Params
         ------
-        *args: Two types currently allowed: 
-            - Tuple[List] e.g. ([X1 ,X2],[y1, y2]).
-                apply_func will then combine *args into a dictionary of format: 
-                {data_0 : [X1, y1], data_1: [X2, y2]} and run modules on each item in dictionary
-            - Dictionaries: takes multiple dicts and combines them into one.
+        *args: List[Dict]: takes multiple dicts and combines them into one.
                 Then runs modules on each item in combined dict. 
         
         Returns
@@ -292,61 +282,49 @@ list of names corresponding to each module</p></div>
                      output:    output_dict = {(train_1, LR)  : fitted logistic, (train_2, LR) :  fitted logistic}.
             Currently matching = &#39;subset&#39; is not used...
         &#39;&#39;&#39;
-        dict_present = False
-        for ele in args:
-            if isinstance(ele, dict):
-                dict_present = True  # Checking if dict is present
-
-        # if dictionary is not present, create dictionary with default data_0 key
-        if not dict_present:
-            data_dict = create_dict(*args)
-            if matching == &#39;cartesian&#39;:
-                output_dict = cartesian_dict(data_dict, self.modules, order=order)
-            elif matching == &#39;subset&#39;:
-                output_dict = subset_dict(data_dict, self.modules, order=order)
-            else:
-                output_dict = {}
-                
-            # store output_dict in modules
-            self.modules = output_dict
-
-            
-            # add PREV_KEY
-            self.__prev__ = &#39;Start&#39;
-            dicts_separated = sep_dicts(output_dict)
-            if type(dicts_separated) == dict:
-                dicts_separated[PREV_KEY] = self
-            else:
-                for d in dicts_separated:
-                    d[PREV_KEY] = self
-            return dicts_separated
+        print(&#39;apply func!&#39;)
         
-        # if dictionary is present, combine dicts based on keys
-        else:
-#             print(&#39;\n&#39;  + self.name + str(len(args)))
-#             print(PREV_KEY in args[0])
-#             print(args[0].keys())
-            data_dict = combine_dicts(*args)
+        for ele in args:
+            if not isinstance(ele, dict):
+                raise Exception(&#39;Need to run init_args before calling module_set!&#39;)
+        
+
+        data_dict = combine_dicts(*args)
 #             print(data_dict.keys())
-            if matching == &#39;cartesian&#39;:
-                output_dict = cartesian_dict(data_dict, self.modules, order=order)
-            elif matching == &#39;subset&#39;:
-                output_dict = subset_dict(data_dict, self.modules, order=order)
+        if matching == &#39;cartesian&#39;:
+            if use_output:
+                output_dict = cartesian_dict(data_dict, self.output, order=order)
             else:
-                output_dict = {}
-                
-            # add PREV_KEY
+                output_dict = cartesian_dict(data_dict, self.modules, order=order)
+        elif matching == &#39;subset&#39;:
+            output_dict = subset_dict(data_dict, self.modules, order=order)
+        else:
+            output_dict = {}
+        #for key,val in output_dict.items(): 
+        #    print(key)
+        #for key,val in self.output.items():
+        #    print(&#34;sef keys:&#34; + str(key))
+        #self.output.update(output_dict)
+        # add PREV_KEY
 #             print(&#39;prev&#39;, str(data_dict[PREV_KEY]))
-            self.__prev__ = data_dict[PREV_KEY]
-            output_dict[PREV_KEY] = self
-            
-            # store output_dict in modules
-            self.modules = output_dict
-            
-            return output_dict
-            # output_dict = cartesian_dict(combine_dicts(*args))
-            # data_dict = append_dict(*args)
-            # output_dict = cartesian_dict(*args,self.modules)
+        self.__prev__ = data_dict[PREV_KEY]
+        output_dict[PREV_KEY] = self
+        if replace == False: 
+            self.output.update(output_dict)
+        else:
+            self.output = output_dict
+        # store output_dict in modules
+        #self.modules = output_dict
+        #for key,val in output_dict.items(): 
+        #    print(key)
+        #    self.output[key] = val
+#         print(output_dict)
+        dicts_separated = sep_dicts(output_dict)
+#         print(&#39;\n\nsep\n&#39;, dicts_separated)
+        return dicts_separated
+        # output_dict = cartesian_dict(combine_dicts(*args))
+        # data_dict = append_dict(*args)
+        # output_dict = cartesian_dict(*args,self.modules)
 
 
     def transform(self, *args, **kwargs):
@@ -357,9 +335,11 @@ list of names corresponding to each module</p></div>
         return results
 
     def predict(self, *args, **kwargs):
-        for k1, v1 in self.modules.items():
-            self.modules[k1] = v1.predict
-        return self.apply_func(*args, matching=&#39;cartesian&#39;, order=&#39;backwards&#39;, **kwargs)
+        #for k1, v1 in self.modules.items():
+        #    self.modules[k1] = v1.predict
+        for k1,v1 in self.output.items():
+            self.output[k1] = v1.predict
+        return self.apply_func(*args, matching=&#39;cartesian&#39;, order=&#39;backwards&#39;, use_output = True,replace = True ,**kwargs)
 
     def predict_proba(self, *args, **kwargs):
         for k1, v1 in self.modules.items():
@@ -375,7 +355,7 @@ list of names corresponding to each module</p></div>
         #    return self.apply_func(*args,matching = &#39;subset&#39;,order = &#39;typical&#39;,**kwargs)
 
     def __call__(self, *args, **kwargs):
-        return self.apply_func(*args, matching=&#39;cartesian&#39;, order=&#39;typical&#39;, **kwargs)
+        return self.apply_func(*args, matching=&#39;cartesian&#39;, order=&#39;typical&#39;,use_output = False,replace = False, **kwargs)
 
     def __getitem__(self, i):
         &#39;&#39;&#39;Accesses ith item in the module set
@@ -403,15 +383,11 @@ list of names corresponding to each module</p></div>
 <h3>Methods</h3>
 <dl>
 <dt id="pcsp.module_set.ModuleSet.apply_func"><code class="name flex">
-<span>def <span class="ident">apply_func</span></span>(<span>self, *args, matching='cartesian', order='typical', **kwargs)</span>
+<span>def <span class="ident">apply_func</span></span>(<span>self, *args, matching='cartesian', order='typical', use_output=False, replace=False, **kwargs)</span>
 </code></dt>
 <dd>
-<div class="desc"><h2 id="params">Params</h2>
-<p><em>args: Two types currently allowed:
-- Tuple[List] e.g. ([X1 ,X2],[y1, y2]).
-apply_func will then combine </em>args into a dictionary of format:
-{data_0 : [X1, y1], data_1: [X2, y2]} and run modules on each item in dictionary
-- Dictionaries: takes multiple dicts and combines them into one.
+<section class="desc"><h2 id="params">Params</h2>
+<p>*args: List[Dict]: takes multiple dicts and combines them into one.
 Then runs modules on each item in combined dict. </p>
 <h2 id="returns">Returns</h2>
 <dl>
@@ -426,21 +402,17 @@ output_dict = {(train_1, LR)
 : fitted logistic, (train_2, LR) :
 fitted logistic}.
 Currently matching = 'subset' is not used&hellip;</dd>
-</dl></div>
+</dl></section>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">    def apply_func(self, *args, matching=&#39;cartesian&#39;, order=&#39;typical&#39;, **kwargs):
+<pre><code class="python">    def apply_func(self, *args, matching=&#39;cartesian&#39;, order=&#39;typical&#39;, use_output = False, replace = False,**kwargs):
         &#39;&#39;&#39;
 
         Params
         ------
-        *args: Two types currently allowed: 
-            - Tuple[List] e.g. ([X1 ,X2],[y1, y2]).
-                apply_func will then combine *args into a dictionary of format: 
-                {data_0 : [X1, y1], data_1: [X2, y2]} and run modules on each item in dictionary
-            - Dictionaries: takes multiple dicts and combines them into one.
+        *args: List[Dict]: takes multiple dicts and combines them into one.
                 Then runs modules on each item in combined dict. 
         
         Returns
@@ -452,65 +424,53 @@ Currently matching = 'subset' is not used&hellip;</dd>
                      output:    output_dict = {(train_1, LR)  : fitted logistic, (train_2, LR) :  fitted logistic}.
             Currently matching = &#39;subset&#39; is not used...
         &#39;&#39;&#39;
-        dict_present = False
-        for ele in args:
-            if isinstance(ele, dict):
-                dict_present = True  # Checking if dict is present
-
-        # if dictionary is not present, create dictionary with default data_0 key
-        if not dict_present:
-            data_dict = create_dict(*args)
-            if matching == &#39;cartesian&#39;:
-                output_dict = cartesian_dict(data_dict, self.modules, order=order)
-            elif matching == &#39;subset&#39;:
-                output_dict = subset_dict(data_dict, self.modules, order=order)
-            else:
-                output_dict = {}
-                
-            # store output_dict in modules
-            self.modules = output_dict
-
-            
-            # add PREV_KEY
-            self.__prev__ = &#39;Start&#39;
-            dicts_separated = sep_dicts(output_dict)
-            if type(dicts_separated) == dict:
-                dicts_separated[PREV_KEY] = self
-            else:
-                for d in dicts_separated:
-                    d[PREV_KEY] = self
-            return dicts_separated
+        print(&#39;apply func!&#39;)
         
-        # if dictionary is present, combine dicts based on keys
-        else:
-#             print(&#39;\n&#39;  + self.name + str(len(args)))
-#             print(PREV_KEY in args[0])
-#             print(args[0].keys())
-            data_dict = combine_dicts(*args)
+        for ele in args:
+            if not isinstance(ele, dict):
+                raise Exception(&#39;Need to run init_args before calling module_set!&#39;)
+        
+
+        data_dict = combine_dicts(*args)
 #             print(data_dict.keys())
-            if matching == &#39;cartesian&#39;:
-                output_dict = cartesian_dict(data_dict, self.modules, order=order)
-            elif matching == &#39;subset&#39;:
-                output_dict = subset_dict(data_dict, self.modules, order=order)
+        if matching == &#39;cartesian&#39;:
+            if use_output:
+                output_dict = cartesian_dict(data_dict, self.output, order=order)
             else:
-                output_dict = {}
-                
-            # add PREV_KEY
+                output_dict = cartesian_dict(data_dict, self.modules, order=order)
+        elif matching == &#39;subset&#39;:
+            output_dict = subset_dict(data_dict, self.modules, order=order)
+        else:
+            output_dict = {}
+        #for key,val in output_dict.items(): 
+        #    print(key)
+        #for key,val in self.output.items():
+        #    print(&#34;sef keys:&#34; + str(key))
+        #self.output.update(output_dict)
+        # add PREV_KEY
 #             print(&#39;prev&#39;, str(data_dict[PREV_KEY]))
-            self.__prev__ = data_dict[PREV_KEY]
-            output_dict[PREV_KEY] = self
-            
-            # store output_dict in modules
-            self.modules = output_dict
-            
-            return output_dict</code></pre>
+        self.__prev__ = data_dict[PREV_KEY]
+        output_dict[PREV_KEY] = self
+        if replace == False: 
+            self.output.update(output_dict)
+        else:
+            self.output = output_dict
+        # store output_dict in modules
+        #self.modules = output_dict
+        #for key,val in output_dict.items(): 
+        #    print(key)
+        #    self.output[key] = val
+#         print(output_dict)
+        dicts_separated = sep_dicts(output_dict)
+#         print(&#39;\n\nsep\n&#39;, dicts_separated)
+        return dicts_separated</code></pre>
 </details>
 </dd>
 <dt id="pcsp.module_set.ModuleSet.evaluate"><code class="name flex">
 <span>def <span class="ident">evaluate</span></span>(<span>self, *args, **kwargs)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Combines dicts before calling apply_func</p></div>
+<section class="desc"><p>Combines dicts before calling apply_func</p></section>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -526,7 +486,7 @@ Currently matching = 'subset' is not used&hellip;</dd>
 <span>def <span class="ident">fit</span></span>(<span>self, *args, **kwargs)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>todo: support kwargs</p></div>
+<section class="desc"><p>todo: support kwargs</p></section>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -541,7 +501,7 @@ Currently matching = 'subset' is not used&hellip;</dd>
     for k1, v1 in self.modules.items():
         if hasattr(v1, &#39;fit&#39;):
             self.modules[k1] = v1.fit
-    self.apply_func(*args, matching=&#39;cartesian&#39;, order=&#39;typical&#39;, **kwargs)
+    self.apply_func(*args, matching=&#39;cartesian&#39;, order=&#39;typical&#39;,use_output = False, replace = False,**kwargs)
     self._fitted = True
     return self</code></pre>
 </details>
@@ -550,7 +510,7 @@ Currently matching = 'subset' is not used&hellip;</dd>
 <span>def <span class="ident">keys</span></span>(<span>self)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<section class="desc"></section>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -565,22 +525,24 @@ Currently matching = 'subset' is not used&hellip;</dd>
 <span>def <span class="ident">predict</span></span>(<span>self, *args, **kwargs)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<section class="desc"></section>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def predict(self, *args, **kwargs):
-    for k1, v1 in self.modules.items():
-        self.modules[k1] = v1.predict
-    return self.apply_func(*args, matching=&#39;cartesian&#39;, order=&#39;backwards&#39;, **kwargs)</code></pre>
+    #for k1, v1 in self.modules.items():
+    #    self.modules[k1] = v1.predict
+    for k1,v1 in self.output.items():
+        self.output[k1] = v1.predict
+    return self.apply_func(*args, matching=&#39;cartesian&#39;, order=&#39;backwards&#39;, use_output = True,replace = True ,**kwargs)</code></pre>
 </details>
 </dd>
 <dt id="pcsp.module_set.ModuleSet.predict_proba"><code class="name flex">
 <span>def <span class="ident">predict_proba</span></span>(<span>self, *args, **kwargs)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<section class="desc"></section>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -595,7 +557,7 @@ Currently matching = 'subset' is not used&hellip;</dd>
 <span>def <span class="ident">transform</span></span>(<span>self, *args, **kwargs)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<section class="desc"></section>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -644,7 +606,9 @@ Currently matching = 'subset' is not used&hellip;</dd>
 </nav>
 </main>
 <footer id="footer">
-<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.9.2</a>.</p>
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.7.2</a>.</p>
 </footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad()</script>
 </body>
 </html>
