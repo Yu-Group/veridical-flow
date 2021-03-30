@@ -31,13 +31,22 @@ from pcsp.module_set import PREV_KEY
 
 def init_args(args_tuple: tuple, names=None):
     &#39;&#39;&#39; converts tuple of arguments to a list of dicts
+    Params
+    ------
+    names: optional, list-like
+        gives names for each of the arguments in the tuple
     &#39;&#39;&#39;
     # print(type(args_tuple), args_tuple)
-    key = &#39;start&#39;
+    if names is None:
+        names = [&#39;start&#39;] * len(args_tuple)
+    else:
+        assert len(names) == len(args_tuple), &#39;names should be same length as args_tuple&#39; 
+    
     output_dicts = []
     for (i, ele) in enumerate(args_tuple):
         output_dicts.append({
-            key: args_tuple[i]
+            names[i]: args_tuple[i],
+            PREV_KEY: &#39;init&#39;,
         })
     return output_dicts
 
@@ -557,20 +566,35 @@ dict = {item1: [x1,y1], item2: [x2,y2], item3: [x3,y3]}. Assume each element of 
 <span>def <span class="ident">init_args</span></span>(<span>args_tuple, names=None)</span>
 </code></dt>
 <dd>
-<section class="desc"><p>converts tuple of arguments to a list of dicts</p></section>
+<section class="desc"><p>converts tuple of arguments to a list of dicts
+Params</p>
+<hr>
+<dl>
+<dt><strong><code>names</code></strong> :&ensp;optional, <code>list</code>-<code>like</code></dt>
+<dd>gives names for each of the arguments in the tuple</dd>
+</dl></section>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def init_args(args_tuple: tuple, names=None):
     &#39;&#39;&#39; converts tuple of arguments to a list of dicts
+    Params
+    ------
+    names: optional, list-like
+        gives names for each of the arguments in the tuple
     &#39;&#39;&#39;
     # print(type(args_tuple), args_tuple)
-    key = &#39;start&#39;
+    if names is None:
+        names = [&#39;start&#39;] * len(args_tuple)
+    else:
+        assert len(names) == len(args_tuple), &#39;names should be same length as args_tuple&#39; 
+    
     output_dicts = []
     for (i, ele) in enumerate(args_tuple):
         output_dicts.append({
-            key: args_tuple[i]
+            names[i]: args_tuple[i],
+            PREV_KEY: &#39;init&#39;,
         })
     return output_dicts</code></pre>
 </details>

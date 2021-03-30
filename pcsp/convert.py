@@ -4,13 +4,22 @@ from pcsp.module_set import PREV_KEY
 
 def init_args(args_tuple: tuple, names=None):
     ''' converts tuple of arguments to a list of dicts
+    Params
+    ------
+    names: optional, list-like
+        gives names for each of the arguments in the tuple
     '''
     # print(type(args_tuple), args_tuple)
-    key = 'start'
+    if names is None:
+        names = ['start'] * len(args_tuple)
+    else:
+        assert len(names) == len(args_tuple), 'names should be same length as args_tuple' 
+    
     output_dicts = []
     for (i, ele) in enumerate(args_tuple):
         output_dicts.append({
-            key: args_tuple[i]
+            names[i]: args_tuple[i],
+            PREV_KEY: 'init',
         })
     return output_dicts
 

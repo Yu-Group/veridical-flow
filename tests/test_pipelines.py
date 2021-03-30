@@ -12,7 +12,7 @@ from sklearn.datasets import make_classification
 class TestBasic():
     def setup(self):
         pass
-
+    '''
     def test_subsampling_fitting_metrics_pipeline(self):
         np.random.seed(13)
         # subsample data
@@ -52,3 +52,4 @@ class TestBasic():
         assert hard_metrics[k1] > 0.9 # 0.9090909090909091
         assert '__prev__' in hard_metrics
         assert len(hard_metrics.keys()) == 49
+    '''

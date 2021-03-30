@@ -64,7 +64,7 @@ class ModuleSet:
                      output:    output_dict = {(train_1, LR)  : fitted logistic, (train_2, LR) :  fitted logistic}.
             Currently matching = 'subset' is not used...
         '''
-        print('apply func!')
+        # print('apply func!')
         
         for ele in args:
             if not isinstance(ele, dict):
@@ -121,7 +121,7 @@ class ModuleSet:
         #    self.modules[k1] = v1.predict
         for k1,v1 in self.output.items():
             self.output[k1] = v1.predict
-        return self.apply_func(*args, matching='cartesian', order='backwards', use_output = True,replace = True ,**kwargs)
+        return self.apply_func(*args, matching='cartesian', order='backwards', use_output=True, replace=True, **kwargs)
 
     def predict_proba(self, *args, **kwargs):
         for k1, v1 in self.modules.items():
@@ -137,7 +137,7 @@ class ModuleSet:
         #    return self.apply_func(*args,matching = 'subset',order = 'typical',**kwargs)
 
     def __call__(self, *args, **kwargs):
-        return self.apply_func(*args, matching='cartesian', order='typical',use_output = False,replace = False, **kwargs)
+        return self.apply_func(*args, matching='cartesian', order='typical', use_output=False, replace=False, **kwargs)
 
     def __getitem__(self, i):
         '''Accesses ith item in the module set
