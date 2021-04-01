@@ -34,3 +34,7 @@ dist
 
 # joblib cache directories
 notebooks/joblib/
+# mlflow tracking directory
+notebooks/mlruns/
+
+
