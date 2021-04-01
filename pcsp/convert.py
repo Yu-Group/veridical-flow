@@ -1,6 +1,7 @@
 '''Useful functions for converting between different types (dicts, lists, tuples, etc.)
 '''
 from pcsp.module_set import PREV_KEY
+from copy import deepcopy
 
 def init_args(args_tuple: tuple, names=None):
     ''' converts tuple of arguments to a list of dicts
@@ -219,6 +220,7 @@ def cartesian_dict(data, modules, order: str='typical'):
                 continue
 #             print(k1, k2)
             try:
+                v2 = deepcopy(v2)
                 if not isinstance(k1, tuple):
                     if isinstance(v1, tuple):
                         if order == 'typical':
