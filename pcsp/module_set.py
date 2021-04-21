@@ -55,12 +55,11 @@ class ModuleSet:
         for ele in args:
             if not isinstance(ele, dict):
                 raise Exception('Need to run init_args before calling module_set!')
-
+        
         if out_dict is None:
             out_dict = self.modules
-
-        data_dict = combine_dicts(*args)
-        # print(data_dict.keys())
+        data_dict = combine_two_dicts(*args) #Changed so that it combines two dicts via cartesian if either has length 1(ignoring prev), and does subset matching if both have more than length 1. 
+                                            #
         if matching == 'cartesian':
             out_dict = cartesian_dict(data_dict, out_dict, order=order)
         elif matching == 'subset':
@@ -150,8 +149,9 @@ class ModuleSet:
     def evaluate(self, *args, **kwargs):
         '''Combines dicts before calling apply_func
         '''
-        validation_dict = combine_subset_dicts(*args, order='typical')
-        return self.apply_func(validation_dict, matching='cartesian', order='typical', **kwargs)
+        #validation_dict = combine_subset_dicts(*args, order='typical')
+        #return self.apply_func(validation_dict, matching='cartesian', order='typical', **kwargs)
+        return self.apply_func(*args,matching = 'cartesian',order = 'typical',**kwargs)
 
     def __call__(self, *args, **kwargs):
         self.fit(*args, **kwargs)

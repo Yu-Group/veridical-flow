@@ -124,40 +124,109 @@ def sep_dicts(d: dict):
             return d
 
 
-def combine_dicts(*args):
-    '''Combines list of dicts into one dict
-    Params
-    ------
-    *args
-        a) *args is a list of dicts > length 1 - then, 
-            Values become a list of items from input dicts. 
-            Assume all args are dicts, keys are the same and are the same length
-        b) *args is a tuple of length 1
-    '''
+# def combine_dicts(*args):
+#     '''Combines list of dicts into one dict
+#     Params
+#     ------
+#     *args
+#         a) *args is a list of dicts > length 1 - then, 
+#             Values become a list of items from input dicts. 
+#             Assume all args are dicts, keys are the same and are the same length
+#         b) *args is a tuple of length 1
+#     '''
     
+#     n_args = len(args)
+# #     print('combine', n_args)
+#     if n_args == 0:
+#         return {}
+#     elif n_args == 1:
+#         return args[0]
+#     else:
+#         combined_dict = {}
+#         for key, val in args[0].items():
+#             if not key == PREV_KEY:
+#                 items = []
+#                 for i in range(n_args):
+#                     items.append(args[i][key])
+#                 combined_dict[key] = items
+                
+#         # add prev_keys from all previous dicts as a list
+#         prev_list = []
+#         for i in range(n_args):
+#             if PREV_KEY in args[i]:
+#                 prev_list.append(args[i][PREV_KEY])
+#         combined_dict[PREV_KEY] = prev_list
+# #         print('combine', prev_list)
+#         return combined_dict
+
+
+def combine_two_dicts(*args):
+    '''assume len args is at most 2 for now.
+    If either dictionary has only 1 key(ignoring prev), then we do a cartesian match. 
+    If both dictionaries has more than 1 key(ignoring prev), then we do a subset dictionary match via combine_two_subset_dicts
+    TODO: Allow more than length 2 and Make keys look better.
+    '''
     n_args = len(args)
-#     print('combine', n_args)
     if n_args == 0:
         return {}
     elif n_args == 1:
         return args[0]
     else:
         combined_dict = {}
-        for key, val in args[0].items():
-            if not key == PREV_KEY:
-                items = []
-                for i in range(n_args):
-                    items.append(args[i][key])
-                combined_dict[key] = items
-                
+        if(len(args[0].keys()) <= 2 or len(args[1].keys()) <= 2):
+            for key0,val0 in args[0].items():
+                for key1,val1 in args[1].items():
+                    if key0 == PREV_KEY or key1 == PREV_KEY:
+                        continue
+                    else:
+                        combined_dict[(key0,key1)] = [val0,val1]
+                        #combined_dict[key0  (key1,)] = [val0,val1]
+            prev_list = []
+            for i in range(n_args):
+                if PREV_KEY in args[i]:
+                    prev_list.append(args[i][PREV_KEY])
+            combined_dict[PREV_KEY] = prev_list
+            #print('combine', prev_list)
+            return combined_dict
+        else:
+            return combine_two_subset_dicts(*args)
+
+
+
+def combine_two_subset_dicts(*args, order='typical'):
+    '''Combines dicts into one dict.
+    Values are now a list of items from input dicts.
+    only combines dicts with key from one dictionary is subset of other dictionaries last value in key.
+    Assumes that keys are tuples. 
+    '''
+    n_args = len(args)
+#     print('subset', n_args)
+    if n_args == 0:
+        return {}
+    elif n_args == 1:
+        return args[0]
+    else:
+        combined_dict = {}
+        for key1, val1 in args[0].items():
+            for key2, val2 in args[1].items():
+                if key1 == PREV_KEY or key2 == PREV_KEY:
+                    continue
+                else:
+                    if key2[-1] in set(key1) and order == 'typical':
+                        combined_dict[key1] = [val1, val2]
+                    elif key2[-1] in set(key1) and order != 'typical':
+                        combined_dict[key2] = [val2, val1]
+                    else:
+                        combined_dict = combined_dict
         # add prev_keys from all previous dicts as a list
+        
         prev_list = []
         for i in range(n_args):
             if PREV_KEY in args[i]:
                 prev_list.append(args[i][PREV_KEY])
         combined_dict[PREV_KEY] = prev_list
-#         print('combine', prev_list)
         return combined_dict
+
 
 
 def combine_subset_dicts(*args, order='typical'):
@@ -176,12 +245,15 @@ def combine_subset_dicts(*args, order='typical'):
         combined_dict = {}
         for key1, val1 in args[0].items():
             for key2, val2 in args[1].items():
-                if set(key1).issubset(key2[-1]) and order == 'typical':
-                    combined_dict[key2] = [val1, val2]
-                elif set(key1).issubset(key2[-1]) and order != 'typical':
-                    combined_dict[key2] = [val2, val1]
+                if key1 == PREV_KEY or key2 == PREV_KEY:
+                    continue
                 else:
-                    combined_dict = combined_dict
+                    if set(key1).issubset(key2[-1]) and order == 'typical':
+                        combined_dict[key2] = [val1, val2]
+                    elif set(key1).issubset(key2[-1]) and order != 'typical':
+                        combined_dict[key2] = [val2, val1]
+                    else:
+                        combined_dict = combined_dict
                     
         # add prev_keys from all previous dicts as a list
         prev_list = []
