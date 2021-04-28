@@ -47,8 +47,6 @@ class ModuleSet:
                      out:    out_dict = {(train_1, LR)  : fitted logistic, (train_2, LR) :  fitted logistic}.
             Currently matching = 'subset' is not used...
         '''
-#         print('mods', self.modules, args)
-#         print(out_dict)
         for ele in args:
             if not isinstance(ele, dict):
                 raise Exception('Need to run init_args before calling module_set!')
@@ -117,8 +115,6 @@ class ModuleSet:
     def evaluate(self, *args, **kwargs):
         '''Combines dicts before calling apply_func
         '''
-        #validation_dict = combine_subset_dicts(*args, order='typical')
-        #return self.apply_func(validation_dict, matching='cartesian', order='typical', **kwargs)
         return self.apply_func(*args,matching = 'cartesian',order = 'typical',**kwargs)
 
     def __call__(self, *args, **kwargs):

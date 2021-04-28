@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name="pcsp",
-    version="0.0.0",
+    version="0.0.1",
     author="Yu Group",
     author_email="chandan_singh@berkeley.edu",
     description="A framework for doing stability analysis with PCS.",

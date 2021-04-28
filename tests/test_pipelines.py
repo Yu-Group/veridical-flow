@@ -1,55 +1,126 @@
 import pcsp
 import numpy as np
 from sklearn.linear_model import LogisticRegression
-from sklearn.tree import DecisionTreeClassifier
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
+from sklearn.ensemble import RandomForestRegressor
 from sklearn.utils import resample
 from functools import partial
-from pcsp import PCSPipeline, ModuleSet, Module # must install pcsp first (pip install pcsp)
-from sklearn.metrics import accuracy_score, balanced_accuracy_score, roc_auc_score
+from pcsp import PCSPipeline, ModuleSet, Module, init_args # must install pcsp first (pip install pcsp)
+from pcsp.pipeline import build_graph
+import sklearn
+from sklearn.metrics import accuracy_score, balanced_accuracy_score, roc_auc_score, r2_score
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import make_classification
+import pandas as pd
 
-class TestBasic():
+class TestPipelines():
+    
     def setup(self):
         pass
-    '''
+    
     def test_subsampling_fitting_metrics_pipeline(self):
+        '''Simplest synthetic pipeline
+        '''
+        # initialize data
         np.random.seed(13)
+        X, y = sklearn.datasets.make_classification(n_samples=50, n_features=5)
+        X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42) # ex. with another split?
+        X_train, X_test, y_train, y_test = init_args((X_train, X_test, y_train, y_test),
+                                                      names=['X_train', 'X_test', 'y_train', 'y_test'])  # optionally provide names for each of these
+
         # subsample data
-        X, y = make_classification(n_samples=50, n_features=5)
-        X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
-        subsampling_funcs = [partial(resample,
-                                    n_samples=int(X_train.shape[0]*0.3),
+        subsampling_funcs = [partial(sklearn.utils.resample,
+                                    n_samples=20,
                                     random_state=i)
                              for i in range(3)]
         subsampling_set = ModuleSet(name='subsampling',
                                     modules=subsampling_funcs)
-        
-        # todo: shouldn't have to pass list for first args
-        X_all, y_all = subsampling_set([X_train], [y_train]) # subsampling_set([X_train, X_train], [y_train, y_train]) # artificially make it seem like there are multiple dsets (data_0 and data_1)
+        X_trains, y_trains = subsampling_set(X_train, y_train)
 
-        # fit models
+
+        #fit models
         modeling_set = ModuleSet(name='modeling',
-                                 modules=[LogisticRegression(max_iter=1000, tol=0.1),
-                                          DecisionTreeClassifier()],
-                                 module_keys=["LR", "DT"])
-        models = modeling_set.fit(X_all, y_all)  # ModuleSet needs to store something for this call to work (makes models kind of useless)
+                                  modules=[LogisticRegression(max_iter=1000, tol=0.1),
+                                           DecisionTreeClassifier()],
+                                  module_keys=["LR", "DT"])
 
-        # get predictions
-        X_all["test"] = X_test
-        y_all["test"] = y_test
-        preds_all = modeling_set.predict(X_all)
+        modeling_set.fit(X_trains, y_trains)
+        preds_test = modeling_set.predict(X_test)
 
         # get metrics
         hard_metrics_set = ModuleSet(name='hard_metrics',
-                                     modules=[accuracy_score, balanced_accuracy_score],
-                                     module_keys=["Acc", "Bal_Acc"])
-        hard_metrics = hard_metrics_set.evaluate(y_all, preds_all)
+                                      modules=[accuracy_score, balanced_accuracy_score],
+                                      module_keys=["Acc", "Bal_Acc"])
+
+        hard_metrics = hard_metrics_set.evaluate(preds_test, y_test)
+        G = build_graph(hard_metrics, draw=True)
         
         # asserts
-        k1 = (('data_0', 'subsampling_0', 'LR'), ('data_0', 'subsampling_0'), 'Acc')
+        k1 = (('X_train', 'y_train', 'subsampling_0', 'LR', 'X_test'),
+              'y_test', 'Acc')
         assert k1 in hard_metrics, 'hard metrics should have ' + str(k1) + ' as key'
         assert hard_metrics[k1] > 0.9 # 0.9090909090909091
         assert '__prev__' in hard_metrics
-        assert len(hard_metrics.keys()) == 49
-    '''
+        assert len(hard_metrics.keys()) == 13
+        
+    def test_feat_engineering(self):
+        '''Feature engineering pipeline
+        '''
+        # get data as df
+        np.random.seed(13)
+        data = sklearn.datasets.load_boston()
+        df = pd.DataFrame.from_dict(data['data'])
+        df.columns = data['feature_names']
+        y = data['target']
+        X_train, X_test, y_train, y_test = init_args(train_test_split(df, y, random_state=123),
+                                                     names=['X_train', 'X_test', 'y_train', 'y_test'])
+
+
+        # feature extraction - extracts two different sets of features from the same data
+        def extract_feats(df: pd.DataFrame, feat_names=['CRIM', 'ZN', 'INDUS', 'CHAS']):
+            '''extract specific columns from dataframe
+            '''
+            return df[feat_names]
+        feat_extraction_funcs = [partial(extract_feats, feat_names=['CRIM', 'ZN', 'INDUS', 'CHAS']),
+                                 partial(extract_feats, feat_names=['CRIM', 'ZN', 'INDUS', 'CHAS', 'NOX', 'RM', 'AGE']),
+                                ]
+        feat_extraction = ModuleSet(name='feat_extraction',
+                                    modules=feat_extraction_funcs)
+
+        X_feats_train = feat_extraction(X_train)
+        X_feats_test = feat_extraction(X_test)
+
+        modeling_set = ModuleSet(name='modeling',
+                                 modules=[DecisionTreeRegressor(), RandomForestRegressor()],
+                                 module_keys=["DT", "RF"])
+
+        # how can we properly pass a y here so that it will fit properly?
+        # this runs, but modeling_set.out is empty
+        _ = modeling_set.fit(X_feats_train, y_train)
+
+        # #get predictions
+        preds_all = modeling_set.predict(X_feats_train)
+
+        # y_test_dict = {('data_0', 'feat_extraction_0'): y_test['X_test'], ('data_0', 'feat_extraction_1'): y_test['X_test']}
+
+        #get metrics
+        hard_metrics_set = ModuleSet(name='hard_metrics',
+                                      modules=[r2_score],
+                                     module_keys=["r2"])
+        hard_metrics = hard_metrics_set.evaluate(preds_all, y_train)
+
+
+
+        # inspect the pipeline
+        #for k in hard_metrics:
+        #     print(k, hard_metrics[k])
+        G = build_graph(hard_metrics, draw=True)
+        
+        # asserts
+        k1 = (((('X_train', 'feat_extraction_0'), 'y_train', 'DT'),
+               ('X_train', 'feat_extraction_0')),
+              'y_train', 'r2')
+        assert k1 in hard_metrics, 'hard metrics should have ' + str(k1) + ' as key'
+        assert hard_metrics[k1] > 0.9 # 0.9090909090909091
+        assert '__prev__' in hard_metrics
+        assert len(hard_metrics.keys()) == 5

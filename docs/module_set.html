@@ -76,8 +76,6 @@ class ModuleSet:
                      out:    out_dict = {(train_1, LR)  : fitted logistic, (train_2, LR) :  fitted logistic}.
             Currently matching = &#39;subset&#39; is not used...
         &#39;&#39;&#39;
-#         print(&#39;mods&#39;, self.modules, args)
-#         print(out_dict)
         for ele in args:
             if not isinstance(ele, dict):
                 raise Exception(&#39;Need to run init_args before calling module_set!&#39;)
@@ -146,11 +144,11 @@ class ModuleSet:
     def evaluate(self, *args, **kwargs):
         &#39;&#39;&#39;Combines dicts before calling apply_func
         &#39;&#39;&#39;
-        #validation_dict = combine_subset_dicts(*args, order=&#39;typical&#39;)
-        #return self.apply_func(validation_dict, matching=&#39;cartesian&#39;, order=&#39;typical&#39;, **kwargs)
         return self.apply_func(*args,matching = &#39;cartesian&#39;,order = &#39;typical&#39;,**kwargs)
 
     def __call__(self, *args, **kwargs):
+        &#39;&#39;&#39;Save into self.out, or append to self.out
+        &#39;&#39;&#39;
         out = self.apply_func(*args, out_dict=self.modules,
                               matching=&#39;cartesian&#39;, order=&#39;typical&#39;, **kwargs)
         if self.out is None:
@@ -255,8 +253,6 @@ Params</p>
                      out:    out_dict = {(train_1, LR)  : fitted logistic, (train_2, LR) :  fitted logistic}.
             Currently matching = &#39;subset&#39; is not used...
         &#39;&#39;&#39;
-#         print(&#39;mods&#39;, self.modules, args)
-#         print(out_dict)
         for ele in args:
             if not isinstance(ele, dict):
                 raise Exception(&#39;Need to run init_args before calling module_set!&#39;)
@@ -325,11 +321,11 @@ Params</p>
     def evaluate(self, *args, **kwargs):
         &#39;&#39;&#39;Combines dicts before calling apply_func
         &#39;&#39;&#39;
-        #validation_dict = combine_subset_dicts(*args, order=&#39;typical&#39;)
-        #return self.apply_func(validation_dict, matching=&#39;cartesian&#39;, order=&#39;typical&#39;, **kwargs)
         return self.apply_func(*args,matching = &#39;cartesian&#39;,order = &#39;typical&#39;,**kwargs)
 
     def __call__(self, *args, **kwargs):
+        &#39;&#39;&#39;Save into self.out, or append to self.out
+        &#39;&#39;&#39;
         out = self.apply_func(*args, out_dict=self.modules,
                               matching=&#39;cartesian&#39;, order=&#39;typical&#39;, **kwargs)
         if self.out is None:
@@ -389,45 +385,43 @@ Currently matching = 'subset' is not used&hellip;</dd>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">    def apply_func(self, *args, out_dict=None, matching=&#39;cartesian&#39;, order=&#39;typical&#39;, **kwargs):
-        &#39;&#39;&#39;
-        Params
-        ------
-        *args: List[Dict]: takes multiple dicts and combines them into one.
-                Then runs modules on each item in combined dict. 
-        out_dict: the dictionary to pass to the matching function. If None, defaults to self.modules.
+<pre><code class="python">def apply_func(self, *args, out_dict=None, matching=&#39;cartesian&#39;, order=&#39;typical&#39;, **kwargs):
+    &#39;&#39;&#39;
+    Params
+    ------
+    *args: List[Dict]: takes multiple dicts and combines them into one.
+            Then runs modules on each item in combined dict. 
+    out_dict: the dictionary to pass to the matching function. If None, defaults to self.modules.
+    
+    Returns
+    -------
+    results: dict
+        with items being determined by functions in module set.
+        Functions and input dictionaries are currently matched using  matching = &#39;cartesian&#39; format.
+            e.g. inputs:    module = {LR : logistic}, data = {train_1 : [X1,y1], train2 : [X2,y2]}
+                 out:    out_dict = {(train_1, LR)  : fitted logistic, (train_2, LR) :  fitted logistic}.
+        Currently matching = &#39;subset&#39; is not used...
+    &#39;&#39;&#39;
+    for ele in args:
+        if not isinstance(ele, dict):
+            raise Exception(&#39;Need to run init_args before calling module_set!&#39;)
+    
+    if out_dict is None:
+        out_dict = self.modules
         
-        Returns
-        -------
-        results: dict
-            with items being determined by functions in module set.
-            Functions and input dictionaries are currently matched using  matching = &#39;cartesian&#39; format.
-                e.g. inputs:    module = {LR : logistic}, data = {train_1 : [X1,y1], train2 : [X2,y2]}
-                     out:    out_dict = {(train_1, LR)  : fitted logistic, (train_2, LR) :  fitted logistic}.
-            Currently matching = &#39;subset&#39; is not used...
-        &#39;&#39;&#39;
-#         print(&#39;mods&#39;, self.modules, args)
-#         print(out_dict)
-        for ele in args:
-            if not isinstance(ele, dict):
-                raise Exception(&#39;Need to run init_args before calling module_set!&#39;)
-        
-        if out_dict is None:
-            out_dict = self.modules
-            
-        # combine two dicts via cartesian if either has length 1 (ignoring prev)
-        # does subset matching if both have more than length 1 
-        data_dict = combine_two_dicts(*args) 
-        if matching == &#39;cartesian&#39;:
-            out_dict = cartesian_dict(data_dict, out_dict, order=order)
-        elif matching == &#39;subset&#39;:
-            out_dict = subset_dict(data_dict, out_dict, order=order)
-        else:
-            out_dict = {}
-        self.__prev__ = data_dict[PREV_KEY]
-        out_dict[PREV_KEY] = self
+    # combine two dicts via cartesian if either has length 1 (ignoring prev)
+    # does subset matching if both have more than length 1 
+    data_dict = combine_two_dicts(*args) 
+    if matching == &#39;cartesian&#39;:
+        out_dict = cartesian_dict(data_dict, out_dict, order=order)
+    elif matching == &#39;subset&#39;:
+        out_dict = subset_dict(data_dict, out_dict, order=order)
+    else:
+        out_dict = {}
+    self.__prev__ = data_dict[PREV_KEY]
+    out_dict[PREV_KEY] = self
 
-        return out_dict</code></pre>
+    return out_dict</code></pre>
 </details>
 </dd>
 <dt id="pcsp.module_set.ModuleSet.evaluate"><code class="name flex">
@@ -442,8 +436,6 @@ Currently matching = 'subset' is not used&hellip;</dd>
 <pre><code class="python">def evaluate(self, *args, **kwargs):
     &#39;&#39;&#39;Combines dicts before calling apply_func
     &#39;&#39;&#39;
-    #validation_dict = combine_subset_dicts(*args, order=&#39;typical&#39;)
-    #return self.apply_func(validation_dict, matching=&#39;cartesian&#39;, order=&#39;typical&#39;, **kwargs)
     return self.apply_func(*args,matching = &#39;cartesian&#39;,order = &#39;typical&#39;,**kwargs)</code></pre>
 </details>
 </dd>
