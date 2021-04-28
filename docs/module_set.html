@@ -34,7 +34,7 @@ PREV_KEY = &#39;__prev__&#39;
 from pcsp.convert import *
 
 class ModuleSet:
-    def __init__(self, name: str, modules, module_keys: list=None, out : dict = {}):
+    def __init__(self, name: str, modules, module_keys: list=None):
         &#39;&#39;&#39;
         todo: include prev and next and change functions to include that. 
         Params
@@ -45,12 +45,10 @@ class ModuleSet:
             dictionary of functions that we want to associate with 
         module_keys: list (optional)
             list of names corresponding to each module
-        module_outs: dict 
-            saved outs corresponding to each module after passing in data. 
         &#39;&#39;&#39;
         self.name = name
         self._fitted = False
-        self.out = out
+        self.out = None # outputs
         if type(modules) is dict:
             self.modules = modules
         elif type(modules) is list:
@@ -63,12 +61,11 @@ class ModuleSet:
 
     def apply_func(self, *args, out_dict=None, matching=&#39;cartesian&#39;, order=&#39;typical&#39;, **kwargs):
         &#39;&#39;&#39;
-
         Params
         ------
         *args: List[Dict]: takes multiple dicts and combines them into one.
                 Then runs modules on each item in combined dict. 
-        out_dict: The dictionary to pass to the matching function. If None, defaults to self.modules.
+        out_dict: the dictionary to pass to the matching function. If None, defaults to self.modules.
         
         Returns
         -------
@@ -79,6 +76,8 @@ class ModuleSet:
                      out:    out_dict = {(train_1, LR)  : fitted logistic, (train_2, LR) :  fitted logistic}.
             Currently matching = &#39;subset&#39; is not used...
         &#39;&#39;&#39;
+#         print(&#39;mods&#39;, self.modules, args)
+#         print(out_dict)
         for ele in args:
             if not isinstance(ele, dict):
                 raise Exception(&#39;Need to run init_args before calling module_set!&#39;)
@@ -102,7 +101,7 @@ class ModuleSet:
 
 
     def fit(self, *args, **kwargs):
-        &#39;&#39;&#39;todo: support kwargs
+        &#39;&#39;&#39;
         &#39;&#39;&#39;
         if self._fitted:
             return self
@@ -118,7 +117,8 @@ class ModuleSet:
         return self
 
     def transform(self, *args, **kwargs):
-        # TODO fix this method
+        &#39;&#39;&#39;todo: fix this method
+        &#39;&#39;&#39;
         results = []
         for out in self.output:
             result = out.transform(*args, **kwargs)
@@ -151,9 +151,13 @@ class ModuleSet:
         return self.apply_func(*args,matching = &#39;cartesian&#39;,order = &#39;typical&#39;,**kwargs)
 
     def __call__(self, *args, **kwargs):
-        self.out = self.apply_func(*args, out_dict=self.modules,
-                                   matching=&#39;cartesian&#39;, order=&#39;typical&#39;, **kwargs)
-        return sep_dicts(self.out)
+        out = self.apply_func(*args, out_dict=self.modules,
+                              matching=&#39;cartesian&#39;, order=&#39;typical&#39;, **kwargs)
+        if self.out is None:
+            self.out = [out]
+        else:
+            self.out.append(out)
+        return sep_dicts(out)
 
     def __getitem__(self, i):
         &#39;&#39;&#39;Accesses ith item in the module set
@@ -190,7 +194,7 @@ class ModuleSet:
 <dl>
 <dt id="pcsp.module_set.ModuleSet"><code class="flex name class">
 <span>class <span class="ident">ModuleSet</span></span>
-<span>(</span><span>name, modules, module_keys=None, out={})</span>
+<span>(</span><span>name, modules, module_keys=None)</span>
 </code></dt>
 <dd>
 <section class="desc"><p>todo: include prev and next and change functions to include that.
@@ -203,15 +207,13 @@ Params</p>
 <dd>dictionary of functions that we want to associate with</dd>
 <dt><strong><code>module_keys</code></strong> :&ensp;<code>list</code> (optional)</dt>
 <dd>list of names corresponding to each module</dd>
-<dt><strong><code>module_outs</code></strong> :&ensp;<code>dict</code></dt>
-<dd>saved outs corresponding to each module after passing in data.</dd>
 </dl></section>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class ModuleSet:
-    def __init__(self, name: str, modules, module_keys: list=None, out : dict = {}):
+    def __init__(self, name: str, modules, module_keys: list=None):
         &#39;&#39;&#39;
         todo: include prev and next and change functions to include that. 
         Params
@@ -222,12 +224,10 @@ Params</p>
             dictionary of functions that we want to associate with 
         module_keys: list (optional)
             list of names corresponding to each module
-        module_outs: dict 
-            saved outs corresponding to each module after passing in data. 
         &#39;&#39;&#39;
         self.name = name
         self._fitted = False
-        self.out = out
+        self.out = None # outputs
         if type(modules) is dict:
             self.modules = modules
         elif type(modules) is list:
@@ -240,12 +240,11 @@ Params</p>
 
     def apply_func(self, *args, out_dict=None, matching=&#39;cartesian&#39;, order=&#39;typical&#39;, **kwargs):
         &#39;&#39;&#39;
-
         Params
         ------
         *args: List[Dict]: takes multiple dicts and combines them into one.
                 Then runs modules on each item in combined dict. 
-        out_dict: The dictionary to pass to the matching function. If None, defaults to self.modules.
+        out_dict: the dictionary to pass to the matching function. If None, defaults to self.modules.
         
         Returns
         -------
@@ -256,6 +255,8 @@ Params</p>
                      out:    out_dict = {(train_1, LR)  : fitted logistic, (train_2, LR) :  fitted logistic}.
             Currently matching = &#39;subset&#39; is not used...
         &#39;&#39;&#39;
+#         print(&#39;mods&#39;, self.modules, args)
+#         print(out_dict)
         for ele in args:
             if not isinstance(ele, dict):
                 raise Exception(&#39;Need to run init_args before calling module_set!&#39;)
@@ -279,7 +280,7 @@ Params</p>
 
 
     def fit(self, *args, **kwargs):
-        &#39;&#39;&#39;todo: support kwargs
+        &#39;&#39;&#39;
         &#39;&#39;&#39;
         if self._fitted:
             return self
@@ -295,7 +296,8 @@ Params</p>
         return self
 
     def transform(self, *args, **kwargs):
-        # TODO fix this method
+        &#39;&#39;&#39;todo: fix this method
+        &#39;&#39;&#39;
         results = []
         for out in self.output:
             result = out.transform(*args, **kwargs)
@@ -328,9 +330,13 @@ Params</p>
         return self.apply_func(*args,matching = &#39;cartesian&#39;,order = &#39;typical&#39;,**kwargs)
 
     def __call__(self, *args, **kwargs):
-        self.out = self.apply_func(*args, out_dict=self.modules,
-                                   matching=&#39;cartesian&#39;, order=&#39;typical&#39;, **kwargs)
-        return sep_dicts(self.out)
+        out = self.apply_func(*args, out_dict=self.modules,
+                              matching=&#39;cartesian&#39;, order=&#39;typical&#39;, **kwargs)
+        if self.out is None:
+            self.out = [out]
+        else:
+            self.out.append(out)
+        return sep_dicts(out)
 
     def __getitem__(self, i):
         &#39;&#39;&#39;Accesses ith item in the module set
@@ -364,7 +370,7 @@ Params</p>
 <section class="desc"><h2 id="params">Params</h2>
 <p>*args: List[Dict]: takes multiple dicts and combines them into one.
 Then runs modules on each item in combined dict.
-out_dict: The dictionary to pass to the matching function. If None, defaults to self.modules.</p>
+out_dict: the dictionary to pass to the matching function. If None, defaults to self.modules.</p>
 <h2 id="returns">Returns</h2>
 <dl>
 <dt><strong><code>results</code></strong> :&ensp;<code>dict</code></dt>
@@ -383,44 +389,45 @@ Currently matching = 'subset' is not used&hellip;</dd>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def apply_func(self, *args, out_dict=None, matching=&#39;cartesian&#39;, order=&#39;typical&#39;, **kwargs):
-    &#39;&#39;&#39;
-
-    Params
-    ------
-    *args: List[Dict]: takes multiple dicts and combines them into one.
-            Then runs modules on each item in combined dict. 
-    out_dict: The dictionary to pass to the matching function. If None, defaults to self.modules.
-    
-    Returns
-    -------
-    results: dict
-        with items being determined by functions in module set.
-        Functions and input dictionaries are currently matched using  matching = &#39;cartesian&#39; format.
-            e.g. inputs:    module = {LR : logistic}, data = {train_1 : [X1,y1], train2 : [X2,y2]}
-                 out:    out_dict = {(train_1, LR)  : fitted logistic, (train_2, LR) :  fitted logistic}.
-        Currently matching = &#39;subset&#39; is not used...
-    &#39;&#39;&#39;
-    for ele in args:
-        if not isinstance(ele, dict):
-            raise Exception(&#39;Need to run init_args before calling module_set!&#39;)
-    
-    if out_dict is None:
-        out_dict = self.modules
+<pre><code class="python">    def apply_func(self, *args, out_dict=None, matching=&#39;cartesian&#39;, order=&#39;typical&#39;, **kwargs):
+        &#39;&#39;&#39;
+        Params
+        ------
+        *args: List[Dict]: takes multiple dicts and combines them into one.
+                Then runs modules on each item in combined dict. 
+        out_dict: the dictionary to pass to the matching function. If None, defaults to self.modules.
         
-    # combine two dicts via cartesian if either has length 1 (ignoring prev)
-    # does subset matching if both have more than length 1 
-    data_dict = combine_two_dicts(*args) 
-    if matching == &#39;cartesian&#39;:
-        out_dict = cartesian_dict(data_dict, out_dict, order=order)
-    elif matching == &#39;subset&#39;:
-        out_dict = subset_dict(data_dict, out_dict, order=order)
-    else:
-        out_dict = {}
-    self.__prev__ = data_dict[PREV_KEY]
-    out_dict[PREV_KEY] = self
+        Returns
+        -------
+        results: dict
+            with items being determined by functions in module set.
+            Functions and input dictionaries are currently matched using  matching = &#39;cartesian&#39; format.
+                e.g. inputs:    module = {LR : logistic}, data = {train_1 : [X1,y1], train2 : [X2,y2]}
+                     out:    out_dict = {(train_1, LR)  : fitted logistic, (train_2, LR) :  fitted logistic}.
+            Currently matching = &#39;subset&#39; is not used...
+        &#39;&#39;&#39;
+#         print(&#39;mods&#39;, self.modules, args)
+#         print(out_dict)
+        for ele in args:
+            if not isinstance(ele, dict):
+                raise Exception(&#39;Need to run init_args before calling module_set!&#39;)
+        
+        if out_dict is None:
+            out_dict = self.modules
+            
+        # combine two dicts via cartesian if either has length 1 (ignoring prev)
+        # does subset matching if both have more than length 1 
+        data_dict = combine_two_dicts(*args) 
+        if matching == &#39;cartesian&#39;:
+            out_dict = cartesian_dict(data_dict, out_dict, order=order)
+        elif matching == &#39;subset&#39;:
+            out_dict = subset_dict(data_dict, out_dict, order=order)
+        else:
+            out_dict = {}
+        self.__prev__ = data_dict[PREV_KEY]
+        out_dict[PREV_KEY] = self
 
-    return out_dict</code></pre>
+        return out_dict</code></pre>
 </details>
 </dd>
 <dt id="pcsp.module_set.ModuleSet.evaluate"><code class="name flex">
@@ -444,13 +451,13 @@ Currently matching = 'subset' is not used&hellip;</dd>
 <span>def <span class="ident">fit</span></span>(<span>self, *args, **kwargs)</span>
 </code></dt>
 <dd>
-<section class="desc"><p>todo: support kwargs</p></section>
+<section class="desc"></section>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def fit(self, *args, **kwargs):
-    &#39;&#39;&#39;todo: support kwargs
+    &#39;&#39;&#39;
     &#39;&#39;&#39;
     if self._fitted:
         return self
@@ -523,13 +530,14 @@ Currently matching = 'subset' is not used&hellip;</dd>
 <span>def <span class="ident">transform</span></span>(<span>self, *args, **kwargs)</span>
 </code></dt>
 <dd>
-<section class="desc"></section>
+<section class="desc"><p>todo: fix this method</p></section>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def transform(self, *args, **kwargs):
-    # TODO fix this method
+    &#39;&#39;&#39;todo: fix this method
+    &#39;&#39;&#39;
     results = []
     for out in self.output:
         result = out.transform(*args, **kwargs)

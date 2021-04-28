@@ -5,7 +5,7 @@ PREV_KEY = '__prev__'
 from pcsp.convert import *
 
 class ModuleSet:
-    def __init__(self, name: str, modules, module_keys: list=None, out : dict = {}):
+    def __init__(self, name: str, modules, module_keys: list=None):
         '''
         todo: include prev and next and change functions to include that. 
         Params
@@ -16,12 +16,10 @@ class ModuleSet:
             dictionary of functions that we want to associate with 
         module_keys: list (optional)
             list of names corresponding to each module
-        module_outs: dict 
-            saved outs corresponding to each module after passing in data. 
         '''
         self.name = name
         self._fitted = False
-        self.out = out
+        self.out = None # outputs
         if type(modules) is dict:
             self.modules = modules
         elif type(modules) is list:
@@ -34,12 +32,11 @@ class ModuleSet:
 
     def apply_func(self, *args, out_dict=None, matching='cartesian', order='typical', **kwargs):
         '''
-
         Params
         ------
         *args: List[Dict]: takes multiple dicts and combines them into one.
                 Then runs modules on each item in combined dict. 
-        out_dict: The dictionary to pass to the matching function. If None, defaults to self.modules.
+        out_dict: the dictionary to pass to the matching function. If None, defaults to self.modules.
         
         Returns
         -------
@@ -50,6 +47,8 @@ class ModuleSet:
                      out:    out_dict = {(train_1, LR)  : fitted logistic, (train_2, LR) :  fitted logistic}.
             Currently matching = 'subset' is not used...
         '''
+#         print('mods', self.modules, args)
+#         print(out_dict)
         for ele in args:
             if not isinstance(ele, dict):
                 raise Exception('Need to run init_args before calling module_set!')
@@ -73,7 +72,7 @@ class ModuleSet:
 
 
     def fit(self, *args, **kwargs):
-        '''todo: support kwargs
+        '''
         '''
         if self._fitted:
             return self
@@ -89,7 +88,8 @@ class ModuleSet:
         return self
 
     def transform(self, *args, **kwargs):
-        # TODO fix this method
+        '''todo: fix this method
+        '''
         results = []
         for out in self.output:
             result = out.transform(*args, **kwargs)
@@ -122,9 +122,15 @@ class ModuleSet:
         return self.apply_func(*args,matching = 'cartesian',order = 'typical',**kwargs)
 
     def __call__(self, *args, **kwargs):
-        self.out = self.apply_func(*args, out_dict=self.modules,
-                                   matching='cartesian', order='typical', **kwargs)
-        return sep_dicts(self.out)
+        '''Save into self.out, or append to self.out
+        '''
+        out = self.apply_func(*args, out_dict=self.modules,
+                              matching='cartesian', order='typical', **kwargs)
+        if self.out is None:
+            self.out = [out]
+        else:
+            self.out.append(out)
+        return sep_dicts(out)
 
     def __getitem__(self, i):
         '''Accesses ith item in the module set
