@@ -50,55 +50,24 @@ class ModuleSet:
                      out:    out_dict = {(train_1, LR)  : fitted logistic, (train_2, LR) :  fitted logistic}.
             Currently matching = 'subset' is not used...
         '''
-        # print('apply func!')
-        
         for ele in args:
             if not isinstance(ele, dict):
                 raise Exception('Need to run init_args before calling module_set!')
         
         if out_dict is None:
             out_dict = self.modules
-        data_dict = combine_two_dicts(*args) #Changed so that it combines two dicts via cartesian if either has length 1(ignoring prev), and does subset matching if both have more than length 1. 
-                                            #
+            
+        # combine two dicts via cartesian if either has length 1 (ignoring prev)
+        # does subset matching if both have more than length 1 
+        data_dict = combine_two_dicts(*args) 
         if matching == 'cartesian':
             out_dict = cartesian_dict(data_dict, out_dict, order=order)
         elif matching == 'subset':
             out_dict = subset_dict(data_dict, out_dict, order=order)
         else:
             out_dict = {}
-        #for key,val in out_dict.items(): 
-        #    print(key)
-        #for key,val in self.out.items():
-        #    print("sef keys:" + str(key))
-        #self.out.update(out_dict)
-        # add PREV_KEY
-        # print('prev', str(data_dict[PREV_KEY]))
-
         self.__prev__ = data_dict[PREV_KEY]
         out_dict[PREV_KEY] = self
-        # if replace == False:
-        #     self.out.update(out_dict)
-        # else:
-        #     self.out = out_dict
-
-        # store out_dict in modules
-        #self.modules = out_dict
-        #for key,val in out_dict.items(): 
-        #    print(key)
-        #    self.out[key] = val
-        # print(out_dict)
-
-        # NOTE: the call to sep_dicts() can happen in the specific method that needs it
-        # if use_out:
-        #     return out_dict
-        # else:
-        #     dicts_separated = sep_dicts(out_dict)
-        #     # print('\n\nsep\n', dicts_separated)
-        #     return dicts_separated
-
-        # out_dict = cartesian_dict(combine_dicts(*args))
-        # data_dict = append_dict(*args)
-        # out_dict = cartesian_dict(*args,self.modules)
 
         return out_dict
 
@@ -106,7 +75,6 @@ class ModuleSet:
     def fit(self, *args, **kwargs):
         '''todo: support kwargs
         '''
-        # funcs = [mod.fit for mod in self.modules.items()]
         if self._fitted:
             return self
         # atm, module is not necessarily a Module object
@@ -154,7 +122,8 @@ class ModuleSet:
         return self.apply_func(*args,matching = 'cartesian',order = 'typical',**kwargs)
 
     def __call__(self, *args, **kwargs):
-        self.fit(*args, **kwargs)
+        self.out = self.apply_func(*args, out_dict=self.modules,
+                                   matching='cartesian', order='typical', **kwargs)
         return sep_dicts(self.out)
 
     def __getitem__(self, i):
