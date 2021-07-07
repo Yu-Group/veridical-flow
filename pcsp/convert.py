@@ -292,6 +292,8 @@ def cartesian_dict(data, modules, order: str='typical'):
                 continue
 #             print(k1, k2)
             try:
+                # deepcopy the method so that original modules are not modified
+                # e.g., when v2 is a sklearn model .fit method
                 v2 = deepcopy(v2)
                 if not isinstance(k1, tuple):
                     if isinstance(v1, tuple):
