@@ -19,6 +19,7 @@ setuptools.setup(
         'joblib',
         'scikit-learn >=0.23.0',  # 0.23+ only works on py3.6+)
         'pytest',
+        'ray'
     ],
     python_requires='>=3.6',
     classifiers=[
