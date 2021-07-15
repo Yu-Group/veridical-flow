@@ -171,7 +171,7 @@ def combine_two_dicts(*args):
         return {}
     elif n_args == 1:
         return args[0]
-    else:
+    elif n_args == 2:
         combined_dict = {}
         if(len(args[0].keys()) <= 2 or len(args[1].keys()) <= 2):
             for key0,val0 in args[0].items():
@@ -190,6 +190,8 @@ def combine_two_dicts(*args):
             return combined_dict
         else:
             return combine_two_subset_dicts(*args)
+    else:
+        return combine_three_subset_dicts(*args)
 
 
 
@@ -200,7 +202,7 @@ def combine_two_subset_dicts(*args, order='typical'):
     Assumes that keys are tuples. 
     '''
     n_args = len(args)
-#     print('subset', n_args)
+#    print('subset', n_args)
     if n_args == 0:
         return {}
     elif n_args == 1:
@@ -227,7 +229,13 @@ def combine_two_subset_dicts(*args, order='typical'):
         combined_dict[PREV_KEY] = prev_list
         return combined_dict
 
-
+def combine_three_subset_dicts(*args, order='typical'):
+    sorted_args = sorted(list(args), key=lambda x: len(x.items()))
+    merged_dict = combine_two_dicts(*sorted_args[:2])
+    print(merged_dict.keys())
+    r = combine_two_dicts(merged_dict, sorted_args[-1])
+    print(r.keys())
+    return r
 
 def combine_subset_dicts(*args, order='typical'):
     '''Combines dicts into one dict.
@@ -325,8 +333,8 @@ def cartesian_dict(data, modules, order: str='typical'):
                             cart.update({(*k1, k2): v2(v1)})  # *k1
                         else:
                             cart.update({(k2, k1): v2(v1)})
-            except:
-                pass
+            except Exception as e:
+                print(e)
     return cart
 
 
