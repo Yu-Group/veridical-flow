@@ -160,7 +160,7 @@ def sep_dicts(d: dict):
 #         return combined_dict
 
 
-def combine_two_dicts(*args):
+def combine_two_dicts(*args, order='typical'):
     '''assume len args is at most 2 for now.
     If either dictionary has only 1 key(ignoring prev), then we do a cartesian match. 
     If both dictionaries has more than 1 key(ignoring prev), then we do a subset dictionary match via combine_two_subset_dicts
@@ -191,7 +191,7 @@ def combine_two_dicts(*args):
         else:
             return combine_two_subset_dicts(*args)
     else:
-        return combine_three_subset_dicts(*args)
+        return combine_three_subset_dicts(*args, order=order)
 
 
 
@@ -230,15 +230,44 @@ def combine_two_subset_dicts(*args, order='typical'):
         return combined_dict
 
 def combine_three_subset_dicts(*args, order='typical'):
-    sorted_args = sorted(list(args), key=lambda x: len(x.items()))
-    merged_dict = combine_two_dicts(*sorted_args[:2])
-    print(merged_dict.keys())
-    r = combine_two_dicts(merged_dict, sorted_args[-1])
-    print(r.keys())
-    return r
+    if order == 'typical':
+        sorted_args = sorted(list(args), key=lambda x: len(x.items()))
+    else:
+        sorted_args = sorted(list(args), key=lambda x: len(x.items()), reverse=True)  
+    merged_dict = extend_dicts(*sorted_args[:2])
+    combined_dict = full_combine_two_dicts(merged_dict, sorted_args[-1])
+    prev_list = []
+    for i in range(len(args)):
+        if PREV_KEY in args[i]:
+            prev_list.append(args[i][PREV_KEY])
+    combined_dict[PREV_KEY] = prev_list
+    return combined_dict
+
+def full_combine_two_dicts(merged: dict, non_merged: dict):
+    '''Cartesian matching of dictionary non_merged
+    with all keys of dictionary merged treated as a unit
+    TODO: add keyword arg to reverse tuple ordering?
+    '''
+    combined_dict = {}
+    for key, val in non_merged.items():
+        if key != PREV_KEY:
+            combined_dict[(key, *merged.keys())] = [val, *merged.values()]
+    return combined_dict
+
+def extend_dicts(*args):
+    '''Extends dicts into one dict
+    Assumes all keys are unique (except PREV_KEY)
+    '''
+    combined_dict = {}
+    for arg in args:
+        for key, val in arg.items():
+            if key != PREV_KEY:
+                combined_dict[key] = val
+    return combined_dict
 
 def combine_subset_dicts(*args, order='typical'):
-    '''Combines dicts into one dict.
+    '''DEPRECATED
+    Combines dicts into one dict.
     Values are now a list of items from input dicts.
     only combines dicts with key from one dictionary is subset of other dictionaries last value in key.
     Assumes that keys are tuples. 
