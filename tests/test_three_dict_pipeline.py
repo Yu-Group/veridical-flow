@@ -85,9 +85,8 @@ class TestThreeDictPipeline():
         feature_importance_set = ModuleSet(name='feature_importance', modules=[permutation_importance], module_keys=["permutation_importance"])
         importances = feature_importance_set.evaluate(modeling_set.out, X_test, y_test)
 
-        G = build_graph(importances, draw=True)
-
         # asserts
         k1 = (('X_train', 'y_train', 'subsampling_0', 'LR'), 'X_test', 'y_test', 'permutation_importance')
         assert k1 in importances, 'hard metrics should have ' + str(k1) + ' as key'
-        
+        assert '__prev__' in importances
+        assert len(importances.keys()) == 7
