@@ -85,8 +85,8 @@ class ModuleSet:
 
 
         # combine two dicts via cartesian if either has length 1 (ignoring prev)
-        # does subset matching if both have more than length 1
-        data_dict = combine_two_dicts(*args)
+        # does subset matching if both have more than length 1 
+        data_dict = combine_two_dicts(*args, order=order)
         if matching == 'cartesian':
             out_dict = cartesian_dict(data_dict, out_dict, order=order)
         elif matching == 'subset':

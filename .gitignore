@@ -38,4 +38,9 @@ notebooks/joblib/
 # mlflow tracking directory
 notebooks/mlruns/
 
+# data directory
+/data/
+# pytorch data directory
+notebooks/data/
+
 
