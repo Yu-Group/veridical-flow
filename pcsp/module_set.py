@@ -2,10 +2,17 @@
 Function arguments are each a list
 '''
 PREV_KEY = '__prev__'
+
 from pcsp.convert import *
+from pcsp.module import Module, AsyncModule
+
+from copy import deepcopy
+
+import ray
+import numpy as np
 
 class ModuleSet:
-    def __init__(self, name: str, modules, module_keys: list=None):
+    def __init__(self, name: str, modules, module_keys: list=None, is_async: bool=False):
         '''
         todo: include prev and next and change functions to include that. 
         Params
@@ -16,10 +23,17 @@ class ModuleSet:
             dictionary of functions that we want to associate with 
         module_keys: list (optional)
             list of names corresponding to each module
+        is_async: bool (optional)
+            if True, modules are computed asynchronously
         '''
         self.name = name
         self._fitted = False
         self.out = None # outputs
+        self._async = is_async
+        # check if any of the modules are AsyncModules
+        # if so, we'll make then all AsyncModules later on
+        if not self._async and np.any([isinstance(mod, AsyncModule) for mod in modules]):
+            self._async = True
         if type(modules) is dict:
             self.modules = modules
         elif type(modules) is list:
@@ -29,6 +43,13 @@ class ModuleSet:
             else:
                 module_keys = [f'{name}_{i}' for i in range(len(modules))]
             self.modules = dict(zip(module_keys, modules))
+        # if needed, wrap the modules in the Module or AsyncModule class
+        for k, v in self.modules.items():
+            if self._async:
+                if not isinstance(v, AsyncModule):
+                    self.modules[k] = AsyncModule(k, v)
+            elif not isinstance(v, Module):
+                self.modules[k] = Module(k, v)
 
     def apply_func(self, *args, out_dict=None, matching='cartesian', order='typical', **kwargs):
         '''
@@ -37,7 +58,7 @@ class ModuleSet:
         *args: List[Dict]: takes multiple dicts and combines them into one.
                 Then runs modules on each item in combined dict. 
         out_dict: the dictionary to pass to the matching function. If None, defaults to self.modules.
-        
+
         Returns
         -------
         results: dict
@@ -47,13 +68,22 @@ class ModuleSet:
                      out:    out_dict = {(train_1, LR)  : fitted logistic, (train_2, LR) :  fitted logistic}.
             Currently matching = 'subset' is not used...
         '''
+        if out_dict is None:
+            out_dict = self.modules
+
+        # deepcopy args to avoid mutating them
+        args = deepcopy(args)
+
         for ele in args:
             if not isinstance(ele, dict):
                 raise Exception('Need to run init_args before calling module_set!')
-        
-        if out_dict is None:
-            out_dict = self.modules
-            
+            if self._async:
+                # send data to the remote object store
+                for k, v in ele.items():
+                    if k != PREV_KEY:
+                        ele[k] = ray.put(v)
+
+
         # combine two dicts via cartesian if either has length 1 (ignoring prev)
         # does subset matching if both have more than length 1 
         data_dict = combine_two_dicts(*args, order=order)
@@ -63,6 +93,12 @@ class ModuleSet:
             out_dict = subset_dict(data_dict, out_dict, order=order)
         else:
             out_dict = {}
+
+        if self._async:
+            out_keys = list(out_dict.keys())
+            out_vals = ray.get(list(out_dict.values()))
+            out_dict = dict(zip(out_keys, out_vals))
+
         self.__prev__ = data_dict[PREV_KEY]
         out_dict[PREV_KEY] = self
 
@@ -74,13 +110,9 @@ class ModuleSet:
         '''
         if self._fitted:
             return self
-        # atm, module is not necessarily a Module object
         out_dict = {}
         for k, v in self.modules.items():
-            if hasattr(v, 'fit'):
-                out_dict[k] = v.fit
-            else:
-                out_dict[k] = v
+            out_dict[k] = v.fit
         self.out = self.apply_func(*args, out_dict=out_dict, matching='cartesian', order='typical', **kwargs)
         self._fitted = True
         return self
