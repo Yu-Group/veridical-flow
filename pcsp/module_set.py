@@ -88,7 +88,10 @@ class ModuleSet:
         # does subset matching if both have more than length 1 
         data_dict = combine_two_dicts(*args, order=order)
         if matching == 'cartesian':
-            out_dict = cartesian_dict(data_dict, out_dict, order=order)
+            if 'match_on' in kwargs:
+                out_dict = cartesian_dict(data_dict, out_dict, order=order, match_on=kwargs['match_on'])
+            else:
+                out_dict = cartesian_dict(data_dict, out_dict, order=order)
         elif matching == 'subset':
             out_dict = subset_dict(data_dict, out_dict, order=order)
         else:
@@ -126,14 +129,14 @@ class ModuleSet:
             results.append(result)
         return results
 
-    def predict(self, *args, **kwargs):
+    def predict(self, *args, match_on=None, **kwargs):
         if not self._fitted:
             raise AttributeError('Please fit the ModuleSet object before calling the predict method.')
         pred_dict = {}
         for k, v in self.out.items():
             if hasattr(v, 'predict'):
                 pred_dict[k] = v.predict
-        return self.apply_func(*args, out_dict=pred_dict, matching='cartesian', order='backwards', **kwargs)
+        return self.apply_func(*args, out_dict=pred_dict, matching='cartesian', order='backwards', match_on=match_on, **kwargs)
 
     def predict_proba(self, *args, **kwargs):
         if not self._fitted:
@@ -147,7 +150,7 @@ class ModuleSet:
     def evaluate(self, *args, **kwargs):
         '''Combines dicts before calling apply_func
         '''
-        return self.apply_func(*args,matching = 'cartesian',order = 'typical',**kwargs)
+        return self.apply_func(*args, matching='cartesian', order='typical', **kwargs)
 
     def __call__(self, *args, **kwargs):
         '''Save into self.out, or append to self.out
