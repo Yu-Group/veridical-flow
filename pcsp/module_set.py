@@ -2,6 +2,7 @@
 Function arguments are each a list
 '''
 PREV_KEY = '__prev__'
+MATCH_KEY = '__num_matches__'
 
 from pcsp.convert import *
 from pcsp.module import Module, AsyncModule
