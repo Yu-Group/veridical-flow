@@ -215,7 +215,7 @@ def combine_two_dicts(*args, order='typical'):
             #print('combine', prev_list)
             return combined_dict
         else:
-            return combine_two_subset_dicts(*args)
+            return combine_two_subset_dicts(*args, order=order)
     else:
         return combine_three_subset_dicts(*args, order=order)
 
@@ -223,11 +223,11 @@ def combine_two_dicts(*args, order='typical'):
 def combine_two_subset_dicts(*args, order='typical'):
     '''Combines dicts into one dict.
     Values are now a list of items from input dicts.
-    only combines dicts with key from one dictionary is subset of other dictionaries last value in key.
-    Assumes that keys are tuples.
+    only combines dicts where (last value in) key from one dictionary 
+    is subset of other dictionaries key.
+    Assumes that keys are tuples. 
     '''
     n_args = len(args)
-#    print('subset', n_args)
     if n_args == 0:
         return {}
     elif n_args == 1:
@@ -239,14 +239,19 @@ def combine_two_subset_dicts(*args, order='typical'):
                 if key1 == PREV_KEY or key2 == PREV_KEY:
                     continue
                 else:
-                    if key2[-1] in set(key1) and order == 'typical':
-                        combined_dict[key1] = [val1, val2]
-                    elif key2[-1] in set(key1) and order != 'typical':
-                        combined_dict[key2] = [val2, val1]
+                    if key2[-1] in set(key1) or key2 in set(key1):
+                        if order == 'typical':
+                            combined_dict[key1] = [val1, val2]
+                        elif order != 'typical':
+                            combined_dict[key2] = [val2, val1]
+                    elif key1[-1] in set(key2) or key1 in set(key2):
+                        if order == 'typical':
+                            combined_dict[key2] = [val1, val2]
+                        elif order != 'typical':
+                            combined_dict[key1] = [val2, val1]
                     else:
                         combined_dict = combined_dict
         # add prev_keys from all previous dicts as a list
-
         prev_list = []
         for i in range(n_args):
             if PREV_KEY in args[i]:
@@ -342,7 +347,7 @@ def create_dict(*args):
     return output_dict
 
 
-def cartesian_dict(data, modules, order: str='typical'):
+def cartesian_dict(data, modules, order: str='typical', match_on=None):
     '''returns cartesian product of two dictionaries
     Params
     ------
@@ -361,38 +366,39 @@ def cartesian_dict(data, modules, order: str='typical'):
                 # deepcopy the method so that original modules are not modified
                 # e.g., when v2 is a sklearn model .fit method
                 v2 = deepcopy(v2)
-                if not isinstance(k1, tuple):
-                    if isinstance(v1, tuple):
-                        if order == 'typical':
-                            cart.update({(k1, k2): v2(*v1)})
+                if match_on is None or k1[match_on] in set(k2):
+                    if not isinstance(k1, tuple):
+                        if isinstance(v1, tuple):
+                            if order == 'typical':
+                                cart.update({(k1, k2): v2(*v1)})
+                            else:
+                                cart.update({(*k2, k1): v2(*v1)})  # *k2
+                        elif isinstance(v1, list):
+                            if order == 'typical':
+                                cart.update({(k1, k2): v2(*v1)})
+                            else:
+                                cart.update({(*k2, k1): v2(*v1)})  # *k2
                         else:
-                            cart.update({(*k2, k1): v2(*v1)})  # *k2
-                    elif isinstance(v1, list):
-                        if order == 'typical':
-                            cart.update({(k1, k2): v2(*v1)})
-                        else:
-                            cart.update({(*k2, k1): v2(*v1)})  # *k2
+                            if order == 'typical':
+                                cart.update({(k1, k2): v2(v1)})
+                            else:
+                                cart.update({(*k2, k1): v2(v1)})  # *k2
                     else:
-                        if order == 'typical':
-                            cart.update({(k1, k2): v2(v1)})
+                        if isinstance(v1, tuple):
+                            if order == 'typical':
+                                cart.update({(*k1, k2): v2(*v1)})  # *k1
+                            else:
+                                cart.update({(k2, k1): v2(*v1)})
+                        elif isinstance(v1, list):
+                            if order == 'typical':
+                                cart.update({(*k1, k2): v2(*v1)})  # *k1
+                            else:
+                                cart.update({(k2, k1): v2(*v1)})
                         else:
-                            cart.update({(*k2, k1): v2(v1)})  # *k2
-                else:
-                    if isinstance(v1, tuple):
-                        if order == 'typical':
-                            cart.update({(*k1, k2): v2(*v1)})  # *k1
-                        else:
-                            cart.update({(k2, k1): v2(*v1)})
-                    elif isinstance(v1, list):
-                        if order == 'typical':
-                            cart.update({(*k1, k2): v2(*v1)})  # *k1
-                        else:
-                            cart.update({(k2, k1): v2(*v1)})
-                    else:
-                        if order == 'typical':
-                            cart.update({(*k1, k2): v2(v1)})  # *k1
-                        else:
-                            cart.update({(k2, k1): v2(v1)})
+                            if order == 'typical':
+                                cart.update({(*k1, k2): v2(v1)})  # *k1
+                            else:
+                                cart.update({(k2, k1): v2(v1)})
             except Exception as e:
                 print(e)
     return cart
