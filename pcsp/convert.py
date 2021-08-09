@@ -117,7 +117,7 @@ def sep_dicts(d: dict):
 
             # add back prev
             prev = d[PREV_KEY]
-            match = d[MATCH_KEY]
+            match = d[MATCH_KEY] if MATCH_KEY in d else 0
             for i in range(len(sep_dicts)):
                 sep_dicts[i][PREV_KEY] = prev
                 sep_dicts[i][MATCH_KEY] = match
