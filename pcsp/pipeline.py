@@ -60,7 +60,7 @@ class PCSPipeline:
                 name_lists.append([f'{step.name}_{i}_{str(mod)[:8]}'
                                    for i, mod in enumerate(step)])
             return list(itertools.product(*name_lists))
-        
+
 
 def build_graph(node, draw=True):
     '''Helper function that just calls build_graph_recur with an empty graph
@@ -72,7 +72,7 @@ def build_graph(node, draw=True):
     -------
     G: nx.Digraph()
     '''
-    
+
     def build_graph_recur(node, G):
         '''Builds a graph up using __prev__ and PREV_KEY pointers
         Params
@@ -92,8 +92,6 @@ def build_graph(node, draw=True):
         elif type(node) is dict:
             s_node = 'End'
             nodes_prev = node[PREV_KEY]
-            if type(nodes_prev) is not list:
-                nodes_prev = [nodes_prev]
             for node_prev in nodes_prev:
                 G.add_edge(node_prev, s_node)
                 G = build_graph_recur(node_prev, G)
@@ -101,14 +99,11 @@ def build_graph(node, draw=True):
 
         # main case: at a moduleset
         elif 'ModuleSet' in str(type(node)):
-            # print(node)
             nodes_prev = node.__prev__
-            if type(nodes_prev) is not list:
-                nodes_prev = [nodes_prev]
             for node_prev in nodes_prev:
                 G.add_edge(node_prev, node)
                 G = build_graph_recur(node_prev, G)
-            return G    
+            return G
 
     G = nx.DiGraph()
     G = build_graph_recur(node, G)

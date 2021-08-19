@@ -20,8 +20,8 @@ def init_args(args_tuple: tuple, names=None):
     output_dicts = []
     for (i, ele) in enumerate(args_tuple):
         output_dicts.append({
-            names[i]: args_tuple[i],
-            PREV_KEY: 'init',
+            (names[i], ): args_tuple[i],
+            PREV_KEY: ('init', ),
         })
     return output_dicts
 
@@ -107,28 +107,25 @@ def sep_dicts(d: dict):
         return {}
     else:
         # try separating dict into multiple dicts
-        try:
-            n_tup = len(tuple(d.values())[0])  # first item in list
-            sep_dicts = [dict() for x in range(n_tup)]
-            for key, value in d.items():
-                if not key in KEYS:
-                    for i in range(n_tup):
-                        sep_dicts[i][key] = value[i]
+        val_list_len = len(tuple(d.values())[0])  # first item in list
+        sep_dicts = [dict() for x in range(val_list_len)]
+        for key, value in d.items():
+            if not key in KEYS:
+                for i in range(val_list_len):
+                    # assumes the correct sub-key for item i is in the i-th position
+                    new_key = (key[i], ) + key[val_list_len:]
+                    sep_dicts[i][new_key] = value[i]
 
-            # add back prev
-            prev = d[PREV_KEY]
-            match = d[MATCH_KEY] if MATCH_KEY in d else 0
-            for i in range(len(sep_dicts)):
-                sep_dicts[i][PREV_KEY] = prev
-                sep_dicts[i][MATCH_KEY] = match
-            return sep_dicts
-
-        # just return original dict
-        except:
-            return d
+        # add back prev
+        prev = d[PREV_KEY]
+        match = d[MATCH_KEY] if MATCH_KEY in d else 0
+        for i in range(len(sep_dicts)):
+            sep_dicts[i][PREV_KEY] = prev
+            sep_dicts[i][MATCH_KEY] = match
+        return sep_dicts
 
 
-def combine_dicts(*args: dict):
+def combine_dicts(*args: dict, base_case=True):
     '''Combines any number of dictionaries into a single dictionary. If MATCH_KEY
     is found in dict d, then the number of matching sub-keys in each tuple key
     must equal d[MATCH_KEY]. Dictionaries are combined left to right, with the
@@ -137,12 +134,19 @@ def combine_dicts(*args: dict):
     for at least one input.
     '''
     n_args = len(args)
+    combined_dict = {}
     if n_args == 0:
-        return {}
+        return combined_dict
     elif n_args == 1:
-        return args[0]
+        for k in args[0]:
+            # wrap the dict values in tuples; this is helpful so that when we
+            # pass the values to a module fun in we just can use * expansion
+            if k not in KEYS:
+                combined_dict[k] = (args[0][k], )
+            else:
+                combined_dict[k] = args[0][k]
+        return combined_dict
     elif n_args == 2:
-        combined_dict = {}
 
         num_matches = 0
         if MATCH_KEY in args[1]:
@@ -162,28 +166,32 @@ def combine_dicts(*args: dict):
                     if key_matches == num_matches:
                         # positive match
                         # make sure to preserve sub-key order
+                        # keeps the last occurrence of a non-unique sub-key
                         combined_key = tuple([
                             combined_key[i] for i in range(len(combined_key))
                             if not combined_key[i] in combined_key[:i]
                         ])
-                        combined_dict[combined_key] = [args[0][k0], args[1][k1]]
+                        if base_case:
+                            combined_dict[combined_key] = (args[0][k0], args[1][k1])
+                        else:
+                            combined_dict[combined_key] = args[0][k0] + (args[1][k1], )
                 else:
-                    # no matching, just combine via cartesian
-                    combined_dict[combined_key] = [args[0][k0], args[1][k1]]
+                    # no matching, just combine everything
+                    if base_case:
+                        combined_dict[combined_key] = (args[0][k0], args[1][k1])
+                    else:
+                        combined_dict[combined_key] = args[0][k0] + (args[1][k1], )
 
-        prev_list = []
+        prev_tup = ()
         for i in range(2):
             if PREV_KEY in args[i]:
-                if isinstance(args[i][PREV_KEY], list):
-                    prev_list.extend(args[i][PREV_KEY])
-                else:
-                    prev_list.append(args[i][PREV_KEY])
-        combined_dict[PREV_KEY] = prev_list
+                prev_tup += args[i][PREV_KEY]
+        combined_dict[PREV_KEY] = prev_tup
         combined_dict[MATCH_KEY] = 0
         return combined_dict
     else:
         # combine the first two dicts and call recursively with remaining args
-        return combine_dicts(combine_dicts(args[0], args[1]), *args[2:])
+        return combine_dicts(combine_dicts(args[0], args[1]), *args[2:], base_case=False)
 
 
 def combine_two_dicts(*args, order='typical'):
@@ -345,6 +353,39 @@ def create_dict(*args):
         key = "data_" + str(i)
         output_dict[key] = args_list[i]
     return output_dict
+
+
+def apply_modules(modules: dict, data_dict: dict):
+    out_dict = {}
+
+    num_matches = 0
+    if MATCH_KEY in data_dict:
+        num_matches += data_dict[MATCH_KEY]
+
+    for k0 in modules:
+        for k1 in data_dict:
+            if k0 in KEYS or k1 in KEYS:
+                continue
+            combined_key = k1 + k0
+            if num_matches > 0:
+                # matching
+                key_matches = 0
+                for k in k0:
+                    if k in k1:
+                        key_matches += 1
+                if key_matches == num_matches:
+                    # positive match
+                    # make sure to preserve sub-key order
+                    combined_key = tuple([
+                        combined_key[i] for i in range(len(combined_key))
+                        if not combined_key[i] in combined_key[:i]
+                    ])
+                    out_dict[combined_key] = deepcopy(modules[k0])(*data_dict[k1])
+            else:
+                # no matching, just combine via cartesian
+                out_dict[combined_key] = deepcopy(modules[k0])(*data_dict[k1])
+
+    return out_dict
 
 
 def cartesian_dict(data, modules, order: str='typical', match_on=None):

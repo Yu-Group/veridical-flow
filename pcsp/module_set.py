@@ -13,7 +13,8 @@ import ray
 import numpy as np
 
 class ModuleSet:
-    def __init__(self, name: str, modules, module_keys: list=None, is_async: bool=False):
+    def __init__(self, name: str, modules, module_keys: list=None,
+                 is_async: bool=False, output_matching: bool=False):
         '''
         todo: include prev and next and change functions to include that. 
         Params
@@ -31,6 +32,7 @@ class ModuleSet:
         self._fitted = False
         self.out = None # outputs
         self._async = is_async
+        self._output_matching = output_matching
         # check if any of the modules are AsyncModules
         # if so, we'll make then all AsyncModules later on
         if not self._async and np.any([isinstance(mod, AsyncModule) for mod in modules]):
@@ -41,16 +43,18 @@ class ModuleSet:
             if module_keys is not None:
                 assert type(module_keys) is list, 'modules passed as list but module_names is not a list'
                 assert len(modules) == len(module_keys), 'modules list and module_names list differ'
+                module_keys = [(k,) for k in module_keys]
             else:
-                module_keys = [f'{name}_{i}' for i in range(len(modules))]
+                module_keys = [(f'{name}_{i}', ) for i in range(len(modules))]
+            # convert module keys to singleton tuples
             self.modules = dict(zip(module_keys, modules))
         # if needed, wrap the modules in the Module or AsyncModule class
         for k, v in self.modules.items():
             if self._async:
                 if not isinstance(v, AsyncModule):
-                    self.modules[k] = AsyncModule(k, v)
+                    self.modules[k] = AsyncModule(k[0], v)
             elif not isinstance(v, Module):
-                self.modules[k] = Module(k, v)
+                self.modules[k] = Module(k[0], v)
 
     def apply_func(self, *args, out_dict=None, matching='cartesian', order='typical', **kwargs):
         '''
@@ -84,19 +88,8 @@ class ModuleSet:
                     if k != PREV_KEY:
                         ele[k] = ray.put(v)
 
-
-        # combine two dicts via cartesian if either has length 1 (ignoring prev)
-        # does subset matching if both have more than length 1 
-        data_dict = combine_two_dicts(*args, order=order)
-        if matching == 'cartesian':
-            if 'match_on' in kwargs:
-                out_dict = cartesian_dict(data_dict, out_dict, order=order, match_on=kwargs['match_on'])
-            else:
-                out_dict = cartesian_dict(data_dict, out_dict, order=order)
-        elif matching == 'subset':
-            out_dict = subset_dict(data_dict, out_dict, order=order)
-        else:
-            out_dict = {}
+        data_dict = combine_dicts(*args)
+        out_dict = apply_modules(out_dict, data_dict)
 
         if self._async:
             out_keys = list(out_dict.keys())
@@ -104,8 +97,13 @@ class ModuleSet:
             out_dict = dict(zip(out_keys, out_vals))
 
         self.__prev__ = data_dict[PREV_KEY]
-        out_dict[PREV_KEY] = self
+        out_dict[PREV_KEY] = (self, )
 
+        if self._output_matching:
+            if not MATCH_KEY in out_dict.keys():
+                out_dict[MATCH_KEY] = 1
+            else:
+                out_dict[MATCH_KEY] += 1
         return out_dict
 
 
@@ -117,7 +115,7 @@ class ModuleSet:
         out_dict = {}
         for k, v in self.modules.items():
             out_dict[k] = v.fit
-        self.out = self.apply_func(*args, out_dict=out_dict, matching='cartesian', order='typical', **kwargs)
+        self.out = self.apply_func(*args, out_dict=out_dict, **kwargs)
         self._fitted = True
         return self
 
@@ -130,14 +128,14 @@ class ModuleSet:
             results.append(result)
         return results
 
-    def predict(self, *args, match_on=None, **kwargs):
+    def predict(self, *args, **kwargs):
         if not self._fitted:
             raise AttributeError('Please fit the ModuleSet object before calling the predict method.')
         pred_dict = {}
         for k, v in self.out.items():
             if hasattr(v, 'predict'):
                 pred_dict[k] = v.predict
-        return self.apply_func(*args, out_dict=pred_dict, matching='cartesian', order='backwards', match_on=match_on, **kwargs)
+        return self.apply_func(*args, out_dict=pred_dict, matching='cartesian', order='backwards', **kwargs)
 
     def predict_proba(self, *args, **kwargs):
         if not self._fitted:
@@ -151,18 +149,13 @@ class ModuleSet:
     def evaluate(self, *args, **kwargs):
         '''Combines dicts before calling apply_func
         '''
-        return self.apply_func(*args, matching='cartesian', order='typical', **kwargs)
+        return self.apply_func(*args, **kwargs)
 
     def __call__(self, *args, **kwargs):
-        '''Save into self.out, or append to self.out
         '''
-        out = self.apply_func(*args, out_dict=self.modules,
-                              matching='cartesian', order='typical', **kwargs)
-        if self.out is None:
-            self.out = [out]
-        else:
-            self.out.append(out)
-        return sep_dicts(out)
+        '''
+        out = self.apply_func(*args, **kwargs)
+        return out
 
     def __getitem__(self, i):
         '''Accesses ith item in the module set
