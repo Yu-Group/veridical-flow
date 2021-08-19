@@ -5,7 +5,7 @@ from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.utils import resample
 from functools import partial
-from pcsp import PCSPipeline, ModuleSet, Module, init_args # must install pcsp first (pip install pcsp)
+from pcsp import PCSPipeline, ModuleSet, Module, init_args, sep_dicts
 from pcsp.pipeline import build_graph
 import sklearn
 from sklearn.metrics import accuracy_score, balanced_accuracy_score, roc_auc_score, r2_score
@@ -15,10 +15,10 @@ from sklearn.inspection import permutation_importance
 import pandas as pd
 
 class TestPipelines():
-    
+
     def setup(self):
         pass
-    
+
     def test_subsampling_fitting_metrics_pipeline(self):
         '''Simplest synthetic pipeline
         '''
@@ -35,8 +35,9 @@ class TestPipelines():
                                     random_state=i)
                              for i in range(3)]
         subsampling_set = ModuleSet(name='subsampling',
-                                    modules=subsampling_funcs)
-        X_trains, y_trains = subsampling_set(X_train, y_train)
+                                    modules=subsampling_funcs,
+                                    output_matching=True)
+        X_trains, y_trains = sep_dicts(subsampling_set(X_train, y_train))
 
 
         #fit models
@@ -55,15 +56,14 @@ class TestPipelines():
 
         hard_metrics = hard_metrics_set.evaluate(preds_test, y_test)
         G = build_graph(hard_metrics, draw=True)
-        
+
         # asserts
-        k1 = (('X_train', 'y_train', 'subsampling_0', 'LR', 'X_test'),
-              'y_test', 'Acc')
+        k1 = ('X_test', 'X_train', 'subsampling_0', 'y_train', 'LR', 'y_test', 'Acc')
         assert k1 in hard_metrics, 'hard metrics should have ' + str(k1) + ' as key'
         assert hard_metrics[k1] > 0.9 # 0.9090909090909091
         assert '__prev__' in hard_metrics
         assert len(hard_metrics.keys()) == 13
-        
+
     def test_feat_engineering(self):
         '''Feature engineering pipeline
         '''
@@ -86,7 +86,8 @@ class TestPipelines():
                                  partial(extract_feats, feat_names=['CRIM', 'ZN', 'INDUS', 'CHAS', 'NOX', 'RM', 'AGE']),
                                 ]
         feat_extraction = ModuleSet(name='feat_extraction',
-                                    modules=feat_extraction_funcs)
+                                    modules=feat_extraction_funcs,
+                                    output_matching=True)
 
         X_feats_train = feat_extraction(X_train)
         X_feats_test = feat_extraction(X_test)
@@ -102,25 +103,19 @@ class TestPipelines():
         # #get predictions
         preds_all = modeling_set.predict(X_feats_train)
 
-        # y_test_dict = {('data_0', 'feat_extraction_0'): y_test['X_test'], ('data_0', 'feat_extraction_1'): y_test['X_test']}
-
         #get metrics
         hard_metrics_set = ModuleSet(name='hard_metrics',
                                       modules=[r2_score],
                                      module_keys=["r2"])
         hard_metrics = hard_metrics_set.evaluate(preds_all, y_train)
 
-
-
         # inspect the pipeline
         #for k in hard_metrics:
         #     print(k, hard_metrics[k])
         G = build_graph(hard_metrics, draw=True)
-        
+
         # asserts
-        k1 = (((('X_train', 'feat_extraction_0'), 'y_train', 'DT'),
-               ('X_train', 'feat_extraction_0')),
-              'y_train', 'r2')
+        k1 = ('X_train', 'X_train', 'feat_extraction_0', 'y_train', 'DT', 'y_train', 'r2')
         assert k1 in hard_metrics, 'hard metrics should have ' + str(k1) + ' as key'
         assert hard_metrics[k1] > 0.9 # 0.9090909090909091
         assert '__prev__' in hard_metrics
@@ -142,8 +137,9 @@ class TestPipelines():
                                     random_state=i)
                              for i in range(3)]
         subsampling_set = ModuleSet(name='subsampling',
-                                    modules=subsampling_funcs)
-        X_trains, y_trains = subsampling_set(X_train, y_train)
+                                    modules=subsampling_funcs,
+                                    output_matching=True)
+        X_trains, y_trains = sep_dicts(subsampling_set(X_train, y_train))
 
 
         #fit models
@@ -160,7 +156,7 @@ class TestPipelines():
         importances = feature_importance_set.evaluate(modeling_set.out, X_test, y_test)
 
         # asserts
-        k1 = (('X_train', 'y_train', 'subsampling_0', 'LR'), 'X_test', 'y_test', 'permutation_importance')
+        k1 = ('X_train', 'subsampling_0', 'y_train', 'LR', 'X_test', 'y_test', 'permutation_importance')
         assert k1 in importances, 'hard metrics should have ' + str(k1) + ' as key'
         assert '__prev__' in importances
         assert len(importances.keys()) == 7

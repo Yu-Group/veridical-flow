@@ -2,7 +2,7 @@
 Function arguments are each a list
 '''
 PREV_KEY = '__prev__'
-MATCH_KEY = '__num_matches__'
+MATCH_KEY = '__match_subkey_ids__'
 
 from pcsp.convert import *
 from pcsp.module import Module, AsyncModule
@@ -42,8 +42,9 @@ class ModuleSet:
         elif type(modules) is list:
             if module_keys is not None:
                 assert type(module_keys) is list, 'modules passed as list but module_names is not a list'
-                assert len(modules) == len(module_keys), 'modules list and module_names list differ'
-                module_keys = [(k,) for k in module_keys]
+                assert len(modules) == len(module_keys), 'modules list and module_names list do not have the same length'
+                # TODO: add more checking of module_keys
+                module_keys = [k if isinstance(k, tuple) else (k, ) for k in module_keys]
             else:
                 module_keys = [(f'{name}_{i}', ) for i in range(len(modules))]
             # convert module keys to singleton tuples
@@ -61,7 +62,7 @@ class ModuleSet:
         Params
         ------
         *args: List[Dict]: takes multiple dicts and combines them into one.
-                Then runs modules on each item in combined dict. 
+                Then runs modules on each item in combined dict.
         out_dict: the dictionary to pass to the matching function. If None, defaults to self.modules.
 
         Returns
@@ -100,10 +101,11 @@ class ModuleSet:
         out_dict[PREV_KEY] = (self, )
 
         if self._output_matching:
-            if not MATCH_KEY in out_dict.keys():
-                out_dict[MATCH_KEY] = 1
+            out_keys = out_dict.keys()
+            if not MATCH_KEY in out_keys:
+                out_dict[MATCH_KEY] = [len(tuple(out_keys)[0]) - 1]
             else:
-                out_dict[MATCH_KEY] += 1
+                out_dict[MATCH_KEY].append(len(tuple(out_keys)[0]) - 1)
         return out_dict
 
 

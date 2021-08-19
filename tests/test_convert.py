@@ -23,7 +23,7 @@ from numpy.testing import assert_equal
             ],
             # out_dict
             {
-                PREV_KEY:('prev_0','prev_1',), MATCH_KEY:0,
+                PREV_KEY:('prev_0','prev_1',), MATCH_KEY:[],
                 ('X_train','y_train','RF','X_test'):('RF_fitted','X_test_data'),
                 ('X_train','y_train','LR','X_test'):('LR_fitted','X_test_data')
             }
@@ -32,19 +32,19 @@ from numpy.testing import assert_equal
             # in_dicts
             [
                 {
-                    PREV_KEY:('prev_0','prev_1',), MATCH_KEY:0,
+                    PREV_KEY:('prev_0','prev_1',), MATCH_KEY:[],
                     ('X_train','y_train','RF','X_test'):['RF_fitted','X_test_data'],
                     ('X_train','y_train','LR','X_test'):['LR_fitted','X_test_data']
                 },
                 {
                     ('y_test',):'y_test_data', ('y_test',):'y_test_data',
-                    PREV_KEY:('prev_2',),MATCH_KEY:0
+                    PREV_KEY:('prev_2',),MATCH_KEY:[]
                 }
             ],
             # out_dict
             {
                 PREV_KEY:('prev_0','prev_1','prev_2',),
-                MATCH_KEY:0,
+                MATCH_KEY:[],
                 ('X_train','y_train','RF','X_test','y_test'):(
                     ['RF_fitted','X_test_data'],'y_test_data'
                 ),
@@ -79,7 +79,45 @@ from numpy.testing import assert_equal
                     'LR_fitted_1','X_test_data','y_test_data'
                 ),
                 PREV_KEY:(),
-                MATCH_KEY:0
+                MATCH_KEY:[]
+            }
+        ),
+        (
+            # in_dicts
+            [
+                {
+                    ('X_train','y_train','subsampling_0','RF'):'RF_fitted_0',
+                    ('X_train','y_train','subsampling_1','RF'):'RF_fitted_1',
+                    ('X_train','y_train','subsampling_0','LR'):'LR_fitted_0',
+                    ('X_train','y_train','subsampling_1','LR'):'LR_fitted_1',
+                },
+                {
+                    ('X_train','subsampling_0'):'X_train_data_0',
+                    ('X_train','subsampling_1'):'X_train_data_1',
+                    MATCH_KEY:[1]
+                },
+                {
+                    ('y_train','subsampling_0'):'y_train_data_0',
+                    ('y_train','subsampling_1'):'y_train_data_1',
+                    MATCH_KEY:[1]
+                }
+            ],
+            # out_dict
+            {
+                ('X_train','y_train','subsampling_0','RF','X_train','y_train'):(
+                    'RF_fitted_0','X_train_data_0','y_train_data_0'
+                ),
+                ('X_train','y_train','subsampling_1','RF','X_train','y_train'):(
+                    'RF_fitted_1','X_train_data_1','y_train_data_1'
+                ),
+                ('X_train','y_train','subsampling_0','LR','X_train','y_train'):(
+                    'LR_fitted_0','X_train_data_0','y_train_data_0'
+                ),
+                ('X_train','y_train','subsampling_1','LR','X_train','y_train'):(
+                    'LR_fitted_1','X_train_data_1','y_train_data_1'
+                ),
+                PREV_KEY:(),
+                MATCH_KEY:[]
             }
         ),
         (
@@ -96,7 +134,7 @@ from numpy.testing import assert_equal
                     ('X_train','y_train','subgroup_1','voxel_extract_1','LR'):'LR_fitted_11'
                 },
                 {
-                    MATCH_KEY:2,
+                    MATCH_KEY:[1,2],
                     ('X_test','subgroup_0','voxel_extract_0'):'X_test_data_00',
                     ('X_test','subgroup_0','voxel_extract_1'):'X_test_data_01',
                     ('X_test','subgroup_1','voxel_extract_0'):'X_test_data_10',
@@ -130,7 +168,7 @@ from numpy.testing import assert_equal
                     'LR_fitted_11','X_test_data_11'
                 ),
                 PREV_KEY:(),
-                MATCH_KEY:0
+                MATCH_KEY:[]
             }
         ),
         (
@@ -162,10 +200,10 @@ from numpy.testing import assert_equal
                         'LR_fitted_11','X_test_data_11'
                     ],
                     PREV_KEY:(),
-                    MATCH_KEY:0
+                    MATCH_KEY:[]
                 },
                 {
-                    MATCH_KEY:2,
+                    MATCH_KEY:[1,2],
                     ('y_test','subgroup_0','voxel_extract_0'):'y_test_data_00',
                     ('y_test','subgroup_0','voxel_extract_1'):'y_test_data_01',
                     ('y_test','subgroup_1','voxel_extract_0'):'y_test_data_10',
@@ -199,7 +237,7 @@ from numpy.testing import assert_equal
                     ['LR_fitted_11','X_test_data_11'],'y_test_data_11'
                 ),
                 PREV_KEY:(),
-                MATCH_KEY:0
+                MATCH_KEY:[]
             }
         ),
         (
@@ -231,10 +269,10 @@ from numpy.testing import assert_equal
                         ['LR_fitted_11','X_test_data_11'],'y_test_data'
                     ],
                     PREV_KEY:(),
-                    MATCH_KEY:0
+                    MATCH_KEY:[]
                 },
                 {
-                    MATCH_KEY:1,
+                    MATCH_KEY:[0],
                     ('LR','acc'):'LR_acc_func',
                     ('LR','bal_acc'):'LR_bal_acc_func',
                     ('RF','acc'):'RF_acc_func',
@@ -292,7 +330,7 @@ from numpy.testing import assert_equal
                     [['LR_fitted_11','X_test_data_11'],'y_test_data'],'LR_bal_acc_func'
                 ),
                 PREV_KEY:(),
-                MATCH_KEY:0
+                MATCH_KEY:[]
             }
         ),
         pytest.param(
@@ -311,7 +349,7 @@ from numpy.testing import assert_equal
             },
             # this test is expected to fail because combine_dicts() makes the
             # assumption that PREV_KEY entries are wrapped in tuples
-            marks=pytest.mark.xfail
+            marks=pytest.mark.xfail(strict=True)
         ),
     ]
 )
@@ -352,7 +390,7 @@ class TestCombineDicts:
                 },
                 # data_dict
                 {
-                    MATCH_KEY: 1,
+                    MATCH_KEY: [1],
                     ('data','group_0'): [np.array([1,2,3]), np.array([4,5,6])],
                     ('data','group_1'): [np.array([1,2,3]), np.array([4,5,6])],
                 }
@@ -363,7 +401,7 @@ class TestCombineDicts:
                 ('data','group_1','module_1'): np.array([4,10,18]),
             }
         ),
-        pytest.param(
+        (
             # in_dicts
             [
                 # modules
@@ -373,17 +411,16 @@ class TestCombineDicts:
                 },
                 # data_dict
                 {
-                    MATCH_KEY: 1,
+                    MATCH_KEY: [1],
                     ('data','group_0'): [np.array([1,2,3]), np.array([4,5,6])],
                     ('data','group_1'): [np.array([1,2,3]), np.array([4,5,6])],
                 }
             ],
             # out_dict
             {
-                ('data','group_0','module_0'): np.array([5,7,9]),
-                ('data','group_1','module_1'): np.array([4,10,18]),
+                ('data', 'data','group_0','module_0'): np.array([5,7,9]),
+                ('data', 'data','group_1','module_1'): np.array([4,10,18]),
             },
-            marks=pytest.mark.xfail
         ),
     ]
 )
