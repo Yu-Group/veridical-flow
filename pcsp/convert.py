@@ -127,13 +127,72 @@ def sep_dicts(d: dict):
         return sep_dicts
 
 
+def combine_keys(left_key, right_key, left_match_ids, right_match_ids):
+    '''Combines the keys into a single key, possibly matching on the keys in
+    positions determined by match_ids. Whichever key has fewer matching
+    requirements is the key we match on, and if one of the keys has no
+    match_ids then just concatenates the keys. If both match_ids are non-empty
+    and no match is found, returns an empty tuple. Returns the new key and new
+    match_ids for the combined key.
+    '''
+    left_num_matches = len(left_match_ids)
+    right_num_matches = len(right_match_ids)
+
+    # match on the arg that requires the smallest number of matching subkeys
+    if left_num_matches < right_num_matches:
+        match_key = left_key
+        match_ids = left_match_ids
+        compare_key = right_key
+        compare_match_ids = right_match_ids
+    else:
+        match_key = right_key
+        match_ids = right_match_ids
+        compare_key = left_key
+        compare_match_ids = left_match_ids
+
+    num_matches = len(match_ids)
+    if num_matches > 0:
+        # matching
+        matched_subkeys = []
+        for idx, subkey in enumerate(match_key):
+            if idx in match_ids and subkey in compare_key:
+                matched_subkeys.append(subkey)
+        if len(matched_subkeys) == num_matches:
+            # positive match: combine keys, making sure to preserve subkey order
+            # find subkeys in compare_key that went unmatched
+            unmatched_subkeys = [
+                compare_key[idx] for idx in compare_match_ids
+                if compare_key[idx] not in matched_subkeys
+            ]
+            # the right key is always filtered
+            filtered_key = tuple([
+                subkey for subkey in right_key if subkey not in matched_subkeys
+            ])
+            combined_key = left_key + filtered_key
+            new_match_ids = [
+                i for i in range(len(combined_key))
+                if combined_key[i] in matched_subkeys
+                or combined_key[i] in unmatched_subkeys
+            ]
+            return combined_key, new_match_ids
+        else:
+            # no match
+            return (), []
+    else:
+        # no matching needed, just concatenate key tuples
+        if left_num_matches > 0:
+            new_match_ids = left_match_ids
+        elif right_num_matches > 0:
+            new_match_ids = [idx + len(left_key) for idx in right_match_ids]
+        else:
+            new_match_ids = []
+        return left_key + right_key, new_match_ids
+
+
 def combine_dicts(*args: dict, base_case=True):
-    '''Combines any number of dictionaries into a single dictionary. If MATCH_KEY
-    is found in dict d, then the number of matching sub-keys in each tuple key
-    must equal d[MATCH_KEY]. Dictionaries are combined left to right, with the
-    rightmost arg determining the matching. As such, this method is not
-    commutative when d[MATCH_KEY] differs for input dicts and d[MATCH_KEY] != 0
-    for at least one input.
+    '''Combines any number of dictionaries into a single dictionary. Dictionaries
+    are combined left to right, matching on the subkeys of the arg that has
+    fewer matching requirements.
     '''
     n_args = len(args)
     combined_dict = {}
@@ -150,36 +209,38 @@ def combine_dicts(*args: dict, base_case=True):
         return combined_dict
     elif n_args == 2:
 
-        num_matches = 0
+        left_num_matches = right_num_matches = 0
+        left_match_ids = []
+        right_match_ids = []
+
+        if MATCH_KEY in args[0]:
+            left_match_ids = args[0][MATCH_KEY]
+
         if MATCH_KEY in args[1]:
-            match_ids = args[1][MATCH_KEY]
-            num_matches = len(match_ids)
+            right_match_ids = args[1][MATCH_KEY]
+
+        match_ids = []
 
         for k0 in args[0]:
             for k1 in args[1]:
+
                 if k0 in KEYS or k1 in KEYS:
                     continue
-                if num_matches > 0:
-                    # matching
-                    subkey_matches = 0
-                    for idx, subkey in enumerate(k1):
-                        if idx in match_ids and subkey in k0:
-                            subkey_matches += 1
-                    if subkey_matches == num_matches:
-                        # positive match
-                        # make sure to preserve sub-key order
-                        # keeps the last occurrence of a non-unique sub-key
-                        filtered_k1 = tuple([
-                            k1[i] for i in range(len(k1)) if i not in match_ids
-                        ])
-                        combined_key = k0 + filtered_k1
-                        if base_case:
-                            combined_dict[combined_key] = (args[0][k0], args[1][k1])
-                        else:
-                            combined_dict[combined_key] = args[0][k0] + (args[1][k1], )
-                else:
-                    combined_key = k0 + k1
-                    # no matching, just combine everything
+
+                # NOTE: having combine_keys() return new_match_ids is a
+                # temporary solution... TODO: implement a ModuleSetKey class to
+                # wrap the key tuples and keep the key's match_ids
+                combined_key, new_match_ids = combine_keys(
+                    k0, k1, left_match_ids, right_match_ids
+                )
+
+                # NOTE: this is pretty sloppy and should be fixed by having
+                # match_ids on a per-key basis rather than for an entire
+                # dictionary
+                if len(new_match_ids) > len(match_ids):
+                    match_ids = new_match_ids
+
+                if len(combined_key) > 0:
                     if base_case:
                         combined_dict[combined_key] = (args[0][k0], args[1][k1])
                     else:
@@ -190,7 +251,7 @@ def combine_dicts(*args: dict, base_case=True):
             if PREV_KEY in args[i]:
                 prev_tup += args[i][PREV_KEY]
         combined_dict[PREV_KEY] = prev_tup
-        combined_dict[MATCH_KEY] = []
+        combined_dict[MATCH_KEY] = match_ids
         return combined_dict
     else:
         # combine the first two dicts and call recursively with remaining args
@@ -362,34 +423,35 @@ def apply_modules(modules: dict, data_dict: dict):
     out_dict = {}
     num_matches = 0
 
+    mod_num_matches = data_num_matches = 0
+    mod_match_ids = []
+    data_match_ids = []
+
+    if MATCH_KEY in modules:
+        mod_match_ids = modules[MATCH_KEY]
+        mod_num_matches = len(mod_match_ids)
+
     if MATCH_KEY in data_dict:
-        match_ids = data_dict[MATCH_KEY]
-        num_matches += len(match_ids)
+        data_match_ids = data_dict[MATCH_KEY]
+        data_num_matches = len(data_match_ids)
+
+    match_ids = []
 
     for mod_k in modules:
         for data_k in data_dict:
             if mod_k in KEYS or data_k in KEYS:
                 continue
-            combined_key = data_k + mod_k
-            if num_matches > 0:
-                # matching
-                subkey_matches = 0
-                for idx, subkey in enumerate(data_k):
-                    if idx in match_ids and subkey in mod_k:
-                        subkey_matches += 1
-                if subkey_matches == num_matches:
-                    # positive match
-                    # make sure to preserve sub-key order
-                    filtered_data_k = tuple([
-                        data_k[i] for i in range(len(data_k)) if i not in match_ids
-                    ])
-                    combined_key = filtered_data_k + mod_k
-                    out_dict[combined_key] = deepcopy(modules[mod_k])(*data_dict[data_k])
-            else:
-                # no matching, just combine via cartesian
-                combined_key = data_k + mod_k
+            combined_key, new_match_ids = combine_keys(
+                data_k, mod_k, data_match_ids, mod_match_ids
+            )
+
+            if len(new_match_ids) > len(match_ids):
+                match_ids = new_match_ids
+
+            if len(combined_key) > 0:
                 out_dict[combined_key] = deepcopy(modules[mod_k])(*data_dict[data_k])
 
+    out_dict[MATCH_KEY] = match_ids
     return out_dict
 
 

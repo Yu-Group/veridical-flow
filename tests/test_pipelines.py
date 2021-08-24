@@ -7,6 +7,7 @@ from sklearn.utils import resample
 from functools import partial
 from pcsp import PCSPipeline, ModuleSet, Module, init_args, sep_dicts
 from pcsp.pipeline import build_graph
+from pcsp.module_set import PREV_KEY, MATCH_KEY
 import sklearn
 from sklearn.metrics import accuracy_score, balanced_accuracy_score, roc_auc_score, r2_score
 from sklearn.model_selection import train_test_split
@@ -61,8 +62,9 @@ class TestPipelines():
         k1 = ('X_test', 'X_train', 'subsampling_0', 'y_train', 'LR', 'y_test', 'Acc')
         assert k1 in hard_metrics, 'hard metrics should have ' + str(k1) + ' as key'
         assert hard_metrics[k1] > 0.9 # 0.9090909090909091
-        assert '__prev__' in hard_metrics
-        assert len(hard_metrics.keys()) == 13
+        assert PREV_KEY in hard_metrics
+        assert MATCH_KEY in hard_metrics
+        assert len(hard_metrics.keys()) == 14
 
     def test_feat_engineering(self):
         '''Feature engineering pipeline
@@ -115,11 +117,12 @@ class TestPipelines():
         G = build_graph(hard_metrics, draw=True)
 
         # asserts
-        k1 = ('X_train', 'X_train', 'feat_extraction_0', 'y_train', 'DT', 'y_train', 'r2')
+        k1 = ('X_train', 'feat_extraction_0', 'X_train', 'y_train', 'DT', 'y_train', 'r2')
         assert k1 in hard_metrics, 'hard metrics should have ' + str(k1) + ' as key'
         assert hard_metrics[k1] > 0.9 # 0.9090909090909091
-        assert '__prev__' in hard_metrics
-        assert len(hard_metrics.keys()) == 5
+        assert PREV_KEY in hard_metrics
+        assert MATCH_KEY in hard_metrics
+        assert len(hard_metrics.keys()) == 6
 
     def test_feature_importance(self):
         '''Simplest synthetic pipeline for feature importance
@@ -158,5 +161,6 @@ class TestPipelines():
         # asserts
         k1 = ('X_train', 'subsampling_0', 'y_train', 'LR', 'X_test', 'y_test', 'permutation_importance')
         assert k1 in importances, 'hard metrics should have ' + str(k1) + ' as key'
-        assert '__prev__' in importances
-        assert len(importances.keys()) == 7
+        assert PREV_KEY in importances
+        assert MATCH_KEY in importances
+        assert len(importances.keys()) == 8

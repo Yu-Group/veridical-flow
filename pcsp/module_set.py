@@ -101,11 +101,10 @@ class ModuleSet:
         out_dict[PREV_KEY] = (self, )
 
         if self._output_matching:
+            # the final subkey of keys in out_dict should be key created during
+            # ModuleSet.__init__()
             out_keys = out_dict.keys()
-            if not MATCH_KEY in out_keys:
-                out_dict[MATCH_KEY] = [len(tuple(out_keys)[0]) - 1]
-            else:
-                out_dict[MATCH_KEY].append(len(tuple(out_keys)[0]) - 1)
+            out_dict[MATCH_KEY].append(len(tuple(out_keys)[0]) - 1)
         return out_dict
 
 
@@ -137,6 +136,8 @@ class ModuleSet:
         for k, v in self.out.items():
             if hasattr(v, 'predict'):
                 pred_dict[k] = v.predict
+        if MATCH_KEY in self.out:
+            pred_dict[MATCH_KEY] = self.out[MATCH_KEY]
         return self.apply_func(*args, out_dict=pred_dict, matching='cartesian', order='backwards', **kwargs)
 
     def predict_proba(self, *args, **kwargs):
@@ -145,7 +146,9 @@ class ModuleSet:
         pred_dict = {}
         for k, v in self.out.items():
             if hasattr(v, 'predict_proba'):
-                pred_dict[k] = v.predict
+                pred_dict[k] = v.predict_proba
+        if MATCH_KEY in self.out:
+            pred_dict[MATCH_KEY] = self.out[MATCH_KEY]
         return self.apply_func(*args, out_dict=pred_dict, matching='cartesian', order='backwards', **kwargs)
 
     def evaluate(self, *args, **kwargs):
