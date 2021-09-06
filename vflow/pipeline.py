@@ -3,7 +3,7 @@
 import itertools
 import networkx as nx
 import pandas as pd
-from pcsp.module_set import PREV_KEY
+from vflow.module_set import PREV_KEY
 import matplotlib.pyplot as plt
 import joblib
 

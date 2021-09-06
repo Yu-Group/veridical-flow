@@ -1,18 +1,12 @@
-from pcsp.convert import cartesian_dict, combine_three_subset_dicts, combine_two_dicts, extend_dicts, full_combine_two_dicts
-import pcsp
 import numpy as np
-from functools import partial
-from pcsp import PCSPipeline, ModuleSet, Module, init_args # must install pcsp first (pip install pcsp)
-from pcsp.pipeline import build_graph
-import sklearn
 from sklearn.dummy import DummyClassifier
-from sklearn.metrics import accuracy_score, balanced_accuracy_score, roc_auc_score, r2_score
-from sklearn.model_selection import train_test_split
-from sklearn.datasets import make_classification
-import pandas as pd
+
+from vflow import ModuleSet, init_args  # must install vflow first (pip install vflow)
+from vflow.convert import combine_three_subset_dicts, combine_two_dicts, extend_dicts, full_combine_two_dicts
+
 
 class TestDictCombine():
-    
+
     def setup(self):
         pass
 
@@ -25,7 +19,7 @@ class TestDictCombine():
             assert arg in combined_dict.keys(), 'dict should contain ' + str(arg) + ' as key'
         for val in vals_tuple:
             assert val in combined_dict.values(), 'dict should contain ' + str(val) + ' as val'
-    
+
     def test_full_combine_dicts(self):
         x_train, y_train = init_args(('x_train', 'y_train'), names=['x_train', 'y_train'])
         merged_dict = extend_dicts(x_train, y_train)
@@ -35,7 +29,7 @@ class TestDictCombine():
         k2 = (('classifier 2', 'dt'), 'x_train', 'y_train')
         for k in [k1, k2]:
             assert k in combined_dict.keys(), 'dict should contain ' + str(k) + ' as key'
-    
+
     def test_combine_three_dicts(self):
         x_train, y_train = init_args(('x_train', 'y_train'), names=['x_train', 'y_train'])
         classifiers = {('classifier 1', 'rf'): 0, ('classifier 2', 'dt'): 1}
@@ -48,19 +42,19 @@ class TestDictCombine():
         v2 = [1, 'x_train', 'y_train']
         for v in [v1, v2]:
             assert v in combined_dict.values(), 'dict should contain ' + str(v) + ' as value'
-        
+
     def test_combine_subset_dicts(self):
         x_train = x_test = np.array([-1, 1, 1, 1])
         y_train = y_test = np.array([0, 1, 1, 1])
-        x_train, x_test, y_train, y_test = init_args((x_train, x_test, y_train, y_test), 
-                                                names=['x_train', 'x_test', 'y_train', 'y_test'])
+        x_train, x_test, y_train, y_test = init_args((x_train, x_test, y_train, y_test),
+                                                     names=['x_train', 'x_test', 'y_train', 'y_test'])
         dummy_subsample_fns = [lambda x, y: (x, y) for i in range(3)]
         dummy_samsample_set = ModuleSet(name='subsample', modules=dummy_subsample_fns)
         x_trains, y_trains = dummy_samsample_set(x_train, y_train)
         x_tests, y_tests = dummy_samsample_set(x_test, y_test)
         dummy_modeling_set = ModuleSet(name='modeling', modules=[DummyClassifier()])
         dummy_modeling_set.fit(x_trains, y_trains)
-        dummy_preds  = dummy_modeling_set.predict(x_tests)
+        dummy_preds = dummy_modeling_set.predict(x_tests)
         # y_tests keys of form ('x_test', 'y_test', 'subsample_0') should match with dummy_preds
         combined_dict = combine_two_dicts(dummy_preds, y_tests)
         k1 = (('x_train', 'y_train', 'subsample_0', 'modeling_0'), ('x_test', 'y_test', 'subsample_0'))

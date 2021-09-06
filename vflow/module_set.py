@@ -3,8 +3,8 @@ Function arguments are each a list
 '''
 PREV_KEY = '__prev__'
 
-from pcsp.convert import *
-from pcsp.module import Module, AsyncModule
+from vflow.convert import *
+from vflow.module import Module, AsyncModule
 
 from copy import deepcopy
 

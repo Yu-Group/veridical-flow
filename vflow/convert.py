@@ -1,6 +1,6 @@
 '''Useful functions for converting between different types (dicts, lists, tuples, etc.)
 '''
-from pcsp.module_set import PREV_KEY
+from vflow.module_set import PREV_KEY
 from copy import deepcopy
 
 def init_args(args_tuple: tuple, names=None):
