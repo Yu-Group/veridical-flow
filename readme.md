@@ -1,4 +1,4 @@
-<h1 align="center"> Veridical Flow </h1>
+<h1 align="center"> Veridical Flow 🌊 </h1>
 <p align="center"> A library for making stability analysis simple (following the veridical data science framework).
 </p>
 

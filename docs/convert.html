@@ -3,23 +3,21 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
-<meta name="generator" content="pdoc 0.9.2" />
-<title>pcsp.convert API documentation</title>
+<meta name="generator" content="pdoc 0.7.2" />
+<title>vflow.convert API documentation</title>
 <meta name="description" content="Useful functions for converting between different types (dicts, lists, tuples, etc.)" />
-<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
-<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
-<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
-<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
-<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<link href='https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css' rel='stylesheet'>
+<link href='https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/8.0.0/sanitize.min.css' rel='stylesheet'>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css" rel="stylesheet">
+<style>.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{font-weight:bold}#index h4 + ul{margin-bottom:.6em}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
 <style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
-<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
 </head>
 <body>
 <main>
 <article id="content">
 <header>
-<h1 class="title">Module <code>pcsp.convert</code></h1>
+<h1 class="title">Module <code>vflow.convert</code></h1>
 </header>
 <section id="section-intro">
 <p>Useful functions for converting between different types (dicts, lists, tuples, etc.)</p>
@@ -29,7 +27,7 @@
 </summary>
 <pre><code class="python">&#39;&#39;&#39;Useful functions for converting between different types (dicts, lists, tuples, etc.)
 &#39;&#39;&#39;
-from pcsp.module_set import PREV_KEY
+from vflow.module_set import PREV_KEY
 from copy import deepcopy
 
 def init_args(args_tuple: tuple, names=None):
@@ -189,7 +187,7 @@ def sep_dicts(d: dict):
 #         return combined_dict
 
 
-def combine_two_dicts(*args):
+def combine_two_dicts(*args, order=&#39;typical&#39;):
     &#39;&#39;&#39;assume len args is at most 2 for now.
     If either dictionary has only 1 key(ignoring prev), then we do a cartesian match. 
     If both dictionaries has more than 1 key(ignoring prev), then we do a subset dictionary match via combine_two_subset_dicts
@@ -200,7 +198,7 @@ def combine_two_dicts(*args):
         return {}
     elif n_args == 1:
         return args[0]
-    else:
+    elif n_args == 2:
         combined_dict = {}
         if(len(args[0].keys()) &lt;= 2 or len(args[1].keys()) &lt;= 2):
             for key0,val0 in args[0].items():
@@ -218,18 +216,20 @@ def combine_two_dicts(*args):
             #print(&#39;combine&#39;, prev_list)
             return combined_dict
         else:
-            return combine_two_subset_dicts(*args)
+            return combine_two_subset_dicts(*args, order=order)
+    else:
+        return combine_three_subset_dicts(*args, order=order)
 
 
 
 def combine_two_subset_dicts(*args, order=&#39;typical&#39;):
     &#39;&#39;&#39;Combines dicts into one dict.
     Values are now a list of items from input dicts.
-    only combines dicts with key from one dictionary is subset of other dictionaries last value in key.
+    only combines dicts where (last value in) key from one dictionary 
+    is subset of other dictionaries key.
     Assumes that keys are tuples. 
     &#39;&#39;&#39;
     n_args = len(args)
-#     print(&#39;subset&#39;, n_args)
     if n_args == 0:
         return {}
     elif n_args == 1:
@@ -241,14 +241,19 @@ def combine_two_subset_dicts(*args, order=&#39;typical&#39;):
                 if key1 == PREV_KEY or key2 == PREV_KEY:
                     continue
                 else:
-                    if key2[-1] in set(key1) and order == &#39;typical&#39;:
-                        combined_dict[key1] = [val1, val2]
-                    elif key2[-1] in set(key1) and order != &#39;typical&#39;:
-                        combined_dict[key2] = [val2, val1]
+                    if key2[-1] in set(key1) or key2 in set(key1):
+                        if order == &#39;typical&#39;:
+                            combined_dict[key1] = [val1, val2]
+                        elif order != &#39;typical&#39;:
+                            combined_dict[key2] = [val2, val1]
+                    elif key1[-1] in set(key2) or key1 in set(key2):
+                        if order == &#39;typical&#39;:
+                            combined_dict[key2] = [val1, val2]
+                        elif order != &#39;typical&#39;:
+                            combined_dict[key1] = [val2, val1]
                     else:
                         combined_dict = combined_dict
         # add prev_keys from all previous dicts as a list
-        
         prev_list = []
         for i in range(n_args):
             if PREV_KEY in args[i]:
@@ -256,10 +261,45 @@ def combine_two_subset_dicts(*args, order=&#39;typical&#39;):
         combined_dict[PREV_KEY] = prev_list
         return combined_dict
 
+def combine_three_subset_dicts(*args, order=&#39;typical&#39;):
+    if order == &#39;typical&#39;:
+        sorted_args = sorted(list(args), key=lambda x: len(x.items()))
+    else:
+        sorted_args = sorted(list(args), key=lambda x: len(x.items()), reverse=True)  
+    merged_dict = extend_dicts(*sorted_args[:2])
+    combined_dict = full_combine_two_dicts(merged_dict, sorted_args[-1])
+    prev_list = []
+    for i in range(len(args)):
+        if PREV_KEY in args[i]:
+            prev_list.append(args[i][PREV_KEY])
+    combined_dict[PREV_KEY] = prev_list
+    return combined_dict
 
+def full_combine_two_dicts(merged: dict, non_merged: dict):
+    &#39;&#39;&#39;Cartesian matching of dictionary non_merged
+    with all keys of dictionary merged treated as a unit
+    TODO: add keyword arg to reverse tuple ordering?
+    &#39;&#39;&#39;
+    combined_dict = {}
+    for key, val in non_merged.items():
+        if key != PREV_KEY:
+            combined_dict[(key, *merged.keys())] = [val, *merged.values()]
+    return combined_dict
+
+def extend_dicts(*args):
+    &#39;&#39;&#39;Extends dicts into one dict
+    Assumes all keys are unique (except PREV_KEY)
+    &#39;&#39;&#39;
+    combined_dict = {}
+    for arg in args:
+        for key, val in arg.items():
+            if key != PREV_KEY:
+                combined_dict[key] = val
+    return combined_dict
 
 def combine_subset_dicts(*args, order=&#39;typical&#39;):
-    &#39;&#39;&#39;Combines dicts into one dict.
+    &#39;&#39;&#39;DEPRECATED
+    Combines dicts into one dict.
     Values are now a list of items from input dicts.
     only combines dicts with key from one dictionary is subset of other dictionaries last value in key.
     Assumes that keys are tuples. 
@@ -305,7 +345,7 @@ def create_dict(*args):
     return output_dict
 
 
-def cartesian_dict(data, modules, order: str=&#39;typical&#39;):
+def cartesian_dict(data, modules, order: str=&#39;typical&#39;, match_on=None):
     &#39;&#39;&#39;returns cartesian product of two dictionaries
     Params
     ------
@@ -324,40 +364,41 @@ def cartesian_dict(data, modules, order: str=&#39;typical&#39;):
                 # deepcopy the method so that original modules are not modified
                 # e.g., when v2 is a sklearn model .fit method
                 v2 = deepcopy(v2)
-                if not isinstance(k1, tuple):
-                    if isinstance(v1, tuple):
-                        if order == &#39;typical&#39;:
-                            cart.update({(k1, k2): v2(*v1)})
+                if match_on is None or k1[match_on] in set(k2):
+                    if not isinstance(k1, tuple):
+                        if isinstance(v1, tuple):
+                            if order == &#39;typical&#39;:
+                                cart.update({(k1, k2): v2(*v1)})
+                            else:
+                                cart.update({(*k2, k1): v2(*v1)})  # *k2
+                        elif isinstance(v1, list):
+                            if order == &#39;typical&#39;:
+                                cart.update({(k1, k2): v2(*v1)})
+                            else:
+                                cart.update({(*k2, k1): v2(*v1)})  # *k2
                         else:
-                            cart.update({(*k2, k1): v2(*v1)})  # *k2
-                    elif isinstance(v1, list):
-                        if order == &#39;typical&#39;:
-                            cart.update({(k1, k2): v2(*v1)})
-                        else:
-                            cart.update({(*k2, k1): v2(*v1)})  # *k2
+                            if order == &#39;typical&#39;:
+                                cart.update({(k1, k2): v2(v1)})
+                            else:
+                                cart.update({(*k2, k1): v2(v1)})  # *k2
                     else:
-                        if order == &#39;typical&#39;:
-                            cart.update({(k1, k2): v2(v1)})
+                        if isinstance(v1, tuple):
+                            if order == &#39;typical&#39;:
+                                cart.update({(*k1, k2): v2(*v1)})  # *k1
+                            else:
+                                cart.update({(k2, k1): v2(*v1)})
+                        elif isinstance(v1, list):
+                            if order == &#39;typical&#39;:
+                                cart.update({(*k1, k2): v2(*v1)})  # *k1
+                            else:
+                                cart.update({(k2, k1): v2(*v1)})
                         else:
-                            cart.update({(*k2, k1): v2(v1)})  # *k2
-                else:
-                    if isinstance(v1, tuple):
-                        if order == &#39;typical&#39;:
-                            cart.update({(*k1, k2): v2(*v1)})  # *k1
-                        else:
-                            cart.update({(k2, k1): v2(*v1)})
-                    elif isinstance(v1, list):
-                        if order == &#39;typical&#39;:
-                            cart.update({(*k1, k2): v2(*v1)})  # *k1
-                        else:
-                            cart.update({(k2, k1): v2(*v1)})
-                    else:
-                        if order == &#39;typical&#39;:
-                            cart.update({(*k1, k2): v2(v1)})  # *k1
-                        else:
-                            cart.update({(k2, k1): v2(v1)})
-            except:
-                pass
+                            if order == &#39;typical&#39;:
+                                cart.update({(*k1, k2): v2(v1)})  # *k1
+                            else:
+                                cart.update({(k2, k1): v2(v1)})
+            except Exception as e:
+                print(e)
     return cart
 
 
@@ -450,22 +491,24 @@ def subset_dict(data, modules, order=&#39;typical&#39;):
 <section>
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
-<dt id="pcsp.convert.cartesian_dict"><code class="name flex">
-<span>def <span class="ident">cartesian_dict</span></span>(<span>data, modules, order: str = 'typical')</span>
+<dt id="vflow.convert.cartesian_dict"><code class="name flex">
+<span>def <span class="ident">cartesian_dict</span></span>(<span>data, modules, order='typical', match_on=None)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>returns cartesian product of two dictionaries
+<section class="desc"><p>returns cartesian product of two dictionaries
 Params</p>
 <hr>
-<p>order: str
-refers in which order new keys are added.
+<dl>
+<dt><strong><code>order</code></strong> :&ensp;<code>str</code></dt>
+<dd>refers in which order new keys are added.
 e.g. order = typical means new key will be (k1,k2).
-else new key will be (k2,k1). order != typical is used for predict function.</p></div>
+else new key will be (k2,k1). order != typical is used for predict function.</dd>
+</dl></section>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def cartesian_dict(data, modules, order: str=&#39;typical&#39;):
+<pre><code class="python">def cartesian_dict(data, modules, order: str=&#39;typical&#39;, match_on=None):
     &#39;&#39;&#39;returns cartesian product of two dictionaries
     Params
     ------
@@ -484,57 +527,60 @@ else new key will be (k2,k1). order != typical is used for predict function.</p>
                 # deepcopy the method so that original modules are not modified
                 # e.g., when v2 is a sklearn model .fit method
                 v2 = deepcopy(v2)
-                if not isinstance(k1, tuple):
-                    if isinstance(v1, tuple):
-                        if order == &#39;typical&#39;:
-                            cart.update({(k1, k2): v2(*v1)})
+                if match_on is None or k1[match_on] in set(k2):
+                    if not isinstance(k1, tuple):
+                        if isinstance(v1, tuple):
+                            if order == &#39;typical&#39;:
+                                cart.update({(k1, k2): v2(*v1)})
+                            else:
+                                cart.update({(*k2, k1): v2(*v1)})  # *k2
+                        elif isinstance(v1, list):
+                            if order == &#39;typical&#39;:
+                                cart.update({(k1, k2): v2(*v1)})
+                            else:
+                                cart.update({(*k2, k1): v2(*v1)})  # *k2
                         else:
-                            cart.update({(*k2, k1): v2(*v1)})  # *k2
-                    elif isinstance(v1, list):
-                        if order == &#39;typical&#39;:
-                            cart.update({(k1, k2): v2(*v1)})
-                        else:
-                            cart.update({(*k2, k1): v2(*v1)})  # *k2
+                            if order == &#39;typical&#39;:
+                                cart.update({(k1, k2): v2(v1)})
+                            else:
+                                cart.update({(*k2, k1): v2(v1)})  # *k2
                     else:
-                        if order == &#39;typical&#39;:
-                            cart.update({(k1, k2): v2(v1)})
+                        if isinstance(v1, tuple):
+                            if order == &#39;typical&#39;:
+                                cart.update({(*k1, k2): v2(*v1)})  # *k1
+                            else:
+                                cart.update({(k2, k1): v2(*v1)})
+                        elif isinstance(v1, list):
+                            if order == &#39;typical&#39;:
+                                cart.update({(*k1, k2): v2(*v1)})  # *k1
+                            else:
+                                cart.update({(k2, k1): v2(*v1)})
                         else:
-                            cart.update({(*k2, k1): v2(v1)})  # *k2
-                else:
-                    if isinstance(v1, tuple):
-                        if order == &#39;typical&#39;:
-                            cart.update({(*k1, k2): v2(*v1)})  # *k1
-                        else:
-                            cart.update({(k2, k1): v2(*v1)})
-                    elif isinstance(v1, list):
-                        if order == &#39;typical&#39;:
-                            cart.update({(*k1, k2): v2(*v1)})  # *k1
-                        else:
-                            cart.update({(k2, k1): v2(*v1)})
-                    else:
-                        if order == &#39;typical&#39;:
-                            cart.update({(*k1, k2): v2(v1)})  # *k1
-                        else:
-                            cart.update({(k2, k1): v2(v1)})
-            except:
-                pass
+                            if order == &#39;typical&#39;:
+                                cart.update({(*k1, k2): v2(v1)})  # *k1
+                            else:
+                                cart.update({(k2, k1): v2(v1)})
+            except Exception as e:
+                print(e)
     return cart</code></pre>
 </details>
 </dd>
-<dt id="pcsp.convert.combine_subset_dicts"><code class="name flex">
+<dt id="vflow.convert.combine_subset_dicts"><code class="name flex">
 <span>def <span class="ident">combine_subset_dicts</span></span>(<span>*args, order='typical')</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Combines dicts into one dict.
+<section class="desc"><p>DEPRECATED
+Combines dicts into one dict.
 Values are now a list of items from input dicts.
 only combines dicts with key from one dictionary is subset of other dictionaries last value in key.
-Assumes that keys are tuples.</p></div>
+Assumes that keys are tuples.</p></section>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def combine_subset_dicts(*args, order=&#39;typical&#39;):
-    &#39;&#39;&#39;Combines dicts into one dict.
+    &#39;&#39;&#39;DEPRECATED
+    Combines dicts into one dict.
     Values are now a list of items from input dicts.
     only combines dicts with key from one dictionary is subset of other dictionaries last value in key.
     Assumes that keys are tuples. 
@@ -568,19 +614,43 @@ Assumes that keys are tuples.</p></div>
         return combined_dict</code></pre>
 </details>
 </dd>
-<dt id="pcsp.convert.combine_two_dicts"><code class="name flex">
-<span>def <span class="ident">combine_two_dicts</span></span>(<span>*args)</span>
+<dt id="vflow.convert.combine_three_subset_dicts"><code class="name flex">
+<span>def <span class="ident">combine_three_subset_dicts</span></span>(<span>*args, order='typical')</span>
 </code></dt>
 <dd>
-<div class="desc"><p>assume len args is at most 2 for now.
-If either dictionary has only 1 key(ignoring prev), then we do a cartesian match.
-If both dictionaries has more than 1 key(ignoring prev), then we do a subset dictionary match via combine_two_subset_dicts
-TODO: Allow more than length 2 and Make keys look better.</p></div>
+<section class="desc"></section>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def combine_two_dicts(*args):
+<pre><code class="python">def combine_three_subset_dicts(*args, order=&#39;typical&#39;):
+    if order == &#39;typical&#39;:
+        sorted_args = sorted(list(args), key=lambda x: len(x.items()))
+    else:
+        sorted_args = sorted(list(args), key=lambda x: len(x.items()), reverse=True)  
+    merged_dict = extend_dicts(*sorted_args[:2])
+    combined_dict = full_combine_two_dicts(merged_dict, sorted_args[-1])
+    prev_list = []
+    for i in range(len(args)):
+        if PREV_KEY in args[i]:
+            prev_list.append(args[i][PREV_KEY])
+    combined_dict[PREV_KEY] = prev_list
+    return combined_dict</code></pre>
+</details>
+</dd>
+<dt id="vflow.convert.combine_two_dicts"><code class="name flex">
+<span>def <span class="ident">combine_two_dicts</span></span>(<span>*args, order='typical')</span>
+</code></dt>
+<dd>
+<section class="desc"><p>assume len args is at most 2 for now.
+If either dictionary has only 1 key(ignoring prev), then we do a cartesian match.
+If both dictionaries has more than 1 key(ignoring prev), then we do a subset dictionary match via combine_two_subset_dicts
+TODO: Allow more than length 2 and Make keys look better.</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def combine_two_dicts(*args, order=&#39;typical&#39;):
     &#39;&#39;&#39;assume len args is at most 2 for now.
     If either dictionary has only 1 key(ignoring prev), then we do a cartesian match. 
     If both dictionaries has more than 1 key(ignoring prev), then we do a subset dictionary match via combine_two_subset_dicts
@@ -591,7 +661,7 @@ TODO: Allow more than length 2 and Make keys look better.</p></div>
         return {}
     elif n_args == 1:
         return args[0]
-    else:
+    elif n_args == 2:
         combined_dict = {}
         if(len(args[0].keys()) &lt;= 2 or len(args[1].keys()) &lt;= 2):
             for key0,val0 in args[0].items():
@@ -609,17 +679,20 @@ TODO: Allow more than length 2 and Make keys look better.</p></div>
             #print(&#39;combine&#39;, prev_list)
             return combined_dict
         else:
-            return combine_two_subset_dicts(*args)</code></pre>
+            return combine_two_subset_dicts(*args, order=order)
+    else:
+        return combine_three_subset_dicts(*args, order=order)</code></pre>
 </details>
 </dd>
-<dt id="pcsp.convert.combine_two_subset_dicts"><code class="name flex">
+<dt id="vflow.convert.combine_two_subset_dicts"><code class="name flex">
 <span>def <span class="ident">combine_two_subset_dicts</span></span>(<span>*args, order='typical')</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Combines dicts into one dict.
+<section class="desc"><p>Combines dicts into one dict.
 Values are now a list of items from input dicts.
-only combines dicts with key from one dictionary is subset of other dictionaries last value in key.
-Assumes that keys are tuples.</p></div>
+only combines dicts where (last value in) key from one dictionary
+is subset of other dictionaries key.
+Assumes that keys are tuples.</p></section>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -627,11 +700,11 @@ Assumes that keys are tuples.</p></div>
 <pre><code class="python">def combine_two_subset_dicts(*args, order=&#39;typical&#39;):
     &#39;&#39;&#39;Combines dicts into one dict.
     Values are now a list of items from input dicts.
-    only combines dicts with key from one dictionary is subset of other dictionaries last value in key.
+    only combines dicts where (last value in) key from one dictionary 
+    is subset of other dictionaries key.
     Assumes that keys are tuples. 
     &#39;&#39;&#39;
     n_args = len(args)
-#     print(&#39;subset&#39;, n_args)
     if n_args == 0:
         return {}
     elif n_args == 1:
@@ -643,14 +716,19 @@ Assumes that keys are tuples.</p></div>
                 if key1 == PREV_KEY or key2 == PREV_KEY:
                     continue
                 else:
-                    if key2[-1] in set(key1) and order == &#39;typical&#39;:
-                        combined_dict[key1] = [val1, val2]
-                    elif key2[-1] in set(key1) and order != &#39;typical&#39;:
-                        combined_dict[key2] = [val2, val1]
+                    if key2[-1] in set(key1) or key2 in set(key1):
+                        if order == &#39;typical&#39;:
+                            combined_dict[key1] = [val1, val2]
+                        elif order != &#39;typical&#39;:
+                            combined_dict[key2] = [val2, val1]
+                    elif key1[-1] in set(key2) or key1 in set(key2):
+                        if order == &#39;typical&#39;:
+                            combined_dict[key2] = [val1, val2]
+                        elif order != &#39;typical&#39;:
+                            combined_dict[key1] = [val2, val1]
                     else:
                         combined_dict = combined_dict
         # add prev_keys from all previous dicts as a list
-        
         prev_list = []
         for i in range(n_args):
             if PREV_KEY in args[i]:
@@ -659,12 +737,12 @@ Assumes that keys are tuples.</p></div>
         return combined_dict</code></pre>
 </details>
 </dd>
-<dt id="pcsp.convert.create_dict"><code class="name flex">
+<dt id="vflow.convert.create_dict"><code class="name flex">
 <span>def <span class="ident">create_dict</span></span>(<span>*args)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>converts *args which is in format Tuple(list) to dict. For example if args = ([x1, x2, x3], [y1, y2, y3]), then
-dict = {item1: [x1,y1], item2: [x2,y2], item3: [x3,y3]}. Assume each element of tuple has same len.</p></div>
+<section class="desc"><p>converts *args which is in format Tuple(list) to dict. For example if args = ([x1, x2, x3], [y1, y2, y3]), then
+dict = {item1: [x1,y1], item2: [x2,y2], item3: [x3,y3]}. Assume each element of tuple has same len.</p></section>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -681,15 +759,62 @@ dict = {item1: [x1,y1], item2: [x2,y2], item3: [x3,y3]}. Assume each element of 
     return output_dict</code></pre>
 </details>
 </dd>
-<dt id="pcsp.convert.init_args"><code class="name flex">
-<span>def <span class="ident">init_args</span></span>(<span>args_tuple: tuple, names=None)</span>
+<dt id="vflow.convert.extend_dicts"><code class="name flex">
+<span>def <span class="ident">extend_dicts</span></span>(<span>*args)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>converts tuple of arguments to a list of dicts
+<section class="desc"><p>Extends dicts into one dict
+Assumes all keys are unique (except PREV_KEY)</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def extend_dicts(*args):
+    &#39;&#39;&#39;Extends dicts into one dict
+    Assumes all keys are unique (except PREV_KEY)
+    &#39;&#39;&#39;
+    combined_dict = {}
+    for arg in args:
+        for key, val in arg.items():
+            if key != PREV_KEY:
+                combined_dict[key] = val
+    return combined_dict</code></pre>
+</details>
+</dd>
+<dt id="vflow.convert.full_combine_two_dicts"><code class="name flex">
+<span>def <span class="ident">full_combine_two_dicts</span></span>(<span>merged, non_merged)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Cartesian matching of dictionary non_merged
+with all keys of dictionary merged treated as a unit
+TODO: add keyword arg to reverse tuple ordering?</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def full_combine_two_dicts(merged: dict, non_merged: dict):
+    &#39;&#39;&#39;Cartesian matching of dictionary non_merged
+    with all keys of dictionary merged treated as a unit
+    TODO: add keyword arg to reverse tuple ordering?
+    &#39;&#39;&#39;
+    combined_dict = {}
+    for key, val in non_merged.items():
+        if key != PREV_KEY:
+            combined_dict[(key, *merged.keys())] = [val, *merged.values()]
+    return combined_dict</code></pre>
+</details>
+</dd>
+<dt id="vflow.convert.init_args"><code class="name flex">
+<span>def <span class="ident">init_args</span></span>(<span>args_tuple, names=None)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>converts tuple of arguments to a list of dicts
 Params</p>
 <hr>
-<p>names: optional, list-like
-gives names for each of the arguments in the tuple</p></div>
+<dl>
+<dt><strong><code>names</code></strong> :&ensp;optional, <code>list</code>-<code>like</code></dt>
+<dd>gives names for each of the arguments in the tuple</dd>
+</dl></section>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -716,11 +841,11 @@ gives names for each of the arguments in the tuple</p></div>
     return output_dicts</code></pre>
 </details>
 </dd>
-<dt id="pcsp.convert.s"><code class="name flex">
+<dt id="vflow.convert.s"><code class="name flex">
 <span>def <span class="ident">s</span></span>(<span>x)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Gets shape of a list/tuple/ndarray</p></div>
+<section class="desc"><p>Gets shape of a list/tuple/ndarray</p></section>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -734,21 +859,24 @@ gives names for each of the arguments in the tuple</p></div>
         return x.shape</code></pre>
 </details>
 </dd>
-<dt id="pcsp.convert.sep_dicts"><code class="name flex">
-<span>def <span class="ident">sep_dicts</span></span>(<span>d: dict)</span>
+<dt id="vflow.convert.sep_dicts"><code class="name flex">
+<span>def <span class="ident">sep_dicts</span></span>(<span>d)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>converts dictionary with value being saved as a tuple/list into multiple dictionaries
+<section class="desc"><p>converts dictionary with value being saved as a tuple/list into multiple dictionaries
 Assumes every value has same length of tuple
 </p>
 <h2 id="params">Params</h2>
-<p>d: {k1: (x1, y1), k2: (x2, y2), &hellip;,
-'<strong>prev</strong>': p}</p>
+<dl>
+<dt><strong><code>d</code></strong> :&ensp;{<code>k1</code>: (<code>x1</code>, <code>y1</code>), <code>k2</code>: (<code>x2</code>, <code>y2</code>), <code>...</code>,
+<code>'__prev__'</code>: <code>p</code>}</dt>
+<dd>&nbsp;</dd>
+</dl>
 <h2 id="returns">Returns</h2>
 <dl>
-<dt><strong><code>sep_dicts</code></strong> :&ensp;<code>[{k1: x1, k2: x2, ..., '__prev__': p}, {k1: y1, k2: y2, '__prev__': p}]</code></dt>
+<dt><strong><a title="vflow.convert.sep_dicts" href="#vflow.convert.sep_dicts"><code>sep_dicts()</code></a></strong> :&ensp;[{<code>k1</code>: <code>x1</code>, <code>k2</code>: <code>x2</code>, <code>...</code>, <code>'__prev__'</code>: <code>p</code>}, {<code>k1</code>: <code>y1</code>, <code>k2</code>: <code>y2</code>, <code>'__prev__'</code>: <code>p</code>}]</dt>
 <dd>&nbsp;</dd>
-</dl></div>
+</dl></section>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -792,11 +920,11 @@ Assumes every value has same length of tuple
             return d</code></pre>
 </details>
 </dd>
-<dt id="pcsp.convert.subset_dict"><code class="name flex">
+<dt id="vflow.convert.subset_dict"><code class="name flex">
 <span>def <span class="ident">subset_dict</span></span>(<span>data, modules, order='typical')</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<section class="desc"></section>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -841,11 +969,11 @@ Assumes every value has same length of tuple
     return cart</code></pre>
 </details>
 </dd>
-<dt id="pcsp.convert.to_list"><code class="name flex">
-<span>def <span class="ident">to_list</span></span>(<span>tup: tuple)</span>
+<dt id="vflow.convert.to_list"><code class="name flex">
+<span>def <span class="ident">to_list</span></span>(<span>tup)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Convert from tuple to packed list
+<section class="desc"><p>Convert from tuple to packed list
 Ex. ([x1, x2, x3], [y1, y2, y3]) -&gt; [[x1, y1], [x2, y2], [x3, y3]]
 Ex. ([x1], [y1]) -&gt; [[x1, y1]]
 Ex. ([x1, x2, x3]) -&gt; [[x1], [x2], [x3]]
@@ -853,7 +981,7 @@ Ex. (x1) -&gt; [[x1]]
 Ex. (x1, y1) -&gt; [[x1, y1]]
 Ex. (x1, x2, x3, y1, y2, y3) -&gt; [[x1, y1], [x2, y2], [x3, y3]]
 Ex. (x1, x2, x3, y1, y2) -&gt; Error
-Allows us to call function with arguments in a loop</p></div>
+Allows us to call function with arguments in a loop</p></section>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -891,16 +1019,16 @@ Allows us to call function with arguments in a loop</p></div>
     return lists_packed</code></pre>
 </details>
 </dd>
-<dt id="pcsp.convert.to_tuple"><code class="name flex">
-<span>def <span class="ident">to_tuple</span></span>(<span>lists: list)</span>
+<dt id="vflow.convert.to_tuple"><code class="name flex">
+<span>def <span class="ident">to_tuple</span></span>(<span>lists)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Convert from lists to unpacked
+<section class="desc"><p>Convert from lists to unpacked
 tuple
 Ex. [[x1, y1], [x2, y2], [x3, y3]] -&gt; ([x1, x2, x3], [y1, y2, y3])
 Ex. [[x1, y1]] -&gt; ([x1], [y1])
 Ex. [m1, m2, m3] -&gt; [m1, m2, m3]
-Allows us to write X, y = ([x1, x2, x3], [y1, y2, y3])</p></div>
+Allows us to write X, y = ([x1, x2, x3], [y1, y2, y3])</p></section>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -938,29 +1066,34 @@ Allows us to write X, y = ([x1, x2, x3], [y1, y2, y3])</p></div>
 <ul id="index">
 <li><h3>Super-module</h3>
 <ul>
-<li><code><a title="pcsp" href="index.html">pcsp</a></code></li>
+<li><code><a title="vflow" href="index.html">vflow</a></code></li>
 </ul>
 </li>
 <li><h3><a href="#header-functions">Functions</a></h3>
 <ul class="">
-<li><code><a title="pcsp.convert.cartesian_dict" href="#pcsp.convert.cartesian_dict">cartesian_dict</a></code></li>
-<li><code><a title="pcsp.convert.combine_subset_dicts" href="#pcsp.convert.combine_subset_dicts">combine_subset_dicts</a></code></li>
-<li><code><a title="pcsp.convert.combine_two_dicts" href="#pcsp.convert.combine_two_dicts">combine_two_dicts</a></code></li>
-<li><code><a title="pcsp.convert.combine_two_subset_dicts" href="#pcsp.convert.combine_two_subset_dicts">combine_two_subset_dicts</a></code></li>
-<li><code><a title="pcsp.convert.create_dict" href="#pcsp.convert.create_dict">create_dict</a></code></li>
-<li><code><a title="pcsp.convert.init_args" href="#pcsp.convert.init_args">init_args</a></code></li>
-<li><code><a title="pcsp.convert.s" href="#pcsp.convert.s">s</a></code></li>
-<li><code><a title="pcsp.convert.sep_dicts" href="#pcsp.convert.sep_dicts">sep_dicts</a></code></li>
-<li><code><a title="pcsp.convert.subset_dict" href="#pcsp.convert.subset_dict">subset_dict</a></code></li>
-<li><code><a title="pcsp.convert.to_list" href="#pcsp.convert.to_list">to_list</a></code></li>
-<li><code><a title="pcsp.convert.to_tuple" href="#pcsp.convert.to_tuple">to_tuple</a></code></li>
+<li><code><a title="vflow.convert.cartesian_dict" href="#vflow.convert.cartesian_dict">cartesian_dict</a></code></li>
+<li><code><a title="vflow.convert.combine_subset_dicts" href="#vflow.convert.combine_subset_dicts">combine_subset_dicts</a></code></li>
+<li><code><a title="vflow.convert.combine_three_subset_dicts" href="#vflow.convert.combine_three_subset_dicts">combine_three_subset_dicts</a></code></li>
+<li><code><a title="vflow.convert.combine_two_dicts" href="#vflow.convert.combine_two_dicts">combine_two_dicts</a></code></li>
+<li><code><a title="vflow.convert.combine_two_subset_dicts" href="#vflow.convert.combine_two_subset_dicts">combine_two_subset_dicts</a></code></li>
+<li><code><a title="vflow.convert.create_dict" href="#vflow.convert.create_dict">create_dict</a></code></li>
+<li><code><a title="vflow.convert.extend_dicts" href="#vflow.convert.extend_dicts">extend_dicts</a></code></li>
+<li><code><a title="vflow.convert.full_combine_two_dicts" href="#vflow.convert.full_combine_two_dicts">full_combine_two_dicts</a></code></li>
+<li><code><a title="vflow.convert.init_args" href="#vflow.convert.init_args">init_args</a></code></li>
+<li><code><a title="vflow.convert.s" href="#vflow.convert.s">s</a></code></li>
+<li><code><a title="vflow.convert.sep_dicts" href="#vflow.convert.sep_dicts">sep_dicts</a></code></li>
+<li><code><a title="vflow.convert.subset_dict" href="#vflow.convert.subset_dict">subset_dict</a></code></li>
+<li><code><a title="vflow.convert.to_list" href="#vflow.convert.to_list">to_list</a></code></li>
+<li><code><a title="vflow.convert.to_tuple" href="#vflow.convert.to_tuple">to_tuple</a></code></li>
 </ul>
 </li>
 </ul>
 </nav>
 </main>
 <footer id="footer">
-<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.9.2</a>.</p>
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.7.2</a>.</p>
 </footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad()</script>
 </body>
 </html>
