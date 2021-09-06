@@ -27,6 +27,14 @@ setuptools.setup(
         'pytest',
         'ray'
     ],
+    extras_require={
+        'dev': [
+            'pytest',
+            'tqdm',
+            'jupyter',
+            'mlflow'
+        ]
+    },
     python_requires='>=3.6',
     classifiers=[
         "Programming Language :: Python :: 3",
