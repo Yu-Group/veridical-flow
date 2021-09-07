@@ -742,7 +742,7 @@ class TestCombineDicts:
 
     def test_combine_dicts(self, in_dicts, out_dict):
         result_dict = combine_dicts(*in_dicts)
-        assert_equal(result_dict, out_dict)
+        assert_equal(result_dict, out_dict, verbose=True)
 
 
 @pytest.mark.parametrize(

@@ -6,6 +6,7 @@ MATCH_KEY = '__match_subkey_ids__'
 
 from pcsp.convert import *
 from pcsp.module import Module, AsyncModule
+from pcsp.smart_subkey import SmartSubkey
 
 from copy import deepcopy
 
@@ -44,9 +45,16 @@ class ModuleSet:
                 assert type(module_keys) is list, 'modules passed as list but module_names is not a list'
                 assert len(modules) == len(module_keys), 'modules list and module_names list do not have the same length'
                 # TODO: add more checking of module_keys
-                module_keys = [k if isinstance(k, tuple) else (k, ) for k in module_keys]
+                if self._output_matching:
+                    module_keys = [self.createSmartSubkey(k) if isinstance(k, tuple) else 
+                                        (self.createSmartSubkey(k), ) for k in module_keys]
+                else:
+                    module_keys = [k if isinstance(k, tuple) else (k, ) for k in module_keys]
             else:
-                module_keys = [(f'{name}_{i}', ) for i in range(len(modules))]
+                if self._output_matching:
+                    module_keys = [(self.createSmartSubkey(f'{name}_{i}'), ) for i in range(len(modules))]
+                else:
+                    module_keys = [(f'{name}_{i}', ) for i in range(len(modules))]
             # convert module keys to singleton tuples
             self.modules = dict(zip(module_keys, modules))
         # if needed, wrap the modules in the Module or AsyncModule class
@@ -170,6 +178,7 @@ class ModuleSet:
     def __contains__(self, key):
         '''Returns true if modules is a dict and key is one of its keys
         '''
+        print('contains')
         if isinstance(self.modules, dict):
             return key in self.modules.keys()
         return False
@@ -184,3 +193,10 @@ class ModuleSet:
 
     def __str__(self):
         return 'ModuleSet(' + self.name  + ')'
+    
+    def createSmartSubkey(self, subkey):
+        return SmartSubkey(subkey, self.name)
+    
+    @staticmethod
+    def _createSmartSubkey(subkey, name):
+        return SmartSubkey(subkey, name)
