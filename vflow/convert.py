@@ -1,7 +1,9 @@
 '''Useful functions for converting between different types (dicts, lists, tuples, etc.)
 '''
-from vflow.module_set import PREV_KEY
 from copy import deepcopy
+
+from vflow.module_set import PREV_KEY
+
 
 def init_args(args_tuple: tuple, names=None):
     ''' converts tuple of arguments to a list of dicts
@@ -14,8 +16,8 @@ def init_args(args_tuple: tuple, names=None):
     if names is None:
         names = ['start'] * len(args_tuple)
     else:
-        assert len(names) == len(args_tuple), 'names should be same length as args_tuple' 
-    
+        assert len(names) == len(args_tuple), 'names should be same length as args_tuple'
+
     output_dicts = []
     for (i, ele) in enumerate(args_tuple):
         output_dicts.append({
@@ -24,6 +26,7 @@ def init_args(args_tuple: tuple, names=None):
         })
     return output_dicts
 
+
 def s(x):
     '''Gets shape of a list/tuple/ndarray
     '''
@@ -31,7 +34,8 @@ def s(x):
         return len(x)
     else:
         return x.shape
-    
+
+
 def to_tuple(lists: list):
     '''Convert from lists to unpacked  tuple
     Ex. [[x1, y1], [x2, y2], [x3, y3]] -> ([x1, x2, x3], [y1, y2, y3])
@@ -74,7 +78,7 @@ def to_list(tup: tuple):
             raise ValueError('Don\'t know how to handle uneven number of args '
                              'without a list. Please wrap your args in a list.')
         # assume first half of args is input and second half is outcome
-        return [list(el) for el in zip(tup[:(n_tup//2)], tup[(n_tup//2):])]
+        return [list(el) for el in zip(tup[:(n_tup // 2)], tup[(n_tup // 2):])]
     elif n_tup == 1:
         return [[x] for x in tup[0]]
     n_mods = len(tup[0])
@@ -97,7 +101,7 @@ def sep_dicts(d: dict):
     -------
     sep_dicts: [{k1: x1, k2: x2, ..., '__prev__': p}, {k1: y1, k2: y2, '__prev__': p}]
     '''
-    
+
     # empty dict -- return empty dict
     n_dicts = len(d)
     if n_dicts == 0:
@@ -106,19 +110,19 @@ def sep_dicts(d: dict):
         # try separating dict into multiple dicts
         try:
             n_tup = len(tuple(d.items())[0][1])  # first item in list
-#             print(n_dicts, n_tup)
+            #             print(n_dicts, n_tup)
             sep_dicts = [dict() for x in range(n_tup)]
             for key, value in d.items():
                 if not key == '__prev__':
                     for i in range(n_tup):
                         sep_dicts[i][key] = value[i]
-                        
+
             # add back prev
             prev = d['__prev__']
             for i in range(len(sep_dicts)):
                 sep_dicts[i]['__prev__'] = prev
             return sep_dicts
-        
+
         # just return original dict
         except:
             return d
@@ -134,7 +138,7 @@ def sep_dicts(d: dict):
 #             Assume all args are dicts, keys are the same and are the same length
 #         b) *args is a tuple of length 1
 #     '''
-    
+
 #     n_args = len(args)
 # #     print('combine', n_args)
 #     if n_args == 0:
@@ -149,7 +153,7 @@ def sep_dicts(d: dict):
 #                 for i in range(n_args):
 #                     items.append(args[i][key])
 #                 combined_dict[key] = items
-                
+
 #         # add prev_keys from all previous dicts as a list
 #         prev_list = []
 #         for i in range(n_args):
@@ -173,26 +177,25 @@ def combine_two_dicts(*args, order='typical'):
         return args[0]
     elif n_args == 2:
         combined_dict = {}
-        if(len(args[0].keys()) <= 2 or len(args[1].keys()) <= 2):
-            for key0,val0 in args[0].items():
-                for key1,val1 in args[1].items():
+        if (len(args[0].keys()) <= 2 or len(args[1].keys()) <= 2):
+            for key0, val0 in args[0].items():
+                for key1, val1 in args[1].items():
                     if key0 == PREV_KEY or key1 == PREV_KEY:
                         continue
                     else:
-                        combined_dict[(key0,key1)] = [val0,val1]
-                        #combined_dict[key0  (key1,)] = [val0,val1]
+                        combined_dict[(key0, key1)] = [val0, val1]
+                        # combined_dict[key0  (key1,)] = [val0,val1]
             prev_list = []
             for i in range(n_args):
                 if PREV_KEY in args[i]:
                     prev_list.append(args[i][PREV_KEY])
             combined_dict[PREV_KEY] = prev_list
-            #print('combine', prev_list)
+            # print('combine', prev_list)
             return combined_dict
         else:
             return combine_two_subset_dicts(*args, order=order)
     else:
         return combine_three_subset_dicts(*args, order=order)
-
 
 
 def combine_two_subset_dicts(*args, order='typical'):
@@ -234,11 +237,12 @@ def combine_two_subset_dicts(*args, order='typical'):
         combined_dict[PREV_KEY] = prev_list
         return combined_dict
 
+
 def combine_three_subset_dicts(*args, order='typical'):
     if order == 'typical':
         sorted_args = sorted(list(args), key=lambda x: len(x.items()))
     else:
-        sorted_args = sorted(list(args), key=lambda x: len(x.items()), reverse=True)  
+        sorted_args = sorted(list(args), key=lambda x: len(x.items()), reverse=True)
     merged_dict = extend_dicts(*sorted_args[:2])
     combined_dict = full_combine_two_dicts(merged_dict, sorted_args[-1])
     prev_list = []
@@ -247,6 +251,7 @@ def combine_three_subset_dicts(*args, order='typical'):
             prev_list.append(args[i][PREV_KEY])
     combined_dict[PREV_KEY] = prev_list
     return combined_dict
+
 
 def full_combine_two_dicts(merged: dict, non_merged: dict):
     '''Cartesian matching of dictionary non_merged
@@ -259,6 +264,7 @@ def full_combine_two_dicts(merged: dict, non_merged: dict):
             combined_dict[(key, *merged.keys())] = [val, *merged.values()]
     return combined_dict
 
+
 def extend_dicts(*args):
     '''Extends dicts into one dict
     Assumes all keys are unique (except PREV_KEY)
@@ -270,6 +276,7 @@ def extend_dicts(*args):
                 combined_dict[key] = val
     return combined_dict
 
+
 def combine_subset_dicts(*args, order='typical'):
     '''DEPRECATED
     Combines dicts into one dict.
@@ -278,7 +285,7 @@ def combine_subset_dicts(*args, order='typical'):
     Assumes that keys are tuples. 
     '''
     n_args = len(args)
-#     print('subset', n_args)
+    #     print('subset', n_args)
     if n_args == 0:
         return {}
     elif n_args == 1:
@@ -296,7 +303,7 @@ def combine_subset_dicts(*args, order='typical'):
                         combined_dict[key2] = [val2, val1]
                     else:
                         combined_dict = combined_dict
-                    
+
         # add prev_keys from all previous dicts as a list
         prev_list = []
         for i in range(n_args):
@@ -318,7 +325,7 @@ def create_dict(*args):
     return output_dict
 
 
-def cartesian_dict(data, modules, order: str='typical', match_on=None):
+def cartesian_dict(data, modules, order: str = 'typical', match_on=None):
     '''returns cartesian product of two dictionaries
     Params
     ------
@@ -332,7 +339,7 @@ def cartesian_dict(data, modules, order: str='typical', match_on=None):
         for k2, v2 in modules.items():
             if k1 == PREV_KEY or k2 == PREV_KEY:
                 continue
-#             print(k1, k2)
+            #             print(k1, k2)
             try:
                 # deepcopy the method so that original modules are not modified
                 # e.g., when v2 is a sklearn model .fit method

@@ -3,16 +3,15 @@ Function arguments are each a list
 '''
 PREV_KEY = '__prev__'
 
-from vflow.convert import *
+import numpy as np
+import ray
+from copy import deepcopy
+import vflow.convert
 from vflow.module import Module, AsyncModule
 
-from copy import deepcopy
-
-import ray
-import numpy as np
 
 class ModuleSet:
-    def __init__(self, name: str, modules, module_keys: list=None, is_async: bool=False):
+    def __init__(self, name: str, modules, module_keys: list = None, is_async: bool = False):
         '''
         todo: include prev and next and change functions to include that. 
         Params
@@ -28,7 +27,7 @@ class ModuleSet:
         '''
         self.name = name
         self._fitted = False
-        self.out = None # outputs
+        self.out = None  # outputs
         self._async = is_async
         # check if any of the modules are AsyncModules
         # if so, we'll make then all AsyncModules later on
@@ -83,15 +82,14 @@ class ModuleSet:
                     if k != PREV_KEY:
                         ele[k] = ray.put(v)
 
-
         # combine two dicts via cartesian if either has length 1 (ignoring prev)
         # does subset matching if both have more than length 1 
-        data_dict = combine_two_dicts(*args, order=order)
+        data_dict = vflow.convert.combine_two_dicts(*args, order=order)
         if matching == 'cartesian':
             if 'match_on' in kwargs:
-                out_dict = cartesian_dict(data_dict, out_dict, order=order, match_on=kwargs['match_on'])
+                out_dict = vflow.convert.cartesian_dict(data_dict, out_dict, order=order, match_on=kwargs['match_on'])
             else:
-                out_dict = cartesian_dict(data_dict, out_dict, order=order)
+                out_dict = vflow.convert.cartesian_dict(data_dict, out_dict, order=order)
         elif matching == 'subset':
             out_dict = subset_dict(data_dict, out_dict, order=order)
         else:
@@ -106,7 +104,6 @@ class ModuleSet:
         out_dict[PREV_KEY] = self
 
         return out_dict
-
 
     def fit(self, *args, **kwargs):
         '''
@@ -136,7 +133,8 @@ class ModuleSet:
         for k, v in self.out.items():
             if hasattr(v, 'predict'):
                 pred_dict[k] = v.predict
-        return self.apply_func(*args, out_dict=pred_dict, matching='cartesian', order='backwards', match_on=match_on, **kwargs)
+        return self.apply_func(*args, out_dict=pred_dict, matching='cartesian', order='backwards', match_on=match_on,
+                               **kwargs)
 
     def predict_proba(self, *args, **kwargs):
         if not self._fitted:
@@ -161,7 +159,7 @@ class ModuleSet:
             self.out = [out]
         else:
             self.out.append(out)
-        return sep_dicts(out)
+        return vflow.convert.sep_dicts(out)
 
     def __getitem__(self, i):
         '''Accesses ith item in the module set
@@ -184,4 +182,4 @@ class ModuleSet:
         return len(self.modules)
 
     def __str__(self):
-        return 'ModuleSet(' + self.name  + ')'
+        return 'ModuleSet(' + self.name + ')'

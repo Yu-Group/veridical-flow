@@ -4,13 +4,14 @@ from abc import abstractmethod
 
 import ray
 
+
 class Module:
     '''Module is basically a function along with a name attribute.
     It may support a "fit" function, but may also just have a "transform" function.
     If none of these is supported, it need only be a function
     '''
 
-    def __init__(self, name: str='', module=lambda x: x):
+    def __init__(self, name: str = '', module=lambda x: x):
         assert hasattr(module, 'fit') or callable(module), \
             'module must be an object with a fit method or a callable'
         self.name = name
@@ -35,19 +36,22 @@ class Module:
         '''
         return self.fit(*args, **kwargs)
 
+
 @ray.remote
 def _remote_fun(module, *args, **kwargs):
     return module(*args, **kwargs)
 
+
 class AsyncModule:
     '''An asynchronous version of the Module class.
     '''
-    def __init__(self, name: str='', module=lambda x: x, *args, **kwargs):
+
+    def __init__(self, name: str = '', module=lambda x: x, *args, **kwargs):
         self.name = name
         if isinstance(module, Module):
             self.module = module.module
         else:
-            assert hasattr(module, 'fit') or callable(module),\
+            assert hasattr(module, 'fit') or callable(module), \
                 'module must be an object with a fit method or a callable'
             self.module = module
 

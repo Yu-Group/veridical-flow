@@ -32,20 +32,26 @@
 <img src="https://img.shields.io/pypi/v/pcsp?color=orange">
 </p>
 <h1 id="sample-usage">Sample usage</h1>
-<p>Install with <code>pip install vflow</code> (see <a href="https://github.com/Yu-Group/pcs-pipeline/blob/master/docs/troubleshooting.md">here</a> for help). For developer (unstable) version, clone the repo and run <code>python setup.py develop</code> from the repo directory.</p>
+<p>Install with <code>pip install vflow</code> (
+see <a href="https://github.com/Yu-Group/pcs-pipeline/blob/master/docs/troubleshooting.md">here</a> for help). For developer (
+unstable) version, clone the repo and run <code>python setup.py develop</code> from the repo directory.</p>
 <pre><code class="language-python">import vflow
-from vflow import PCSPipeline  # replaces sklearn.Pipeline
+from vflow import vflowipeline  # replaces sklearn.Pipeline
 from vflow import ModuleSet  # drop-in replacement for any function with a set of functions
 </code></pre>
 <h1 id="documentation">Documentation</h1>
-<p>Builds heavily on the <a href="https://scikit-learn.org/stable/modules/compose.html">sklearn-pipeline</a>, but extends it to facilitate stability analysis.</p>
+<p>Builds heavily on the <a href="https://scikit-learn.org/stable/modules/compose.html">sklearn-pipeline</a>, but extends it to
+facilitate stability analysis.</p>
 <h2 id="pipeline">Pipeline</h2>
-<p>The <a href="https://scikit-learn.org/stable/modules/generated/sklearn.pipeline.Pipeline.html#sklearn.pipeline.Pipeline"><code>Pipeline</code></a> is built using a list of <code>(key, value)</code> pairs, where the <code>key</code> is a string containing the name you want to give this step and <code>value</code> is an estimator object:</p>
-<pre><code class="language-python">from vflow import PCSPipeline  # replaces sklearn.Pipeline
+<p>The <a href="https://scikit-learn.org/stable/modules/generated/sklearn.pipeline.Pipeline.html#sklearn.pipeline.Pipeline"><code>Pipeline</code></a>
+is built using a list of <code>(key, value)</code> pairs, where the <code>key</code> is a string containing the name you want to give this
+step and <code>value</code> is an estimator object:</p>
+<pre><code class="language-python">from vflow import vflowipeline  # replaces sklearn.Pipeline
 
 pipe = PCSPipeline()
 </code></pre>
-<p>The estimators of a pipeline are stored as a list in the steps attribute, but can be accessed by index or name by indexing (with [idx]) the Pipeline:</p>
+<p>The estimators of a pipeline are stored as a list in the steps attribute, but can be accessed by index or name by
+indexing (with [idx]) the Pipeline:</p>
 <pre><code class="language-python">&gt;&gt;&gt; pipe.steps[0]
 ...
 &gt;&gt;&gt; pipe[0]
@@ -70,10 +76,10 @@ pipe = PCSPipeline()
 <pre><code class="python">&#34;&#34;&#34;
 .. include:: ../readme.md
 &#34;&#34;&#34;
+from .convert import init_args
 from .module import *
 from .module_set import *
-from .pipeline import *
-from .convert import init_args</code></pre>
+from .pipeline import *</code></pre>
 </details>
 </section>
 <section>

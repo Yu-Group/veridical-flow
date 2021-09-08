@@ -31,13 +31,14 @@ from abc import abstractmethod
 
 import ray
 
+
 class Module:
     &#39;&#39;&#39;Module is basically a function along with a name attribute.
     It may support a &#34;fit&#34; function, but may also just have a &#34;transform&#34; function.
     If none of these is supported, it need only be a function
     &#39;&#39;&#39;
 
-    def __init__(self, name: str=&#39;&#39;, module=lambda x: x):
+    def __init__(self, name: str = &#39;&#39;, module=lambda x: x):
         assert hasattr(module, &#39;fit&#39;) or callable(module), \
             &#39;module must be an object with a fit method or a callable&#39;
         self.name = name
@@ -62,19 +63,22 @@ class Module:
         &#39;&#39;&#39;
         return self.fit(*args, **kwargs)
 
+
 @ray.remote
 def _remote_fun(module, *args, **kwargs):
     return module(*args, **kwargs)
 
+
 class AsyncModule:
     &#39;&#39;&#39;An asynchronous version of the Module class.
     &#39;&#39;&#39;
-    def __init__(self, name: str=&#39;&#39;, module=lambda x: x, *args, **kwargs):
+
+    def __init__(self, name: str = &#39;&#39;, module=lambda x: x, *args, **kwargs):
         self.name = name
         if isinstance(module, Module):
             self.module = module.module
         else:
-            assert hasattr(module, &#39;fit&#39;) or callable(module),\
+            assert hasattr(module, &#39;fit&#39;) or callable(module), \
                 &#39;module must be an object with a fit method or a callable&#39;
             self.module = module
 
@@ -112,12 +116,13 @@ class AsyncModule:
 <pre><code class="python">class AsyncModule:
     &#39;&#39;&#39;An asynchronous version of the Module class.
     &#39;&#39;&#39;
-    def __init__(self, name: str=&#39;&#39;, module=lambda x: x, *args, **kwargs):
+
+    def __init__(self, name: str = &#39;&#39;, module=lambda x: x, *args, **kwargs):
         self.name = name
         if isinstance(module, Module):
             self.module = module.module
         else:
-            assert hasattr(module, &#39;fit&#39;) or callable(module),\
+            assert hasattr(module, &#39;fit&#39;) or callable(module), \
                 &#39;module must be an object with a fit method or a callable&#39;
             self.module = module
 
@@ -172,7 +177,7 @@ If none of these is supported, it need only be a function</p></section>
     If none of these is supported, it need only be a function
     &#39;&#39;&#39;
 
-    def __init__(self, name: str=&#39;&#39;, module=lambda x: x):
+    def __init__(self, name: str = &#39;&#39;, module=lambda x: x):
         assert hasattr(module, &#39;fit&#39;) or callable(module), \
             &#39;module must be an object with a fit method or a callable&#39;
         self.name = name
