@@ -7,7 +7,7 @@
   <img src="https://img.shields.io/badge/python-3.6+-blue">
   <a href="https://github.com/Yu-group/pcs-pipeline/actions"><img src="https://github.com/Yu-group/pcs-pipeline/workflows/tests/badge.svg"></a>
   <img src="https://img.shields.io/github/checks-status/Yu-group/pcs-pipeline/master">
-  <img src="https://img.shields.io/pypi/v/pcsp?color=orange">
+  <img src="https://img.shields.io/pypi/v/vflow?color=orange">
 </p> 
 
 # Sample usage
