@@ -2,11 +2,11 @@
 '''
 import enum
 from turtle import left, right
-from pcsp.module_set import PREV_KEY, MATCH_KEY
+from pcsp.module_set import PREV_KEY
 from pcsp.smart_subkey import SmartSubkey
 from copy import deepcopy
 
-KEYS = [PREV_KEY, MATCH_KEY]
+KEYS = [PREV_KEY]
 
 def init_args(args_tuple: tuple, names=None):
     ''' converts tuple of arguments to a list of dicts
@@ -121,61 +121,12 @@ def sep_dicts(d: dict):
 
         # add back prev
         prev = d[PREV_KEY]
-        match_ids = d[MATCH_KEY] if MATCH_KEY in d else []
-        for i, idx in enumerate(match_ids):
-            match_ids[i] -= len(sep_dicts) - 1
         for i in range(len(sep_dicts)):
             sep_dicts[i][PREV_KEY] = prev
-            sep_dicts[i][MATCH_KEY] = match_ids
         return sep_dicts
 
-# def combine_keys(left_key, right_key, left_match_ids, right_match_ids):
-    left_num_matches = len(left_match_ids)
-    right_num_matches = len(right_match_ids)
-
-    if left_num_matches < right_num_matches:
-        match_key = left_key
-        match_ids = left_match_ids
-        compare_key = right_key
-        compare_ids = right_match_ids
-    else:
-        match_key = right_key
-        match_ids = right_match_ids
-        compare_key = left_key
-        compare_ids = left_match_ids
-    if len(match_ids) > 0:
-        matched_subkeys = []
-        for idx, subkey in enumerate(match_key):
-            if idx in match_ids and isinstance(subkey, SmartSubkey):
-                for id in compare_ids:
-                    c_subkey = compare_key[id]
-                    if isinstance(c_subkey, SmartSubkey) and subkey == c_subkey:
-                        matched_subkeys.append(subkey)
-                        break
-        if len(matched_subkeys) > 0:
-            unmatched_subkeys = [
-                compare_key[idx] for idx in compare_ids
-                if compare_key[idx] not in matched_subkeys
-            ]
-            filtered_key = tuple([subkey for subkey in right_key if subkey not in matched_subkeys])
-            combined_key = left_key + filtered_key
-            new_match_ids = [
-                i for i in range(len(combined_key))
-                if combined_key[i] in matched_subkeys
-                or combined_key[i] in unmatched_subkeys
-            ]
-            return combined_key, new_match_ids 
-        else:
-            return (), []
-    else:
-        # no matching needed, just concatenate key tuples
-        if left_num_matches > 0:
-            new_match_ids = left_match_ids
-        elif right_num_matches > 0:
-            new_match_ids = [idx + len(left_key) for idx in right_match_ids]
-        else:
-            new_match_ids = []
-        return left_key + right_key, new_match_ids
+def createSmartSubkey(subkey, name):
+    return SmartSubkey(subkey, name)
 
 def combine_keys(left_key, right_key):
     if len(left_key) < len(right_key):
@@ -184,14 +135,10 @@ def combine_keys(left_key, right_key):
     else:
         match_key = right_key
         compare_key = left_key
-    match_ids = []
-    for idx, subkey in enumerate(match_key):
-        if isinstance(subkey, SmartSubkey):
-            match_ids.append(idx)
-    if len(match_ids) > 0:
+    match_smartkeys = [subkey for subkey in match_key if isinstance(subkey, SmartSubkey)]
+    if len(match_smartkeys) > 0:
         matched_subkeys = []
-        for idx in match_ids:
-            subkey = match_key[idx]
+        for subkey in match_smartkeys:
             for c_subkey in compare_key:
                 if isinstance(c_subkey, SmartSubkey):
                     if subkey.origin == c_subkey.origin:
@@ -199,8 +146,10 @@ def combine_keys(left_key, right_key):
                             matched_subkeys.append(subkey)
                             break
                         else:
+                            # subkeys with same origin but different values are rejected
                             return ()
         if len(matched_subkeys) > 0:
+            # always filter on right key
             filtered_key = tuple([subkey for subkey in right_key if subkey not in matched_subkeys])
             combined_key = left_key + filtered_key
             return combined_key
@@ -208,68 +157,6 @@ def combine_keys(left_key, right_key):
             return left_key + right_key
     else:
         return left_key + right_key
-
-# def combine_keys(left_key, right_key, left_match_ids, right_match_ids):
-    '''Combines the keys into a single key, possibly matching on the keys in
-    positions determined by match_ids. Whichever key has fewer matching
-    requirements is the key we match on, and if one of the keys has no
-    match_ids then just concatenates the keys. If both match_ids are non-empty
-    and no match is found, returns an empty tuple. Returns the new key and new
-    match_ids for the combined key.
-    '''
-    left_num_matches = len(left_match_ids)
-    right_num_matches = len(right_match_ids)
-
-    # match on the arg that requires the smallest number of matching subkeys
-    if left_num_matches < right_num_matches:
-        match_key = left_key
-        match_ids = left_match_ids
-        compare_key = right_key
-        compare_match_ids = right_match_ids
-    else:
-        match_key = right_key
-        match_ids = right_match_ids
-        compare_key = left_key
-        compare_match_ids = left_match_ids
-
-    num_matches = len(match_ids)
-    if num_matches > 0:
-        # matching
-        matched_subkeys = []
-        for idx, subkey in enumerate(match_key):
-            if idx in match_ids and subkey in compare_key:
-                matched_subkeys.append(subkey)
-        if len(matched_subkeys) == num_matches:
-            # positive match: combine keys, making sure to preserve subkey order
-            # find subkeys in compare_key that went unmatched
-            unmatched_subkeys = [
-                compare_key[idx] for idx in compare_match_ids
-                if compare_key[idx] not in matched_subkeys
-            ]
-            # the right key is always filtered
-            filtered_key = tuple([
-                subkey for subkey in right_key if subkey not in matched_subkeys
-            ])
-            combined_key = left_key + filtered_key
-            new_match_ids = [
-                i for i in range(len(combined_key))
-                if combined_key[i] in matched_subkeys
-                or combined_key[i] in unmatched_subkeys
-            ]
-            return combined_key, new_match_ids
-        else:
-            # no match
-            return (), []
-    else:
-        # no matching needed, just concatenate key tuples
-        if left_num_matches > 0:
-            new_match_ids = left_match_ids
-        elif right_num_matches > 0:
-            new_match_ids = [idx + len(left_key) for idx in right_match_ids]
-        else:
-            new_match_ids = []
-        return left_key + right_key, new_match_ids
-
 
 def combine_dicts(*args: dict, base_case=True):
     '''Combines any number of dictionaries into a single dictionary. Dictionaries
@@ -290,19 +177,6 @@ def combine_dicts(*args: dict, base_case=True):
                 combined_dict[k] = args[0][k]
         return combined_dict
     elif n_args == 2:
-
-        left_num_matches = right_num_matches = 0
-        left_match_ids = []
-        right_match_ids = []
-
-        if MATCH_KEY in args[0]:
-            left_match_ids = args[0][MATCH_KEY]
-
-        if MATCH_KEY in args[1]:
-            right_match_ids = args[1][MATCH_KEY]
-
-        match_ids = []
-
         for k0 in args[0]:
             for k1 in args[1]:
 
@@ -334,7 +208,6 @@ def combine_dicts(*args: dict, base_case=True):
             if PREV_KEY in args[i]:
                 prev_tup += args[i][PREV_KEY]
         combined_dict[PREV_KEY] = prev_tup
-        combined_dict[MATCH_KEY] = match_ids
         return combined_dict
     else:
         # combine the first two dicts and call recursively with remaining args
@@ -343,22 +216,6 @@ def combine_dicts(*args: dict, base_case=True):
 
 def apply_modules(modules: dict, data_dict: dict):
     out_dict = {}
-    num_matches = 0
-
-    mod_num_matches = data_num_matches = 0
-    mod_match_ids = []
-    data_match_ids = []
-
-    if MATCH_KEY in modules:
-        mod_match_ids = modules[MATCH_KEY]
-        mod_num_matches = len(mod_match_ids)
-
-    if MATCH_KEY in data_dict:
-        data_match_ids = data_dict[MATCH_KEY]
-        data_num_matches = len(data_match_ids)
-
-    match_ids = []
-
     for mod_k in modules:
         for data_k in data_dict:
             if mod_k in KEYS or data_k in KEYS:
@@ -374,5 +231,4 @@ def apply_modules(modules: dict, data_dict: dict):
             if len(combined_key) > 0:
                 out_dict[combined_key] = deepcopy(modules[mod_k])(*data_dict[data_k])
 
-    out_dict[MATCH_KEY] = match_ids
     return out_dict

@@ -5,9 +5,9 @@ from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.utils import resample
 from functools import partial
-from pcsp import PCSPipeline, ModuleSet, Module, init_args, sep_dicts
+from pcsp import PCSPipeline, ModuleSet, Module, init_args, sep_dicts, createSmartSubkey
 from pcsp.pipeline import build_graph
-from pcsp.module_set import PREV_KEY, MATCH_KEY
+from pcsp.module_set import PREV_KEY
 import sklearn
 from sklearn.metrics import accuracy_score, balanced_accuracy_score, roc_auc_score, r2_score
 from sklearn.model_selection import train_test_split
@@ -59,12 +59,11 @@ class TestPipelines():
         G = build_graph(hard_metrics, draw=True)
 
         # asserts
-        k1 = ('X_test', 'X_train', ModuleSet._createSmartSubkey('subsampling_0', 'subsampling'), 'y_train', 'LR', 'y_test', 'Acc')
+        k1 = ('X_test', 'X_train', createSmartSubkey('subsampling_0', 'subsampling'), 'y_train', 'LR', 'y_test', 'Acc')
         assert k1 in hard_metrics, 'hard metrics should have ' + str(k1) + ' as key'
         assert hard_metrics[k1] > 0.9 # 0.9090909090909091
         assert PREV_KEY in hard_metrics
-        assert MATCH_KEY in hard_metrics
-        assert len(hard_metrics.keys()) == 14
+        assert len(hard_metrics.keys()) == 13
 
     def test_feat_engineering(self):
         '''Feature engineering pipeline
@@ -117,12 +116,11 @@ class TestPipelines():
         G = build_graph(hard_metrics, draw=True)
 
         # asserts
-        k1 = ('X_train', ModuleSet._createSmartSubkey('feat_extraction_0', 'feat_extraction'), 'X_train', 'y_train', 'DT', 'y_train', 'r2')
+        k1 = ('X_train', createSmartSubkey('feat_extraction_0', 'feat_extraction'), 'X_train', 'y_train', 'DT', 'y_train', 'r2')
         assert k1 in hard_metrics, 'hard metrics should have ' + str(k1) + ' as key'
         assert hard_metrics[k1] > 0.9 # 0.9090909090909091
         assert PREV_KEY in hard_metrics
-        assert MATCH_KEY in hard_metrics
-        assert len(hard_metrics.keys()) == 6
+        assert len(hard_metrics.keys()) == 5
 
     def test_feature_importance(self):
         '''Simplest synthetic pipeline for feature importance
@@ -159,8 +157,7 @@ class TestPipelines():
         importances = feature_importance_set.evaluate(modeling_set.out, X_test, y_test)
 
         # asserts
-        k1 = ('X_train', ModuleSet._createSmartSubkey('subsampling_0', 'subsampling'), 'y_train', 'LR', 'X_test', 'y_test', 'permutation_importance')
+        k1 = ('X_train', createSmartSubkey('subsampling_0', 'subsampling'), 'y_train', 'LR', 'X_test', 'y_test', 'permutation_importance')
         assert k1 in importances, 'hard metrics should have ' + str(k1) + ' as key'
         assert PREV_KEY in importances
-        assert MATCH_KEY in importances
-        assert len(importances.keys()) == 8
+        assert len(importances.keys()) == 7

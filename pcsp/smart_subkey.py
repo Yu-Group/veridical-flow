@@ -12,7 +12,7 @@ class SmartSubkey:
         self.origin = origin
     
     def __repr__(self) -> str:
-        return repr(self.subkey)
+        return f"{repr(self.subkey)}-{repr(self.origin)}"
     
     def __eq__(self, o: object):
         if isinstance(o, self.__class__):

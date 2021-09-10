@@ -2,7 +2,6 @@
 Function arguments are each a list
 '''
 PREV_KEY = '__prev__'
-MATCH_KEY = '__match_subkey_ids__'
 
 from pcsp.convert import *
 from pcsp.module import Module, AsyncModule
@@ -112,7 +111,6 @@ class ModuleSet:
             # the final subkey of keys in out_dict should be key created during
             # ModuleSet.__init__()
             out_keys = out_dict.keys()
-            out_dict[MATCH_KEY].append(len(tuple(out_keys)[0]) - 1)
         return out_dict
 
 
@@ -144,8 +142,6 @@ class ModuleSet:
         for k, v in self.out.items():
             if hasattr(v, 'predict'):
                 pred_dict[k] = v.predict
-        if MATCH_KEY in self.out:
-            pred_dict[MATCH_KEY] = self.out[MATCH_KEY]
         return self.apply_func(*args, out_dict=pred_dict, matching='cartesian', order='backwards', **kwargs)
 
     def predict_proba(self, *args, **kwargs):
@@ -155,8 +151,6 @@ class ModuleSet:
         for k, v in self.out.items():
             if hasattr(v, 'predict_proba'):
                 pred_dict[k] = v.predict_proba
-        if MATCH_KEY in self.out:
-            pred_dict[MATCH_KEY] = self.out[MATCH_KEY]
         return self.apply_func(*args, out_dict=pred_dict, matching='cartesian', order='backwards', **kwargs)
 
     def evaluate(self, *args, **kwargs):
@@ -196,7 +190,3 @@ class ModuleSet:
     
     def createSmartSubkey(self, subkey):
         return SmartSubkey(subkey, self.name)
-    
-    @staticmethod
-    def _createSmartSubkey(subkey, name):
-        return SmartSubkey(subkey, name)
