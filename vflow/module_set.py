@@ -3,14 +3,15 @@ Function arguments are each a list
 '''
 PREV_KEY = '__prev__'
 
-from pcsp.convert import *
-from pcsp.module import Module, AsyncModule
-from pcsp.smart_subkey import SmartSubkey
+from vflow.convert import *
+from vflow.module import Module, AsyncModule
+from vflow.smart_subkey import SmartSubkey
+
+import numpy as np
+import ray
 
 from copy import deepcopy
 
-import ray
-import numpy as np
 
 class ModuleSet:
     def __init__(self, name: str, modules, module_keys: list=None,
@@ -30,7 +31,7 @@ class ModuleSet:
         '''
         self.name = name
         self._fitted = False
-        self.out = None # outputs
+        self.out = None  # outputs
         self._async = is_async
         self._output_matching = output_matching
         # check if any of the modules are AsyncModules
@@ -112,7 +113,6 @@ class ModuleSet:
             # ModuleSet.__init__()
             out_keys = out_dict.keys()
         return out_dict
-
 
     def fit(self, *args, **kwargs):
         '''

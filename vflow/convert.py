@@ -1,7 +1,8 @@
 '''Useful functions for converting between different types (dicts, lists, tuples, etc.)
 '''
-from pcsp.module_set import PREV_KEY
-from pcsp.smart_subkey import SmartSubkey
+from vflow.smart_subkey import SmartSubkey
+from vflow.module_set import PREV_KEY
+
 from copy import deepcopy
 
 def init_args(args_tuple: tuple, names=None):
@@ -76,7 +77,7 @@ def to_list(tup: tuple):
             raise ValueError('Don\'t know how to handle uneven number of args '
                              'without a list. Please wrap your args in a list.')
         # assume first half of args is input and second half is outcome
-        return [list(el) for el in zip(tup[:(n_tup//2)], tup[(n_tup//2):])]
+        return [list(el) for el in zip(tup[:(n_tup // 2)], tup[(n_tup // 2):])]
     elif n_tup == 1:
         return [[x] for x in tup[0]]
     n_mods = len(tup[0])
@@ -99,7 +100,6 @@ def sep_dicts(d: dict):
     -------
     sep_dicts: [{k1: x1, k2: x2, ..., '__prev__': p}, {k1: y1, k2: y2, '__prev__': p}]
     '''
-
     # empty dict -- return empty dict
     n_dicts = len(d)
     if n_dicts == 0:
@@ -151,6 +151,7 @@ def combine_keys(left_key, right_key):
             return left_key + right_key
     else:
         return left_key + right_key
+
 
 def combine_dicts(*args: dict, base_case=True):
     '''Combines any number of dictionaries into a single dictionary. Dictionaries

@@ -1,9 +1,8 @@
 import pytest
 
-import pcsp
-from pcsp.module_set import PREV_KEY
-from pcsp.smart_subkey import SmartSubkey as sm
-from pcsp.convert import *
+from vflow.module_set import PREV_KEY
+from vflow.smart_subkey import SmartSubkey as sm
+from vflow.convert import *
 
 import numpy as np
 from numpy.testing import assert_equal

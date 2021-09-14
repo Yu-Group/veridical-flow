@@ -1,11 +1,14 @@
 '''Class that stores the entire pipeline of steps in a data-science workflow
 '''
 import itertools
+
+import joblib
+import matplotlib.pyplot as plt
 import networkx as nx
 import pandas as pd
-from pcsp.module_set import PREV_KEY
-import matplotlib.pyplot as plt
-import joblib
+
+from vflow.module_set import PREV_KEY
+
 
 class PCSPipeline:
     def __init__(self, steps: list = [], cache_dir=None):
@@ -111,6 +114,7 @@ def build_graph(node, draw=True):
         nx.draw(G, with_labels=True, node_color='#CCCCCC')
         plt.tight_layout()
     return G
+
 
 def _run_step(step, *args, **kwargs):
     if step._fitted:

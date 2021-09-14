@@ -1,13 +1,12 @@
-import pcsp
-from pcsp.convert import to_tuple, to_list
-from pcsp import PCSPipeline, ModuleSet, Module # must install pcsp first (pip install pcsp)
+import vflow
+from vflow.convert import to_tuple, to_list
 
 
 class TestBasic():
     def setup(self):
-        self.pipeline = pcsp.PCSPipeline()
-        self.module_set = pcsp.ModuleSet(name='s', modules={})
-        self.module = pcsp.Module()
+        self.pipeline = vflow.PCSPipeline()
+        self.module_set = vflow.ModuleSet(name='s', modules={})
+        self.module = vflow.Module()
 
     def test_class_initializations(self):
         assert self.pipeline.steps is not None
