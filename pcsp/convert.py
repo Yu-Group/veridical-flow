@@ -1,12 +1,8 @@
 '''Useful functions for converting between different types (dicts, lists, tuples, etc.)
 '''
-import enum
-from turtle import left, right
 from pcsp.module_set import PREV_KEY
 from pcsp.smart_subkey import SmartSubkey
 from copy import deepcopy
-
-KEYS = [PREV_KEY]
 
 def init_args(args_tuple: tuple, names=None):
     ''' converts tuple of arguments to a list of dicts
@@ -113,7 +109,7 @@ def sep_dicts(d: dict):
         val_list_len = len(tuple(d.values())[0])  # first item in list
         sep_dicts = [dict() for x in range(val_list_len)]
         for key, value in d.items():
-            if not key in KEYS:
+            if key != PREV_KEY:
                 for i in range(val_list_len):
                     # assumes the correct sub-key for item i is in the i-th position
                     new_key = (key[i], ) + key[val_list_len:]
@@ -125,8 +121,6 @@ def sep_dicts(d: dict):
             sep_dicts[i][PREV_KEY] = prev
         return sep_dicts
 
-def createSmartSubkey(subkey, name):
-    return SmartSubkey(subkey, name)
 
 def combine_keys(left_key, right_key):
     if len(left_key) < len(right_key):
@@ -171,7 +165,7 @@ def combine_dicts(*args: dict, base_case=True):
         for k in args[0]:
             # wrap the dict values in tuples; this is helpful so that when we
             # pass the values to a module fun in we just can use * expansion
-            if k not in KEYS:
+            if k != PREV_KEY:
                 combined_dict[k] = (args[0][k], )
             else:
                 combined_dict[k] = args[0][k]
@@ -180,22 +174,10 @@ def combine_dicts(*args: dict, base_case=True):
         for k0 in args[0]:
             for k1 in args[1]:
 
-                if k0 in KEYS or k1 in KEYS:
+                if k0 == PREV_KEY or k1 == PREV_KEY:
                     continue
 
-                # NOTE: having combine_keys() return new_match_ids is a
-                # temporary solution... TODO: implement a ModuleSetKey class to
-                # wrap the key tuples and keep the key's match_ids
-                # combined_key, new_match_ids = combine_keys(
-                #     k0, k1, left_match_ids, right_match_ids
-                # )
                 combined_key = combine_keys(k0, k1)
-
-                # NOTE: this is pretty sloppy and should be fixed by having
-                # match_ids on a per-key basis rather than for an entire
-                # dictionary
-                # if len(new_match_ids) > len(match_ids):
-                #     match_ids = new_match_ids
 
                 if len(combined_key) > 0:
                     if base_case:
@@ -218,15 +200,10 @@ def apply_modules(modules: dict, data_dict: dict):
     out_dict = {}
     for mod_k in modules:
         for data_k in data_dict:
-            if mod_k in KEYS or data_k in KEYS:
+            if mod_k == PREV_KEY or data_k == PREV_KEY:
                 continue
-            # combined_key, new_match_ids = combine_keys(
-            #     data_k, mod_k, data_match_ids, mod_match_ids
-            # )
-            combined_key = combine_keys(data_k, mod_k)
 
-            # if len(new_match_ids) > len(match_ids):
-            #     match_ids = new_match_ids
+            combined_key = combine_keys(data_k, mod_k)
 
             if len(combined_key) > 0:
                 out_dict[combined_key] = deepcopy(modules[mod_k])(*data_dict[data_k])

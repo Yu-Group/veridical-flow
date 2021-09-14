@@ -1,3 +1,5 @@
+import pytest
+
 import pcsp
 import numpy as np
 from sklearn.linear_model import LogisticRegression
@@ -5,7 +7,8 @@ from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.utils import resample
 from functools import partial
-from pcsp import PCSPipeline, ModuleSet, Module, init_args, sep_dicts, createSmartSubkey
+from pcsp import PCSPipeline, ModuleSet, Module, init_args, sep_dicts
+from pcsp.smart_subkey import SmartSubkey as sm
 from pcsp.pipeline import build_graph
 from pcsp.module_set import PREV_KEY
 import sklearn
@@ -59,7 +62,7 @@ class TestPipelines():
         G = build_graph(hard_metrics, draw=True)
 
         # asserts
-        k1 = ('X_test', 'X_train', createSmartSubkey('subsampling_0', 'subsampling'), 'y_train', 'LR', 'y_test', 'Acc')
+        k1 = ('X_test', 'X_train', sm('subsampling_0', 'subsampling'), 'y_train', 'LR', 'y_test', 'Acc')
         assert k1 in hard_metrics, 'hard metrics should have ' + str(k1) + ' as key'
         assert hard_metrics[k1] > 0.9 # 0.9090909090909091
         assert PREV_KEY in hard_metrics
@@ -116,7 +119,7 @@ class TestPipelines():
         G = build_graph(hard_metrics, draw=True)
 
         # asserts
-        k1 = ('X_train', createSmartSubkey('feat_extraction_0', 'feat_extraction'), 'X_train', 'y_train', 'DT', 'y_train', 'r2')
+        k1 = ('X_train', sm('feat_extraction_0', 'feat_extraction'), 'X_train', 'y_train', 'DT', 'y_train', 'r2')
         assert k1 in hard_metrics, 'hard metrics should have ' + str(k1) + ' as key'
         assert hard_metrics[k1] > 0.9 # 0.9090909090909091
         assert PREV_KEY in hard_metrics
@@ -157,7 +160,39 @@ class TestPipelines():
         importances = feature_importance_set.evaluate(modeling_set.out, X_test, y_test)
 
         # asserts
-        k1 = ('X_train', createSmartSubkey('subsampling_0', 'subsampling'), 'y_train', 'LR', 'X_test', 'y_test', 'permutation_importance')
+        k1 = ('X_train', sm('subsampling_0', 'subsampling'), 'y_train', 'LR', 'X_test', 'y_test', 'permutation_importance')
         assert k1 in importances, 'hard metrics should have ' + str(k1) + ' as key'
         assert PREV_KEY in importances
         assert len(importances.keys()) == 7
+
+    @pytest.mark.xfail
+    def test_repeated_subsampling(self):
+        np.random.seed(13)
+        X, y = sklearn.datasets.make_classification(n_samples=50, n_features=5)
+        X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
+        X_train, X_test, y_train, y_test = init_args((X_train, X_test, y_train, y_test),
+                                                      names=['X_train', 'X_test', 'y_train', 'y_test'])
+
+        # subsample data
+        subsampling_funcs = [partial(sklearn.utils.resample,
+                                    n_samples=20,
+                                    random_state=i)
+                             for i in range(3)]
+
+        subsampling_set = ModuleSet(name='subsampling',
+                                    modules=subsampling_funcs,
+                                    output_matching=True)
+        X_trains, y_trains = sep_dicts(subsampling_set(X_train, y_train))
+        X_tests, y_tests = sep_dicts(subsampling_set(X_test, y_test))
+
+        modeling_set = ModuleSet(name='modeling',
+                                 modules=[LogisticRegression(max_iter=1000, tol=0.1),
+                                          DecisionTreeClassifier()],
+                                 module_keys=["LR", "DT"])
+
+        modeling_set.fit(X_trains, y_trains)
+        preds_test = modeling_set.predict(X_tests)
+
+        # subsampling in (X_trains, y_trains), should not match subsampling in
+        # X_tests because they are unrelated
+        assert len(preds_test.keys() == 19)

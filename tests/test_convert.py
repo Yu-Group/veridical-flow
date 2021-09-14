@@ -2,7 +2,7 @@ import pytest
 
 import pcsp
 from pcsp.module_set import PREV_KEY
-from pcsp.convert import createSmartSubkey as sm
+from pcsp.smart_subkey import SmartSubkey as sm
 from pcsp.convert import *
 
 import numpy as np
@@ -688,7 +688,7 @@ from numpy.testing import assert_equal
                 ('X_train',sm('standardize_0', 's_origin'),'y_train'):('X_train_0','y_train_data'),
                 ('X_train',sm('standardize_1', 's_origin'),'y_train'):('X_train_1','y_train_data')
             }
-        )
+        ),
     ]
 )
 class TestCombineDicts:

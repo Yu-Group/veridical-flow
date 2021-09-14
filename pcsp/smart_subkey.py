@@ -10,14 +10,14 @@ class SmartSubkey:
         '''
         self.subkey = subkey
         self.origin = origin
-    
+
     def __repr__(self) -> str:
         return f"{repr(self.subkey)}-{repr(self.origin)}"
-    
+
     def __eq__(self, o: object):
         if isinstance(o, self.__class__):
             return self.subkey == o.subkey and self.origin == o.origin
         return False
-    
+
     def __hash__(self):
         return hash(self.subkey) ^ hash(self.origin)
