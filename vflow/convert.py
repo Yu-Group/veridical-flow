@@ -88,36 +88,39 @@ def to_list(tup: tuple):
     return lists_packed
 
 
-def sep_dicts(d: dict):
-    '''converts dictionary with value being saved as a tuple/list into multiple dictionaries
-    Assumes every value has same length of tuple
+def sep_dicts(d: dict, n_out: int=1):
+    '''converts dictionary with value being saved as an iterable into multiple dictionaries
+    Assumes every value has same length n_out
 
     Params
     ------
     d: {k1: (x1, y1), k2: (x2, y2), ...,  '__prev__': p}
+    n_out: the number of dictionaries to separate d into
 
     Returns
     -------
     sep_dicts: [{k1: x1, k2: x2, ..., '__prev__': p}, {k1: y1, k2: y2, '__prev__': p}]
     '''
     # empty dict -- return empty dict
+    if n_out == 1:
+        return d
     n_dicts = len(d)
     if n_dicts == 0:
-        return {}
+        return [{}]
     else:
         # try separating dict into multiple dicts
         val_list_len = len(tuple(d.values())[0])  # first item in list
-        sep_dicts = [dict() for x in range(val_list_len)]
+        sep_dicts = [dict() for x in range(n_out)]
         for key, value in d.items():
             if key != PREV_KEY:
-                for i in range(val_list_len):
+                for i in range(n_out):
                     # assumes the correct sub-key for item i is in the i-th position
-                    new_key = (key[i], ) + key[val_list_len:]
+                    new_key = (key[i], ) + key[n_out:]
                     sep_dicts[i][new_key] = value[i]
 
         # add back prev
         prev = d[PREV_KEY]
-        for i in range(len(sep_dicts)):
+        for i in range(n_out):
             sep_dicts[i][PREV_KEY] = prev
         return sep_dicts
 

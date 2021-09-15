@@ -158,10 +158,12 @@ class ModuleSet:
         '''
         return self.apply_func(*args, **kwargs)
 
-    def __call__(self, *args, **kwargs):
+    def __call__(self, *args, n_out: int=None, **kwargs):
         '''
         '''
-        out = self.apply_func(*args, **kwargs)
+        if n_out is None:
+            n_out = len(args)
+        out = sep_dicts(self.apply_func(*args, **kwargs), n_out=n_out)
         return out
 
     def __getitem__(self, i):

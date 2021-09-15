@@ -14,7 +14,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils import resample
 
-from vflow import ModuleSet, init_args, sep_dicts  # must install vflow first (pip install vflow)
+from vflow import ModuleSet, init_args  # must install vflow first (pip install vflow)
 from vflow.pipeline import build_graph
 from vflow.module_set import PREV_KEY
 from vflow.smart_subkey import SmartSubkey as sm
@@ -43,7 +43,7 @@ class TestPipelines():
         subsampling_set = ModuleSet(name='subsampling',
                                     modules=subsampling_funcs,
                                     output_matching=True)
-        X_trains, y_trains = sep_dicts(subsampling_set(X_train, y_train))
+        X_trains, y_trains = subsampling_set(X_train, y_train)
 
         # fit models
         modeling_set = ModuleSet(name='modeling',
@@ -145,7 +145,7 @@ class TestPipelines():
         subsampling_set = ModuleSet(name='subsampling',
                                     modules=subsampling_funcs,
                                     output_matching=True)
-        X_trains, y_trains = sep_dicts(subsampling_set(X_train, y_train))
+        X_trains, y_trains = subsampling_set(X_train, y_train)
 
         # fit models
         modeling_set = ModuleSet(name='modeling',
@@ -184,8 +184,8 @@ class TestPipelines():
         subsampling_set = ModuleSet(name='subsampling',
                                     modules=subsampling_funcs,
                                     output_matching=True)
-        X_trains, y_trains = sep_dicts(subsampling_set(X_train, y_train))
-        X_tests, y_tests = sep_dicts(subsampling_set(X_test, y_test))
+        X_trains, y_trains = subsampling_set(X_train, y_train)
+        X_tests, y_tests = subsampling_set(X_test, y_test)
 
         modeling_set = ModuleSet(name='modeling',
                                  modules=[LogisticRegression(max_iter=1000, tol=0.1),

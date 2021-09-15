@@ -4,4 +4,4 @@
 from .module import *
 from .module_set import *
 from .pipeline import *
-from .convert import init_args, sep_dicts
+from .convert import init_args
