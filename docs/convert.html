@@ -30,6 +30,7 @@
 from copy import deepcopy
 
 from vflow.module_set import PREV_KEY
+from vflow.smart_subkey import SmartSubkey
 
 
 def init_args(args_tuple: tuple, names=None):
@@ -39,7 +40,6 @@ def init_args(args_tuple: tuple, names=None):
     names: optional, list-like
         gives names for each of the arguments in the tuple
     &#39;&#39;&#39;
-    # print(type(args_tuple), args_tuple)
     if names is None:
         names = [&#39;start&#39;] * len(args_tuple)
     else:
@@ -48,8 +48,8 @@ def init_args(args_tuple: tuple, names=None):
     output_dicts = []
     for (i, ele) in enumerate(args_tuple):
         output_dicts.append({
-            names[i]: args_tuple[i],
-            PREV_KEY: &#39;init&#39;,
+            (names[i],): args_tuple[i],
+            PREV_KEY: (&#39;init&#39;,),
         })
     return output_dicts
 
@@ -116,379 +116,131 @@ def to_list(tup: tuple):
     return lists_packed
 
 
-def sep_dicts(d: dict):
-    &#39;&#39;&#39;converts dictionary with value being saved as a tuple/list into multiple dictionaries 
-    Assumes every value has same length of tuple  
-    
+def sep_dicts(d: dict, n_out: int = 1):
+    &#39;&#39;&#39;converts dictionary with value being saved as an iterable into multiple dictionaries
+    Assumes every value has same length n_out
+
     Params
     ------
     d: {k1: (x1, y1), k2: (x2, y2), ...,  &#39;__prev__&#39;: p}
-    
+    n_out: the number of dictionaries to separate d into
+
     Returns
     -------
     sep_dicts: [{k1: x1, k2: x2, ..., &#39;__prev__&#39;: p}, {k1: y1, k2: y2, &#39;__prev__&#39;: p}]
     &#39;&#39;&#39;
-
     # empty dict -- return empty dict
+    if n_out == 1:
+        return d
     n_dicts = len(d)
     if n_dicts == 0:
-        return {}
+        return [{}]
     else:
         # try separating dict into multiple dicts
-        try:
-            n_tup = len(tuple(d.items())[0][1])  # first item in list
-            #             print(n_dicts, n_tup)
-            sep_dicts = [dict() for x in range(n_tup)]
-            for key, value in d.items():
-                if not key == &#39;__prev__&#39;:
-                    for i in range(n_tup):
-                        sep_dicts[i][key] = value[i]
-
-            # add back prev
-            prev = d[&#39;__prev__&#39;]
-            for i in range(len(sep_dicts)):
-                sep_dicts[i][&#39;__prev__&#39;] = prev
-            return sep_dicts
-
-        # just return original dict
-        except:
-            return d
-
-
-# def combine_dicts(*args):
-#     &#39;&#39;&#39;Combines list of dicts into one dict
-#     Params
-#     ------
-#     *args
-#         a) *args is a list of dicts &gt; length 1 - then, 
-#             Values become a list of items from input dicts. 
-#             Assume all args are dicts, keys are the same and are the same length
-#         b) *args is a tuple of length 1
-#     &#39;&#39;&#39;
-
-#     n_args = len(args)
-# #     print(&#39;combine&#39;, n_args)
-#     if n_args == 0:
-#         return {}
-#     elif n_args == 1:
-#         return args[0]
-#     else:
-#         combined_dict = {}
-#         for key, val in args[0].items():
-#             if not key == PREV_KEY:
-#                 items = []
-#                 for i in range(n_args):
-#                     items.append(args[i][key])
-#                 combined_dict[key] = items
-
-#         # add prev_keys from all previous dicts as a list
-#         prev_list = []
-#         for i in range(n_args):
-#             if PREV_KEY in args[i]:
-#                 prev_list.append(args[i][PREV_KEY])
-#         combined_dict[PREV_KEY] = prev_list
-# #         print(&#39;combine&#39;, prev_list)
-#         return combined_dict
-
-
-def combine_two_dicts(*args, order=&#39;typical&#39;):
-    &#39;&#39;&#39;assume len args is at most 2 for now.
-    If either dictionary has only 1 key(ignoring prev), then we do a cartesian match. 
-    If both dictionaries has more than 1 key(ignoring prev), then we do a subset dictionary match via combine_two_subset_dicts
-    TODO: Allow more than length 2 and Make keys look better.
-    &#39;&#39;&#39;
-    n_args = len(args)
-    if n_args == 0:
-        return {}
-    elif n_args == 1:
-        return args[0]
-    elif n_args == 2:
-        combined_dict = {}
-        if (len(args[0].keys()) &lt;= 2 or len(args[1].keys()) &lt;= 2):
-            for key0, val0 in args[0].items():
-                for key1, val1 in args[1].items():
-                    if key0 == PREV_KEY or key1 == PREV_KEY:
-                        continue
-                    else:
-                        combined_dict[(key0, key1)] = [val0, val1]
-                        # combined_dict[key0  (key1,)] = [val0,val1]
-            prev_list = []
-            for i in range(n_args):
-                if PREV_KEY in args[i]:
-                    prev_list.append(args[i][PREV_KEY])
-            combined_dict[PREV_KEY] = prev_list
-            # print(&#39;combine&#39;, prev_list)
-            return combined_dict
-        else:
-            return combine_two_subset_dicts(*args, order=order)
-    else:
-        return combine_three_subset_dicts(*args, order=order)
-
-
-def combine_two_subset_dicts(*args, order=&#39;typical&#39;):
-    &#39;&#39;&#39;Combines dicts into one dict.
-    Values are now a list of items from input dicts.
-    only combines dicts where (last value in) key from one dictionary 
-    is subset of other dictionaries key.
-    Assumes that keys are tuples. 
-    &#39;&#39;&#39;
-    n_args = len(args)
-    if n_args == 0:
-        return {}
-    elif n_args == 1:
-        return args[0]
-    else:
-        combined_dict = {}
-        for key1, val1 in args[0].items():
-            for key2, val2 in args[1].items():
-                if key1 == PREV_KEY or key2 == PREV_KEY:
-                    continue
-                else:
-                    if key2[-1] in set(key1) or key2 in set(key1):
-                        if order == &#39;typical&#39;:
-                            combined_dict[key1] = [val1, val2]
-                        elif order != &#39;typical&#39;:
-                            combined_dict[key2] = [val2, val1]
-                    elif key1[-1] in set(key2) or key1 in set(key2):
-                        if order == &#39;typical&#39;:
-                            combined_dict[key2] = [val1, val2]
-                        elif order != &#39;typical&#39;:
-                            combined_dict[key1] = [val2, val1]
-                    else:
-                        combined_dict = combined_dict
-        # add prev_keys from all previous dicts as a list
-        prev_list = []
-        for i in range(n_args):
-            if PREV_KEY in args[i]:
-                prev_list.append(args[i][PREV_KEY])
-        combined_dict[PREV_KEY] = prev_list
-        return combined_dict
-
-
-def combine_three_subset_dicts(*args, order=&#39;typical&#39;):
-    if order == &#39;typical&#39;:
-        sorted_args = sorted(list(args), key=lambda x: len(x.items()))
-    else:
-        sorted_args = sorted(list(args), key=lambda x: len(x.items()), reverse=True)
-    merged_dict = extend_dicts(*sorted_args[:2])
-    combined_dict = full_combine_two_dicts(merged_dict, sorted_args[-1])
-    prev_list = []
-    for i in range(len(args)):
-        if PREV_KEY in args[i]:
-            prev_list.append(args[i][PREV_KEY])
-    combined_dict[PREV_KEY] = prev_list
-    return combined_dict
-
-
-def full_combine_two_dicts(merged: dict, non_merged: dict):
-    &#39;&#39;&#39;Cartesian matching of dictionary non_merged
-    with all keys of dictionary merged treated as a unit
-    TODO: add keyword arg to reverse tuple ordering?
-    &#39;&#39;&#39;
-    combined_dict = {}
-    for key, val in non_merged.items():
-        if key != PREV_KEY:
-            combined_dict[(key, *merged.keys())] = [val, *merged.values()]
-    return combined_dict
-
-
-def extend_dicts(*args):
-    &#39;&#39;&#39;Extends dicts into one dict
-    Assumes all keys are unique (except PREV_KEY)
-    &#39;&#39;&#39;
-    combined_dict = {}
-    for arg in args:
-        for key, val in arg.items():
+        val_list_len = len(tuple(d.values())[0])  # first item in list
+        sep_dicts = [dict() for x in range(n_out)]
+        for key, value in d.items():
             if key != PREV_KEY:
-                combined_dict[key] = val
-    return combined_dict
+                for i in range(n_out):
+                    # assumes the correct sub-key for item i is in the i-th position
+                    new_key = (key[i],) + key[n_out:]
+                    sep_dicts[i][new_key] = value[i]
+
+        # add back prev
+        prev = d[PREV_KEY]
+        for i in range(n_out):
+            sep_dicts[i][PREV_KEY] = prev
+        return sep_dicts
 
 
-def combine_subset_dicts(*args, order=&#39;typical&#39;):
-    &#39;&#39;&#39;DEPRECATED
-    Combines dicts into one dict.
-    Values are now a list of items from input dicts.
-    only combines dicts with key from one dictionary is subset of other dictionaries last value in key.
-    Assumes that keys are tuples. 
+def combine_keys(left_key, right_key):
+    if len(left_key) &lt; len(right_key):
+        match_key = left_key
+        compare_key = right_key
+    else:
+        match_key = right_key
+        compare_key = left_key
+    match_smartkeys = [subkey for subkey in match_key if isinstance(subkey, SmartSubkey)]
+    if len(match_smartkeys) &gt; 0:
+        matched_subkeys = []
+        for subkey in match_smartkeys:
+            for c_subkey in compare_key:
+                if isinstance(c_subkey, SmartSubkey):
+                    if subkey.origin == c_subkey.origin:
+                        if subkey.subkey == c_subkey.subkey:
+                            matched_subkeys.append(subkey)
+                            break
+                        else:
+                            # subkeys with same origin but different values are rejected
+                            return ()
+        if len(matched_subkeys) &gt; 0:
+            # always filter on right key
+            filtered_key = tuple([subkey for subkey in right_key if subkey not in matched_subkeys])
+            combined_key = left_key + filtered_key
+            return combined_key
+        else:
+            return left_key + right_key
+    else:
+        return left_key + right_key
+
+
+def combine_dicts(*args: dict, base_case=True):
+    &#39;&#39;&#39;Combines any number of dictionaries into a single dictionary. Dictionaries
+    are combined left to right, matching on the subkeys of the arg that has
+    fewer matching requirements.
     &#39;&#39;&#39;
     n_args = len(args)
-    #     print(&#39;subset&#39;, n_args)
+    combined_dict = {}
     if n_args == 0:
-        return {}
-    elif n_args == 1:
-        return args[0]
-    else:
-        combined_dict = {}
-        for key1, val1 in args[0].items():
-            for key2, val2 in args[1].items():
-                if key1 == PREV_KEY or key2 == PREV_KEY:
-                    continue
-                else:
-                    if set(key1).issubset(key2[-1]) and order == &#39;typical&#39;:
-                        combined_dict[key2] = [val1, val2]
-                    elif set(key1).issubset(key2[-1]) and order != &#39;typical&#39;:
-                        combined_dict[key2] = [val2, val1]
-                    else:
-                        combined_dict = combined_dict
-
-        # add prev_keys from all previous dicts as a list
-        prev_list = []
-        for i in range(n_args):
-            if PREV_KEY in args[i]:
-                prev_list.append(args[i][PREV_KEY])
-        combined_dict[PREV_KEY] = prev_list
         return combined_dict
-
-
-def create_dict(*args):
-    &#39;&#39;&#39; converts *args which is in format Tuple(list) to dict. For example if args = ([x1, x2, x3], [y1, y2, y3]), then 
-     dict = {item1: [x1,y1], item2: [x2,y2], item3: [x3,y3]}. Assume each element of tuple has same len.
-    &#39;&#39;&#39;
-    output_dict = {}
-    args_list = to_list(args)
-    for (i, ele) in enumerate(args_list):
-        key = &#34;data_&#34; + str(i)
-        output_dict[key] = args_list[i]
-    return output_dict
-
-
-def cartesian_dict(data, modules, order: str = &#39;typical&#39;, match_on=None):
-    &#39;&#39;&#39;returns cartesian product of two dictionaries
-    Params
-    ------
-    order: str
-        refers in which order new keys are added.
-        e.g. order = typical means new key will be (k1,k2).
-        else new key will be (k2,k1). order != typical is used for predict function.
-    &#39;&#39;&#39;
-    cart = {}
-    for k1, v1 in data.items():
-        for k2, v2 in modules.items():
-            if k1 == PREV_KEY or k2 == PREV_KEY:
-                continue
-            #             print(k1, k2)
-            try:
-                # deepcopy the method so that original modules are not modified
-                # e.g., when v2 is a sklearn model .fit method
-                v2 = deepcopy(v2)
-                if match_on is None or k1[match_on] in set(k2):
-                    if not isinstance(k1, tuple):
-                        if isinstance(v1, tuple):
-                            if order == &#39;typical&#39;:
-                                cart.update({(k1, k2): v2(*v1)})
-                            else:
-                                cart.update({(*k2, k1): v2(*v1)})  # *k2
-                        elif isinstance(v1, list):
-                            if order == &#39;typical&#39;:
-                                cart.update({(k1, k2): v2(*v1)})
-                            else:
-                                cart.update({(*k2, k1): v2(*v1)})  # *k2
-                        else:
-                            if order == &#39;typical&#39;:
-                                cart.update({(k1, k2): v2(v1)})
-                            else:
-                                cart.update({(*k2, k1): v2(v1)})  # *k2
-                    else:
-                        if isinstance(v1, tuple):
-                            if order == &#39;typical&#39;:
-                                cart.update({(*k1, k2): v2(*v1)})  # *k1
-                            else:
-                                cart.update({(k2, k1): v2(*v1)})
-                        elif isinstance(v1, list):
-                            if order == &#39;typical&#39;:
-                                cart.update({(*k1, k2): v2(*v1)})  # *k1
-                            else:
-                                cart.update({(k2, k1): v2(*v1)})
-                        else:
-                            if order == &#39;typical&#39;:
-                                cart.update({(*k1, k2): v2(v1)})  # *k1
-                            else:
-                                cart.update({(k2, k1): v2(v1)})
-            except Exception as e:
-                print(e)
-    return cart
-
-
-&#39;&#39;&#39;
-def cartesian_dict_tuple(data,modules,order = &#39;typical&#39;):
-    cart = {}
-    for k1, v1 in data.items():
-        for k2, v2 in modules.items():
-            if not isinstance(k1, tuple):
-                if isinstance(v1,tuple):
-                    if(order == &#39;typical&#39;):
-                        cart.update({((k1,), (k2,)): v2(*v1)})
-                    else:
-                        cart.update({((k2,),(k1,)): v2(*v1)}) #*k2
-                elif isinstance(v1,list):
-                    if(order == &#39;typical&#39;):
-                        cart.update({((k1,), (k2,)): v2(*v1)})
-                    else:
-                        cart.update({((k2,), (k1,)): v2(*v1)}) #*k2
-                else:
-                    if(order == &#39;typical&#39;):
-                        cart.update({((k1,), (k2,)): v2(v1)})
-                    else:
-                         cart.update({((k2,), (k1,)): v2(v1)}) #*k2
+    elif n_args == 1:
+        for k in args[0]:
+            # wrap the dict values in tuples; this is helpful so that when we
+            # pass the values to a module fun in we just can use * expansion
+            if k != PREV_KEY:
+                combined_dict[k] = (args[0][k],)
             else:
-                if isinstance(v1,tuple):
-                    if(order == &#39;typical&#39;):
-                        cart.update({((k1,), (k2,)): v2(*v1)}) #*k1
+                combined_dict[k] = args[0][k]
+        return combined_dict
+    elif n_args == 2:
+        for k0 in args[0]:
+            for k1 in args[1]:
+
+                if k0 == PREV_KEY or k1 == PREV_KEY:
+                    continue
+
+                combined_key = combine_keys(k0, k1)
+
+                if len(combined_key) &gt; 0:
+                    if base_case:
+                        combined_dict[combined_key] = (args[0][k0], args[1][k1])
                     else:
-                        cart.update({((k2,), (k1,)): v2(*v1)})
-                elif isinstance(v1,list):
-                    if(order == &#39;typical&#39;):
-                        cart.update({((k1,), (k2)): v2(*v1)}) #*k1
-                    else:
-                        cart.update({((k2,), (k1,)): v2(*v1)})
-                else:
-                    if(order == &#39;typical&#39;):
-                        cart.update({((k1,) ,(k2,)): v2(v1)}) #*k1
-                    else:
-                        cart.update({((k2,), (k1,)): v2(v1)})
-                
-    return cart
-&#39;&#39;&#39;
+                        combined_dict[combined_key] = args[0][k0] + (args[1][k1],)
+
+        prev_tup = ()
+        for i in range(2):
+            if PREV_KEY in args[i]:
+                prev_tup += args[i][PREV_KEY]
+        combined_dict[PREV_KEY] = prev_tup
+        return combined_dict
+    else:
+        # combine the first two dicts and call recursively with remaining args
+        return combine_dicts(combine_dicts(args[0], args[1]), *args[2:], base_case=False)
 
 
-def subset_dict(data, modules, order=&#39;typical&#39;):
-    cart = {}
-    for k1, v1 in data.items():
-        for k2, v2 in modules.items():
-            if set(k1).issubset(k2):
-                if not isinstance(k1, tuple):
-                    if isinstance(v1, tuple):
-                        if order == &#39;typical&#39;:
-                            cart.update({(k1, k2): v2(*v1)})
-                        else:
-                            cart.update({(*k2, k1): v2(*v1)})  # *k2
-                    elif isinstance(v1, list):
-                        if order == &#39;typical&#39;:
-                            cart.update({(k1, k2): v2(*v1)})
-                        else:
-                            cart.update({(*k2, k1): v2(*v1)})  # *k2
-                    else:
-                        if order == &#39;typical&#39;:
-                            cart.update({(k1, k2): v2(v1)})
-                        else:
-                            cart.update({(*k2, k1): v2(v1)})  # *k2
-                else:
-                    if isinstance(v1, tuple):
-                        if order == &#39;typical&#39;:
-                            cart.update({(*k1, k2): v2(*v1)})  # *k1
-                        else:
-                            cart.update({(k2, k1): v2(*v1)})
-                    elif isinstance(v1, list):
-                        if order == &#39;typical&#39;:
-                            cart.update({(*k1, k2): v2(*v1)})  # *k1
-                        else:
-                            cart.update({(k2, k1): v2(*v1)})
-                    else:
-                        if order == &#39;typical&#39;:
-                            cart.update({(*k1, k2): v2(v1)})  # *k1
-                        else:
-                            cart.update({(k2, k1): v2(v1)})
-    return cart</code></pre>
+def apply_modules(modules: dict, data_dict: dict):
+    out_dict = {}
+    for mod_k in modules:
+        for data_k in data_dict:
+            if mod_k == PREV_KEY or data_k == PREV_KEY:
+                continue
+
+            combined_key = combine_keys(data_k, mod_k)
+
+            if len(combined_key) &gt; 0:
+                out_dict[combined_key] = deepcopy(modules[mod_k])(*data_dict[data_k])
+
+    return out_dict</code></pre>
 </details>
 </section>
 <section>
@@ -498,131 +250,8 @@ def subset_dict(data, modules, order=&#39;typical&#39;):
 <section>
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
-<dt id="vflow.convert.cartesian_dict"><code class="name flex">
-<span>def <span class="ident">cartesian_dict</span></span>(<span>data, modules, order='typical', match_on=None)</span>
-</code></dt>
-<dd>
-<section class="desc"><p>returns cartesian product of two dictionaries
-Params</p>
-<hr>
-<dl>
-<dt><strong><code>order</code></strong> :&ensp;<code>str</code></dt>
-<dd>refers in which order new keys are added.
-e.g. order = typical means new key will be (k1,k2).
-else new key will be (k2,k1). order != typical is used for predict function.</dd>
-</dl></section>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def cartesian_dict(data, modules, order: str = &#39;typical&#39;, match_on=None):
-    &#39;&#39;&#39;returns cartesian product of two dictionaries
-    Params
-    ------
-    order: str
-        refers in which order new keys are added.
-        e.g. order = typical means new key will be (k1,k2).
-        else new key will be (k2,k1). order != typical is used for predict function.
-    &#39;&#39;&#39;
-    cart = {}
-    for k1, v1 in data.items():
-        for k2, v2 in modules.items():
-            if k1 == PREV_KEY or k2 == PREV_KEY:
-                continue
-            #             print(k1, k2)
-            try:
-                # deepcopy the method so that original modules are not modified
-                # e.g., when v2 is a sklearn model .fit method
-                v2 = deepcopy(v2)
-                if match_on is None or k1[match_on] in set(k2):
-                    if not isinstance(k1, tuple):
-                        if isinstance(v1, tuple):
-                            if order == &#39;typical&#39;:
-                                cart.update({(k1, k2): v2(*v1)})
-                            else:
-                                cart.update({(*k2, k1): v2(*v1)})  # *k2
-                        elif isinstance(v1, list):
-                            if order == &#39;typical&#39;:
-                                cart.update({(k1, k2): v2(*v1)})
-                            else:
-                                cart.update({(*k2, k1): v2(*v1)})  # *k2
-                        else:
-                            if order == &#39;typical&#39;:
-                                cart.update({(k1, k2): v2(v1)})
-                            else:
-                                cart.update({(*k2, k1): v2(v1)})  # *k2
-                    else:
-                        if isinstance(v1, tuple):
-                            if order == &#39;typical&#39;:
-                                cart.update({(*k1, k2): v2(*v1)})  # *k1
-                            else:
-                                cart.update({(k2, k1): v2(*v1)})
-                        elif isinstance(v1, list):
-                            if order == &#39;typical&#39;:
-                                cart.update({(*k1, k2): v2(*v1)})  # *k1
-                            else:
-                                cart.update({(k2, k1): v2(*v1)})
-                        else:
-                            if order == &#39;typical&#39;:
-                                cart.update({(*k1, k2): v2(v1)})  # *k1
-                            else:
-                                cart.update({(k2, k1): v2(v1)})
-            except Exception as e:
-                print(e)
-    return cart</code></pre>
-</details>
-</dd>
-<dt id="vflow.convert.combine_subset_dicts"><code class="name flex">
-<span>def <span class="ident">combine_subset_dicts</span></span>(<span>*args, order='typical')</span>
-</code></dt>
-<dd>
-<section class="desc"><p>DEPRECATED
-Combines dicts into one dict.
-Values are now a list of items from input dicts.
-only combines dicts with key from one dictionary is subset of other dictionaries last value in key.
-Assumes that keys are tuples.</p></section>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def combine_subset_dicts(*args, order=&#39;typical&#39;):
-    &#39;&#39;&#39;DEPRECATED
-    Combines dicts into one dict.
-    Values are now a list of items from input dicts.
-    only combines dicts with key from one dictionary is subset of other dictionaries last value in key.
-    Assumes that keys are tuples. 
-    &#39;&#39;&#39;
-    n_args = len(args)
-    #     print(&#39;subset&#39;, n_args)
-    if n_args == 0:
-        return {}
-    elif n_args == 1:
-        return args[0]
-    else:
-        combined_dict = {}
-        for key1, val1 in args[0].items():
-            for key2, val2 in args[1].items():
-                if key1 == PREV_KEY or key2 == PREV_KEY:
-                    continue
-                else:
-                    if set(key1).issubset(key2[-1]) and order == &#39;typical&#39;:
-                        combined_dict[key2] = [val1, val2]
-                    elif set(key1).issubset(key2[-1]) and order != &#39;typical&#39;:
-                        combined_dict[key2] = [val2, val1]
-                    else:
-                        combined_dict = combined_dict
-
-        # add prev_keys from all previous dicts as a list
-        prev_list = []
-        for i in range(n_args):
-            if PREV_KEY in args[i]:
-                prev_list.append(args[i][PREV_KEY])
-        combined_dict[PREV_KEY] = prev_list
-        return combined_dict</code></pre>
-</details>
-</dd>
-<dt id="vflow.convert.combine_three_subset_dicts"><code class="name flex">
-<span>def <span class="ident">combine_three_subset_dicts</span></span>(<span>*args, order='typical')</span>
+<dt id="vflow.convert.apply_modules"><code class="name flex">
+<span>def <span class="ident">apply_modules</span></span>(<span>modules, data_dict)</span>
 </code></dt>
 <dd>
 <section class="desc"></section>
@@ -630,185 +259,114 @@ Assumes that keys are tuples.</p></section>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def combine_three_subset_dicts(*args, order=&#39;typical&#39;):
-    if order == &#39;typical&#39;:
-        sorted_args = sorted(list(args), key=lambda x: len(x.items()))
-    else:
-        sorted_args = sorted(list(args), key=lambda x: len(x.items()), reverse=True)
-    merged_dict = extend_dicts(*sorted_args[:2])
-    combined_dict = full_combine_two_dicts(merged_dict, sorted_args[-1])
-    prev_list = []
-    for i in range(len(args)):
-        if PREV_KEY in args[i]:
-            prev_list.append(args[i][PREV_KEY])
-    combined_dict[PREV_KEY] = prev_list
-    return combined_dict</code></pre>
+<pre><code class="python">def apply_modules(modules: dict, data_dict: dict):
+    out_dict = {}
+    for mod_k in modules:
+        for data_k in data_dict:
+            if mod_k == PREV_KEY or data_k == PREV_KEY:
+                continue
+
+            combined_key = combine_keys(data_k, mod_k)
+
+            if len(combined_key) &gt; 0:
+                out_dict[combined_key] = deepcopy(modules[mod_k])(*data_dict[data_k])
+
+    return out_dict</code></pre>
 </details>
 </dd>
-<dt id="vflow.convert.combine_two_dicts"><code class="name flex">
-<span>def <span class="ident">combine_two_dicts</span></span>(<span>*args, order='typical')</span>
+<dt id="vflow.convert.combine_dicts"><code class="name flex">
+<span>def <span class="ident">combine_dicts</span></span>(<span>*args, base_case=True)</span>
 </code></dt>
 <dd>
-<section class="desc"><p>assume len args is at most 2 for now.
-If either dictionary has only 1 key(ignoring prev), then we do a cartesian match.
-If both dictionaries has more than 1 key(ignoring prev), then we do a subset dictionary match via combine_two_subset_dicts
-TODO: Allow more than length 2 and Make keys look better.</p></section>
+<section class="desc"><p>Combines any number of dictionaries into a single dictionary. Dictionaries
+are combined left to right, matching on the subkeys of the arg that has
+fewer matching requirements.</p></section>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def combine_two_dicts(*args, order=&#39;typical&#39;):
-    &#39;&#39;&#39;assume len args is at most 2 for now.
-    If either dictionary has only 1 key(ignoring prev), then we do a cartesian match. 
-    If both dictionaries has more than 1 key(ignoring prev), then we do a subset dictionary match via combine_two_subset_dicts
-    TODO: Allow more than length 2 and Make keys look better.
+<pre><code class="python">def combine_dicts(*args: dict, base_case=True):
+    &#39;&#39;&#39;Combines any number of dictionaries into a single dictionary. Dictionaries
+    are combined left to right, matching on the subkeys of the arg that has
+    fewer matching requirements.
     &#39;&#39;&#39;
     n_args = len(args)
+    combined_dict = {}
     if n_args == 0:
-        return {}
+        return combined_dict
     elif n_args == 1:
-        return args[0]
+        for k in args[0]:
+            # wrap the dict values in tuples; this is helpful so that when we
+            # pass the values to a module fun in we just can use * expansion
+            if k != PREV_KEY:
+                combined_dict[k] = (args[0][k],)
+            else:
+                combined_dict[k] = args[0][k]
+        return combined_dict
     elif n_args == 2:
-        combined_dict = {}
-        if (len(args[0].keys()) &lt;= 2 or len(args[1].keys()) &lt;= 2):
-            for key0, val0 in args[0].items():
-                for key1, val1 in args[1].items():
-                    if key0 == PREV_KEY or key1 == PREV_KEY:
-                        continue
-                    else:
-                        combined_dict[(key0, key1)] = [val0, val1]
-                        # combined_dict[key0  (key1,)] = [val0,val1]
-            prev_list = []
-            for i in range(n_args):
-                if PREV_KEY in args[i]:
-                    prev_list.append(args[i][PREV_KEY])
-            combined_dict[PREV_KEY] = prev_list
-            # print(&#39;combine&#39;, prev_list)
-            return combined_dict
-        else:
-            return combine_two_subset_dicts(*args, order=order)
-    else:
-        return combine_three_subset_dicts(*args, order=order)</code></pre>
-</details>
-</dd>
-<dt id="vflow.convert.combine_two_subset_dicts"><code class="name flex">
-<span>def <span class="ident">combine_two_subset_dicts</span></span>(<span>*args, order='typical')</span>
-</code></dt>
-<dd>
-<section class="desc"><p>Combines dicts into one dict.
-Values are now a list of items from input dicts.
-only combines dicts where (last value in) key from one dictionary
-is subset of other dictionaries key.
-Assumes that keys are tuples.</p></section>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def combine_two_subset_dicts(*args, order=&#39;typical&#39;):
-    &#39;&#39;&#39;Combines dicts into one dict.
-    Values are now a list of items from input dicts.
-    only combines dicts where (last value in) key from one dictionary 
-    is subset of other dictionaries key.
-    Assumes that keys are tuples. 
-    &#39;&#39;&#39;
-    n_args = len(args)
-    if n_args == 0:
-        return {}
-    elif n_args == 1:
-        return args[0]
-    else:
-        combined_dict = {}
-        for key1, val1 in args[0].items():
-            for key2, val2 in args[1].items():
-                if key1 == PREV_KEY or key2 == PREV_KEY:
+        for k0 in args[0]:
+            for k1 in args[1]:
+
+                if k0 == PREV_KEY or k1 == PREV_KEY:
                     continue
-                else:
-                    if key2[-1] in set(key1) or key2 in set(key1):
-                        if order == &#39;typical&#39;:
-                            combined_dict[key1] = [val1, val2]
-                        elif order != &#39;typical&#39;:
-                            combined_dict[key2] = [val2, val1]
-                    elif key1[-1] in set(key2) or key1 in set(key2):
-                        if order == &#39;typical&#39;:
-                            combined_dict[key2] = [val1, val2]
-                        elif order != &#39;typical&#39;:
-                            combined_dict[key1] = [val2, val1]
+
+                combined_key = combine_keys(k0, k1)
+
+                if len(combined_key) &gt; 0:
+                    if base_case:
+                        combined_dict[combined_key] = (args[0][k0], args[1][k1])
                     else:
-                        combined_dict = combined_dict
-        # add prev_keys from all previous dicts as a list
-        prev_list = []
-        for i in range(n_args):
+                        combined_dict[combined_key] = args[0][k0] + (args[1][k1],)
+
+        prev_tup = ()
+        for i in range(2):
             if PREV_KEY in args[i]:
-                prev_list.append(args[i][PREV_KEY])
-        combined_dict[PREV_KEY] = prev_list
-        return combined_dict</code></pre>
+                prev_tup += args[i][PREV_KEY]
+        combined_dict[PREV_KEY] = prev_tup
+        return combined_dict
+    else:
+        # combine the first two dicts and call recursively with remaining args
+        return combine_dicts(combine_dicts(args[0], args[1]), *args[2:], base_case=False)</code></pre>
 </details>
 </dd>
-<dt id="vflow.convert.create_dict"><code class="name flex">
-<span>def <span class="ident">create_dict</span></span>(<span>*args)</span>
+<dt id="vflow.convert.combine_keys"><code class="name flex">
+<span>def <span class="ident">combine_keys</span></span>(<span>left_key, right_key)</span>
 </code></dt>
 <dd>
-<section class="desc"><p>converts *args which is in format Tuple(list) to dict. For example if args = ([x1, x2, x3], [y1, y2, y3]), then
-dict = {item1: [x1,y1], item2: [x2,y2], item3: [x3,y3]}. Assume each element of tuple has same len.</p></section>
+<section class="desc"></section>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def create_dict(*args):
-    &#39;&#39;&#39; converts *args which is in format Tuple(list) to dict. For example if args = ([x1, x2, x3], [y1, y2, y3]), then 
-     dict = {item1: [x1,y1], item2: [x2,y2], item3: [x3,y3]}. Assume each element of tuple has same len.
-    &#39;&#39;&#39;
-    output_dict = {}
-    args_list = to_list(args)
-    for (i, ele) in enumerate(args_list):
-        key = &#34;data_&#34; + str(i)
-        output_dict[key] = args_list[i]
-    return output_dict</code></pre>
-</details>
-</dd>
-<dt id="vflow.convert.extend_dicts"><code class="name flex">
-<span>def <span class="ident">extend_dicts</span></span>(<span>*args)</span>
-</code></dt>
-<dd>
-<section class="desc"><p>Extends dicts into one dict
-Assumes all keys are unique (except PREV_KEY)</p></section>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def extend_dicts(*args):
-    &#39;&#39;&#39;Extends dicts into one dict
-    Assumes all keys are unique (except PREV_KEY)
-    &#39;&#39;&#39;
-    combined_dict = {}
-    for arg in args:
-        for key, val in arg.items():
-            if key != PREV_KEY:
-                combined_dict[key] = val
-    return combined_dict</code></pre>
-</details>
-</dd>
-<dt id="vflow.convert.full_combine_two_dicts"><code class="name flex">
-<span>def <span class="ident">full_combine_two_dicts</span></span>(<span>merged, non_merged)</span>
-</code></dt>
-<dd>
-<section class="desc"><p>Cartesian matching of dictionary non_merged
-with all keys of dictionary merged treated as a unit
-TODO: add keyword arg to reverse tuple ordering?</p></section>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def full_combine_two_dicts(merged: dict, non_merged: dict):
-    &#39;&#39;&#39;Cartesian matching of dictionary non_merged
-    with all keys of dictionary merged treated as a unit
-    TODO: add keyword arg to reverse tuple ordering?
-    &#39;&#39;&#39;
-    combined_dict = {}
-    for key, val in non_merged.items():
-        if key != PREV_KEY:
-            combined_dict[(key, *merged.keys())] = [val, *merged.values()]
-    return combined_dict</code></pre>
+<pre><code class="python">def combine_keys(left_key, right_key):
+    if len(left_key) &lt; len(right_key):
+        match_key = left_key
+        compare_key = right_key
+    else:
+        match_key = right_key
+        compare_key = left_key
+    match_smartkeys = [subkey for subkey in match_key if isinstance(subkey, SmartSubkey)]
+    if len(match_smartkeys) &gt; 0:
+        matched_subkeys = []
+        for subkey in match_smartkeys:
+            for c_subkey in compare_key:
+                if isinstance(c_subkey, SmartSubkey):
+                    if subkey.origin == c_subkey.origin:
+                        if subkey.subkey == c_subkey.subkey:
+                            matched_subkeys.append(subkey)
+                            break
+                        else:
+                            # subkeys with same origin but different values are rejected
+                            return ()
+        if len(matched_subkeys) &gt; 0:
+            # always filter on right key
+            filtered_key = tuple([subkey for subkey in right_key if subkey not in matched_subkeys])
+            combined_key = left_key + filtered_key
+            return combined_key
+        else:
+            return left_key + right_key
+    else:
+        return left_key + right_key</code></pre>
 </details>
 </dd>
 <dt id="vflow.convert.init_args"><code class="name flex">
@@ -833,7 +391,6 @@ Params</p>
     names: optional, list-like
         gives names for each of the arguments in the tuple
     &#39;&#39;&#39;
-    # print(type(args_tuple), args_tuple)
     if names is None:
         names = [&#39;start&#39;] * len(args_tuple)
     else:
@@ -842,8 +399,8 @@ Params</p>
     output_dicts = []
     for (i, ele) in enumerate(args_tuple):
         output_dicts.append({
-            names[i]: args_tuple[i],
-            PREV_KEY: &#39;init&#39;,
+            (names[i],): args_tuple[i],
+            PREV_KEY: (&#39;init&#39;,),
         })
     return output_dicts</code></pre>
 </details>
@@ -867,16 +424,17 @@ Params</p>
 </details>
 </dd>
 <dt id="vflow.convert.sep_dicts"><code class="name flex">
-<span>def <span class="ident">sep_dicts</span></span>(<span>d)</span>
+<span>def <span class="ident">sep_dicts</span></span>(<span>d, n_out=1)</span>
 </code></dt>
 <dd>
-<section class="desc"><p>converts dictionary with value being saved as a tuple/list into multiple dictionaries
-Assumes every value has same length of tuple
-</p>
+<section class="desc"><p>converts dictionary with value being saved as an iterable into multiple dictionaries
+Assumes every value has same length n_out</p>
 <h2 id="params">Params</h2>
 <dl>
 <dt><strong><code>d</code></strong> :&ensp;{<code>k1</code>: (<code>x1</code>, <code>y1</code>), <code>k2</code>: (<code>x2</code>, <code>y2</code>), <code>...</code>,
 <code>'__prev__'</code>: <code>p</code>}</dt>
+<dd>&nbsp;</dd>
+<dt><strong><code>n_out</code></strong> :&ensp;<code>the</code> <code>number</code> of <code>dictionaries</code> <code>to</code> <code>separate</code> <code>d</code> <code>into</code></dt>
 <dd>&nbsp;</dd>
 </dl>
 <h2 id="returns">Returns</h2>
@@ -888,92 +446,41 @@ Assumes every value has same length of tuple
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def sep_dicts(d: dict):
-    &#39;&#39;&#39;converts dictionary with value being saved as a tuple/list into multiple dictionaries 
-    Assumes every value has same length of tuple  
-    
+<pre><code class="python">def sep_dicts(d: dict, n_out: int = 1):
+    &#39;&#39;&#39;converts dictionary with value being saved as an iterable into multiple dictionaries
+    Assumes every value has same length n_out
+
     Params
     ------
     d: {k1: (x1, y1), k2: (x2, y2), ...,  &#39;__prev__&#39;: p}
-    
+    n_out: the number of dictionaries to separate d into
+
     Returns
     -------
     sep_dicts: [{k1: x1, k2: x2, ..., &#39;__prev__&#39;: p}, {k1: y1, k2: y2, &#39;__prev__&#39;: p}]
     &#39;&#39;&#39;
-
     # empty dict -- return empty dict
+    if n_out == 1:
+        return d
     n_dicts = len(d)
     if n_dicts == 0:
-        return {}
+        return [{}]
     else:
         # try separating dict into multiple dicts
-        try:
-            n_tup = len(tuple(d.items())[0][1])  # first item in list
-            #             print(n_dicts, n_tup)
-            sep_dicts = [dict() for x in range(n_tup)]
-            for key, value in d.items():
-                if not key == &#39;__prev__&#39;:
-                    for i in range(n_tup):
-                        sep_dicts[i][key] = value[i]
+        val_list_len = len(tuple(d.values())[0])  # first item in list
+        sep_dicts = [dict() for x in range(n_out)]
+        for key, value in d.items():
+            if key != PREV_KEY:
+                for i in range(n_out):
+                    # assumes the correct sub-key for item i is in the i-th position
+                    new_key = (key[i],) + key[n_out:]
+                    sep_dicts[i][new_key] = value[i]
 
-            # add back prev
-            prev = d[&#39;__prev__&#39;]
-            for i in range(len(sep_dicts)):
-                sep_dicts[i][&#39;__prev__&#39;] = prev
-            return sep_dicts
-
-        # just return original dict
-        except:
-            return d</code></pre>
-</details>
-</dd>
-<dt id="vflow.convert.subset_dict"><code class="name flex">
-<span>def <span class="ident">subset_dict</span></span>(<span>data, modules, order='typical')</span>
-</code></dt>
-<dd>
-<section class="desc"></section>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def subset_dict(data, modules, order=&#39;typical&#39;):
-    cart = {}
-    for k1, v1 in data.items():
-        for k2, v2 in modules.items():
-            if set(k1).issubset(k2):
-                if not isinstance(k1, tuple):
-                    if isinstance(v1, tuple):
-                        if order == &#39;typical&#39;:
-                            cart.update({(k1, k2): v2(*v1)})
-                        else:
-                            cart.update({(*k2, k1): v2(*v1)})  # *k2
-                    elif isinstance(v1, list):
-                        if order == &#39;typical&#39;:
-                            cart.update({(k1, k2): v2(*v1)})
-                        else:
-                            cart.update({(*k2, k1): v2(*v1)})  # *k2
-                    else:
-                        if order == &#39;typical&#39;:
-                            cart.update({(k1, k2): v2(v1)})
-                        else:
-                            cart.update({(*k2, k1): v2(v1)})  # *k2
-                else:
-                    if isinstance(v1, tuple):
-                        if order == &#39;typical&#39;:
-                            cart.update({(*k1, k2): v2(*v1)})  # *k1
-                        else:
-                            cart.update({(k2, k1): v2(*v1)})
-                    elif isinstance(v1, list):
-                        if order == &#39;typical&#39;:
-                            cart.update({(*k1, k2): v2(*v1)})  # *k1
-                        else:
-                            cart.update({(k2, k1): v2(*v1)})
-                    else:
-                        if order == &#39;typical&#39;:
-                            cart.update({(*k1, k2): v2(v1)})  # *k1
-                        else:
-                            cart.update({(k2, k1): v2(v1)})
-    return cart</code></pre>
+        # add back prev
+        prev = d[PREV_KEY]
+        for i in range(n_out):
+            sep_dicts[i][PREV_KEY] = prev
+        return sep_dicts</code></pre>
 </details>
 </dd>
 <dt id="vflow.convert.to_list"><code class="name flex">
@@ -1077,19 +584,13 @@ Allows us to write X, y = ([x1, x2, x3], [y1, y2, y3])</p></section>
 </ul>
 </li>
 <li><h3><a href="#header-functions">Functions</a></h3>
-<ul class="">
-<li><code><a title="vflow.convert.cartesian_dict" href="#vflow.convert.cartesian_dict">cartesian_dict</a></code></li>
-<li><code><a title="vflow.convert.combine_subset_dicts" href="#vflow.convert.combine_subset_dicts">combine_subset_dicts</a></code></li>
-<li><code><a title="vflow.convert.combine_three_subset_dicts" href="#vflow.convert.combine_three_subset_dicts">combine_three_subset_dicts</a></code></li>
-<li><code><a title="vflow.convert.combine_two_dicts" href="#vflow.convert.combine_two_dicts">combine_two_dicts</a></code></li>
-<li><code><a title="vflow.convert.combine_two_subset_dicts" href="#vflow.convert.combine_two_subset_dicts">combine_two_subset_dicts</a></code></li>
-<li><code><a title="vflow.convert.create_dict" href="#vflow.convert.create_dict">create_dict</a></code></li>
-<li><code><a title="vflow.convert.extend_dicts" href="#vflow.convert.extend_dicts">extend_dicts</a></code></li>
-<li><code><a title="vflow.convert.full_combine_two_dicts" href="#vflow.convert.full_combine_two_dicts">full_combine_two_dicts</a></code></li>
+<ul class="two-column">
+<li><code><a title="vflow.convert.apply_modules" href="#vflow.convert.apply_modules">apply_modules</a></code></li>
+<li><code><a title="vflow.convert.combine_dicts" href="#vflow.convert.combine_dicts">combine_dicts</a></code></li>
+<li><code><a title="vflow.convert.combine_keys" href="#vflow.convert.combine_keys">combine_keys</a></code></li>
 <li><code><a title="vflow.convert.init_args" href="#vflow.convert.init_args">init_args</a></code></li>
 <li><code><a title="vflow.convert.s" href="#vflow.convert.s">s</a></code></li>
 <li><code><a title="vflow.convert.sep_dicts" href="#vflow.convert.sep_dicts">sep_dicts</a></code></li>
-<li><code><a title="vflow.convert.subset_dict" href="#vflow.convert.subset_dict">subset_dict</a></code></li>
 <li><code><a title="vflow.convert.to_list" href="#vflow.convert.to_list">to_list</a></code></li>
 <li><code><a title="vflow.convert.to_tuple" href="#vflow.convert.to_tuple">to_tuple</a></code></li>
 </ul>

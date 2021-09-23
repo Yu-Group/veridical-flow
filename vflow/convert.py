@@ -1,9 +1,10 @@
 '''Useful functions for converting between different types (dicts, lists, tuples, etc.)
 '''
-from vflow.smart_subkey import SmartSubkey
-from vflow.module_set import PREV_KEY
-
 from copy import deepcopy
+
+from vflow.module_set import PREV_KEY
+from vflow.smart_subkey import SmartSubkey
+
 
 def init_args(args_tuple: tuple, names=None):
     ''' converts tuple of arguments to a list of dicts
@@ -20,8 +21,8 @@ def init_args(args_tuple: tuple, names=None):
     output_dicts = []
     for (i, ele) in enumerate(args_tuple):
         output_dicts.append({
-            (names[i], ): args_tuple[i],
-            PREV_KEY: ('init', ),
+            (names[i],): args_tuple[i],
+            PREV_KEY: ('init',),
         })
     return output_dicts
 
@@ -88,7 +89,7 @@ def to_list(tup: tuple):
     return lists_packed
 
 
-def sep_dicts(d: dict, n_out: int=1):
+def sep_dicts(d: dict, n_out: int = 1):
     '''converts dictionary with value being saved as an iterable into multiple dictionaries
     Assumes every value has same length n_out
 
@@ -115,7 +116,7 @@ def sep_dicts(d: dict, n_out: int=1):
             if key != PREV_KEY:
                 for i in range(n_out):
                     # assumes the correct sub-key for item i is in the i-th position
-                    new_key = (key[i], ) + key[n_out:]
+                    new_key = (key[i],) + key[n_out:]
                     sep_dicts[i][new_key] = value[i]
 
         # add back prev
@@ -170,7 +171,7 @@ def combine_dicts(*args: dict, base_case=True):
             # wrap the dict values in tuples; this is helpful so that when we
             # pass the values to a module fun in we just can use * expansion
             if k != PREV_KEY:
-                combined_dict[k] = (args[0][k], )
+                combined_dict[k] = (args[0][k],)
             else:
                 combined_dict[k] = args[0][k]
         return combined_dict
@@ -187,7 +188,7 @@ def combine_dicts(*args: dict, base_case=True):
                     if base_case:
                         combined_dict[combined_key] = (args[0][k0], args[1][k1])
                     else:
-                        combined_dict[combined_key] = args[0][k0] + (args[1][k1], )
+                        combined_dict[combined_key] = args[0][k0] + (args[1][k1],)
 
         prev_tup = ()
         for i in range(2):
