@@ -10,6 +10,7 @@
   <img src="https://img.shields.io/github/checks-status/Yu-group/pcs-pipeline/master">
   <img src="https://img.shields.io/pypi/v/vflow?color=orange">
 </p> 
+
 # Why use `vflow`?
 
 Using `vflow`'s simple wrappers easily enables many best practices for data science, and makes writing pipelines easy.
@@ -20,11 +21,10 @@ Using `vflow`'s simple wrappers easily enables many best practices for data scie
 
 Here we show a simple example of an entire data-science pipeline with several perturbations (e.g. different data subsamples, models, and metrics) written simply using `vflow`.
 
-
 ```python
 import sklearn
 from sklearn.metrics import accuracy_score, balanced_accuracy_score
-from vflow import init_args, ModuleSet
+from vflow import init_args, Vset
 
 # initialize data
 X, y = sklearn.datasets.make_classification()
@@ -35,28 +35,28 @@ X_train, X_test, y_train, y_test = init_args(
 
 # subsample data
 subsampling_funcs = [
-    partial(sklearn.utils.resample, random_state=i) for i in range(3)
+    sklearn.utils.resample for _ in range(3)
 ]
-subsampling_set = ModuleSet(name='subsampling',
-                            modules=subsampling_funcs,
-                            output_matching=True)
+subsampling_set = Vset(name='subsampling',
+                       modules=subsampling_funcs,
+                       output_matching=True)
 X_trains, y_trains = subsampling_set(X_train, y_train)
 
 # fit models
 models = [
-  sklearn.linear_model.LogisticRegression(),
-  sklearn.tree.DecisionTreeClassifier()
+    sklearn.linear_model.LogisticRegression(),
+    sklearn.tree.DecisionTreeClassifier()
 ]
-modeling_set = ModuleSet(name='modeling',
-                         modules=models,
-                         module_keys=["LR", "DT"])
+modeling_set = Vset(name='modeling',
+                    modules=models,
+                    module_keys=["LR", "DT"])
 modeling_set.fit(X_trains, y_trains)
 preds_test = modeling_set.predict(X_test)
 
 # get metrics
-binary_metrics_set = ModuleSet(name='binary_metrics',
-                               modules=[accuracy_score, balanced_accuracy_score],
-                               module_keys=["Acc", "Bal_Acc"])
+binary_metrics_set = Vset(name='binary_metrics',
+                          modules=[accuracy_score, balanced_accuracy_score],
+                          module_keys=["Acc", "Bal_Acc"])
 binary_metrics = binary_metrics_set.evaluate(preds_test, y_test)
 ```
 

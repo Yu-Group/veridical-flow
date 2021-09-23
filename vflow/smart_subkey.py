@@ -4,9 +4,9 @@ class SmartSubkey:
         Params
         -------
         key:
-            subkey corresponding to a ModuleSet module
+            subkey corresponding to a Vset module
         origin: str
-            name of the origin ModuleSet of this subkey
+            name of the origin Vset of this subkey
         '''
         self.subkey = subkey
         self.origin = origin

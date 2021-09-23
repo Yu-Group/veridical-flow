@@ -5,7 +5,7 @@ from vflow.convert import to_tuple, to_list
 class TestBasic():
     def setup(self):
         self.pipeline = vflow.PCSPipeline()
-        self.module_set = vflow.ModuleSet(name='s', modules={})
+        self.module_set = vflow.Vset(name='s', modules={})
         self.module = vflow.Module()
 
     def test_class_initializations(self):

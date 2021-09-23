@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import pandas as pd
 
-from vflow.module_set import PREV_KEY
+from vflow.vset import PREV_KEY
 
 
 class PCSPipeline:
@@ -16,7 +16,7 @@ class PCSPipeline:
         Params
         ------
         steps: list
-            a list of ModuleSet instances
+            a list of Vset instances
         cache_dir: str, default=None
             The directory to use as data store by joblib. If None, won't do
             caching.
@@ -69,7 +69,7 @@ def build_graph(node, draw=True):
     '''Helper function that just calls build_graph_recur with an empty graph
     Params
     ------
-    node: dict or ModuleSet
+    node: dict or Vset
 
     Returns
     -------
@@ -80,7 +80,7 @@ def build_graph(node, draw=True):
         '''Builds a graph up using __prev__ and PREV_KEY pointers
         Params
         ------
-        node: dict or ModuleSet
+        node: dict or Vset
         G: nx.Digraph()
 
         Returns
@@ -101,7 +101,7 @@ def build_graph(node, draw=True):
             return G
 
         # main case: at a moduleset
-        elif 'ModuleSet' in str(type(node)):
+        elif 'Vset' in str(type(node)):
             nodes_prev = node.__prev__
             for node_prev in nodes_prev:
                 G.add_edge(node_prev, node)

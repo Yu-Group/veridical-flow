@@ -13,8 +13,8 @@ from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils import resample
 
-from vflow import ModuleSet, init_args  # must install vflow first (pip install vflow)
-from vflow.module_set import PREV_KEY
+from vflow import Vset, init_args  # must install vflow first (pip install vflow)
+from vflow.vset import PREV_KEY
 from vflow.pipeline import build_graph
 from vflow.smart_subkey import SmartSubkey as sm
 
@@ -40,24 +40,24 @@ class TestPipelines:
                                      n_samples=20,
                                      random_state=i)
                              for i in range(3)]
-        subsampling_set = ModuleSet(name='subsampling',
-                                    modules=subsampling_funcs,
-                                    output_matching=True)
+        subsampling_set = Vset(name='subsampling',
+                               modules=subsampling_funcs,
+                               output_matching=True)
         X_trains, y_trains = subsampling_set(X_train, y_train)
 
         # fit models
-        modeling_set = ModuleSet(name='modeling',
-                                 modules=[LogisticRegression(max_iter=1000, tol=0.1),
+        modeling_set = Vset(name='modeling',
+                            modules=[LogisticRegression(max_iter=1000, tol=0.1),
                                           DecisionTreeClassifier()],
-                                 module_keys=["LR", "DT"])
+                            module_keys=["LR", "DT"])
 
         modeling_set.fit(X_trains, y_trains)
         preds_test = modeling_set.predict(X_test)
 
         # get metrics
-        hard_metrics_set = ModuleSet(name='hard_metrics',
-                                     modules=[accuracy_score, balanced_accuracy_score],
-                                     module_keys=["Acc", "Bal_Acc"])
+        hard_metrics_set = Vset(name='hard_metrics',
+                                modules=[accuracy_score, balanced_accuracy_score],
+                                module_keys=["Acc", "Bal_Acc"])
 
         hard_metrics = hard_metrics_set.evaluate(preds_test, y_test)
         G = build_graph(hard_metrics, draw=True)
@@ -90,16 +90,16 @@ class TestPipelines:
         feat_extraction_funcs = [partial(extract_feats, feat_names=['CRIM', 'ZN', 'INDUS', 'CHAS']),
                                  partial(extract_feats, feat_names=['CRIM', 'ZN', 'INDUS', 'CHAS', 'NOX', 'RM', 'AGE']),
                                  ]
-        feat_extraction = ModuleSet(name='feat_extraction',
-                                    modules=feat_extraction_funcs,
-                                    output_matching=True)
+        feat_extraction = Vset(name='feat_extraction',
+                               modules=feat_extraction_funcs,
+                               output_matching=True)
 
         X_feats_train = feat_extraction(X_train)
         X_feats_test = feat_extraction(X_test)
 
-        modeling_set = ModuleSet(name='modeling',
-                                 modules=[DecisionTreeRegressor(), RandomForestRegressor()],
-                                 module_keys=["DT", "RF"])
+        modeling_set = Vset(name='modeling',
+                            modules=[DecisionTreeRegressor(), RandomForestRegressor()],
+                            module_keys=["DT", "RF"])
 
         # how can we properly pass a y here so that it will fit properly?
         # this runs, but modeling_set.out is empty
@@ -109,9 +109,9 @@ class TestPipelines:
         preds_all = modeling_set.predict(X_feats_train)
 
         # get metrics
-        hard_metrics_set = ModuleSet(name='hard_metrics',
-                                     modules=[r2_score],
-                                     module_keys=["r2"])
+        hard_metrics_set = Vset(name='hard_metrics',
+                                modules=[r2_score],
+                                module_keys=["r2"])
         hard_metrics = hard_metrics_set.evaluate(preds_all, y_train)
 
         # inspect the pipeline
@@ -142,23 +142,23 @@ class TestPipelines:
                                      n_samples=20,
                                      random_state=i)
                              for i in range(3)]
-        subsampling_set = ModuleSet(name='subsampling',
-                                    modules=subsampling_funcs,
-                                    output_matching=True)
+        subsampling_set = Vset(name='subsampling',
+                               modules=subsampling_funcs,
+                               output_matching=True)
         X_trains, y_trains = subsampling_set(X_train, y_train)
 
         # fit models
-        modeling_set = ModuleSet(name='modeling',
-                                 modules=[LogisticRegression(max_iter=1000, tol=0.1),
+        modeling_set = Vset(name='modeling',
+                            modules=[LogisticRegression(max_iter=1000, tol=0.1),
                                           DecisionTreeClassifier()],
-                                 module_keys=["LR", "DT"])
+                            module_keys=["LR", "DT"])
 
         modeling_set.fit(X_trains, y_trains)
         preds_test = modeling_set.predict(X_test)
 
         # get metrics
-        feature_importance_set = ModuleSet(name='feature_importance', modules=[permutation_importance],
-                                           module_keys=["permutation_importance"])
+        feature_importance_set = Vset(name='feature_importance', modules=[permutation_importance],
+                                      module_keys=["permutation_importance"])
         importances = feature_importance_set.evaluate(modeling_set.out, X_test, y_test)
 
         # asserts
@@ -183,16 +183,16 @@ class TestPipelines:
                                      random_state=i)
                              for i in range(3)]
 
-        subsampling_set = ModuleSet(name='subsampling',
-                                    modules=subsampling_funcs,
-                                    output_matching=True)
+        subsampling_set = Vset(name='subsampling',
+                               modules=subsampling_funcs,
+                               output_matching=True)
         X_trains, y_trains = subsampling_set(X_train, y_train)
         X_tests, y_tests = subsampling_set(X_test, y_test)
 
-        modeling_set = ModuleSet(name='modeling',
-                                 modules=[LogisticRegression(max_iter=1000, tol=0.1),
+        modeling_set = Vset(name='modeling',
+                            modules=[LogisticRegression(max_iter=1000, tol=0.1),
                                           DecisionTreeClassifier()],
-                                 module_keys=["LR", "DT"])
+                            module_keys=["LR", "DT"])
 
         modeling_set.fit(X_trains, y_trains)
         preds_test = modeling_set.predict(X_tests)

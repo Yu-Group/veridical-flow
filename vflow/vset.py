@@ -11,7 +11,7 @@ from vflow.module import Module, AsyncModule
 from vflow.smart_subkey import SmartSubkey
 
 
-class ModuleSet:
+class Vset:
     def __init__(self, name: str, modules, module_keys: list = None,
                  is_async: bool = False, output_matching: bool = False):
         '''
@@ -109,7 +109,7 @@ class ModuleSet:
 
         if self._output_matching:
             # the final subkey of keys in out_dict should be key created during
-            # ModuleSet.__init__()
+            # Vset.__init__()
             out_keys = out_dict.keys()
         return out_dict
 
@@ -136,7 +136,7 @@ class ModuleSet:
 
     def predict(self, *args, **kwargs):
         if not self._fitted:
-            raise AttributeError('Please fit the ModuleSet object before calling the predict method.')
+            raise AttributeError('Please fit the Vset object before calling the predict method.')
         pred_dict = {}
         for k, v in self.out.items():
             if hasattr(v, 'predict'):
@@ -145,7 +145,7 @@ class ModuleSet:
 
     def predict_proba(self, *args, **kwargs):
         if not self._fitted:
-            raise AttributeError('Please fit the ModuleSet object before calling the predict_proba method.')
+            raise AttributeError('Please fit the Vset object before calling the predict_proba method.')
         pred_dict = {}
         for k, v in self.out.items():
             if hasattr(v, 'predict_proba'):
@@ -186,7 +186,7 @@ class ModuleSet:
         return len(self.modules)
 
     def __str__(self):
-        return 'ModuleSet(' + self.name + ')'
+        return 'Vset(' + self.name + ')'
 
     def __create_smart_subkey(self, subkey):
         return SmartSubkey(subkey, self.name)

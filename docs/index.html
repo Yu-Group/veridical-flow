@@ -52,7 +52,7 @@
 <p>Here we show a simple example of an entire data-science pipeline with several perturbations (e.g. different data subsamples, models, and metrics) written simply using <a title="vflow" href="#vflow"><code>vflow</code></a>.</p>
 <pre><code class="language-python">import sklearn
 from sklearn.metrics import accuracy_score, balanced_accuracy_score
-from vflow import init_args, ModuleSet
+from vflow import init_args, Vset
 
 # initialize data
 X, y = sklearn.datasets.make_classification()
@@ -63,28 +63,28 @@ X_train, X_test, y_train, y_test = init_args(
 
 # subsample data
 subsampling_funcs = [
-    partial(sklearn.utils.resample, random_state=i) for i in range(3)
+    sklearn.utils.resample for _ in range(3)
 ]
-subsampling_set = ModuleSet(name='subsampling',
-                            modules=subsampling_funcs,
-                            output_matching=True)
+subsampling_set = Vset(name='subsampling',
+                       modules=subsampling_funcs,
+                       output_matching=True)
 X_trains, y_trains = subsampling_set(X_train, y_train)
 
 # fit models
 models = [
-  sklearn.linear_model.LogisticRegression(),
-  sklearn.tree.DecisionTreeClassifier()
+    sklearn.linear_model.LogisticRegression(),
+    sklearn.tree.DecisionTreeClassifier()
 ]
-modeling_set = ModuleSet(name='modeling',
-                         modules=models,
-                         module_keys=[&quot;LR&quot;, &quot;DT&quot;])
+modeling_set = Vset(name='modeling',
+                    modules=models,
+                    module_keys=[&quot;LR&quot;, &quot;DT&quot;])
 modeling_set.fit(X_trains, y_trains)
 preds_test = modeling_set.predict(X_test)
 
 # get metrics
-binary_metrics_set = ModuleSet(name='binary_metrics',
-                               modules=[accuracy_score, balanced_accuracy_score],
-                               module_keys=[&quot;Acc&quot;, &quot;Bal_Acc&quot;])
+binary_metrics_set = Vset(name='binary_metrics',
+                          modules=[accuracy_score, balanced_accuracy_score],
+                          module_keys=[&quot;Acc&quot;, &quot;Bal_Acc&quot;])
 binary_metrics = binary_metrics_set.evaluate(preds_test, y_test)
 </code></pre>
 <p>Once we've written this pipeline, get very easily see how stable certain metrics (e.g. "Acc") are to our choice of subsampling or model.</p>
@@ -113,7 +113,7 @@ binary_metrics = binary_metrics_set.evaluate(preds_test, y_test)
 .. include:: ../readme.md
 &#34;&#34;&#34;
 from .module import *
-from .module_set import *
+from .vset import *
 from .pipeline import *
 from .convert import init_args</code></pre>
 </details>
@@ -129,11 +129,6 @@ from .convert import init_args</code></pre>
 <dd>
 <section class="desc"><p>A perturbation that can be used as a step in a pipeline</p></section>
 </dd>
-<dt><code class="name"><a title="vflow.module_set" href="module_set.html">vflow.module_set</a></code></dt>
-<dd>
-<section class="desc"><p>Set of modules to be parallelized over in a pipeline.
-Function arguments are each a list</p></section>
-</dd>
 <dt><code class="name"><a title="vflow.pipeline" href="pipeline.html">vflow.pipeline</a></code></dt>
 <dd>
 <section class="desc"><p>Class that stores the entire pipeline of steps in a data-science workflow</p></section>
@@ -141,6 +136,11 @@ Function arguments are each a list</p></section>
 <dt><code class="name"><a title="vflow.smart_subkey" href="smart_subkey.html">vflow.smart_subkey</a></code></dt>
 <dd>
 <section class="desc"></section>
+</dd>
+<dt><code class="name"><a title="vflow.vset" href="vset.html">vflow.vset</a></code></dt>
+<dd>
+<section class="desc"><p>Set of modules to be parallelized over in a pipeline.
+Function arguments are each a list</p></section>
 </dd>
 </dl>
 </section>
@@ -168,9 +168,9 @@ Function arguments are each a list</p></section>
 <ul>
 <li><code><a title="vflow.convert" href="convert.html">vflow.convert</a></code></li>
 <li><code><a title="vflow.module" href="module.html">vflow.module</a></code></li>
-<li><code><a title="vflow.module_set" href="module_set.html">vflow.module_set</a></code></li>
 <li><code><a title="vflow.pipeline" href="pipeline.html">vflow.pipeline</a></code></li>
 <li><code><a title="vflow.smart_subkey" href="smart_subkey.html">vflow.smart_subkey</a></code></li>
+<li><code><a title="vflow.vset" href="vset.html">vflow.vset</a></code></li>
 </ul>
 </li>
 </ul>

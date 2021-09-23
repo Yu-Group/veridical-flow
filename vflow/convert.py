@@ -2,7 +2,7 @@
 '''
 from copy import deepcopy
 
-from vflow.module_set import PREV_KEY
+from vflow.vset import PREV_KEY
 from vflow.smart_subkey import SmartSubkey
 
 

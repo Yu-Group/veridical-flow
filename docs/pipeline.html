@@ -34,7 +34,7 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import pandas as pd
 
-from vflow.module_set import PREV_KEY
+from vflow.vset import PREV_KEY
 
 
 class PCSPipeline:
@@ -43,7 +43,7 @@ class PCSPipeline:
         Params
         ------
         steps: list
-            a list of ModuleSet instances
+            a list of Vset instances
         cache_dir: str, default=None
             The directory to use as data store by joblib. If None, won&#39;t do
             caching.
@@ -96,7 +96,7 @@ def build_graph(node, draw=True):
     &#39;&#39;&#39;Helper function that just calls build_graph_recur with an empty graph
     Params
     ------
-    node: dict or ModuleSet
+    node: dict or Vset
 
     Returns
     -------
@@ -107,7 +107,7 @@ def build_graph(node, draw=True):
         &#39;&#39;&#39;Builds a graph up using __prev__ and PREV_KEY pointers
         Params
         ------
-        node: dict or ModuleSet
+        node: dict or Vset
         G: nx.Digraph()
 
         Returns
@@ -128,7 +128,7 @@ def build_graph(node, draw=True):
             return G
 
         # main case: at a moduleset
-        elif &#39;ModuleSet&#39; in str(type(node)):
+        elif &#39;Vset&#39; in str(type(node)):
             nodes_prev = node.__prev__
             for node_prev in nodes_prev:
                 G.add_edge(node_prev, node)
@@ -165,7 +165,7 @@ def _run_step(step, *args, **kwargs):
 Params</p>
 <hr>
 <dl>
-<dt><strong><code>node</code></strong> :&ensp;<code>dict</code> or <code>ModuleSet</code></dt>
+<dt><strong><code>node</code></strong> :&ensp;<code>dict</code> or <code>Vset</code></dt>
 <dd>&nbsp;</dd>
 </dl>
 <h2 id="returns">Returns</h2>
@@ -181,7 +181,7 @@ Params</p>
     &#39;&#39;&#39;Helper function that just calls build_graph_recur with an empty graph
     Params
     ------
-    node: dict or ModuleSet
+    node: dict or Vset
 
     Returns
     -------
@@ -192,7 +192,7 @@ Params</p>
         &#39;&#39;&#39;Builds a graph up using __prev__ and PREV_KEY pointers
         Params
         ------
-        node: dict or ModuleSet
+        node: dict or Vset
         G: nx.Digraph()
 
         Returns
@@ -213,7 +213,7 @@ Params</p>
             return G
 
         # main case: at a moduleset
-        elif &#39;ModuleSet&#39; in str(type(node)):
+        elif &#39;Vset&#39; in str(type(node)):
             nodes_prev = node.__prev__
             for node_prev in nodes_prev:
                 G.add_edge(node_prev, node)
@@ -243,7 +243,7 @@ Params</p>
 <hr>
 <dl>
 <dt><strong><code>steps</code></strong> :&ensp;<code>list</code></dt>
-<dd>a list of ModuleSet instances</dd>
+<dd>a list of Vset instances</dd>
 <dt><strong><code>cache_dir</code></strong> :&ensp;<code>str</code>, default=<code>None</code></dt>
 <dd>The directory to use as data store by joblib. If None, won't do
 caching.</dd>
@@ -263,7 +263,7 @@ caching.</dd>
         Params
         ------
         steps: list
-            a list of ModuleSet instances
+            a list of Vset instances
         cache_dir: str, default=None
             The directory to use as data store by joblib. If None, won&#39;t do
             caching.

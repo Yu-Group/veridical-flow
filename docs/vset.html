@@ -1,0 +1,663 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.7.2" />
+<title>vflow.vset API documentation</title>
+<meta name="description" content="Set of modules to be parallelized over in a pipeline.
+Function arguments are each a list" />
+<link href='https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css' rel='stylesheet'>
+<link href='https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/8.0.0/sanitize.min.css' rel='stylesheet'>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css" rel="stylesheet">
+<style>.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{font-weight:bold}#index h4 + ul{margin-bottom:.6em}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>vflow.vset</code></h1>
+</header>
+<section id="section-intro">
+<p>Set of modules to be parallelized over in a pipeline.
+Function arguments are each a list</p>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">&#39;&#39;&#39;Set of modules to be parallelized over in a pipeline.
+Function arguments are each a list
+&#39;&#39;&#39;
+PREV_KEY = &#39;__prev__&#39;
+
+import numpy as np
+import ray
+
+from vflow.convert import *
+from vflow.module import Module, AsyncModule
+from vflow.smart_subkey import SmartSubkey
+
+
+class Vset:
+    def __init__(self, name: str, modules, module_keys: list = None,
+                 is_async: bool = False, output_matching: bool = False):
+        &#39;&#39;&#39;
+        todo: include prev and next and change functions to include that.
+        Params
+        -------
+        name: str
+            name of this moduleset
+        modules: list or dict
+            dictionary of functions that we want to associate with
+        module_keys: list (optional)
+            list of names corresponding to each module
+        is_async: bool (optional)
+            if True, modules are computed asynchronously
+        &#39;&#39;&#39;
+        self.name = name
+        self._fitted = False
+        self.out = None  # outputs
+        self._async = is_async
+        self._output_matching = output_matching
+        # check if any of the modules are AsyncModules
+        # if so, we&#39;ll make then all AsyncModules later on
+        if not self._async and np.any([isinstance(mod, AsyncModule) for mod in modules]):
+            self._async = True
+        if type(modules) is dict:
+            self.modules = modules
+        elif type(modules) is list:
+            if module_keys is not None:
+                assert type(module_keys) is list, &#39;modules passed as list but module_names is not a list&#39;
+                assert len(modules) == len(
+                    module_keys), &#39;modules list and module_names list do not have the same length&#39;
+                # TODO: add more checking of module_keys
+                if self._output_matching:
+                    module_keys = [self.__create_smart_subkey(k) if isinstance(k, tuple) else
+                                   (self.__create_smart_subkey(k),) for k in module_keys]
+                else:
+                    module_keys = [k if isinstance(k, tuple) else (k,) for k in module_keys]
+            else:
+                if self._output_matching:
+                    module_keys = [(self.__create_smart_subkey(f&#39;{name}_{i}&#39;),) for i in range(len(modules))]
+                else:
+                    module_keys = [(f&#39;{name}_{i}&#39;,) for i in range(len(modules))]
+            # convert module keys to singleton tuples
+            self.modules = dict(zip(module_keys, modules))
+        # if needed, wrap the modules in the Module or AsyncModule class
+        for k, v in self.modules.items():
+            if self._async:
+                if not isinstance(v, AsyncModule):
+                    self.modules[k] = AsyncModule(k[0], v)
+            elif not isinstance(v, Module):
+                self.modules[k] = Module(k[0], v)
+
+    def apply_func(self, *args, out_dict=None, matching=&#39;cartesian&#39;, order=&#39;typical&#39;, **kwargs):
+        &#39;&#39;&#39;
+        Params
+        ------
+        *args: List[Dict]: takes multiple dicts and combines them into one.
+                Then runs modules on each item in combined dict.
+        out_dict: the dictionary to pass to the matching function. If None, defaults to self.modules.
+
+        Returns
+        -------
+        results: dict
+            with items being determined by functions in module set.
+            Functions and input dictionaries are currently matched using  matching = &#39;cartesian&#39; format.
+                e.g. inputs:    module = {LR : logistic}, data = {train_1 : [X1,y1], train2 : [X2,y2]}
+                     out:    out_dict = {(train_1, LR)  : fitted logistic, (train_2, LR) :  fitted logistic}.
+            Currently matching = &#39;subset&#39; is not used...
+        &#39;&#39;&#39;
+        if out_dict is None:
+            out_dict = self.modules
+
+        # deepcopy args to avoid mutating them
+        args = deepcopy(args)
+
+        for ele in args:
+            if not isinstance(ele, dict):
+                raise Exception(&#39;Need to run init_args before calling module_set!&#39;)
+            if self._async:
+                # send data to the remote object store
+                for k, v in ele.items():
+                    if k != PREV_KEY:
+                        ele[k] = ray.put(v)
+
+        data_dict = combine_dicts(*args)
+        out_dict = apply_modules(out_dict, data_dict)
+
+        if self._async:
+            out_keys = list(out_dict.keys())
+            out_vals = ray.get(list(out_dict.values()))
+            out_dict = dict(zip(out_keys, out_vals))
+
+        self.__prev__ = data_dict[PREV_KEY]
+        out_dict[PREV_KEY] = (self,)
+
+        if self._output_matching:
+            # the final subkey of keys in out_dict should be key created during
+            # Vset.__init__()
+            out_keys = out_dict.keys()
+        return out_dict
+
+    def fit(self, *args, **kwargs):
+        &#39;&#39;&#39;
+        &#39;&#39;&#39;
+        if self._fitted:
+            return self
+        out_dict = {}
+        for k, v in self.modules.items():
+            out_dict[k] = v.fit
+        self.out = self.apply_func(*args, out_dict=out_dict, **kwargs)
+        self._fitted = True
+        return self
+
+    def transform(self, *args, **kwargs):
+        &#39;&#39;&#39;todo: fix this method
+        &#39;&#39;&#39;
+        results = []
+        for out in self.output:
+            result = out.transform(*args, **kwargs)
+            results.append(result)
+        return results
+
+    def predict(self, *args, **kwargs):
+        if not self._fitted:
+            raise AttributeError(&#39;Please fit the Vset object before calling the predict method.&#39;)
+        pred_dict = {}
+        for k, v in self.out.items():
+            if hasattr(v, &#39;predict&#39;):
+                pred_dict[k] = v.predict
+        return self.apply_func(*args, out_dict=pred_dict, matching=&#39;cartesian&#39;, order=&#39;backwards&#39;, **kwargs)
+
+    def predict_proba(self, *args, **kwargs):
+        if not self._fitted:
+            raise AttributeError(&#39;Please fit the Vset object before calling the predict_proba method.&#39;)
+        pred_dict = {}
+        for k, v in self.out.items():
+            if hasattr(v, &#39;predict_proba&#39;):
+                pred_dict[k] = v.predict_proba
+        return self.apply_func(*args, out_dict=pred_dict, matching=&#39;cartesian&#39;, order=&#39;backwards&#39;, **kwargs)
+
+    def evaluate(self, *args, **kwargs):
+        &#39;&#39;&#39;Combines dicts before calling apply_func
+        &#39;&#39;&#39;
+        return self.apply_func(*args, **kwargs)
+
+    def __call__(self, *args, n_out: int = None, **kwargs):
+        &#39;&#39;&#39;
+        &#39;&#39;&#39;
+        if n_out is None:
+            n_out = len(args)
+        out = sep_dicts(self.apply_func(*args, **kwargs), n_out=n_out)
+        return out
+
+    def __getitem__(self, i):
+        &#39;&#39;&#39;Accesses ith item in the module set
+        &#39;&#39;&#39;
+        return self.modules[i]
+
+    def __contains__(self, key):
+        &#39;&#39;&#39;Returns true if modules is a dict and key is one of its keys
+        &#39;&#39;&#39;
+        if isinstance(self.modules, dict):
+            return key in self.modules.keys()
+        return False
+
+    def keys(self):
+        if isinstance(self.modules, dict):
+            return self.modules.keys()
+        return {}.keys()
+
+    def __len__(self):
+        return len(self.modules)
+
+    def __str__(self):
+        return &#39;Vset(&#39; + self.name + &#39;)&#39;
+
+    def __create_smart_subkey(self, subkey):
+        return SmartSubkey(subkey, self.name)</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="vflow.vset.Vset"><code class="flex name class">
+<span>class <span class="ident">Vset</span></span>
+<span>(</span><span>name, modules, module_keys=None, is_async=False, output_matching=False)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>todo: include prev and next and change functions to include that.
+Params</p>
+<hr>
+<dl>
+<dt><strong><code>name</code></strong> :&ensp;<code>str</code></dt>
+<dd>name of this moduleset</dd>
+<dt><strong><code>modules</code></strong> :&ensp;<code>list</code> or <code>dict</code></dt>
+<dd>dictionary of functions that we want to associate with</dd>
+<dt><strong><code>module_keys</code></strong> :&ensp;<code>list</code> (optional)</dt>
+<dd>list of names corresponding to each module</dd>
+<dt><strong><code>is_async</code></strong> :&ensp;<code>bool</code> (optional)</dt>
+<dd>if True, modules are computed asynchronously</dd>
+</dl></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Vset:
+    def __init__(self, name: str, modules, module_keys: list = None,
+                 is_async: bool = False, output_matching: bool = False):
+        &#39;&#39;&#39;
+        todo: include prev and next and change functions to include that.
+        Params
+        -------
+        name: str
+            name of this moduleset
+        modules: list or dict
+            dictionary of functions that we want to associate with
+        module_keys: list (optional)
+            list of names corresponding to each module
+        is_async: bool (optional)
+            if True, modules are computed asynchronously
+        &#39;&#39;&#39;
+        self.name = name
+        self._fitted = False
+        self.out = None  # outputs
+        self._async = is_async
+        self._output_matching = output_matching
+        # check if any of the modules are AsyncModules
+        # if so, we&#39;ll make then all AsyncModules later on
+        if not self._async and np.any([isinstance(mod, AsyncModule) for mod in modules]):
+            self._async = True
+        if type(modules) is dict:
+            self.modules = modules
+        elif type(modules) is list:
+            if module_keys is not None:
+                assert type(module_keys) is list, &#39;modules passed as list but module_names is not a list&#39;
+                assert len(modules) == len(
+                    module_keys), &#39;modules list and module_names list do not have the same length&#39;
+                # TODO: add more checking of module_keys
+                if self._output_matching:
+                    module_keys = [self.__create_smart_subkey(k) if isinstance(k, tuple) else
+                                   (self.__create_smart_subkey(k),) for k in module_keys]
+                else:
+                    module_keys = [k if isinstance(k, tuple) else (k,) for k in module_keys]
+            else:
+                if self._output_matching:
+                    module_keys = [(self.__create_smart_subkey(f&#39;{name}_{i}&#39;),) for i in range(len(modules))]
+                else:
+                    module_keys = [(f&#39;{name}_{i}&#39;,) for i in range(len(modules))]
+            # convert module keys to singleton tuples
+            self.modules = dict(zip(module_keys, modules))
+        # if needed, wrap the modules in the Module or AsyncModule class
+        for k, v in self.modules.items():
+            if self._async:
+                if not isinstance(v, AsyncModule):
+                    self.modules[k] = AsyncModule(k[0], v)
+            elif not isinstance(v, Module):
+                self.modules[k] = Module(k[0], v)
+
+    def apply_func(self, *args, out_dict=None, matching=&#39;cartesian&#39;, order=&#39;typical&#39;, **kwargs):
+        &#39;&#39;&#39;
+        Params
+        ------
+        *args: List[Dict]: takes multiple dicts and combines them into one.
+                Then runs modules on each item in combined dict.
+        out_dict: the dictionary to pass to the matching function. If None, defaults to self.modules.
+
+        Returns
+        -------
+        results: dict
+            with items being determined by functions in module set.
+            Functions and input dictionaries are currently matched using  matching = &#39;cartesian&#39; format.
+                e.g. inputs:    module = {LR : logistic}, data = {train_1 : [X1,y1], train2 : [X2,y2]}
+                     out:    out_dict = {(train_1, LR)  : fitted logistic, (train_2, LR) :  fitted logistic}.
+            Currently matching = &#39;subset&#39; is not used...
+        &#39;&#39;&#39;
+        if out_dict is None:
+            out_dict = self.modules
+
+        # deepcopy args to avoid mutating them
+        args = deepcopy(args)
+
+        for ele in args:
+            if not isinstance(ele, dict):
+                raise Exception(&#39;Need to run init_args before calling module_set!&#39;)
+            if self._async:
+                # send data to the remote object store
+                for k, v in ele.items():
+                    if k != PREV_KEY:
+                        ele[k] = ray.put(v)
+
+        data_dict = combine_dicts(*args)
+        out_dict = apply_modules(out_dict, data_dict)
+
+        if self._async:
+            out_keys = list(out_dict.keys())
+            out_vals = ray.get(list(out_dict.values()))
+            out_dict = dict(zip(out_keys, out_vals))
+
+        self.__prev__ = data_dict[PREV_KEY]
+        out_dict[PREV_KEY] = (self,)
+
+        if self._output_matching:
+            # the final subkey of keys in out_dict should be key created during
+            # Vset.__init__()
+            out_keys = out_dict.keys()
+        return out_dict
+
+    def fit(self, *args, **kwargs):
+        &#39;&#39;&#39;
+        &#39;&#39;&#39;
+        if self._fitted:
+            return self
+        out_dict = {}
+        for k, v in self.modules.items():
+            out_dict[k] = v.fit
+        self.out = self.apply_func(*args, out_dict=out_dict, **kwargs)
+        self._fitted = True
+        return self
+
+    def transform(self, *args, **kwargs):
+        &#39;&#39;&#39;todo: fix this method
+        &#39;&#39;&#39;
+        results = []
+        for out in self.output:
+            result = out.transform(*args, **kwargs)
+            results.append(result)
+        return results
+
+    def predict(self, *args, **kwargs):
+        if not self._fitted:
+            raise AttributeError(&#39;Please fit the Vset object before calling the predict method.&#39;)
+        pred_dict = {}
+        for k, v in self.out.items():
+            if hasattr(v, &#39;predict&#39;):
+                pred_dict[k] = v.predict
+        return self.apply_func(*args, out_dict=pred_dict, matching=&#39;cartesian&#39;, order=&#39;backwards&#39;, **kwargs)
+
+    def predict_proba(self, *args, **kwargs):
+        if not self._fitted:
+            raise AttributeError(&#39;Please fit the Vset object before calling the predict_proba method.&#39;)
+        pred_dict = {}
+        for k, v in self.out.items():
+            if hasattr(v, &#39;predict_proba&#39;):
+                pred_dict[k] = v.predict_proba
+        return self.apply_func(*args, out_dict=pred_dict, matching=&#39;cartesian&#39;, order=&#39;backwards&#39;, **kwargs)
+
+    def evaluate(self, *args, **kwargs):
+        &#39;&#39;&#39;Combines dicts before calling apply_func
+        &#39;&#39;&#39;
+        return self.apply_func(*args, **kwargs)
+
+    def __call__(self, *args, n_out: int = None, **kwargs):
+        &#39;&#39;&#39;
+        &#39;&#39;&#39;
+        if n_out is None:
+            n_out = len(args)
+        out = sep_dicts(self.apply_func(*args, **kwargs), n_out=n_out)
+        return out
+
+    def __getitem__(self, i):
+        &#39;&#39;&#39;Accesses ith item in the module set
+        &#39;&#39;&#39;
+        return self.modules[i]
+
+    def __contains__(self, key):
+        &#39;&#39;&#39;Returns true if modules is a dict and key is one of its keys
+        &#39;&#39;&#39;
+        if isinstance(self.modules, dict):
+            return key in self.modules.keys()
+        return False
+
+    def keys(self):
+        if isinstance(self.modules, dict):
+            return self.modules.keys()
+        return {}.keys()
+
+    def __len__(self):
+        return len(self.modules)
+
+    def __str__(self):
+        return &#39;Vset(&#39; + self.name + &#39;)&#39;
+
+    def __create_smart_subkey(self, subkey):
+        return SmartSubkey(subkey, self.name)</code></pre>
+</details>
+<h3>Methods</h3>
+<dl>
+<dt id="vflow.vset.Vset.apply_func"><code class="name flex">
+<span>def <span class="ident">apply_func</span></span>(<span>self, *args, out_dict=None, matching='cartesian', order='typical', **kwargs)</span>
+</code></dt>
+<dd>
+<section class="desc"><h2 id="params">Params</h2>
+<p>*args: List[Dict]: takes multiple dicts and combines them into one.
+Then runs modules on each item in combined dict.
+out_dict: the dictionary to pass to the matching function. If None, defaults to self.modules.</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><strong><code>results</code></strong> :&ensp;<code>dict</code></dt>
+<dd>with items being determined by functions in module set.
+Functions and input dictionaries are currently matched using
+matching = 'cartesian' format.
+e.g. inputs:
+module = {LR : logistic}, data = {train_1 : [X1,y1], train2 : [X2,y2]}
+out:
+out_dict = {(train_1, LR)
+: fitted logistic, (train_2, LR) :
+fitted logistic}.
+Currently matching = 'subset' is not used&hellip;</dd>
+</dl></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def apply_func(self, *args, out_dict=None, matching=&#39;cartesian&#39;, order=&#39;typical&#39;, **kwargs):
+    &#39;&#39;&#39;
+    Params
+    ------
+    *args: List[Dict]: takes multiple dicts and combines them into one.
+            Then runs modules on each item in combined dict.
+    out_dict: the dictionary to pass to the matching function. If None, defaults to self.modules.
+
+    Returns
+    -------
+    results: dict
+        with items being determined by functions in module set.
+        Functions and input dictionaries are currently matched using  matching = &#39;cartesian&#39; format.
+            e.g. inputs:    module = {LR : logistic}, data = {train_1 : [X1,y1], train2 : [X2,y2]}
+                 out:    out_dict = {(train_1, LR)  : fitted logistic, (train_2, LR) :  fitted logistic}.
+        Currently matching = &#39;subset&#39; is not used...
+    &#39;&#39;&#39;
+    if out_dict is None:
+        out_dict = self.modules
+
+    # deepcopy args to avoid mutating them
+    args = deepcopy(args)
+
+    for ele in args:
+        if not isinstance(ele, dict):
+            raise Exception(&#39;Need to run init_args before calling module_set!&#39;)
+        if self._async:
+            # send data to the remote object store
+            for k, v in ele.items():
+                if k != PREV_KEY:
+                    ele[k] = ray.put(v)
+
+    data_dict = combine_dicts(*args)
+    out_dict = apply_modules(out_dict, data_dict)
+
+    if self._async:
+        out_keys = list(out_dict.keys())
+        out_vals = ray.get(list(out_dict.values()))
+        out_dict = dict(zip(out_keys, out_vals))
+
+    self.__prev__ = data_dict[PREV_KEY]
+    out_dict[PREV_KEY] = (self,)
+
+    if self._output_matching:
+        # the final subkey of keys in out_dict should be key created during
+        # Vset.__init__()
+        out_keys = out_dict.keys()
+    return out_dict</code></pre>
+</details>
+</dd>
+<dt id="vflow.vset.Vset.evaluate"><code class="name flex">
+<span>def <span class="ident">evaluate</span></span>(<span>self, *args, **kwargs)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Combines dicts before calling apply_func</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def evaluate(self, *args, **kwargs):
+    &#39;&#39;&#39;Combines dicts before calling apply_func
+    &#39;&#39;&#39;
+    return self.apply_func(*args, **kwargs)</code></pre>
+</details>
+</dd>
+<dt id="vflow.vset.Vset.fit"><code class="name flex">
+<span>def <span class="ident">fit</span></span>(<span>self, *args, **kwargs)</span>
+</code></dt>
+<dd>
+<section class="desc"></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def fit(self, *args, **kwargs):
+    &#39;&#39;&#39;
+    &#39;&#39;&#39;
+    if self._fitted:
+        return self
+    out_dict = {}
+    for k, v in self.modules.items():
+        out_dict[k] = v.fit
+    self.out = self.apply_func(*args, out_dict=out_dict, **kwargs)
+    self._fitted = True
+    return self</code></pre>
+</details>
+</dd>
+<dt id="vflow.vset.Vset.keys"><code class="name flex">
+<span>def <span class="ident">keys</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<section class="desc"></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def keys(self):
+    if isinstance(self.modules, dict):
+        return self.modules.keys()
+    return {}.keys()</code></pre>
+</details>
+</dd>
+<dt id="vflow.vset.Vset.predict"><code class="name flex">
+<span>def <span class="ident">predict</span></span>(<span>self, *args, **kwargs)</span>
+</code></dt>
+<dd>
+<section class="desc"></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def predict(self, *args, **kwargs):
+    if not self._fitted:
+        raise AttributeError(&#39;Please fit the Vset object before calling the predict method.&#39;)
+    pred_dict = {}
+    for k, v in self.out.items():
+        if hasattr(v, &#39;predict&#39;):
+            pred_dict[k] = v.predict
+    return self.apply_func(*args, out_dict=pred_dict, matching=&#39;cartesian&#39;, order=&#39;backwards&#39;, **kwargs)</code></pre>
+</details>
+</dd>
+<dt id="vflow.vset.Vset.predict_proba"><code class="name flex">
+<span>def <span class="ident">predict_proba</span></span>(<span>self, *args, **kwargs)</span>
+</code></dt>
+<dd>
+<section class="desc"></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def predict_proba(self, *args, **kwargs):
+    if not self._fitted:
+        raise AttributeError(&#39;Please fit the Vset object before calling the predict_proba method.&#39;)
+    pred_dict = {}
+    for k, v in self.out.items():
+        if hasattr(v, &#39;predict_proba&#39;):
+            pred_dict[k] = v.predict_proba
+    return self.apply_func(*args, out_dict=pred_dict, matching=&#39;cartesian&#39;, order=&#39;backwards&#39;, **kwargs)</code></pre>
+</details>
+</dd>
+<dt id="vflow.vset.Vset.transform"><code class="name flex">
+<span>def <span class="ident">transform</span></span>(<span>self, *args, **kwargs)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>todo: fix this method</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def transform(self, *args, **kwargs):
+    &#39;&#39;&#39;todo: fix this method
+    &#39;&#39;&#39;
+    results = []
+    for out in self.output:
+        result = out.transform(*args, **kwargs)
+        results.append(result)
+    return results</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="vflow" href="index.html">vflow</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="vflow.vset.Vset" href="#vflow.vset.Vset">Vset</a></code></h4>
+<ul class="two-column">
+<li><code><a title="vflow.vset.Vset.apply_func" href="#vflow.vset.Vset.apply_func">apply_func</a></code></li>
+<li><code><a title="vflow.vset.Vset.evaluate" href="#vflow.vset.Vset.evaluate">evaluate</a></code></li>
+<li><code><a title="vflow.vset.Vset.fit" href="#vflow.vset.Vset.fit">fit</a></code></li>
+<li><code><a title="vflow.vset.Vset.keys" href="#vflow.vset.Vset.keys">keys</a></code></li>
+<li><code><a title="vflow.vset.Vset.predict" href="#vflow.vset.Vset.predict">predict</a></code></li>
+<li><code><a title="vflow.vset.Vset.predict_proba" href="#vflow.vset.Vset.predict_proba">predict_proba</a></code></li>
+<li><code><a title="vflow.vset.Vset.transform" href="#vflow.vset.Vset.transform">transform</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.7.2</a>.</p>
+</footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad()</script>
+</body>
+</html>
