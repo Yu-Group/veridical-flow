@@ -7,7 +7,7 @@ import numpy as np
 import ray
 
 from vflow.convert import *
-from vflow.module import Module, AsyncModule
+from vflow.vfunc import Vfunc, AsyncModule
 from vflow.smart_subkey import SmartSubkey
 
 
@@ -56,13 +56,13 @@ class Vset:
                     module_keys = [(f'{name}_{i}',) for i in range(len(modules))]
             # convert module keys to singleton tuples
             self.modules = dict(zip(module_keys, modules))
-        # if needed, wrap the modules in the Module or AsyncModule class
+        # if needed, wrap the modules in the Vfunc or AsyncModule class
         for k, v in self.modules.items():
             if self._async:
                 if not isinstance(v, AsyncModule):
                     self.modules[k] = AsyncModule(k[0], v)
-            elif not isinstance(v, Module):
-                self.modules[k] = Module(k[0], v)
+            elif not isinstance(v, Vfunc):
+                self.modules[k] = Vfunc(k[0], v)
 
     def apply_func(self, *args, out_dict=None, matching='cartesian', order='typical', **kwargs):
         '''

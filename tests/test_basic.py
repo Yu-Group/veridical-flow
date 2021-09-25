@@ -6,7 +6,7 @@ class TestBasic():
     def setup(self):
         self.pipeline = vflow.PCSPipeline()
         self.module_set = vflow.Vset(name='s', modules={})
-        self.module = vflow.Module()
+        self.module = vflow.Vfunc()
 
     def test_class_initializations(self):
         assert self.pipeline.steps is not None
