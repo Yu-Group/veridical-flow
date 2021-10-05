@@ -1,9 +1,12 @@
 '''Useful functions for converting between different types (dicts, lists, tuples, etc.)
 '''
+from typing import List
+from pandas.core.frame import DataFrame
 from vflow.smart_subkey import SmartSubkey
 from vflow.module_set import PREV_KEY
 
 from copy import deepcopy
+import pandas as pd
 
 def init_args(args_tuple: tuple, names=None):
     ''' converts tuple of arguments to a list of dicts
@@ -20,7 +23,7 @@ def init_args(args_tuple: tuple, names=None):
     output_dicts = []
     for (i, ele) in enumerate(args_tuple):
         output_dicts.append({
-            (names[i], ): args_tuple[i],
+            (SmartSubkey(names[i], 'init'), ): args_tuple[i],
             PREV_KEY: ('init', ),
         })
     return output_dicts
@@ -34,6 +37,25 @@ def s(x):
     else:
         return x.shape
 
+def dict_to_df(d: dict):
+    '''Converts a dictionary with tuple keys
+    into a pandas DataFrame
+    '''
+    d_copy = {k:d[k] for k in d if k != PREV_KEY}
+    df = pd.Series(d_copy).reset_index()
+    if len(d_copy.keys()) > 0:
+        cols = [sk.origin for sk in list(d_copy.keys())[0]]
+        # Set last column to 'out'
+        cols.append('out')
+        df.set_axis(cols, axis=1, inplace=True)
+    return df
+
+def compute_interval(df: DataFrame, d_label, wrt_label, accum: list=['std']):
+    '''Compute an interval (std. dev) of d_label column with 
+    respect to pertubations in the wrt_label column
+    TODO: Add fn param to set accum type
+    '''
+    return df[[wrt_label, d_label]].groupby(wrt_label).agg(accum)
 
 def to_tuple(lists: list):
     '''Convert from lists to unpacked  tuple
@@ -132,12 +154,12 @@ def combine_keys(left_key, right_key):
     else:
         match_key = right_key
         compare_key = left_key
-    match_smartkeys = [subkey for subkey in match_key if isinstance(subkey, SmartSubkey)]
+    match_smartkeys = [subkey for subkey in match_key if subkey.is_matching()]
     if len(match_smartkeys) > 0:
         matched_subkeys = []
         for subkey in match_smartkeys:
             for c_subkey in compare_key:
-                if isinstance(c_subkey, SmartSubkey):
+                if subkey.is_matching():
                     if subkey.origin == c_subkey.origin:
                         if subkey.subkey == c_subkey.subkey:
                             matched_subkeys.append(subkey)
