@@ -4,6 +4,8 @@ from copy import deepcopy
 
 from vflow.vset import PREV_KEY
 from vflow.smart_subkey import SmartSubkey
+import pandas as pd
+from pandas import DataFrame
 
 
 def init_args(args_tuple: tuple, names=None):
