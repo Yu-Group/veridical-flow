@@ -66,7 +66,8 @@ class TestPipelines:
         G = build_graph(hard_metrics, draw=True)
 
         # asserts
-        k1 = ('X_test', 'X_train', sm('subsampling_0', 'subsampling'), 'y_train', 'LR', 'y_test', 'Acc')
+        k1 = (sm('X_test', 'init'), sm('X_train', 'init'), sm('subsampling_0', 'subsampling', True), 
+            sm('y_train', 'init'), sm('LR', 'modeling'), sm('y_test', 'init'), sm('Acc', 'hard_metrics'))
         assert k1 in hard_metrics, 'hard metrics should have ' + str(k1) + ' as key'
         assert hard_metrics[k1] > 0.9  # 0.9090909090909091
         assert PREV_KEY in hard_metrics
@@ -123,7 +124,8 @@ class TestPipelines:
         G = build_graph(hard_metrics, draw=True)
 
         # asserts
-        k1 = ('X_train', sm('feat_extraction_0', 'feat_extraction'), 'X_train', 'y_train', 'DT', 'y_train', 'r2')
+        k1 = (sm('X_train', 'init'), sm('feat_extraction_0', 'feat_extraction', True), sm('X_train', 'init'), sm('y_train', 'init'), 
+                sm('DT', 'modeling'), sm('y_train', 'init'), sm('r2', 'hard_metrics'))
         assert k1 in hard_metrics, 'hard metrics should have ' + str(k1) + ' as key'
         assert hard_metrics[k1] > 0.9  # 0.9090909090909091
         assert PREV_KEY in hard_metrics
@@ -165,9 +167,9 @@ class TestPipelines:
         importances = feature_importance_set.evaluate(modeling_set.out, X_test, y_test)
 
         # asserts
-        k1 = (
-            'X_train', sm('subsampling_0', 'subsampling'), 'y_train', 'LR', 'X_test', 'y_test',
-            'permutation_importance')
+        k1 = (sm('X_train', 'init'), sm('subsampling_0', 'subsampling', True), 
+            sm('y_train', 'init'), sm('LR', 'modeling'), sm('X_test', 'init'), 
+            sm('y_test', 'init'), sm('permutation_importance', 'feature_importance'))
         assert k1 in importances, 'hard metrics should have ' + str(k1) + ' as key'
         assert PREV_KEY in importances
         assert len(importances.keys()) == 7

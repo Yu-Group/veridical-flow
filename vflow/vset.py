@@ -53,16 +53,10 @@ class Vset:
                 assert len(modules) == len(
                     module_keys), 'modules list and module_names list do not have the same length'
                 # TODO: add more checking of module_keys
-                if self._output_matching:
-                    module_keys = [self.__create_smart_subkey(k) if isinstance(k, tuple) else
-                                   (self.__create_smart_subkey(k),) for k in module_keys]
-                else:
-                    module_keys = [k if isinstance(k, tuple) else (k,) for k in module_keys]
+                module_keys = [self.__create_smart_subkey(k) if isinstance(k, tuple) else
+                                (self.__create_smart_subkey(k), ) for k in module_keys]
             else:
-                if self._output_matching:
-                    module_keys = [(self.__create_smart_subkey(f'{name}_{i}'),) for i in range(len(modules))]
-                else:
-                    module_keys = [(f'{name}_{i}',) for i in range(len(modules))]
+                module_keys = [(self.__create_smart_subkey(f'{name}_{i}'), ) for i in range(len(modules))]
             # convert module keys to singleton tuples
             self.modules = dict(zip(module_keys, modules))
         # if needed, wrap the modules in the Vfunc or AsyncModule class
@@ -160,7 +154,7 @@ class Vset:
         return 'Vset(' + self.name + ')'
 
     def __create_smart_subkey(self, subkey):
-        return SmartSubkey(subkey, self.name)
+        return SmartSubkey(subkey, self.name, self._output_matching)
 
 
 def _apply_func_cached(out_dict: dict, is_async: bool, output_matching: bool, *args):
@@ -209,4 +203,3 @@ def _apply_func_cached(out_dict: dict, is_async: bool, output_matching: bool, *a
         # Vset.__init__()
         out_keys = out_dict.keys()
     return data_dict, out_dict
-
