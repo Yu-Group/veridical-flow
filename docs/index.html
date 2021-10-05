@@ -6,7 +6,7 @@
 <meta name="generator" content="pdoc 0.7.2" />
 <title>vflow API documentation</title>
 <meta name="description" content="&lt;h1 align=&#34;center&#34;&gt; Veridical Flow 🌊 &lt;/h1&gt;
-&lt;p align=&#34;center&#34;&gt; A library for making stability analysis simple (following the veridical data science …" />
+&lt;p align=&#34;center&#34;&gt; A library for making stability analysis simple, following the veridical data-science …" />
 <link href='https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css' rel='stylesheet'>
 <link href='https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/8.0.0/sanitize.min.css' rel='stylesheet'>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css" rel="stylesheet">
@@ -22,52 +22,88 @@
 </header>
 <section id="section-intro">
 <h1 align="center"> Veridical Flow 🌊 </h1>
-<p align="center"> A library for making stability analysis simple (following the veridical data science framework).
+<p align="center"> A library for making stability analysis simple, following the veridical data-science framework.
 </p>
 <p align="center">
 <img src="https://img.shields.io/badge/license-mit-blue.svg">
 <img src="https://img.shields.io/badge/python-3.6+-blue">
 <a href="https://github.com/Yu-group/pcs-pipeline/actions"><img src="https://github.com/Yu-group/pcs-pipeline/workflows/tests/badge.svg"></a>
 <img src="https://img.shields.io/github/checks-status/Yu-group/pcs-pipeline/master">
-<img src="https://img.shields.io/pypi/v/pcsp?color=orange">
+<img src="https://img.shields.io/pypi/v/vflow?color=orange">
 </p>
-<h1 id="sample-usage">Sample usage</h1>
-<p>Install with <code>pip install vflow</code> (
-see <a href="https://github.com/Yu-Group/pcs-pipeline/blob/master/docs/troubleshooting.md">here</a> for help). For developer (
-unstable) version, clone the repo and run <code>python setup.py develop</code> from the repo directory.</p>
-<pre><code class="language-python">import vflow
-from vflow import vflowipeline  # replaces sklearn.Pipeline
-from vflow import ModuleSet  # drop-in replacement for any function with a set of functions
-</code></pre>
-<h1 id="documentation">Documentation</h1>
-<p>Builds heavily on the <a href="https://scikit-learn.org/stable/modules/compose.html">sklearn-pipeline</a>, but extends it to
-facilitate stability analysis.</p>
-<h2 id="pipeline">Pipeline</h2>
-<p>The <a href="https://scikit-learn.org/stable/modules/generated/sklearn.pipeline.Pipeline.html#sklearn.pipeline.Pipeline"><code>Pipeline</code></a>
-is built using a list of <code>(key, value)</code> pairs, where the <code>key</code> is a string containing the name you want to give this
-step and <code>value</code> is an estimator object:</p>
-<pre><code class="language-python">from vflow import vflowipeline  # replaces sklearn.Pipeline
+<h1 id="why-use-vflow">Why use <a title="vflow" href="#vflow"><code>vflow</code></a>?</h1>
+<p>Using <a title="vflow" href="#vflow"><code>vflow</code></a>'s simple wrappers easily enables many best practices for data science, and makes writing pipelines easy.</p>
+<table>
+<thead>
+<tr>
+<th>Stability</th>
+<th>Computation</th>
+<th>Reproducibility</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Replace a single function (e.g. preprocessing) with a set of functions and easily assess the stability of downstream results</td>
+<td>Automatic parallelization and caching throughout the pipeline</td>
+<td>Automatic experiment tracking and saving</td>
+</tr>
+</tbody>
+</table>
+<p>Here we show a simple example of an entire data-science pipeline with several perturbations (e.g. different data subsamples, models, and metrics) written simply using <a title="vflow" href="#vflow"><code>vflow</code></a>.</p>
+<pre><code class="language-python">import sklearn
+from sklearn.metrics import accuracy_score, balanced_accuracy_score
+from vflow import init_args, Vset
 
-pipe = PCSPipeline()
+# initialize data
+X, y = sklearn.datasets.make_classification()
+X_train, X_test, y_train, y_test = init_args(
+    sklearn.model_selection.train_test_split(X, y),
+    names=['X_train', 'X_test', 'y_train', 'y_test']  # optionally name the args
+)
+
+# subsample data
+subsampling_funcs = [
+    sklearn.utils.resample for _ in range(3)
+]
+subsampling_set = Vset(name='subsampling',
+                       modules=subsampling_funcs,
+                       output_matching=True)
+X_trains, y_trains = subsampling_set(X_train, y_train)
+
+# fit models
+models = [
+    sklearn.linear_model.LogisticRegression(),
+    sklearn.tree.DecisionTreeClassifier()
+]
+modeling_set = Vset(name='modeling',
+                    modules=models,
+                    module_keys=[&quot;LR&quot;, &quot;DT&quot;])
+modeling_set.fit(X_trains, y_trains)
+preds_test = modeling_set.predict(X_test)
+
+# get metrics
+binary_metrics_set = Vset(name='binary_metrics',
+                          modules=[accuracy_score, balanced_accuracy_score],
+                          module_keys=[&quot;Acc&quot;, &quot;Bal_Acc&quot;])
+binary_metrics = binary_metrics_set.evaluate(preds_test, y_test)
 </code></pre>
-<p>The estimators of a pipeline are stored as a list in the steps attribute, but can be accessed by index or name by
-indexing (with [idx]) the Pipeline:</p>
-<pre><code class="language-python">&gt;&gt;&gt; pipe.steps[0]
-...
-&gt;&gt;&gt; pipe[0]
-...
-</code></pre>
+<p>Once we've written this pipeline, get very easily see how stable certain metrics (e.g. "Acc") are to our choice of subsampling or model.</p>
+<h1 id="documentation">Documentation</h1>
+<p>See the <a href="https://yu-group.github.io/veridical-flow/">docs</a> for reference on the API</p>
 <blockquote>
 <p><strong>Examples</strong></p>
-<p><a href="https://github.com/Yu-Group/pcs-pipeline/tree/master/notebooks/synthetic_classification.ipynb">Synthetic classification example</a></p>
-<p><a href="https://github.com/Yu-Group/pcs-pipeline/tree/master/notebooks/digits_classification.ipynb">Digit classification example</a></p>
+<p><a href="https://github.com/Yu-Group/veridical-flow/blob/master/notebooks/00_synthetic_classification.ipynb">Synthetic classification example</a></p>
+<p><a href="https://github.com/Yu-Group/veridical-flow/blob/master/notebooks/01_enhancer.ipynb">Enhancer example</a></p>
+<p><a href="https://github.com/Yu-Group/veridical-flow/blob/master/notebooks/02_fmri.ipynb">fMRI example</a></p>
 </blockquote>
+<h2 id="installation">Installation</h2>
+<p>Install with <code>pip install vflow</code> (see <a href="https://github.com/Yu-Group/pcs-pipeline/blob/master/docs/troubleshooting.md">here</a> for help). For dev version (unstable), clone the repo and run <code>python setup.py develop</code> from the repo directory.</p>
 <h1 id="references">References</h1>
 <ul>
-<li>built on <a href="https://scikit-learn.org/stable/index.html">scikit-learn</a></li>
-<li>compatible with <a href="https://dvc.org/">dvc</a> - data version control</li>
-<li>uses <a href="https://joblib.readthedocs.io/en/latest/">joblib</a> for caching</li>
-<li>pull requests <a href="https://github.com/Yu-Group/pcs-pipeline/blob/master/docs/contributing.md">very welcome</a>!</li>
+<li>interface: easily build on <a href="https://scikit-learn.org/stable/index.html">scikit-learn</a> and <a href="https://dvc.org/">dvc</a> (data version control)</li>
+<li>computation: integration with <a href="https://www.ray.io/">ray</a> and caching with <a href="https://joblib.readthedocs.io/en/latest/">joblib</a></li>
+<li>tracking: <a href="https://mlflow.org/">mlflow</a></li>
+<li>pull requests very welcome! (see <a href="https://github.com/Yu-Group/pcs-pipeline/blob/master/docs/contributing.md">contributing.md</a>)</li>
 </ul>
 <details class="source">
 <summary>
@@ -76,10 +112,10 @@ indexing (with [idx]) the Pipeline:</p>
 <pre><code class="python">&#34;&#34;&#34;
 .. include:: ../readme.md
 &#34;&#34;&#34;
-from .convert import init_args
 from .module import *
-from .module_set import *
-from .pipeline import *</code></pre>
+from .vset import *
+from .pipeline import *
+from .convert import init_args</code></pre>
 </details>
 </section>
 <section>
@@ -93,14 +129,18 @@ from .pipeline import *</code></pre>
 <dd>
 <section class="desc"><p>A perturbation that can be used as a step in a pipeline</p></section>
 </dd>
-<dt><code class="name"><a title="vflow.module_set" href="module_set.html">vflow.module_set</a></code></dt>
-<dd>
-<section class="desc"><p>Set of modules to be parallelized over in a pipeline.
-Function arguments are each a list</p></section>
-</dd>
 <dt><code class="name"><a title="vflow.pipeline" href="pipeline.html">vflow.pipeline</a></code></dt>
 <dd>
 <section class="desc"><p>Class that stores the entire pipeline of steps in a data-science workflow</p></section>
+</dd>
+<dt><code class="name"><a title="vflow.smart_subkey" href="smart_subkey.html">vflow.smart_subkey</a></code></dt>
+<dd>
+<section class="desc"></section>
+</dd>
+<dt><code class="name"><a title="vflow.vset" href="vset.html">vflow.vset</a></code></dt>
+<dd>
+<section class="desc"><p>Set of modules to be parallelized over in a pipeline.
+Function arguments are each a list</p></section>
 </dd>
 </dl>
 </section>
@@ -115,9 +155,9 @@ Function arguments are each a list</p></section>
 <h1>Index 🔍</h1>
 <div class="toc">
 <ul>
-<li><a href="#sample-usage">Sample usage</a></li>
+<li><a href="#why-use-vflow">Why use vflow?</a></li>
 <li><a href="#documentation">Documentation</a><ul>
-<li><a href="#pipeline">Pipeline</a></li>
+<li><a href="#installation">Installation</a></li>
 </ul>
 </li>
 <li><a href="#references">References</a></li>
@@ -128,8 +168,9 @@ Function arguments are each a list</p></section>
 <ul>
 <li><code><a title="vflow.convert" href="convert.html">vflow.convert</a></code></li>
 <li><code><a title="vflow.module" href="module.html">vflow.module</a></code></li>
-<li><code><a title="vflow.module_set" href="module_set.html">vflow.module_set</a></code></li>
 <li><code><a title="vflow.pipeline" href="pipeline.html">vflow.pipeline</a></code></li>
+<li><code><a title="vflow.smart_subkey" href="smart_subkey.html">vflow.smart_subkey</a></code></li>
+<li><code><a title="vflow.vset" href="vset.html">vflow.vset</a></code></li>
 </ul>
 </li>
 </ul>

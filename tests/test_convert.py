@@ -1,11 +1,10 @@
-import pytest
-
-from vflow.module_set import PREV_KEY
-from vflow.smart_subkey import SmartSubkey as sm
-from vflow.convert import *
-
 import numpy as np
+import pytest
 from numpy.testing import assert_equal
+
+from vflow.convert import *
+from vflow.smart_subkey import SmartSubkey as sm
+
 
 @pytest.mark.parametrize(
     'in_dicts,out_dict',
@@ -453,10 +452,10 @@ from numpy.testing import assert_equal
             # in_dicts
             [
                 {
-                    PREV_KEY: 'prev_0' # not wrapped in tuple
+                    PREV_KEY: 'prev_0'  # not wrapped in tuple
                 },
                 {
-                    PREV_KEY: ('prev_1', )
+                    PREV_KEY: ('prev_1',)
                 }
             ],
             # out_dict
@@ -803,7 +802,7 @@ from numpy.testing import assert_equal
                  sm('y_test', 'init'),sm('voxel_extract_1', 'v_origin', True),
                  sm('X_train', 'init'),sm('y_train', 'init'),sm('RF', 'modeling')): ('X_test_data_11','y_test_data_11', 'RF_111'),
 
-            }
+                }
         ),
         (
             # in_dicts

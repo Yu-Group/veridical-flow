@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 <meta name="generator" content="pdoc 0.7.2" />
-<title>vflow.module_set API documentation</title>
+<title>vflow.vset API documentation</title>
 <meta name="description" content="Set of modules to be parallelized over in a pipeline.
 Function arguments are each a list" />
 <link href='https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css' rel='stylesheet'>
@@ -18,7 +18,7 @@ Function arguments are each a list" />
 <main>
 <article id="content">
 <header>
-<h1 class="title">Module <code>vflow.module_set</code></h1>
+<h1 class="title">Module <code>vflow.vset</code></h1>
 </header>
 <section id="section-intro">
 <p>Set of modules to be parallelized over in a pipeline.
@@ -40,7 +40,7 @@ from vflow.module import Module, AsyncModule
 from vflow.smart_subkey import SmartSubkey
 
 
-class ModuleSet:
+class Vset:
     def __init__(self, name: str, modules, module_keys: list = None,
                  is_async: bool = False, output_matching: bool = False):
         &#39;&#39;&#39;
@@ -138,7 +138,7 @@ class ModuleSet:
 
         if self._output_matching:
             # the final subkey of keys in out_dict should be key created during
-            # ModuleSet.__init__()
+            # Vset.__init__()
             out_keys = out_dict.keys()
         return out_dict
 
@@ -165,7 +165,7 @@ class ModuleSet:
 
     def predict(self, *args, **kwargs):
         if not self._fitted:
-            raise AttributeError(&#39;Please fit the ModuleSet object before calling the predict method.&#39;)
+            raise AttributeError(&#39;Please fit the Vset object before calling the predict method.&#39;)
         pred_dict = {}
         for k, v in self.out.items():
             if hasattr(v, &#39;predict&#39;):
@@ -174,7 +174,7 @@ class ModuleSet:
 
     def predict_proba(self, *args, **kwargs):
         if not self._fitted:
-            raise AttributeError(&#39;Please fit the ModuleSet object before calling the predict_proba method.&#39;)
+            raise AttributeError(&#39;Please fit the Vset object before calling the predict_proba method.&#39;)
         pred_dict = {}
         for k, v in self.out.items():
             if hasattr(v, &#39;predict_proba&#39;):
@@ -215,7 +215,7 @@ class ModuleSet:
         return len(self.modules)
 
     def __str__(self):
-        return &#39;ModuleSet(&#39; + self.name + &#39;)&#39;
+        return &#39;Vset(&#39; + self.name + &#39;)&#39;
 
     def __create_smart_subkey(self, subkey):
         return SmartSubkey(subkey, self.name)</code></pre>
@@ -230,8 +230,8 @@ class ModuleSet:
 <section>
 <h2 class="section-title" id="header-classes">Classes</h2>
 <dl>
-<dt id="vflow.module_set.ModuleSet"><code class="flex name class">
-<span>class <span class="ident">ModuleSet</span></span>
+<dt id="vflow.vset.Vset"><code class="flex name class">
+<span>class <span class="ident">Vset</span></span>
 <span>(</span><span>name, modules, module_keys=None, is_async=False, output_matching=False)</span>
 </code></dt>
 <dd>
@@ -252,7 +252,7 @@ Params</p>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class ModuleSet:
+<pre><code class="python">class Vset:
     def __init__(self, name: str, modules, module_keys: list = None,
                  is_async: bool = False, output_matching: bool = False):
         &#39;&#39;&#39;
@@ -350,7 +350,7 @@ Params</p>
 
         if self._output_matching:
             # the final subkey of keys in out_dict should be key created during
-            # ModuleSet.__init__()
+            # Vset.__init__()
             out_keys = out_dict.keys()
         return out_dict
 
@@ -377,7 +377,7 @@ Params</p>
 
     def predict(self, *args, **kwargs):
         if not self._fitted:
-            raise AttributeError(&#39;Please fit the ModuleSet object before calling the predict method.&#39;)
+            raise AttributeError(&#39;Please fit the Vset object before calling the predict method.&#39;)
         pred_dict = {}
         for k, v in self.out.items():
             if hasattr(v, &#39;predict&#39;):
@@ -386,7 +386,7 @@ Params</p>
 
     def predict_proba(self, *args, **kwargs):
         if not self._fitted:
-            raise AttributeError(&#39;Please fit the ModuleSet object before calling the predict_proba method.&#39;)
+            raise AttributeError(&#39;Please fit the Vset object before calling the predict_proba method.&#39;)
         pred_dict = {}
         for k, v in self.out.items():
             if hasattr(v, &#39;predict_proba&#39;):
@@ -427,14 +427,14 @@ Params</p>
         return len(self.modules)
 
     def __str__(self):
-        return &#39;ModuleSet(&#39; + self.name + &#39;)&#39;
+        return &#39;Vset(&#39; + self.name + &#39;)&#39;
 
     def __create_smart_subkey(self, subkey):
         return SmartSubkey(subkey, self.name)</code></pre>
 </details>
 <h3>Methods</h3>
 <dl>
-<dt id="vflow.module_set.ModuleSet.apply_func"><code class="name flex">
+<dt id="vflow.vset.Vset.apply_func"><code class="name flex">
 <span>def <span class="ident">apply_func</span></span>(<span>self, *args, out_dict=None, matching='cartesian', order='typical', **kwargs)</span>
 </code></dt>
 <dd>
@@ -505,12 +505,12 @@ Currently matching = 'subset' is not used&hellip;</dd>
 
     if self._output_matching:
         # the final subkey of keys in out_dict should be key created during
-        # ModuleSet.__init__()
+        # Vset.__init__()
         out_keys = out_dict.keys()
     return out_dict</code></pre>
 </details>
 </dd>
-<dt id="vflow.module_set.ModuleSet.evaluate"><code class="name flex">
+<dt id="vflow.vset.Vset.evaluate"><code class="name flex">
 <span>def <span class="ident">evaluate</span></span>(<span>self, *args, **kwargs)</span>
 </code></dt>
 <dd>
@@ -525,7 +525,7 @@ Currently matching = 'subset' is not used&hellip;</dd>
     return self.apply_func(*args, **kwargs)</code></pre>
 </details>
 </dd>
-<dt id="vflow.module_set.ModuleSet.fit"><code class="name flex">
+<dt id="vflow.vset.Vset.fit"><code class="name flex">
 <span>def <span class="ident">fit</span></span>(<span>self, *args, **kwargs)</span>
 </code></dt>
 <dd>
@@ -547,7 +547,7 @@ Currently matching = 'subset' is not used&hellip;</dd>
     return self</code></pre>
 </details>
 </dd>
-<dt id="vflow.module_set.ModuleSet.keys"><code class="name flex">
+<dt id="vflow.vset.Vset.keys"><code class="name flex">
 <span>def <span class="ident">keys</span></span>(<span>self)</span>
 </code></dt>
 <dd>
@@ -562,7 +562,7 @@ Currently matching = 'subset' is not used&hellip;</dd>
     return {}.keys()</code></pre>
 </details>
 </dd>
-<dt id="vflow.module_set.ModuleSet.predict"><code class="name flex">
+<dt id="vflow.vset.Vset.predict"><code class="name flex">
 <span>def <span class="ident">predict</span></span>(<span>self, *args, **kwargs)</span>
 </code></dt>
 <dd>
@@ -573,7 +573,7 @@ Currently matching = 'subset' is not used&hellip;</dd>
 </summary>
 <pre><code class="python">def predict(self, *args, **kwargs):
     if not self._fitted:
-        raise AttributeError(&#39;Please fit the ModuleSet object before calling the predict method.&#39;)
+        raise AttributeError(&#39;Please fit the Vset object before calling the predict method.&#39;)
     pred_dict = {}
     for k, v in self.out.items():
         if hasattr(v, &#39;predict&#39;):
@@ -581,7 +581,7 @@ Currently matching = 'subset' is not used&hellip;</dd>
     return self.apply_func(*args, out_dict=pred_dict, matching=&#39;cartesian&#39;, order=&#39;backwards&#39;, **kwargs)</code></pre>
 </details>
 </dd>
-<dt id="vflow.module_set.ModuleSet.predict_proba"><code class="name flex">
+<dt id="vflow.vset.Vset.predict_proba"><code class="name flex">
 <span>def <span class="ident">predict_proba</span></span>(<span>self, *args, **kwargs)</span>
 </code></dt>
 <dd>
@@ -592,7 +592,7 @@ Currently matching = 'subset' is not used&hellip;</dd>
 </summary>
 <pre><code class="python">def predict_proba(self, *args, **kwargs):
     if not self._fitted:
-        raise AttributeError(&#39;Please fit the ModuleSet object before calling the predict_proba method.&#39;)
+        raise AttributeError(&#39;Please fit the Vset object before calling the predict_proba method.&#39;)
     pred_dict = {}
     for k, v in self.out.items():
         if hasattr(v, &#39;predict_proba&#39;):
@@ -600,7 +600,7 @@ Currently matching = 'subset' is not used&hellip;</dd>
     return self.apply_func(*args, out_dict=pred_dict, matching=&#39;cartesian&#39;, order=&#39;backwards&#39;, **kwargs)</code></pre>
 </details>
 </dd>
-<dt id="vflow.module_set.ModuleSet.transform"><code class="name flex">
+<dt id="vflow.vset.Vset.transform"><code class="name flex">
 <span>def <span class="ident">transform</span></span>(<span>self, *args, **kwargs)</span>
 </code></dt>
 <dd>
@@ -638,15 +638,15 @@ Currently matching = 'subset' is not used&hellip;</dd>
 <li><h3><a href="#header-classes">Classes</a></h3>
 <ul>
 <li>
-<h4><code><a title="vflow.module_set.ModuleSet" href="#vflow.module_set.ModuleSet">ModuleSet</a></code></h4>
+<h4><code><a title="vflow.vset.Vset" href="#vflow.vset.Vset">Vset</a></code></h4>
 <ul class="two-column">
-<li><code><a title="vflow.module_set.ModuleSet.apply_func" href="#vflow.module_set.ModuleSet.apply_func">apply_func</a></code></li>
-<li><code><a title="vflow.module_set.ModuleSet.evaluate" href="#vflow.module_set.ModuleSet.evaluate">evaluate</a></code></li>
-<li><code><a title="vflow.module_set.ModuleSet.fit" href="#vflow.module_set.ModuleSet.fit">fit</a></code></li>
-<li><code><a title="vflow.module_set.ModuleSet.keys" href="#vflow.module_set.ModuleSet.keys">keys</a></code></li>
-<li><code><a title="vflow.module_set.ModuleSet.predict" href="#vflow.module_set.ModuleSet.predict">predict</a></code></li>
-<li><code><a title="vflow.module_set.ModuleSet.predict_proba" href="#vflow.module_set.ModuleSet.predict_proba">predict_proba</a></code></li>
-<li><code><a title="vflow.module_set.ModuleSet.transform" href="#vflow.module_set.ModuleSet.transform">transform</a></code></li>
+<li><code><a title="vflow.vset.Vset.apply_func" href="#vflow.vset.Vset.apply_func">apply_func</a></code></li>
+<li><code><a title="vflow.vset.Vset.evaluate" href="#vflow.vset.Vset.evaluate">evaluate</a></code></li>
+<li><code><a title="vflow.vset.Vset.fit" href="#vflow.vset.Vset.fit">fit</a></code></li>
+<li><code><a title="vflow.vset.Vset.keys" href="#vflow.vset.Vset.keys">keys</a></code></li>
+<li><code><a title="vflow.vset.Vset.predict" href="#vflow.vset.Vset.predict">predict</a></code></li>
+<li><code><a title="vflow.vset.Vset.predict_proba" href="#vflow.vset.Vset.predict_proba">predict_proba</a></code></li>
+<li><code><a title="vflow.vset.Vset.transform" href="#vflow.vset.Vset.transform">transform</a></code></li>
 </ul>
 </li>
 </ul>

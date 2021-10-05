@@ -3,19 +3,17 @@ Function arguments are each a list
 '''
 PREV_KEY = '__prev__'
 
-from vflow.convert import *
-from vflow.module import Module, AsyncModule
-from vflow.smart_subkey import SmartSubkey
-
 import numpy as np
 import ray
 
-from copy import deepcopy
+from vflow.convert import *
+from vflow.vfunc import Vfunc, AsyncModule
+from vflow.smart_subkey import SmartSubkey
 
 
-class ModuleSet:
-    def __init__(self, name: str, modules, module_keys: list=None,
-                 is_async: bool=False, output_matching: bool=False):
+class Vset:
+    def __init__(self, name: str, modules, module_keys: list = None,
+                 is_async: bool = False, output_matching: bool = False):
         '''
         todo: include prev and next and change functions to include that.
         Params
@@ -43,7 +41,8 @@ class ModuleSet:
         elif type(modules) is list:
             if module_keys is not None:
                 assert type(module_keys) is list, 'modules passed as list but module_names is not a list'
-                assert len(modules) == len(module_keys), 'modules list and module_names list do not have the same length'
+                assert len(modules) == len(
+                    module_keys), 'modules list and module_names list do not have the same length'
                 # TODO: add more checking of module_keys
                 module_keys = [self.__create_smart_subkey(k) if isinstance(k, tuple) else
                                 (self.__create_smart_subkey(k), ) for k in module_keys]
@@ -51,13 +50,13 @@ class ModuleSet:
                 module_keys = [(self.__create_smart_subkey(f'{name}_{i}'), ) for i in range(len(modules))]
             # convert module keys to singleton tuples
             self.modules = dict(zip(module_keys, modules))
-        # if needed, wrap the modules in the Module or AsyncModule class
+        # if needed, wrap the modules in the Vfunc or AsyncModule class
         for k, v in self.modules.items():
             if self._async:
                 if not isinstance(v, AsyncModule):
                     self.modules[k] = AsyncModule(k[0], v)
-            elif not isinstance(v, Module):
-                self.modules[k] = Module(k[0], v)
+            elif not isinstance(v, Vfunc):
+                self.modules[k] = Vfunc(k[0], v)
 
     def apply_func(self, *args, out_dict=None, matching='cartesian', order='typical', **kwargs):
         '''
@@ -100,11 +99,11 @@ class ModuleSet:
             out_dict = dict(zip(out_keys, out_vals))
 
         self.__prev__ = data_dict[PREV_KEY]
-        out_dict[PREV_KEY] = (self, )
+        out_dict[PREV_KEY] = (self,)
 
         if self._output_matching:
             # the final subkey of keys in out_dict should be key created during
-            # ModuleSet.__init__()
+            # Vset.__init__()
             out_keys = out_dict.keys()
         return out_dict
 
@@ -131,7 +130,7 @@ class ModuleSet:
 
     def predict(self, *args, **kwargs):
         if not self._fitted:
-            raise AttributeError('Please fit the ModuleSet object before calling the predict method.')
+            raise AttributeError('Please fit the Vset object before calling the predict method.')
         pred_dict = {}
         for k, v in self.out.items():
             if hasattr(v, 'predict'):
@@ -140,7 +139,7 @@ class ModuleSet:
 
     def predict_proba(self, *args, **kwargs):
         if not self._fitted:
-            raise AttributeError('Please fit the ModuleSet object before calling the predict_proba method.')
+            raise AttributeError('Please fit the Vset object before calling the predict_proba method.')
         pred_dict = {}
         for k, v in self.out.items():
             if hasattr(v, 'predict_proba'):
@@ -152,7 +151,7 @@ class ModuleSet:
         '''
         return self.apply_func(*args, **kwargs)
 
-    def __call__(self, *args, n_out: int=None, **kwargs):
+    def __call__(self, *args, n_out: int = None, **kwargs):
         '''
         '''
         if n_out is None:
@@ -181,7 +180,7 @@ class ModuleSet:
         return len(self.modules)
 
     def __str__(self):
-        return 'ModuleSet(' + self.name  + ')'
+        return 'Vset(' + self.name + ')'
 
     def __create_smart_subkey(self, subkey):
         return SmartSubkey(subkey, self.name, self._output_matching)
