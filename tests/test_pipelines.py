@@ -226,16 +226,16 @@ class TestPipelines:
             begin = time.time()
             cached_set.fit(X)
             assert time.time() - begin >= 2
-            assert_equal(uncached_set.out[('X', 'subsampling_0')],
-                         cached_set.out[('X', 'subsampling_0')])
+
+            assert_equal(uncached_set.out.keys(), cached_set.out.keys())
 
             # this should be very fast because it's using the already cached results
             cached_set2 = Vset(name='subsampling', modules=subsampling_funcs, cache_dir='./')
             begin = time.time()
             cached_set2.fit(X)
             assert time.time() - begin < 1
-            assert_equal(uncached_set.out[('X', 'subsampling_0')],
-                         cached_set2.out[('X', 'subsampling_0')])
+            assert_equal(uncached_set.out.keys(), cached_set2.out.keys())
+
         finally:
             # clean up
             rmtree('./joblib')
