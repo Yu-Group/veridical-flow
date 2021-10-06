@@ -1,9 +1,12 @@
 from functools import partial
 
+import time
 import numpy as np
 import pandas as pd
 import pytest
 import sklearn
+from shutil import rmtree
+from numpy.testing import assert_equal
 from sklearn.datasets import make_classification
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.inspection import permutation_importance
@@ -202,3 +205,42 @@ class TestPipelines:
         # subsampling in (X_trains, y_trains), should not match subsampling in
         # X_tests because they are unrelated
         assert len(preds_test.keys() == 19)
+
+    def test_caching(self):
+        try:
+            np.random.seed(13)
+            X, _ = make_classification(n_samples=50, n_features=5)
+            X = init_args([X], names=['X'])[0]
+
+            subsampling_funcs = [partial(costly_compute, row_index=np.arange(25))]
+
+            uncached_set = Vset(name='subsampling', modules=subsampling_funcs)
+            cached_set = Vset(name='subsampling', modules=subsampling_funcs, cache_dir='./')
+
+            # this always takes about 2 seconds
+            begin = time.time()
+            uncached_set.fit(X)
+            assert time.time() - begin >= 2
+
+            # the first time this runs it takes 2 seconds
+            begin = time.time()
+            cached_set.fit(X)
+            assert time.time() - begin >= 2
+
+            assert_equal(uncached_set.out.keys(), cached_set.out.keys())
+
+            # this should be very fast because it's using the already cached results
+            cached_set2 = Vset(name='subsampling', modules=subsampling_funcs, cache_dir='./')
+            begin = time.time()
+            cached_set2.fit(X)
+            assert time.time() - begin < 1
+            assert_equal(uncached_set.out.keys(), cached_set2.out.keys())
+
+        finally:
+            # clean up
+            rmtree('./joblib')
+
+def costly_compute(data, row_index=0):
+    """Simulate an expensive computation"""
+    time.sleep(2)
+    return data[row_index,]
