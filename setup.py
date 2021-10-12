@@ -25,14 +25,14 @@ setuptools.setup(
         'joblib',
         'scikit-learn >=0.23.0',  # 0.23+ only works on py3.6+)
         'pytest',
-        'ray'
+        'ray',
+        'mlflow',
     ],
     extras_require={
         'dev': [
             'pytest',
             'tqdm',
             'jupyter',
-            'mlflow'
         ]
     },
     python_requires='>=3.6',
