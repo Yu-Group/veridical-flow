@@ -37,6 +37,11 @@ def s(x):
     else:
         return x.shape
 
+def init_step(idx, cols):
+    for i in range(idx, len(cols)):
+        if cols[i] != 'init':
+            return 'init-' + cols[i]
+
 def dict_to_df(d: dict):
     '''Converts a dictionary with tuple keys
     into a pandas DataFrame
@@ -44,9 +49,9 @@ def dict_to_df(d: dict):
     d_copy = {k:d[k] for k in d if k != PREV_KEY}
     df = pd.Series(d_copy).reset_index()
     if len(d_copy.keys()) > 0:
-        cols = [sk.origin for sk in list(d_copy.keys())[0]]
-        # Set last column to 'out'
-        cols.append('out')
+        cols = [sk.origin for sk in list(d_copy.keys())[0]] + ['out']
+        # set each init col to init-{next_module_set}
+        cols = [c if c != 'init' else init_step(idx, cols) for idx, c in enumerate(cols) ]
         df.set_axis(cols, axis=1, inplace=True)
     return df
 
