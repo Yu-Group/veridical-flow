@@ -7,15 +7,16 @@ import numpy as np
 import joblib
 import ray
 
+from  mlflow.tracking import MlflowClient
+
 from vflow.convert import *
 from vflow.vfunc import Vfunc, AsyncModule
 from vflow.smart_subkey import SmartSubkey
 
-
 class Vset:
     def __init__(self, name: str, modules, module_keys: list = None,
                  is_async: bool = False, output_matching: bool = False,
-                 cache_dir: str = None):
+                 cache_dir: str = None, tracking_dir: str = None):
         '''
         todo: include prev and next and change functions to include that.
         Params
@@ -34,6 +35,9 @@ class Vset:
         cache_dir: str (optional)
             if provided, do caching and use cache_dir as the data store for
             joblib.Memory
+        tracking_dir: str (optional)
+            if provided, use the mlflow.tracking api to log outputs as metrics
+            with params determined by input keys
         '''
         self.name = name
         self._fitted = False
@@ -41,6 +45,15 @@ class Vset:
         self._async = is_async
         self._output_matching = output_matching
         self._memory = joblib.Memory(cache_dir)
+        if tracking_dir is not None:
+            self._mlflow = MlflowClient(tracking_uri=tracking_dir)
+            experiment = self._mlflow.get_experiment_by_name(name=self.name)
+            if experiment is None:
+                self._exp_id = self._mlflow.create_experiment(name=self.name)
+            else:
+                self._exp_id = experiment.experiment_id
+        else:
+            self._mlflow = None
         # check if any of the modules are AsyncModules
         # if so, we'll make then all AsyncModules later on
         if not self._async and np.any([isinstance(mod, AsyncModule) for mod in modules]):
@@ -75,6 +88,25 @@ class Vset:
             out_dict, self._async, self._output_matching, *args
         )
         self.__prev__ = data_dict[PREV_KEY]
+        if self._mlflow is not None:
+            # log smart subkeys as params and value as metric
+            # TODO: log metrics with common params at the same time
+            for k, v in out_dict.items():
+                origins = np.array([subk.origin for subk in k])
+                # ignore init origins and the last origin (this Vset)
+                param_idx = [
+                    i for i in range(len(k[:-1])) if origins[i] != 'init'
+                ]
+                run = self._mlflow.create_run(self._exp_id)
+                for idx in param_idx:
+                    subkey = k[idx]
+                    param_name = subkey.origin
+                    # check if the origin occurs multiple times
+                    if np.sum(origins == param_name) > 1:
+                        occurence  = np.sum(origins[:idx] == param_name)
+                        param_name = param_name + str(occurence)
+                    self._mlflow.log_param(run.info.run_id, param_name, subkey.subkey)
+                self._mlflow.log_metric(run.info.run_id, k[-1].subkey, v)
         out_dict[PREV_KEY] = (self,)
         return out_dict
 
