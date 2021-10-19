@@ -5,6 +5,7 @@ from copy import deepcopy
 from vflow.vset import PREV_KEY
 from vflow.smart_subkey import SmartSubkey
 import pandas as pd
+import numpy as np
 from pandas import DataFrame
 
 
@@ -61,6 +62,14 @@ def compute_interval(df: DataFrame, d_label, wrt_label, accum: list=['std']):
     TODO: Add fn param to set accum type
     '''
     return df[[wrt_label, d_label]].groupby(wrt_label).agg(accum)
+
+def predict_interval(preds: dict, y_real: dict):
+    preds = {k: v for k, v in preds.items() if k != PREV_KEY}
+    y_real = {k: v for k, v in y_real.items() if k != PREV_KEY}
+    preds_arr = np.array([(l - np.mean(l)) / np.std(l) for l in list(preds.values())])
+    uncertainty = np.std(preds_arr, axis=0)
+    binned_acc = 1 - np.sum(np.abs(preds_arr - list(y_real.values())[0]), axis=0) / preds_arr.shape[0]
+    return uncertainty, binned_acc
 
 def to_tuple(lists: list):
     '''Convert from lists to unpacked  tuple
