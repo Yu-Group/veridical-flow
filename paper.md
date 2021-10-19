@@ -9,7 +9,7 @@ tags:
 authors:
   - name: James Duncan^[Equal Contribution]
     orcid: 0000-0003-3297-681X
-    affiliation: 4
+    affiliation: 1
   - name: Rush Kapoor^[Equal Contribution]
     affiliation: 2
   - name: Abhineet Agarwal^[Equal Contribution]
