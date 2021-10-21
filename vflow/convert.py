@@ -1,9 +1,10 @@
 '''Useful functions for converting between different types (dicts, lists, tuples, etc.)
 '''
 from copy import deepcopy
+from uuid import uuid4
 
 from vflow.vset import PREV_KEY
-from vflow.smart_subkey import SmartSubkey
+from vflow.subkey import Subkey
 import pandas as pd
 from pandas import DataFrame
 
@@ -23,7 +24,7 @@ def init_args(args_tuple: tuple, names=None):
     output_dicts = []
     for (i, ele) in enumerate(args_tuple):
         output_dicts.append({
-            (SmartSubkey(names[i], 'init'), ): args_tuple[i],
+            (Subkey(names[i], 'init'), ): args_tuple[i],
             PREV_KEY: ('init', ),
         })
     return output_dicts
@@ -131,18 +132,16 @@ def sep_dicts(d: dict, n_out: int = 1):
     # empty dict -- return empty dict
     if n_out == 1:
         return d
-    n_dicts = len(d)
-    if n_dicts == 0:
-        return [{}]
     else:
         # try separating dict into multiple dicts
-        val_list_len = len(tuple(d.values())[0])  # first item in list
+        sep_dicts_id = str(uuid4()) # w/ high prob, uuid4 is unique
         sep_dicts = [dict() for x in range(n_out)]
         for key, value in d.items():
             if key != PREV_KEY:
                 for i in range(n_out):
                     # assumes the correct sub-key for item i is in the i-th position
                     new_key = (key[i],) + key[n_out:]
+                    new_key[-1]._sep_dicts_id = sep_dicts_id
                     sep_dicts[i][new_key] = value[i]
 
         # add back prev
@@ -159,19 +158,17 @@ def combine_keys(left_key, right_key):
     else:
         match_key = right_key
         compare_key = left_key
-    match_smartkeys = [subkey for subkey in match_key if subkey.is_matching()]
-    if len(match_smartkeys) > 0:
+    match_subkeys = [subkey for subkey in match_key if subkey.is_matching()]
+    if len(match_subkeys) > 0:
         matched_subkeys = []
-        for subkey in match_smartkeys:
+        for subkey in match_subkeys:
             for c_subkey in compare_key:
-                if subkey.is_matching():
-                    if subkey.origin == c_subkey.origin:
-                        if subkey.subkey == c_subkey.subkey:
-                            matched_subkeys.append(subkey)
-                            break
-                        else:
-                            # subkeys with same origin but different values are rejected
-                            return ()
+                if subkey.matches(c_subkey):
+                    matched_subkeys.append(subkey)
+                    break
+                elif subkey.mismatches(c_subkey):
+                    # subkeys with same origin but different values are rejected
+                    return ()
         if len(matched_subkeys) > 0:
             # always filter on right key
             filtered_key = tuple([subkey for subkey in right_key if subkey not in matched_subkeys])
@@ -195,7 +192,7 @@ def combine_dicts(*args: dict, base_case=True):
     elif n_args == 1:
         for k in args[0]:
             # wrap the dict values in tuples; this is helpful so that when we
-            # pass the values to a module fun in we just can use * expansion
+            # pass the values to a module fun in we can just use * expansion
             if k != PREV_KEY:
                 combined_dict[k] = (args[0][k],)
             else:

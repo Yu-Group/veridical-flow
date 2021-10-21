@@ -3,7 +3,7 @@ import pytest
 from numpy.testing import assert_equal
 
 from vflow.convert import *
-from vflow.smart_subkey import SmartSubkey as sm
+from vflow.subkey import Subkey as sm
 
 
 @pytest.mark.parametrize(
