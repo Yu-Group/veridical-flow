@@ -173,7 +173,6 @@ class TestPipelines:
         assert PREV_KEY in importances
         assert len(importances.keys()) == 7
 
-    @pytest.mark.xfail
     def test_repeated_subsampling(self):
         np.random.seed(13)
         X, y = sklearn.datasets.make_classification(n_samples=50, n_features=5)
@@ -202,6 +201,7 @@ class TestPipelines:
 
         # subsampling in (X_trains, y_trains), should not match subsampling in
         # X_tests because they are unrelated
+        assert len(modeling_set.out.keys()) == 7
         assert len(preds_test.keys()) == 19
 
     def test_caching(self):

@@ -1,4 +1,5 @@
 class Subkey:
+
     def __init__(self, value, origin: str, output_matching: bool=False):
         '''
         Params
@@ -13,16 +14,26 @@ class Subkey:
         self.origin = origin
         self._output_matching = output_matching
         # _sep_dicts_id identifies the particular call to sep_dicts() that this
-        # key's dictionary went through (if any). Supersedes _output_matching.
+        # key's dictionary went through (if any).
         self._sep_dicts_id = None
+
 
     def is_matching(self):
         return self._output_matching or self._sep_dicts_id is not None
 
+
+    def matches_sep_dict_id(self, o: object):
+        if isinstance(o, self.__class__):
+            return self._sep_dicts_id is not None \
+                and self._sep_dicts_id == o._sep_dicts_id
+        return False
+
+
     def matches(self, o: object):
-        '''
-        Determines if this Subkey is compatible with another for the purpose of
-        combining data dictionaries and matching data to modules.
+        '''When Subkey matching is required, determines if this Subkey is compatible
+        with another, meaning that the origins and values match, and either the
+        _sep_dicts_ids match or both Subkeys have _output_matching True.
+
         '''
         if isinstance(o, self.__class__):
             # they're both matching
@@ -30,25 +41,31 @@ class Subkey:
             # value and origins match
             cond1 = self.value == o.value and self.origin == o.origin
             # _sep_dicts_id matches
-            cond2 = self._sep_dicts_id == o._sep_dicts_id
+            cond2 = self._sep_dicts_id == o._sep_dicts_id \
+                or (self._output_matching and o._output_matching)
             return cond0 and cond1 and cond2
         return False
 
+
     def mismatches(self, o: object):
-        '''
-        Determines if this Subkey and another are a bad match, meaning they have
-        the same origin but different values when both are matching.
+        '''When Subkey matching is required, determines if this Subkey and another are
+        a bad match, meaning either:
+
+        1. output_matching is True, origin is same, value is different
+        2. output_matching is False, _sep_dicts_id is same and not None, origin
+           is same, value is different
+
         '''
         if isinstance(o, self.__class__):
-            # one of the two keys is matching
-            cond0 = self.is_matching() or o.is_matching()
-            # origins match
-            cond1 = self.origin == o.origin
-            # values or _sep_dicts_id mismatch
-            cond2 = self.value != o.value # \
-                # or self._sep_dicts_id != o._sep_dicts_id
-            return cond0 and cond1 and cond2
+            # one of the two keys is output_matching
+            cond0 = self._output_matching or o._output_matching
+            # neither key is output_matching but sep_dict_ids not None and match
+            cond1 = not cond0 and self.matches_sep_dict_id(o)
+            # origins match and values mismatch
+            cond2 = self.origin == o.origin and self.value != o.value
+            return (cond0 or cond1) and cond2
         return True
+
 
     def __eq__(self, o: object):
         '''
@@ -59,8 +76,10 @@ class Subkey:
             return self.value == o.value and self.origin == o.origin
         return False
 
+
     def __repr__(self) -> str:
         return self.value
+
 
     def __hash__(self):
         '''
