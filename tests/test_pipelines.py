@@ -19,7 +19,7 @@ from sklearn.utils import resample
 from vflow import Vset, init_args  # must install vflow first (pip install vflow)
 from vflow.vset import PREV_KEY
 from vflow.pipeline import build_graph
-from vflow.smart_subkey import SmartSubkey as sm
+from vflow.subkey import Subkey as sm
 
 
 class TestPipelines:
@@ -44,8 +44,7 @@ class TestPipelines:
                                      random_state=i)
                              for i in range(3)]
         subsampling_set = Vset(name='subsampling',
-                               modules=subsampling_funcs,
-                               output_matching=True)
+                               modules=subsampling_funcs)
         X_trains, y_trains = subsampling_set(X_train, y_train)
 
         # fit models
@@ -55,6 +54,7 @@ class TestPipelines:
                             module_keys=["LR", "DT"])
 
         modeling_set.fit(X_trains, y_trains)
+
         preds_test = modeling_set.predict(X_test)
 
         # get metrics
@@ -63,11 +63,11 @@ class TestPipelines:
                                 module_keys=["Acc", "Bal_Acc"])
 
         hard_metrics = hard_metrics_set.evaluate(preds_test, y_test)
-        G = build_graph(hard_metrics, draw=True)
 
         # asserts
-        k1 = (sm('X_test', 'init'), sm('X_train', 'init'), sm('subsampling_0', 'subsampling', True), 
-            sm('y_train', 'init'), sm('LR', 'modeling'), sm('y_test', 'init'), sm('Acc', 'hard_metrics'))
+        k1 = (sm('X_test', 'init'), sm('X_train', 'init'), sm('subsampling_0', 'subsampling'),
+              sm('y_train', 'init'), sm('LR', 'modeling'), sm('y_test', 'init'), sm('Acc', 'hard_metrics'))
+
         assert k1 in hard_metrics, 'hard metrics should have ' + str(k1) + ' as key'
         assert hard_metrics[k1] > 0.9  # 0.9090909090909091
         assert PREV_KEY in hard_metrics
@@ -124,7 +124,7 @@ class TestPipelines:
         G = build_graph(hard_metrics, draw=True)
 
         # asserts
-        k1 = (sm('X_train', 'init'), sm('feat_extraction_0', 'feat_extraction', True), sm('X_train', 'init'), sm('y_train', 'init'), 
+        k1 = (sm('X_train', 'init'), sm('feat_extraction_0', 'feat_extraction', True), sm('X_train', 'init'), sm('y_train', 'init'),
                 sm('DT', 'modeling'), sm('y_train', 'init'), sm('r2', 'hard_metrics'))
         assert k1 in hard_metrics, 'hard metrics should have ' + str(k1) + ' as key'
         assert hard_metrics[k1] > 0.9  # 0.9090909090909091
@@ -148,8 +148,7 @@ class TestPipelines:
                                      random_state=i)
                              for i in range(3)]
         subsampling_set = Vset(name='subsampling',
-                               modules=subsampling_funcs,
-                               output_matching=True)
+                               modules=subsampling_funcs)
         X_trains, y_trains = subsampling_set(X_train, y_train)
 
         # fit models
@@ -167,14 +166,13 @@ class TestPipelines:
         importances = feature_importance_set.evaluate(modeling_set.out, X_test, y_test)
 
         # asserts
-        k1 = (sm('X_train', 'init'), sm('subsampling_0', 'subsampling', True), 
-            sm('y_train', 'init'), sm('LR', 'modeling'), sm('X_test', 'init'), 
+        k1 = (sm('X_train', 'init'), sm('subsampling_0', 'subsampling'),
+            sm('y_train', 'init'), sm('LR', 'modeling'), sm('X_test', 'init'),
             sm('y_test', 'init'), sm('permutation_importance', 'feature_importance'))
         assert k1 in importances, 'hard metrics should have ' + str(k1) + ' as key'
         assert PREV_KEY in importances
         assert len(importances.keys()) == 7
 
-    @pytest.mark.xfail
     def test_repeated_subsampling(self):
         np.random.seed(13)
         X, y = sklearn.datasets.make_classification(n_samples=50, n_features=5)
@@ -189,8 +187,7 @@ class TestPipelines:
                              for i in range(3)]
 
         subsampling_set = Vset(name='subsampling',
-                               modules=subsampling_funcs,
-                               output_matching=True)
+                               modules=subsampling_funcs)
         X_trains, y_trains = subsampling_set(X_train, y_train)
         X_tests, y_tests = subsampling_set(X_test, y_test)
 
@@ -204,7 +201,8 @@ class TestPipelines:
 
         # subsampling in (X_trains, y_trains), should not match subsampling in
         # X_tests because they are unrelated
-        assert len(preds_test.keys() == 19)
+        assert len(modeling_set.out.keys()) == 7
+        assert len(preds_test.keys()) == 19
 
     def test_caching(self):
         try:
@@ -217,15 +215,15 @@ class TestPipelines:
             uncached_set = Vset(name='subsampling', modules=subsampling_funcs)
             cached_set = Vset(name='subsampling', modules=subsampling_funcs, cache_dir='./')
 
-            # this always takes about 2 seconds
+            # this always takes about 1 seconds
             begin = time.time()
             uncached_set.fit(X)
-            assert time.time() - begin >= 2
+            assert time.time() - begin >= 1
 
-            # the first time this runs it takes 2 seconds
+            # the first time this runs it takes 1 seconds
             begin = time.time()
             cached_set.fit(X)
-            assert time.time() - begin >= 2
+            assert time.time() - begin >= 1
 
             assert_equal(uncached_set.out.keys(), cached_set.out.keys())
 
@@ -242,5 +240,5 @@ class TestPipelines:
 
 def costly_compute(data, row_index=0):
     """Simulate an expensive computation"""
-    time.sleep(2)
+    time.sleep(1)
     return data[row_index,]

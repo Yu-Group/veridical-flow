@@ -11,7 +11,7 @@ from  mlflow.tracking import MlflowClient
 
 from vflow.convert import *
 from vflow.vfunc import Vfunc, AsyncModule
-from vflow.smart_subkey import SmartSubkey
+from vflow.subkey import Subkey
 
 class Vset:
     def __init__(self, name: str, modules, module_keys: list = None,
@@ -66,10 +66,10 @@ class Vset:
                 assert len(modules) == len(
                     module_keys), 'modules list and module_names list do not have the same length'
                 # TODO: add more checking of module_keys
-                module_keys = [self.__create_smart_subkey(k) if isinstance(k, tuple) else
-                                (self.__create_smart_subkey(k), ) for k in module_keys]
+                module_keys = [self.__create_subkey(k) if isinstance(k, tuple) else
+                                (self.__create_subkey(k), ) for k in module_keys]
             else:
-                module_keys = [(self.__create_smart_subkey(f'{name}_{i}'), ) for i in range(len(modules))]
+                module_keys = [(self.__create_subkey(f'{name}_{i}'), ) for i in range(len(modules))]
             # convert module keys to singleton tuples
             self.modules = dict(zip(module_keys, modules))
         # if needed, wrap the modules in the Vfunc or AsyncModule class
@@ -80,17 +80,17 @@ class Vset:
             elif not isinstance(v, Vfunc):
                 self.modules[k] = Vfunc(k[0], v)
 
-    def _apply_func(self, out_dict, *args):
+    def _apply_func(self, out_dict: dict=None, *args):
         if out_dict is None:
-            out_dict = self.modules
+            out_dict = deepcopy(self.modules)
         apply_func_cached = self._memory.cache(_apply_func_cached)
         data_dict, out_dict = apply_func_cached(
-            out_dict, self._async, self._output_matching, *args
+            out_dict, self._async, *args
         )
         self.__prev__ = data_dict[PREV_KEY]
         if self._mlflow is not None:
             run_dict = {}
-            # log smart subkeys as params and value as metric
+            # log subkeys as params and value as metric
             for k, v in out_dict.items():
                 origins = np.array([subk.origin for subk in k])
                 # ignore init origins and the last origin (this Vset)
@@ -98,7 +98,7 @@ class Vset:
                     i for i in range(len(k[:-1])) if origins[i] != 'init'
                 ]
                 # get or create mlflow run
-                run_dict_key = tuple([subk.subkey for subk in k[:-1]])
+                run_dict_key = tuple([subk.value for subk in k[:-1]])
                 if run_dict_key in run_dict:
                     run_id = run_dict[run_dict_key]
                 else:
@@ -114,9 +114,9 @@ class Vset:
                             occurence  = np.sum(origins[:idx] == param_name)
                             param_name = param_name + str(occurence)
                             self._mlflow.log_param(
-                                run_id, param_name, subkey.subkey
+                                run_id, param_name, subkey.value
                             )
-                self._mlflow.log_metric(run_id, k[-1].subkey, v)
+                self._mlflow.log_metric(run_id, k[-1].value, v)
         out_dict[PREV_KEY] = (self,)
         return out_dict
 
@@ -162,14 +162,14 @@ class Vset:
     def evaluate(self, *args, **kwargs):
         '''Combines dicts before calling _apply_func
         '''
-        return self._apply_func(self.modules, *args)
+        return self._apply_func(None, *args)
 
     def __call__(self, *args, n_out: int = None, **kwargs):
         '''
         '''
         if n_out is None:
             n_out = len(args)
-        out = sep_dicts(self._apply_func(self.modules, *args), n_out=n_out)
+        out = sep_dicts(self._apply_func(None, *args), n_out=n_out)
         return out
 
     def __getitem__(self, i):
@@ -195,11 +195,11 @@ class Vset:
     def __str__(self):
         return 'Vset(' + self.name + ')'
 
-    def __create_smart_subkey(self, subkey):
-        return SmartSubkey(subkey, self.name, self._output_matching)
+    def __create_subkey(self, value):
+        return Subkey(value, self.name, self._output_matching)
 
 
-def _apply_func_cached(out_dict: dict, is_async: bool, output_matching: bool, *args):
+def _apply_func_cached(out_dict: dict, is_async: bool, *args):
     '''
     Params
     ------
@@ -216,10 +216,6 @@ def _apply_func_cached(out_dict: dict, is_async: bool, output_matching: bool, *a
                  out:    out_dict = {(train_1, LR)  : fitted logistic, (train_2, LR) :  fitted logistic}.
         Currently matching = 'subset' is not used...
     '''
-    #out_dict = kwargs['out_dict']
-    #is_async = kwargs['is_async']
-    #is_async = kwargs['output_matching']
-
     # deepcopy args to avoid mutating them
     args = deepcopy(args)
 
@@ -240,8 +236,4 @@ def _apply_func_cached(out_dict: dict, is_async: bool, output_matching: bool, *a
         out_vals = ray.get(list(out_dict.values()))
         out_dict = dict(zip(out_keys, out_vals))
 
-    if output_matching:
-        # the final subkey of keys in out_dict should be key created during
-        # Vset.__init__()
-        out_keys = out_dict.keys()
     return data_dict, out_dict
