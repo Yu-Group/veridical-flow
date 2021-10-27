@@ -68,8 +68,10 @@ def predict_interval(preds: dict, y_real: dict):
     y_real = {k: v for k, v in y_real.items() if k != PREV_KEY}
     preds_arr = np.array([(l - np.mean(l)) / np.std(l) for l in list(preds.values())])
     uncertainty = np.std(preds_arr, axis=0)
-    binned_acc = 1 - np.sum(np.abs(preds_arr - list(y_real.values())[0]), axis=0) / preds_arr.shape[0]
-    return uncertainty, binned_acc
+    sorted_idx = np.argsort(uncertainty)
+    preds_arr, uncertainty = preds_arr[:, sorted_idx], uncertainty[sorted_idx]
+    acc = np.sum(np.abs(preds_arr - np.array(list(y_real.values())[0])[sorted_idx]), axis=0) / preds_arr.shape[0]
+    return uncertainty, acc
 
 def to_tuple(lists: list):
     '''Convert from lists to unpacked  tuple
