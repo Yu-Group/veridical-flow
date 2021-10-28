@@ -59,8 +59,8 @@ def dict_to_df(d: dict):
 def compute_interval(df: DataFrame, d_label, wrt_label, accum: list=['std']):
     '''Compute an interval (std. dev) of d_label column with 
     respect to pertubations in the wrt_label column
-    TODO: Add fn param to set accum type
     '''
+    df = df.astype({wrt_label: str})
     return df[[wrt_label, d_label]].groupby(wrt_label).agg(accum)
 
 def to_tuple(lists: list):
