@@ -1,8 +1,10 @@
-<h1 align="center"> Veridical Flow 🌊 </h1>
-<p align="center"> A library for making stability analysis simple, following the veridical data-science framework.
+<p align="center">
+	<img src="https://yu-group.github.io/veridical-flow/logo_vflow_straight.jpg" width="70%"> 
 </p>
 
 
+<p align="center"> A library for making stability analysis simple, following the veridical data-science framework.
+</p>
 <p align="center">
   <img src="https://img.shields.io/badge/license-mit-blue.svg">
   <img src="https://img.shields.io/badge/python-3.6+-blue">
@@ -10,7 +12,6 @@
   <img src="https://img.shields.io/github/checks-status/Yu-group/pcs-pipeline/master">
   <img src="https://img.shields.io/pypi/v/vflow?color=orange">
 </p> 
-
 # Why use `vflow`?
 
 Using `vflow`'s simple wrappers easily enables many best practices for data science, and makes writing pipelines easy.
