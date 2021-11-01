@@ -3,7 +3,7 @@
 </p>
 
 
-<p align="center"> A library for making stability analysis simple, following the veridical data-science framework.
+<p align="center"> A library for making stability analysis simple, following the <a href="https://www.pnas.org/content/117/8/3920">veridical data-science</a> framework.
 </p>
 <p align="center">
   <img src="https://img.shields.io/badge/license-mit-blue.svg">
@@ -12,6 +12,7 @@
   <img src="https://img.shields.io/github/checks-status/Yu-group/pcs-pipeline/master">
   <img src="https://img.shields.io/pypi/v/vflow?color=orange">
 </p> 
+
 # Why use `vflow`?
 
 Using `vflow`'s simple wrappers easily enables many best practices for data science, and makes writing pipelines easy.
