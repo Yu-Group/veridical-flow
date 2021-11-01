@@ -16,7 +16,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils import resample
 
-from vflow import Vset, init_args  # must install vflow first (pip install vflow)
+from vflow import Vset, init_args, build_Vset  # must install vflow first (pip install vflow)
 from vflow.vset import PREV_KEY
 from vflow.pipeline import build_graph
 from vflow.subkey import Subkey as sm
@@ -39,12 +39,9 @@ class TestPipelines:
                                                             'y_test'])  # optionally provide names for each of these
 
         # subsample data
-        subsampling_funcs = [partial(sklearn.utils.resample,
-                                     n_samples=20,
-                                     random_state=i)
-                             for i in range(3)]
-        subsampling_set = Vset(name='subsampling',
-                               modules=subsampling_funcs)
+        subsampling_set = build_Vset('subsampling', sklearn.utils.resample,
+                                     param_dict={'random_state': list(range(3))},
+                                     n_samples=20)
         X_trains, y_trains = subsampling_set(X_train, y_train)
 
         # fit models
@@ -143,12 +140,9 @@ class TestPipelines:
                                                             'y_test'])  # optionally provide names for each of these
 
         # subsample data
-        subsampling_funcs = [partial(sklearn.utils.resample,
-                                     n_samples=20,
-                                     random_state=i)
-                             for i in range(3)]
-        subsampling_set = Vset(name='subsampling',
-                               modules=subsampling_funcs)
+        subsampling_set = build_Vset('subsampling', sklearn.utils.resample,
+                                     param_dict={'random_state': list(range(3))},
+                                     n_samples=20)
         X_trains, y_trains = subsampling_set(X_train, y_train)
 
         # fit models
@@ -181,13 +175,9 @@ class TestPipelines:
                                                      names=['X_train', 'X_test', 'y_train', 'y_test'])
 
         # subsample data
-        subsampling_funcs = [partial(sklearn.utils.resample,
-                                     n_samples=20,
-                                     random_state=i)
-                             for i in range(3)]
-
-        subsampling_set = Vset(name='subsampling',
-                               modules=subsampling_funcs)
+        subsampling_set = build_Vset('subsampling', sklearn.utils.resample,
+                                     param_dict={'random_state': list(range(3))},
+                                     n_samples=20)
         X_trains, y_trains = subsampling_set(X_train, y_train)
         X_tests, y_tests = subsampling_set(X_test, y_test)
 
