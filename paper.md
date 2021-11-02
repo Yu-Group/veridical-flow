@@ -32,6 +32,8 @@ bibliography: references.bib
 
 # Summary
 
+![](docs/logo_vflow_straight.jpg){ width=60% }
+
 `VeridicalFlow` is a Python package for simplifying building reproducible and trustworthy data-science pipelines using the PCS framework [@yu2020veridical].
 It provides users a simple interface for stability analysis, i.e. checking the robustness of results from a data-science pipeline to various judgement calls made during modeling.
 This ensures that arbitrary judgement calls made by data-practitioners (e.g. specifying a default imputation strategy) do not dramatically alter the final conclusions made in a modeling pipeline.
@@ -54,8 +56,6 @@ This enables a practitioner to represent a pipeline with many different perturba
 
 Using `VeridicalFlows`'s simple wrappers easily enables many best practices for data science, and makes writing pipelines easy.
 
-![](docs/logo_vflow_straight.jpg)
-
 | Stability                                                    | Computability                                                | Reproducibility                          |
 | ------------------------------------------------------------ | ------------------------------------------------------------ | ---------------------------------------- |
 | Replace a single function (e.g. preprocessing) with a set of functions representing different judgement calls and easily assess the stability of downstream results | Automatic parallelization and caching throughout the pipeline | Automatic experiment tracking and saving |
@@ -74,7 +74,7 @@ Experiment-tracking and saving are (optionally) handled via integration with MLF
 
 # Acknowledgements
 
-The work here was supported in part by NSF Grants DMS-1613002, 1953191, 2015341, IIS 1741340, the Center for Science of Information (CSoI), an NSF Science and Technology Center, under grant agreement CCF-0939370, NSF grant 2023505 on Collaborative Research: Foundations of Data Science Institute (FODSI), the NSF and the Simons Foundation for the Collaboration on the Theoretical Foundations of Deep Learning through awards DMS-2031883 and 814639, a Chan Zuckerberg Biohub Intercampus Research Award, and a grant from the Weill Neurohub..
+The work here was supported in part by NSF Grants DMS-1613002, 1953191, 2015341, IIS 1741340, the Center for Science of Information (CSoI), an NSF Science and Technology Center, under grant agreement CCF-0939370, NSF grant 2023505 on Collaborative Research: Foundations of Data Science Institute (FODSI), the NSF and the Simons Foundation for the Collaboration on the Theoretical Foundations of Deep Learning through awards DMS-2031883 and 814639, a Chan Zuckerberg Biohub Intercampus Research Award, and a grant from the Weill Neurohub.
 
 The code here heavily derives from the wonderful work of previous projects.
 It hinges on the data-science infrastructure of python, including packages such as pandas [@mckinney2011pandas], numpy [@van2011numpy], and scikit-learn [@pedregosa2011scikit] as well as newer projects such as imodels [@singh2021imodels] and networkx [@hagbergnetworkx].
