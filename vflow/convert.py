@@ -59,19 +59,22 @@ def dict_to_df(d: dict):
 def compute_interval(df: DataFrame, d_label, wrt_label, accum: list=['std']):
     '''Compute an interval (std. dev) of d_label column with 
     respect to pertubations in the wrt_label column
-    TODO: Add fn param to set accum type
     '''
     return df[[wrt_label, d_label]].groupby(wrt_label).agg(accum)
 
-def predict_interval(preds: dict, y_real: dict):
+def evaluate_uncertainty(preds, uncertainty, y_real):
+    '''Returns uncertainty and cumulative accuracy intervals for
+    individual predictions, sorted in increasing order of uncertainty.'''
     preds = {k: v for k, v in preds.items() if k != PREV_KEY}
     y_real = {k: v for k, v in y_real.items() if k != PREV_KEY}
-    preds_arr = np.array([(l - np.mean(l)) / np.std(l) for l in list(preds.values())])
+    preds_arr = np.array(list(preds.values()))
+    y_real = np.array(list(y_real.values()))
     uncertainty = np.std(preds_arr, axis=0)
     sorted_idx = np.argsort(uncertainty)
-    preds_arr, uncertainty = preds_arr[:, sorted_idx], uncertainty[sorted_idx]
-    acc = np.sum(np.abs(preds_arr - np.array(list(y_real.values())[0])[sorted_idx]), axis=0) / preds_arr.shape[0]
-    return uncertainty, acc
+    preds_arr, uncertainty, y_real = preds_arr[:,sorted_idx], uncertainty[sorted_idx], y_real[:,sorted_idx]
+    # todo: mean sqd err - calibration curve?
+    acc = np.mean(preds_arr == y_real, axis=0)
+    return uncertainty, np.cumsum(acc)
 
 def to_tuple(lists: list):
     '''Convert from lists to unpacked  tuple
