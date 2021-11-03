@@ -62,7 +62,7 @@ binary_metrics_set = Vset(name='binary_metrics',
 binary_metrics = binary_metrics_set.evaluate(preds_test, y_test)
 ```
 
-Once we've written this pipeline, get very easily see how stable certain metrics (e.g. "Acc") are to our choice of subsampling or model.
+Once we've written this pipeline, we can easily measure the stability of metrics (e.g. "Accuracy") to our choice of subsampling or model.
 
 # Documentation
 
@@ -70,11 +70,13 @@ See the [docs](https://yu-group.github.io/veridical-flow/) for reference on the 
 
 > **Examples**
 >
-> [Synthetic classification example](https://github.com/Yu-Group/veridical-flow/blob/master/notebooks/00_synthetic_classification.ipynb)
+> [synthetic classification example](https://github.com/Yu-Group/veridical-flow/blob/master/notebooks/00_synthetic_classification.ipynb)
 >
-> [Enhancer example](https://github.com/Yu-Group/veridical-flow/blob/master/notebooks/01_enhancer.ipynb)
+> [enhancer example](https://github.com/Yu-Group/veridical-flow/blob/master/notebooks/01_enhancer.ipynb)
 >
-> [fMRI example](https://github.com/Yu-Group/veridical-flow/blob/master/notebooks/02_fmri.ipynb)
+> [fmri example](https://github.com/Yu-Group/veridical-flow/blob/master/notebooks/02_fmri.ipynb)
+> 
+> [computer vision example](https://github.com/Yu-Group/veridical-flow/blob/master/notebooks/03_computer_vision_dnn.ipynb)
 
 ## Installation
 
