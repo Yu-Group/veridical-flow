@@ -32,8 +32,6 @@ bibliography: references.bib
 
 # Summary
 
-![](docs/logo_vflow_straight.jpg){ width=60% }
-
 `VeridicalFlow` is a Python package for simplifying building reproducible and trustworthy data-science pipelines using the PCS framework [@yu2020veridical].
 It provides users a simple interface for stability analysis, i.e. checking the robustness of results from a data-science pipeline to various judgement calls made during modeling.
 This ensures that arbitrary judgement calls made by data-practitioners (e.g. specifying a default imputation strategy) do not dramatically alter the final conclusions made in a modeling pipeline.
