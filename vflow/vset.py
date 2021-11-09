@@ -116,6 +116,13 @@ class Vset:
             if hasattr(v, 'predict_proba'):
                 pred_dict[k] = v.predict_proba
         return self._apply_func(pred_dict, *args)
+    
+    def predict_with_uncertainties(self, *args, **kwargs):
+        preds_proba = base_dict(self.predict_proba(*args, **kwargs))
+        preds_np = np.array(list(preds_proba.values()))
+        uncertainty = np.std(preds_np, axis=0)
+        mean_preds = np.mean(preds_np, axis=0)
+        return mean_preds, uncertainty
 
     def evaluate(self, *args, **kwargs):
         '''Combines dicts before calling _apply_func

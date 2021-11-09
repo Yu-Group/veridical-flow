@@ -47,7 +47,7 @@ def dict_to_df(d: dict):
     '''Converts a dictionary with tuple keys
     into a pandas DataFrame
     '''
-    d_copy = {k:d[k] for k in d if k != PREV_KEY}
+    d_copy = base_dict(d)
     df = pd.Series(d_copy).reset_index()
     if len(d_copy.keys()) > 0:
         cols = [sk.origin for sk in list(d_copy.keys())[0]] + ['out']
@@ -65,16 +65,21 @@ def compute_interval(df: DataFrame, d_label, wrt_label, accum: list=['std']):
 def evaluate_uncertainty(preds, uncertainty, y_real):
     '''Returns uncertainty and cumulative accuracy intervals for
     individual predictions, sorted in increasing order of uncertainty.'''
-    preds = {k: v for k, v in preds.items() if k != PREV_KEY}
-    y_real = {k: v for k, v in y_real.items() if k != PREV_KEY}
+    preds = base_dict(preds)
+    y_real = base_dict(y_real)
     preds_arr = np.array(list(preds.values()))
     y_real = np.array(list(y_real.values()))
     uncertainty = np.std(preds_arr, axis=0)
     sorted_idx = np.argsort(uncertainty)
     preds_arr, uncertainty, y_real = preds_arr[:,sorted_idx], uncertainty[sorted_idx], y_real[:,sorted_idx]
     # todo: mean sqd err - calibration curve?
-    acc = np.mean(preds_arr == y_real, axis=0)
+    acc = np.mean((preds_arr-y_real)**2, axis=0)
     return uncertainty, np.cumsum(acc)
+
+def base_dict(d: dict):
+    '''Remove PREV_KEY from dict d if present.'''
+    return {k:v for k,v in d.items() if k != PREV_KEY}
+
 
 def to_tuple(lists: list):
     '''Convert from lists to unpacked  tuple
