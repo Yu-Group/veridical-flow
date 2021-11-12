@@ -1,15 +1,16 @@
 '''User-facing helper functions included at import vflow
 '''
 
-from vflow.vset import *
-from vflow.vfunc import *
+from vflow.vset import Vset
+from vflow.vfunc import Vfunc
 
 from itertools import product
 from functools import partial
 
-def build_Vset(name: str, obj, param_dict: dict = {}, *args,
+def build_vset(name: str, obj, param_dict: dict = {}, *args,
                is_async: bool = False, output_matching: bool = False,
-               cache_dir: str = None, tracking_dir: str = None, **kwargs) -> Vset:
+               lazy: bool = False, cache_dir: str = None,
+               tracking_dir: str = None, **kwargs) -> Vset:
     '''Builds a Vset by currying callable obj with all combinations of parameters in param_dict.
 
     Params
@@ -65,5 +66,5 @@ def build_Vset(name: str, obj, param_dict: dict = {}, *args,
             vfuncs.append(Vfunc(module=partial(obj, *args, **kwargs_dict)))
 
     return Vset(name, vfuncs, is_async=is_async,
-                output_matching=output_matching, cache_dir=cache_dir,
-                tracking_dir=tracking_dir)
+                output_matching=output_matching, lazy=lazy,
+                cache_dir=cache_dir, tracking_dir=tracking_dir)

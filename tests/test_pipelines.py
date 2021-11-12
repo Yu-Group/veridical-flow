@@ -16,7 +16,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils import resample
 
-from vflow import Vset, init_args, build_Vset  # must install vflow first (pip install vflow)
+from vflow import Vset, init_args, build_vset  # must install vflow first (pip install vflow)
 from vflow.vset import PREV_KEY
 from vflow.pipeline import build_graph
 from vflow.subkey import Subkey as sm
@@ -39,7 +39,7 @@ class TestPipelines:
                                                             'y_test'])  # optionally provide names for each of these
 
         # subsample data
-        subsampling_set = build_Vset('subsampling', sklearn.utils.resample,
+        subsampling_set = build_vset('subsampling', sklearn.utils.resample,
                                      param_dict={'random_state': list(range(3))},
                                      n_samples=20)
         X_trains, y_trains = subsampling_set(X_train, y_train)
@@ -140,7 +140,7 @@ class TestPipelines:
                                                             'y_test'])  # optionally provide names for each of these
 
         # subsample data
-        subsampling_set = build_Vset('subsampling', sklearn.utils.resample,
+        subsampling_set = build_vset('subsampling', sklearn.utils.resample,
                                      param_dict={'random_state': list(range(3))},
                                      n_samples=20)
         X_trains, y_trains = subsampling_set(X_train, y_train)
@@ -175,7 +175,7 @@ class TestPipelines:
                                                      names=['X_train', 'X_test', 'y_train', 'y_test'])
 
         # subsample data
-        subsampling_set = build_Vset('subsampling', sklearn.utils.resample,
+        subsampling_set = build_vset('subsampling', sklearn.utils.resample,
                                      param_dict={'random_state': list(range(3))},
                                      n_samples=20)
         X_trains, y_trains = subsampling_set(X_train, y_train)
