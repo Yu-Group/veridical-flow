@@ -36,7 +36,6 @@ class Vfunc:
         '''
         return self.fit(*args, **kwargs)
 
-
 @ray.remote
 def _remote_fun(module, *args, **kwargs):
     return module(*args, **kwargs)
@@ -65,3 +64,30 @@ class AsyncModule:
 
     def __call__(self, *args, **kwargs):
         return self.fit(*args, **kwargs)
+
+
+class VfuncPromise:
+
+    def __init__(self, vfunc: Vfunc, *args):
+        self.vfunc = vfunc
+        self.args = args
+        self.called = False
+        self.value = None
+
+    def __call__(self):
+        if self.called:
+            return self.value
+        tmp_args = []
+        for i, arg in enumerate(self.args):
+            tmp_args.append(arg)
+            if isinstance(arg, VfuncPromise):
+                tmp_args[i] = arg()
+        self.value = self.vfunc(*tmp_args)
+        self.called = True
+        return self.value
+
+    def __repr__(self):
+        if self.called:
+            return(f'Fulfilled VfuncPromise({self.value})')
+        else:
+            return(f'Unfulfilled VfuncPromise(func={self.vfunc}, args={self.args})')

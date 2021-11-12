@@ -16,7 +16,8 @@ from vflow.subkey import Subkey
 class Vset:
     def __init__(self, name: str, modules, module_keys: list = None,
                  is_async: bool = False, output_matching: bool = False,
-                 cache_dir: str = None, tracking_dir: str = None):
+                 lazy: bool = False, cache_dir: str = None,
+                 tracking_dir: str = None):
         '''
         todo: include prev and next and change functions to include that.
         Params
@@ -32,6 +33,9 @@ class Vset:
         output_matching: bool (optional)
             if True, then output keys from this Vset will be matched when used
             in other Vsets
+        lazy: bool (optional)
+            if True, then modules are evaluated lazily, i.e. outputs contain a
+            promise
         cache_dir: str (optional)
             if provided, do caching and use cache_dir as the data store for
             joblib.Memory
@@ -44,6 +48,7 @@ class Vset:
         self.out = None  # outputs
         self._async = is_async
         self._output_matching = output_matching
+        self._lazy = lazy
         self._memory = joblib.Memory(cache_dir)
         if tracking_dir is not None:
             self._mlflow = MlflowClient(tracking_uri=tracking_dir)
@@ -85,9 +90,12 @@ class Vset:
             out_dict = deepcopy(self.modules)
         apply_func_cached = self._memory.cache(_apply_func_cached)
         data_dict, out_dict = apply_func_cached(
-            out_dict, self._async, *args
+            out_dict, self._async, self._lazy, *args
         )
-        self.__prev__ = data_dict[PREV_KEY]
+        if PREV_KEY in data_dict:
+            self.__prev__ = data_dict[PREV_KEY]
+        else:
+            self.__prev__ = ('init', )
         if self._mlflow is not None:
             run_dict = {}
             # log subkeys as params and value as metric
@@ -199,7 +207,7 @@ class Vset:
         return Subkey(value, self.name, self._output_matching)
 
 
-def _apply_func_cached(out_dict: dict, is_async: bool, *args):
+def _apply_func_cached(out_dict: dict, is_async: bool, lazy: bool, *args):
     '''
     Params
     ------
@@ -216,20 +224,23 @@ def _apply_func_cached(out_dict: dict, is_async: bool, *args):
                  out:    out_dict = {(train_1, LR)  : fitted logistic, (train_2, LR) :  fitted logistic}.
         Currently matching = 'subset' is not used...
     '''
-    # deepcopy args to avoid mutating them
-    args = deepcopy(args)
-
-    for ele in args:
-        if not isinstance(ele, dict):
+    async_args = []
+    for in_dict in args:
+        if not isinstance(in_dict, dict):
             raise Exception('Need to run init_args before calling module_set!')
         if is_async:
+            remote_dict = {}
             # send data to the remote object store
-            for k, v in ele.items():
+            for k, v in in_dict.items():
                 if k != PREV_KEY:
-                    ele[k] = ray.put(v)
-
+                    remote_dict[k] = ray.put(v)
+                else:
+                    remote_dict[k] = v
+            async_args.append(remote_dict)
+    if is_async:
+        args = async_args
     data_dict = combine_dicts(*args)
-    out_dict = apply_modules(out_dict, data_dict)
+    out_dict = apply_modules(out_dict, data_dict, lazy)
 
     if is_async:
         out_keys = list(out_dict.keys())

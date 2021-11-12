@@ -4,6 +4,7 @@ from copy import deepcopy
 from uuid import uuid4
 
 from vflow.vset import PREV_KEY
+from vflow.vfunc import VfuncPromise
 from vflow.subkey import Subkey
 import pandas as pd
 from pandas import DataFrame
@@ -130,7 +131,7 @@ def sep_dicts(d: dict, n_out: int = 1):
     sep_dicts: [{k1: x1, k2: x2, ..., '__prev__': p}, {k1: y1, k2: y2, '__prev__': p}]
     '''
     # empty dict -- return empty dict
-    if n_out == 1:
+    if n_out <= 1:
         return d
     else:
         # try separating dict into multiple dicts
@@ -142,7 +143,13 @@ def sep_dicts(d: dict, n_out: int = 1):
                     # assumes the correct sub-key for item i is in the i-th position
                     new_key = (key[i],) + key[n_out:]
                     new_key[-1]._sep_dicts_id = sep_dicts_id
-                    sep_dicts[i][new_key] = value[i]
+                    if isinstance(value, VfuncPromise):
+                        # return a promise to get the value at index i of the
+                        # original promise
+                        value_i = VfuncPromise(lambda v,i: v[i], value, i)
+                    else:
+                        value_i = value[i]
+                    sep_dicts[i][new_key] = value_i
 
         # add back prev
         prev = d[PREV_KEY]
@@ -223,10 +230,15 @@ def combine_dicts(*args: dict, base_case=True):
         # combine the first two dicts and call recursively with remaining args
         return combine_dicts(combine_dicts(args[0], args[1]), *args[2:], base_case=False)
 
-
-def apply_modules(modules: dict, data_dict: dict):
+def apply_modules(modules: dict, data_dict: dict, lazy: bool = False):
     out_dict = {}
     for mod_k in modules:
+        if (len(data_dict) == 0):
+            func = deepcopy(modules[mod_k])
+            if lazy:
+                out_dict[mod_k] = VfuncPromise(func)
+            else:
+                out_dict[mod_k] = func()
         for data_k in data_dict:
             if mod_k == PREV_KEY or data_k == PREV_KEY:
                 continue
@@ -234,6 +246,15 @@ def apply_modules(modules: dict, data_dict: dict):
             combined_key = combine_keys(data_k, mod_k)
 
             if len(combined_key) > 0:
-                out_dict[combined_key] = deepcopy(modules[mod_k])(*data_dict[data_k])
+                func = deepcopy(modules[mod_k])
+                if lazy:
+                    # return a promise
+                    out_dict[combined_key] = VfuncPromise(func, *data_dict[data_k])
+                else:
+                    data_list = list(data_dict[data_k])
+                    for i, data in enumerate(data_list):
+                        if isinstance(data, VfuncPromise):
+                            data_list[i] = data()
+                    out_dict[combined_key] = func(*data_list)
 
     return out_dict
