@@ -146,7 +146,8 @@ def sep_dicts(d: dict, n_out: int = 1, keys: list = []):
                     if len(keys) == 0:
                         new_key = (key[i],) + key[n_out:]
                     else:
-                        new_key = (keys[i],) + key
+                        new_sub = Subkey(value=keys[i], origin=key[-1].origin)
+                        new_key = (new_sub,) + key
                     new_key[-1]._sep_dicts_id = sep_dicts_id
                     if isinstance(value, VfuncPromise):
                         # return a promise to get the value at index i of the
