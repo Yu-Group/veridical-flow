@@ -172,12 +172,12 @@ class Vset:
         '''
         return self._apply_func(None, *args)
 
-    def __call__(self, *args, n_out: int = None, **kwargs):
+    def __call__(self, *args, n_out: int = None, keys: list = [], **kwargs):
         '''
         '''
         if n_out is None:
             n_out = len(args)
-        out = sep_dicts(self._apply_func(None, *args), n_out=n_out)
+        out = sep_dicts(self._apply_func(None, *args), n_out=n_out, keys=keys)
         return out
 
     def __getitem__(self, i):

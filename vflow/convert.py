@@ -117,7 +117,7 @@ def to_list(tup: tuple):
     return lists_packed
 
 
-def sep_dicts(d: dict, n_out: int = 1):
+def sep_dicts(d: dict, n_out: int = 1, keys: list = []):
     '''converts dictionary with value being saved as an iterable into multiple dictionaries
     Assumes every value has same length n_out
 
@@ -130,6 +130,8 @@ def sep_dicts(d: dict, n_out: int = 1):
     -------
     sep_dicts: [{k1: x1, k2: x2, ..., '__prev__': p}, {k1: y1, k2: y2, '__prev__': p}]
     '''
+    if len(keys) > 0 and len(keys) != n_out:
+        raise ValueError(f'keys should be empty or have length n_out={n_out}')
     # empty dict -- return empty dict
     if n_out <= 1:
         return d
@@ -141,7 +143,10 @@ def sep_dicts(d: dict, n_out: int = 1):
             if key != PREV_KEY:
                 for i in range(n_out):
                     # assumes the correct sub-key for item i is in the i-th position
-                    new_key = (key[i],) + key[n_out:]
+                    if len(keys) == 0:
+                        new_key = (key[i],) + key[n_out:]
+                    else:
+                        new_key = (keys[i],) + key
                     new_key[-1]._sep_dicts_id = sep_dicts_id
                     if isinstance(value, VfuncPromise):
                         # return a promise to get the value at index i of the
