@@ -148,7 +148,7 @@ def sep_dicts(d: dict, n_out: int = 1, keys: list = []):
                     if len(keys) == 0:
                         new_key = (key[i],) + key[n_out:]
                     else:
-                        new_sub = Subkey(value=keys[i], origin=key[-1].origin)
+                        new_sub = Subkey(value=keys[i], origin=key[-1].origin+'-'+str(i))
                         new_key = (new_sub,) + key
                     new_key[-1]._sep_dicts_id = sep_dicts_id
                     if isinstance(value, VfuncPromise):
@@ -231,7 +231,10 @@ def combine_dicts(*args: dict, base_case=True):
         prev_tup = ()
         for i in range(2):
             if PREV_KEY in args[i]:
-                prev_tup += args[i][PREV_KEY]
+                prev = args[i][PREV_KEY]
+                for p in prev:
+                    if p not in prev_tup:
+                        prev_tup += (p,)
         combined_dict[PREV_KEY] = prev_tup
         return combined_dict
     else:

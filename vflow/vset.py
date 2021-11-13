@@ -49,9 +49,11 @@ class Vset:
         self._async = is_async
         self._output_matching = output_matching
         self._lazy = lazy
-        self._memory = joblib.Memory(cache_dir)
-        if tracking_dir is not None:
-            self._mlflow = MlflowClient(tracking_uri=tracking_dir)
+        self._cache_dir = cache_dir
+        self._tracking_dir = tracking_dir
+        self._memory = joblib.Memory(self._cache_dir)
+        if self._tracking_dir is not None:
+            self._mlflow = MlflowClient(tracking_uri=self._tracking_dir)
             experiment = self._mlflow.get_experiment_by_name(name=self.name)
             if experiment is None:
                 self._exp_id = self._mlflow.create_experiment(name=self.name)
@@ -93,9 +95,17 @@ class Vset:
             out_dict, self._async, self._lazy, *args
         )
         if PREV_KEY in data_dict:
-            self.__prev__ = data_dict[PREV_KEY]
+            if not hasattr(self, PREV_KEY):
+                setattr(self, PREV_KEY, data_dict[PREV_KEY])
+            else:
+                prev = getattr(self, PREV_KEY)
+                for p in data_dict[PREV_KEY]:
+                    if not p in prev:
+                        prev += (p,)
+                setattr(self, PREV_KEY, prev)
         else:
-            self.__prev__ = ('init', )
+            if not hasattr(self, PREV_KEY):
+                setattr(self, PREV_KEY, ('init', ))
         if self._mlflow is not None:
             run_dict = {}
             # log subkeys as params and value as metric
