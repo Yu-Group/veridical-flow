@@ -48,10 +48,12 @@ def dict_to_df(d: dict):
     '''Converts a dictionary with tuple keys
     into a pandas DataFrame
     '''
-    d_copy = {k:d[k] for k in d if k != PREV_KEY}
+    d_copy = {tuple([sk.value for sk in k]):d[k] for k in d if k != PREV_KEY}
     df = pd.Series(d_copy).reset_index()
     if len(d_copy.keys()) > 0:
-        cols = [sk.origin for sk in list(d_copy.keys())[0]] + ['out']
+        key_list = list(d.keys())
+        subkey_list = key_list[0] if key_list[0] != PREV_KEY else key_list[1]
+        cols = [sk.origin for sk in subkey_list] + ['out']
         # set each init col to init-{next_module_set}
         cols = [c if c != 'init' else init_step(idx, cols) for idx, c in enumerate(cols) ]
         df.set_axis(cols, axis=1, inplace=True)
