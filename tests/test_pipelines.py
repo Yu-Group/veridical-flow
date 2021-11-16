@@ -16,7 +16,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils import resample
 
-from vflow import Vset, init_args, build_Vset  # must install vflow first (pip install vflow)
+from vflow import Vset, init_args, build_vset  # must install vflow first (pip install vflow)
 from vflow.vset import PREV_KEY
 from vflow.pipeline import build_graph
 from vflow.subkey import Subkey as sm
@@ -39,7 +39,7 @@ class TestPipelines:
                                                             'y_test'])  # optionally provide names for each of these
 
         # subsample data
-        subsampling_set = build_Vset('subsampling', sklearn.utils.resample,
+        subsampling_set = build_vset('subsampling', sklearn.utils.resample,
                                      param_dict={'random_state': list(range(3))},
                                      n_samples=20)
         X_trains, y_trains = subsampling_set(X_train, y_train)
@@ -140,7 +140,7 @@ class TestPipelines:
                                                             'y_test'])  # optionally provide names for each of these
 
         # subsample data
-        subsampling_set = build_Vset('subsampling', sklearn.utils.resample,
+        subsampling_set = build_vset('subsampling', sklearn.utils.resample,
                                      param_dict={'random_state': list(range(3))},
                                      n_samples=20)
         X_trains, y_trains = subsampling_set(X_train, y_train)
@@ -175,7 +175,7 @@ class TestPipelines:
                                                      names=['X_train', 'X_test', 'y_train', 'y_test'])
 
         # subsample data
-        subsampling_set = build_Vset('subsampling', sklearn.utils.resample,
+        subsampling_set = build_vset('subsampling', sklearn.utils.resample,
                                      param_dict={'random_state': list(range(3))},
                                      n_samples=20)
         X_trains, y_trains = subsampling_set(X_train, y_train)
@@ -193,6 +193,46 @@ class TestPipelines:
         # X_tests because they are unrelated
         assert len(modeling_set.out.keys()) == 7
         assert len(preds_test.keys()) == 19
+
+    def test_lazy_eval(self):
+        def f(arg_name: str='', i: int=0):
+            return (arg_name, f'f_iter={i}')
+        f_modules = [partial(f, i=i) for i in range(3)]
+        f_arg = init_args(('f_arg',), names=['f_init'])[0]
+
+        f_set = Vset('f', modules = f_modules)
+        f_lazy_set = Vset('f', modules = f_modules, lazy=True)
+
+        f_res = f_set(f_arg)
+        f_lazy_res = f_lazy_set(f_arg)
+
+        assert_equal(f_res.keys(), f_lazy_res.keys())
+
+        def g(tup, arg_name: str='', i: int=0):
+            return (*tup, arg_name, f'g_iter={i}')
+        g_modules = [partial(g, i=i) for i in range(2)]
+        g_arg = init_args(('g_arg',), names=['g_init'])[0]
+
+        g_set = Vset('g', modules=g_modules)
+        g_lazy_set = Vset('g', modules=g_modules, lazy=True)
+
+        g_res = g_set(f_res, g_arg, n_out=1)
+        g_lazy_res = g_lazy_set(f_lazy_res, g_arg, n_out=1)
+
+        assert_equal(g_res.keys(), g_lazy_res.keys())
+
+        def h(tup, arg_name: str='', i: int=0):
+            return (*tup, arg_name, f'h_iter={i}')
+        h_modules = [partial(h, i=i) for i in range(2)]
+        h_arg = init_args(('h_arg',), names=['h_init'])[0]
+
+        h_set = Vset('h', modules=h_modules)
+
+        h_res = h_set(g_res, h_arg, n_out=1)
+        h_lazy_res = h_set(g_lazy_res, h_arg, n_out=1)
+
+        assert_equal(h_res, h_lazy_res)
+
 
     def test_caching(self):
         try:

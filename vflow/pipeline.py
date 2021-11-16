@@ -102,7 +102,7 @@ def build_graph(node, draw=True):
 
         # main case: at a moduleset
         elif 'Vset' in str(type(node)):
-            nodes_prev = node.__prev__
+            nodes_prev = getattr(node, PREV_KEY)
             for node_prev in nodes_prev:
                 G.add_edge(node_prev, node)
                 G = build_graph_recur(node_prev, G)
