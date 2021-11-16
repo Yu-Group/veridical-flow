@@ -70,13 +70,15 @@ See the [docs](https://yu-group.github.io/veridical-flow/) for reference on the 
 
 > **Examples**
 >
-> [synthetic classification example](https://github.com/Yu-Group/veridical-flow/blob/master/notebooks/00_synthetic_classification.ipynb)
+> [synthetic classification](https://github.com/Yu-Group/veridical-flow/blob/master/notebooks/00_synthetic_classification.ipynb)
 >
-> [enhancer example](https://github.com/Yu-Group/veridical-flow/blob/master/notebooks/01_enhancer.ipynb)
+> [enhancer genomics](https://github.com/Yu-Group/veridical-flow/blob/master/notebooks/01_enhancer.ipynb)
 >
-> [fmri example](https://github.com/Yu-Group/veridical-flow/blob/master/notebooks/02_fmri.ipynb)
+> [fmri voxel prediction](https://github.com/Yu-Group/veridical-flow/blob/master/notebooks/02_fmri.ipynb)
 > 
-> [computer vision example](https://github.com/Yu-Group/veridical-flow/blob/master/notebooks/03_computer_vision_dnn.ipynb)
+> [fashion mnist classification](https://github.com/Yu-Group/veridical-flow/blob/master/notebooks/03_computer_vision_dnn.ipynb)
+> 
+> [clinical decision rule vetting](https://github.com/Yu-Group/rule-vetting)
 
 ## Installation
 
