@@ -69,12 +69,12 @@ def evaluate_uncertainty(preds, uncertainty, y_real):
     y_real = base_dict(y_real)
     preds_arr = np.array(list(preds.values()))
     y_real = np.array(list(y_real.values()))
-    uncertainty = np.std(preds_arr, axis=0)
+    # uncertainty = np.std(preds_arr, axis=0)
     sorted_idx = np.argsort(uncertainty)
     preds_arr, uncertainty, y_real = preds_arr[:,sorted_idx], uncertainty[sorted_idx], y_real[:,sorted_idx]
     # todo: mean sqd err - calibration curve?
-    acc = np.mean((preds_arr-y_real)**2, axis=0)
-    return uncertainty, np.cumsum(acc)
+    mse = np.cumsum(np.mean((preds_arr-y_real)**2, axis=0)) / len(uncertainty)
+    return uncertainty, mse
 
 def base_dict(d: dict):
     '''Remove PREV_KEY from dict d if present.'''
