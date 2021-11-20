@@ -41,7 +41,7 @@ class TestPipelines:
         # subsample data
         subsampling_set = build_vset('subsampling', sklearn.utils.resample,
                                      param_dict={'random_state': list(range(3))},
-                                     n_samples=20)
+                                     n_samples=20, verbose=False)
         X_trains, y_trains = subsampling_set(X_train, y_train)
 
         # fit models
@@ -142,7 +142,7 @@ class TestPipelines:
         # subsample data
         subsampling_set = build_vset('subsampling', sklearn.utils.resample,
                                      param_dict={'random_state': list(range(3))},
-                                     n_samples=20)
+                                     n_samples=20, verbose=False)
         X_trains, y_trains = subsampling_set(X_train, y_train)
 
         # fit models
