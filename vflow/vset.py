@@ -72,9 +72,8 @@ class Vset:
                 assert type(module_keys) is list, 'modules passed as list but module_names is not a list'
                 assert len(modules) == len(
                     module_keys), 'modules list and module_names list do not have the same length'
-                # TODO: add more checking of module_keys
-                module_keys = [self.__create_subkey(k) if isinstance(k, tuple) else
-                                (self.__create_subkey(k), ) for k in module_keys]
+                # TODO: how best to handle tuple subkeys?
+                module_keys = [(self.__create_subkey(k), ) for k in module_keys]
             else:
                 module_keys = [(self.__create_subkey(f'{name}_{i}'), ) for i in range(len(modules))]
             # convert module keys to singleton tuples
