@@ -10,7 +10,7 @@ from functools import partial
 
 def build_vset(name: str, obj, param_dict: dict = {}, *args,
                is_async: bool = False, output_matching: bool = False,
-               lazy: bool = False, cache_dir: str = None,
+               lazy: bool = False, cache_dir: str = None, verbose: bool = True,
                tracking_dir: str = None, **kwargs) -> Vset:
     '''Builds a Vset by currying callable obj with all combinations of parameters in param_dict.
 
@@ -32,6 +32,8 @@ def build_vset(name: str, obj, param_dict: dict = {}, *args,
     cache_dir: str (optional)
         if provided, do caching and use cache_dir as the data store for
         joblib.Memory
+    verbose : bool (optional)
+        if True, modules are named with param_dict items as tuples of str("param_name=param_val")
     tracking_dir: str (optional)
         if provided, use the mlflow.tracking api to log outputs as metrics
         with params determined by input keys
@@ -45,6 +47,7 @@ def build_vset(name: str, obj, param_dict: dict = {}, *args,
     assert callable(obj), 'obj must be callable'
 
     vfuncs = []
+    vkeys = []
 
     # TODO: better way to check this?
     # check if obj is a class
@@ -55,20 +58,26 @@ def build_vset(name: str, obj, param_dict: dict = {}, *args,
     kwargs_tuples = product(*param_lists)
     for tup in kwargs_tuples:
         kwargs_dict = {}
+        vkey_tup = []
         for param_name, param_val in zip(param_names, tup):
             kwargs_dict[param_name] = param_val
+            vkey_tup.append(f'{param_name}={param_val}')
+        # add module_key to vkeys
+        vkey_tup = tuple(vkey_tup)
+        vkeys.append(vkey_tup)
         # add additional fixed kwargs to kwargs_dict
         for k, v in kwargs.items():
             kwargs_dict[k] = v
         if instantiate:
             # instantiate obj
-            vfuncs.append(Vfunc(module=obj(*args, **kwargs_dict)))
+            vfuncs.append(Vfunc(module=obj(*args, **kwargs_dict), name=str(vkey_tup)))
         else:
             # use partial to wrap obj
-            vfuncs.append(Vfunc(module=partial(obj, *args, **kwargs_dict)))
-
-    return Vset(name, vfuncs, is_async=is_async,
-                output_matching=output_matching, lazy=lazy,
+            vfuncs.append(Vfunc(module=partial(obj, *args, **kwargs_dict), name=str(vkey_tup)))
+    if not verbose:
+        vkeys = None
+    return Vset(name, vfuncs, is_async=is_async, module_keys=vkeys,
+                output_matching=output_matching,  lazy=lazy,
                 cache_dir=cache_dir, tracking_dir=tracking_dir)
 
 def filter_vset_by_metric(metric_dict: dict, vset: Vset, *vsets: Vset, n_keep: int=1,

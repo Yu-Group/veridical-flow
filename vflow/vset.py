@@ -80,7 +80,7 @@ class Vset:
             # convert module keys to singleton tuples
             self.modules = dict(zip(module_keys, modules))
         # if needed, wrap the modules in the Vfunc or AsyncModule class
-        for k, v in self.modules.items():
+        for k, v in self.modules.items(): 
             if self._async:
                 if not isinstance(v, AsyncModule):
                     self.modules[k] = AsyncModule(k[0], v)
