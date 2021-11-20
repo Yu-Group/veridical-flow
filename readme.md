@@ -1,6 +1,7 @@
 <p align="center">
-	<img src="https://yu-group.github.io/veridical-flow/logo_vflow_straight.jpg" width="70%"> 
+	<img src="https://yu-group.github.io/veridical-flow/logo_vflow_straight.png" width="70%"> 
 </p>
+
 
 
 <p align="center"> A library for making stability analysis simple, following the <a href="https://www.pnas.org/content/117/8/3920">veridical data-science</a> framework.
