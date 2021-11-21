@@ -88,6 +88,6 @@ class VfuncPromise:
 
     def __repr__(self):
         if self.called:
-            return(f'Fulfilled VfuncPromise({self.value})')
+            return f'Fulfilled VfuncPromise({self.value})'
         else:
-            return(f'Unfulfilled VfuncPromise(func={self.vfunc}, args={self.args})')
+            return f'Unfulfilled VfuncPromise(func={self.vfunc}, args={self.args})'
