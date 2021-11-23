@@ -36,7 +36,7 @@ class PCSPipeline:
         for i, step in enumerate(self.steps):
             try:
                 step_name = step.name
-            except:
+            except AttributeError:
                 step_name = f'Step {i}'
             print(step_name)
             outputs, fitted_step = run_step_cached(step, *args, **kwargs)
