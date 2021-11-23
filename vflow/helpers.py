@@ -118,10 +118,10 @@ def filter_vset_by_metric(metric_dict: dict, vset: Vset, *vsets: Vset, n_keep: i
         if not vset.name in df.columns:
             raise ValueError(f'{vset.name} should be one of the columns of dict_to_df(metric_dict)')
         vset_names.append(vset.name)
-    if (len(filter_on) > 0):
+    if len(filter_on) > 0:
         filter_col = list(metric_dict.keys())[0][-1].origin
         df = df[df[filter_col].isin(filter_on)]
-    if (group):
+    if group:
         df = df.groupby(by=vset_names, as_index=False).mean()
     if bigger_is_better:
         df = df.sort_values(by='out', ascending=False)
