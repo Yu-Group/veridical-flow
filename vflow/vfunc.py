@@ -25,11 +25,13 @@ class Vfunc:
         else:
             return self.module(*args, **kwargs)
 
-    @abstractmethod
     def transform(self, *args, **kwargs):
         '''This function transforms its input in some way
         '''
-        pass
+        if hasattr(self.module, 'transform'):
+            return self.module.transform(*args, **kwargs)
+        else:
+            return self.module(*args, **kwargs)
 
     def __call__(self, *args, **kwargs):
         '''This should decide what to call
@@ -59,6 +61,14 @@ class AsyncModule:
         '''
         if hasattr(self.module, 'fit'):
             return _remote_fun.remote(self.module.fit, *args, **kwargs)
+        else:
+            return _remote_fun.remote(self.module, *args, **kwargs)
+
+    def transform(self, *args, **kwargs):
+        '''This function transforms its input in some way
+        '''
+        if hasattr(self.module, 'transform'):
+            return _remote_fun.remote(self.module.transform, *args, **kwargs)
         else:
             return _remote_fun.remote(self.module, *args, **kwargs)
 
