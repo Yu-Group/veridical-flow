@@ -130,9 +130,8 @@ def filter_vset_by_metric(metric_dict: dict, vset: Vset, *vsets: Vset, n_keep: i
     df = df.iloc[0:n_keep]
     for i, vset in enumerate(vsets):
         vfuncs = vset.modules
-        vfunc_filter = df[vset.name].to_numpy()
-        vfunc_keys = [k for k in vfuncs.keys() if k[0].value in vfunc_filter]
-        new_vfuncs = {k: vfuncs[k] for k in vfunc_keys}
+        vfunc_filter = [str(name) for name in df[vset.name].to_numpy()]
+        new_vfuncs = {k:v for k,v in vfuncs.items() if str(v.name) in vfunc_filter}
         new_vset = Vset('filtered_'+vset.name, new_vfuncs, is_async=vset._async,
                         output_matching=vset._output_matching, lazy=vset._lazy,
                         cache_dir=vset._cache_dir, tracking_dir=vset._tracking_dir)
