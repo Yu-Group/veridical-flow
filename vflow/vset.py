@@ -150,13 +150,15 @@ class Vset:
         return self
 
     def transform(self, *args, **kwargs):
-        '''todo: fix this method
         '''
-        results = []
-        for out in self.output:
-            result = out.transform(*args, **kwargs)
-            results.append(result)
-        return results
+        '''
+        if not self._fitted:
+            raise AttributeError('Please fit the Vset object before calling the transform method.')
+        out_dict = {}
+        for k, v in self.out.items():
+            if hasattr(v, 'transform'):
+                out_dict[k] = v.transform
+        return self._apply_func(out_dict, *args)
 
     def predict(self, *args, **kwargs):
         if not self._fitted:

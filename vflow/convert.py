@@ -247,7 +247,7 @@ def combine_dicts(*args: dict, base_case=True):
 def apply_modules(modules: dict, data_dict: dict, lazy: bool = False):
     out_dict = {}
     for mod_k in modules:
-        if (len(data_dict) == 0):
+        if len(data_dict) == 0:
             func = deepcopy(modules[mod_k])
             if lazy:
                 out_dict[mod_k] = VfuncPromise(func)
