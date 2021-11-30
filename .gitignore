@@ -40,6 +40,8 @@ notebooks/mlruns/
 
 # data directory
 /data/
+# include enhancer data
+!/data/enhancer/
 # pytorch data directory
 notebooks/data/
 
