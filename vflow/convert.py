@@ -44,9 +44,10 @@ def init_step(idx, cols):
         if cols[i] != 'init':
             return 'init-' + cols[i]
 
-def dict_to_df(d: dict):
+def dict_to_df(d: dict, param_key=None):
     '''Converts a dictionary with tuple keys
-    into a pandas DataFrame
+    into a pandas DataFrame, optionally seperating
+    parameters in param_key if not None
     '''
     d_copy = {tuple([sk.value for sk in k]):d[k] for k in d if k != PREV_KEY}
     df = pd.Series(d_copy).reset_index()
@@ -57,6 +58,8 @@ def dict_to_df(d: dict):
         # set each init col to init-{next_module_set}
         cols = [c if c != 'init' else init_step(idx, cols) for idx, c in enumerate(cols) ]
         df.set_axis(cols, axis=1, inplace=True)
+        if param_key:
+            df = df.join(pd.DataFrame(df[param_key].tolist()))
     return df
 
 def compute_interval(df: DataFrame, d_label, wrt_label, accum: list=['std']):
