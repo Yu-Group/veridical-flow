@@ -66,6 +66,15 @@ def compute_interval(df: DataFrame, d_label, wrt_label, accum: list=['std']):
     df = df.astype({wrt_label: str})
     return df[[wrt_label, d_label]].groupby(wrt_label).agg(accum)
 
+def perturbation_stats(df: DataFrame, *groups: str, wrt_col: str='out',
+                       func: list=['count', 'mean', 'std']):
+    '''Compute statistics for wrt_col in df, conditional on groups
+    '''
+    groups = list(groups)
+    df = df.groupby(groups).agg(func)[wrt_col]
+    df.reset_index(inplace=True)
+    return df.sort_values(groups[0])
+
 def to_tuple(lists: list):
     '''Convert from lists to unpacked  tuple
     Ex. [[x1, y1], [x2, y2], [x3, y3]] -> ([x1, x2, x3], [y1, y2, y3])
