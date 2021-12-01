@@ -79,7 +79,7 @@ class Vset:
             # convert module keys to singleton tuples
             self.modules = dict(zip(module_keys, modules))
         # if needed, wrap the modules in the Vfunc or AsyncModule class
-        for k, v in self.modules.items(): 
+        for k, v in self.modules.items():
             if self._async:
                 if not isinstance(v, AsyncModule):
                     self.modules[k] = AsyncModule(k[0], v)
@@ -89,22 +89,16 @@ class Vset:
     def _apply_func(self, out_dict: dict=None, *args):
         if out_dict is None:
             out_dict = deepcopy(self.modules)
+
         apply_func_cached = self._memory.cache(_apply_func_cached)
-        data_dict, out_dict = apply_func_cached(
-            out_dict, self._async, self._lazy, *args
-        )
-        if PREV_KEY in data_dict:
-            if not hasattr(self, PREV_KEY):
-                setattr(self, PREV_KEY, data_dict[PREV_KEY])
-            else:
-                prev = getattr(self, PREV_KEY)
-                for p in data_dict[PREV_KEY]:
-                    if not p in prev:
-                        prev += (p,)
-                setattr(self, PREV_KEY, prev)
-        else:
-            if not hasattr(self, PREV_KEY):
-                setattr(self, PREV_KEY, ('init', ))
+        out_dict = apply_func_cached(out_dict, self._async, self._lazy, *args)
+
+        prev = tuple()
+        for arg in args:
+            if PREV_KEY in arg:
+                prev += (arg[PREV_KEY],)
+        out_dict[PREV_KEY] = (self,) + prev
+
         if self._mlflow is not None:
             run_dict = {}
             # log subkeys as params and value as metric
@@ -134,7 +128,6 @@ class Vset:
                                 run_id, param_name, subkey.value
                             )
                 self._mlflow.log_metric(run_id, k[-1].value, v)
-        out_dict[PREV_KEY] = (self,)
         return out_dict
 
     def fit(self, *args, **kwargs):
@@ -146,6 +139,10 @@ class Vset:
         for k, v in self.modules.items():
             out_dict[k] = v.fit
         self.out = self._apply_func(out_dict, *args)
+        prev = self.out[PREV_KEY][1:]
+        if hasattr(self, PREV_KEY):
+            prev = getattr(self, PREV_KEY) + prev
+        setattr(self, PREV_KEY, prev)
         self._fitted = True
         return self
 
@@ -188,8 +185,18 @@ class Vset:
         '''
         if n_out is None:
             n_out = len(args)
-        out = sep_dicts(self._apply_func(None, *args), n_out=n_out, keys=keys)
-        return out
+        out_dict = self._apply_func(None, *args)
+        if n_out == 1:
+            return out_dict
+        out_dicts = sep_dicts(out_dict, n_out=n_out, keys=keys)
+        # add back prev
+        prev = out_dict[PREV_KEY]
+        for i in range(n_out):
+            if n_out == len(args):
+                out_dicts[i][PREV_KEY] = (prev[0],) + (prev[i+1],)
+            else:
+                out_dicts[i][PREV_KEY] = prev
+        return out_dicts
 
     def __getitem__(self, i):
         '''Accesses ith item in the module set
@@ -250,6 +257,7 @@ def _apply_func_cached(out_dict: dict, is_async: bool, lazy: bool, *args):
             async_args.append(remote_dict)
     if is_async:
         args = async_args
+
     data_dict = combine_dicts(*args)
     out_dict = apply_modules(out_dict, data_dict, lazy)
 
@@ -258,4 +266,4 @@ def _apply_func_cached(out_dict: dict, is_async: bool, lazy: bool, *args):
         out_vals = ray.get(list(out_dict.values()))
         out_dict = dict(zip(out_keys, out_vals))
 
-    return data_dict, out_dict
+    return out_dict
