@@ -16,13 +16,11 @@ from vflow.subkey import Subkey as sm
                 {
                     (sm('X_train', 'init'),sm('y_train', 'init'),sm('RF', 'modeling')):'RF_fitted',
                     (sm('X_train', 'init'),sm('y_train', 'init'),sm('LR', 'modeling')):'LR_fitted',
-                    PREV_KEY:('prev_0',)
                 },
-                {(sm('X_test', 'init'),):'X_test_data', PREV_KEY:('prev_1',)}
+                {(sm('X_test', 'init'),):'X_test_data'}
             ],
             # out_dict
             {
-                PREV_KEY:('prev_0','prev_1',),
                 (sm('X_train', 'init'),sm('y_train', 'init'),sm('RF', 'modeling'),sm('X_test', 'init')):('RF_fitted','X_test_data'),
                 (sm('X_train', 'init'),sm('y_train', 'init'),sm('LR', 'modeling'),sm('X_test', 'init')):('LR_fitted','X_test_data')
             }
@@ -42,7 +40,6 @@ from vflow.subkey import Subkey as sm
             ],
             # out_dict
             {
-                PREV_KEY:('prev_0','prev_1','prev_2',),
                 (sm('X_train', 'init'),sm('y_train', 'init'),sm('RF', 'modeling'),sm('X_test', 'init'),sm('y_test', 'init')):(
                     ['RF_fitted','X_test_data'],'y_test_data'
                 ),
@@ -80,7 +77,6 @@ from vflow.subkey import Subkey as sm
                     sm('LR', 'modeling'),sm('X_test', 'init'),sm('y_test', 'init')):(
                     'LR_fitted_1','X_test_data','y_test_data'
                 ),
-                PREV_KEY:()
             }
         ),
         (
@@ -119,7 +115,6 @@ from vflow.subkey import Subkey as sm
                     sm('LR', 'modeling'),sm('X_train', 'init'),sm('y_train', 'init')):(
                     'LR_fitted_1','X_train_data_1','y_train_data_1'
                 ),
-                PREV_KEY:()
             }
         ),
         (
@@ -184,7 +179,6 @@ from vflow.subkey import Subkey as sm
                     sm('voxel_extract_1', 'v_origin', True),sm('LR', 'modeling'),sm('X_test', 'init')):(
                     'LR_fitted_11','X_test_data_11'
                 ),
-                PREV_KEY:()
             }
         ),
         (
@@ -249,7 +243,6 @@ from vflow.subkey import Subkey as sm
                     sm('voxel_extract_1', 'v_origin', True),sm('LR', 'modeling'),sm('X_test', 'init')):(
                     'LR_fitted_11','X_test_data_11'
                 ),
-                PREV_KEY:()
             }
         ),
         (
@@ -288,7 +281,6 @@ from vflow.subkey import Subkey as sm
                         sm('voxel_extract_1', 'v_origin', True),sm('LR', 'modeling'),sm('X_test', 'init')):[
                         'LR_fitted_11','X_test_data_11'
                     ],
-                    PREV_KEY:()
                 },
                 {
                     (sm('y_test', 'init'),sm('subgroup_0', 's_origin', True),sm('voxel_extract_0', 'v_origin', True)):'y_test_data_00',
@@ -331,7 +323,6 @@ from vflow.subkey import Subkey as sm
                     sm('voxel_extract_1', 'v_origin', True),sm('LR', 'modeling'),sm('X_test', 'init'),sm('y_test', 'init')):(
                     ['LR_fitted_11','X_test_data_11'],'y_test_data_11'
                 ),
-                PREV_KEY:()
             }
         ),
         (
@@ -370,7 +361,6 @@ from vflow.subkey import Subkey as sm
                         sm('voxel_extract_1', 'v_origin', True),sm('LR', 'm_origin', True),sm('X_test', 'init'),sm('y_test', 'init')):[
                         ['LR_fitted_11','X_test_data_11'],'y_test_data'
                     ],
-                    PREV_KEY:()
                 },
                 {
                     (sm('LR', 'm_origin', True),sm('acc', 'metrics')):'LR_acc_func',
@@ -445,26 +435,7 @@ from vflow.subkey import Subkey as sm
                     sm('voxel_extract_1', 'v_origin', True),sm('LR', 'm_origin', True),sm('X_test', 'init'),sm('y_test', 'init'),sm('bal_acc', 'metrics')):(
                     [['LR_fitted_11','X_test_data_11'],'y_test_data'],'LR_bal_acc_func'
                 ),
-                PREV_KEY:()
             }
-        ),
-        pytest.param(
-            # in_dicts
-            [
-                {
-                    PREV_KEY: 'prev_0'  # not wrapped in tuple
-                },
-                {
-                    PREV_KEY: ('prev_1',)
-                }
-            ],
-            # out_dict
-            {
-                PREV_KEY: ('prev_0', 'prev_1')
-            },
-            # this test is expected to fail because combine_dicts() makes the
-            # assumption that PREV_KEY entries are wrapped in tuples
-            marks=pytest.mark.xfail(strict=True)
         ),
         (
             # in_dicts
@@ -492,7 +463,6 @@ from vflow.subkey import Subkey as sm
             ],
             # out_dict
             {
-                PREV_KEY:(),
                 (sm('X_train', 'init'),sm('y_train', 'init'),sm('voxel_extract_0', 'v_origin', True),sm('subgroup_0', 's_origin', True),
                     sm('RF', 'modeling'),sm('X_test', 'init'),sm('y_test', 'init')):(
                     'RF_00', 'X_test_data_0', 'y_test_data_00'
@@ -537,7 +507,6 @@ from vflow.subkey import Subkey as sm
             ],
             # out_dict
             {
-                PREV_KEY:(),
                 (sm('X_train', 'init'),sm('y_train', 'init'),sm('voxel_extract_0', 'v_origin', True),
                     sm('subgroup_0', 's_origin', True),sm('RF', 'modeling'),sm('y_test', 'init'),sm('X_test', 'init')):(
                     'RF_00', 'y_test_data_00', 'X_test_data_0'
@@ -582,7 +551,6 @@ from vflow.subkey import Subkey as sm
             ],
             # out_dict
             {
-                PREV_KEY:(),
                 (sm('X_test', 'init'),sm('subgroup_0', 's_origin', True),sm('X_train', 'init'),sm('y_train', 'init'),
                     sm('voxel_extract_0', 'v_origin', True),sm('RF', 'modeling'),sm('y_test', 'init')):(
                     'X_test_data_0', 'RF_00', 'y_test_data_00'
@@ -627,7 +595,6 @@ from vflow.subkey import Subkey as sm
             ],
             # out_dict
             {
-                PREV_KEY:(),
                 (sm('X_test', 'init'),sm('subgroup_0', 's_origin', True),sm('y_test', 'init'),
                     sm('voxel_extract_0', 'v_origin', True),sm('X_train', 'init'),sm('y_train', 'init'),sm('RF', 'modeling')):(
                     'X_test_data_0', 'y_test_data_00', 'RF_00'
@@ -672,7 +639,6 @@ from vflow.subkey import Subkey as sm
             ],
             # out_dict
             {
-                PREV_KEY:(),
                 (sm('y_test', 'init'),sm('voxel_extract_0', 'v_origin', True),sm('subgroup_0', 's_origin', True),
                     sm('X_train', 'init'),sm('y_train', 'init'),sm('RF', 'modeling'),sm('X_test', 'init')):(
                     'y_test_data_00', 'RF_00', 'X_test_data_0'
@@ -717,7 +683,6 @@ from vflow.subkey import Subkey as sm
             ],
             # out_dict
             {
-                PREV_KEY:(),
                 (sm('y_test', 'init'),sm('voxel_extract_0', 'v_origin', True),sm('subgroup_0', 's_origin', True),
                     sm('X_test', 'init'),sm('X_train', 'init'),sm('y_train', 'init'),sm('RF', 'modeling')):(
                     'y_test_data_00', 'X_test_data_0', 'RF_00'
@@ -776,7 +741,6 @@ from vflow.subkey import Subkey as sm
             ],
             # out_dict
             {
-                PREV_KEY:(),
                 (sm('X_test', 'init'),sm('feature_extraction_0', 'f_origin', True),sm('subgroup_0', 's_origin', True),
                  sm('y_test', 'init'),sm('voxel_extract_0', 'v_origin', True),
                  sm('X_train', 'init'),sm('y_train', 'init'),sm('RF', 'modeling')): ('X_test_data_00','y_test_data_00','RF_000'),
@@ -815,7 +779,6 @@ from vflow.subkey import Subkey as sm
             ],
             # out_dict
             {
-                PREV_KEY:(),
                 (sm('X_train', 'init'),sm('standardize_0', 's_origin', True),sm('y_train', 'init')):('X_train_0','y_train_data'),
                 (sm('X_train', 'init'),sm('standardize_1', 's_origin', True),sm('y_train', 'init')):('X_train_1','y_train_data')
             }

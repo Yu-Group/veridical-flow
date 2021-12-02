@@ -135,7 +135,7 @@ def filter_vset_by_metric(metric_dict: dict, vset: Vset, *vsets: Vset, n_keep: i
         new_vset = Vset('filtered_'+vset.name, new_vfuncs, is_async=vset._async,
                         output_matching=vset._output_matching, lazy=vset._lazy,
                         cache_dir=vset._cache_dir, tracking_dir=vset._tracking_dir)
-        setattr(new_vset, PREV_KEY, metric_dict[PREV_KEY])
+        setattr(new_vset, PREV_KEY, (metric_dict[PREV_KEY], vset,))
         vsets[i] = new_vset
     if len(vsets) == 1:
         return vsets[0]

@@ -76,11 +76,28 @@ def build_graph(node, draw=True):
     G: nx.Digraph()
     '''
 
+    def unnest_node(node):
+        '''Unnest a node, if necessary (i.e., when node is a tuple)
+        Params
+        ------
+        node: str, dict, Vset, or tuple
+
+        Returns
+        -------
+        unnested_node: str, Vset, or None
+        '''
+        node_type = type(node)
+        if node_type is str or 'Vset' in str(node_type):
+            return node
+        if node_type is tuple:
+            return unnest_node(node[0])
+        return None
+
     def build_graph_recur(node, G):
         '''Builds a graph up using __prev__ and PREV_KEY pointers
         Params
         ------
-        node: dict or Vset
+        node: str, dict, Vset, or tuple
         G: nx.Digraph()
 
         Returns
@@ -95,17 +112,28 @@ def build_graph(node, draw=True):
         elif type(node) is dict:
             s_node = 'End'
             nodes_prev = node[PREV_KEY]
-            for node_prev in nodes_prev:
-                G.add_edge(node_prev, s_node)
+            G.add_edge(nodes_prev[0], s_node)
+            for node_prev in nodes_prev[1:]:
+                G.add_edge(unnest_node(node_prev), nodes_prev[0])
                 G = build_graph_recur(node_prev, G)
             return G
 
         # main case: at a moduleset
         elif 'Vset' in str(type(node)):
-            nodes_prev = getattr(node, PREV_KEY)
-            for node_prev in nodes_prev:
-                G.add_edge(node_prev, node)
-                G = build_graph_recur(node_prev, G)
+            if hasattr(node, PREV_KEY):
+                nodes_prev = getattr(node, PREV_KEY)
+                for node_prev in nodes_prev:
+                    G.add_edge(unnest_node(node_prev), node)
+                    G = build_graph_recur(node_prev, G)
+            return G
+
+        # nested prev key case
+        elif type(node) is tuple:
+            func_node = unnest_node(node[0])
+            G = build_graph_recur(func_node, G)
+            for arg_node in node[1:]:
+                G.add_edge(unnest_node(arg_node), func_node)
+                G = build_graph_recur(arg_node, G)
             return G
 
     G = nx.DiGraph()

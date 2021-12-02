@@ -231,6 +231,16 @@ class TestPipelines:
         h_res = h_set(g_res, h_arg, n_out=1)
         h_lazy_res = h_set(g_lazy_res, h_arg, n_out=1)
 
+        # check PREV_KEYs
+        assert_equal(h_res[PREV_KEY][0], h_lazy_res[PREV_KEY][0])
+        assert_equal(h_res[PREV_KEY][1][0], g_set)
+        assert_equal(h_lazy_res[PREV_KEY][1][0], g_lazy_set)
+        assert_equal(h_res[PREV_KEY][1][1][0], f_set)
+        assert_equal(h_lazy_res[PREV_KEY][1][1][0], f_lazy_set)
+
+        del h_res[PREV_KEY]
+        del h_lazy_res[PREV_KEY]
+
         assert_equal(h_res, h_lazy_res)
 
 

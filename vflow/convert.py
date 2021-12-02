@@ -171,10 +171,6 @@ def sep_dicts(d: dict, n_out: int = 1, keys: list = []):
                         value_i = value[i]
                     sep_dicts[i][new_key] = value_i
 
-        # add back prev
-        prev = d[PREV_KEY]
-        for i in range(n_out):
-            sep_dicts[i][PREV_KEY] = prev
         return sep_dicts
 
 
@@ -240,14 +236,6 @@ def combine_dicts(*args: dict, base_case=True):
                     else:
                         combined_dict[combined_key] = args[0][k0] + (args[1][k1],)
 
-        prev_tup = ()
-        for i in range(2):
-            if PREV_KEY in args[i]:
-                prev = args[i][PREV_KEY]
-                for p in prev:
-                    if p not in prev_tup:
-                        prev_tup += (p,)
-        combined_dict[PREV_KEY] = prev_tup
         return combined_dict
     else:
         # combine the first two dicts and call recursively with remaining args
