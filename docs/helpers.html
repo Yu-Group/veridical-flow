@@ -30,15 +30,17 @@
 <pre><code class="python">&#39;&#39;&#39;User-facing helper functions included at import vflow
 &#39;&#39;&#39;
 
-from vflow.vset import *
-from vflow.vfunc import *
+from vflow.vset import Vset, PREV_KEY
+from vflow.vfunc import Vfunc
+from vflow.convert import dict_to_df
 
 from itertools import product
 from functools import partial
 
-def build_Vset(name: str, obj, param_dict: dict = {}, *args,
+def build_vset(name: str, obj, param_dict: dict = {}, *args,
                is_async: bool = False, output_matching: bool = False,
-               cache_dir: str = None, tracking_dir: str = None, **kwargs) -&gt; Vset:
+               lazy: bool = False, cache_dir: str = None, verbose: bool = True,
+               tracking_dir: str = None, **kwargs) -&gt; Vset:
     &#39;&#39;&#39;Builds a Vset by currying callable obj with all combinations of parameters in param_dict.
 
     Params
@@ -59,6 +61,8 @@ def build_Vset(name: str, obj, param_dict: dict = {}, *args,
     cache_dir: str (optional)
         if provided, do caching and use cache_dir as the data store for
         joblib.Memory
+    verbose : bool (optional)
+        if True, modules are named with param_dict items as tuples of str(&#34;param_name=param_val&#34;)
     tracking_dir: str (optional)
         if provided, use the mlflow.tracking api to log outputs as metrics
         with params determined by input keys
@@ -72,8 +76,10 @@ def build_Vset(name: str, obj, param_dict: dict = {}, *args,
     assert callable(obj), &#39;obj must be callable&#39;
 
     vfuncs = []
+    vkeys = []
 
     # TODO: better way to check this?
+    # check if obj is a class
     instantiate = isinstance(obj, type)
 
     param_names = list(param_dict.keys())
@@ -81,21 +87,89 @@ def build_Vset(name: str, obj, param_dict: dict = {}, *args,
     kwargs_tuples = product(*param_lists)
     for tup in kwargs_tuples:
         kwargs_dict = {}
+        vkey_tup = []
         for param_name, param_val in zip(param_names, tup):
             kwargs_dict[param_name] = param_val
-        # add additional fixed kwargs
+            vkey_tup.append(f&#39;{param_name}={param_val}&#39;)
+        # add module_key to vkeys
+        vkey_tup = tuple(vkey_tup)
+        vkeys.append(vkey_tup)
+        # add additional fixed kwargs to kwargs_dict
         for k, v in kwargs.items():
             kwargs_dict[k] = v
         if instantiate:
             # instantiate obj
-            vfuncs.append(Vfunc(module=obj(*args, **kwargs_dict)))
+            vfuncs.append(Vfunc(module=obj(*args, **kwargs_dict), name=str(vkey_tup)))
         else:
             # use partial to wrap obj
-            vfuncs.append(Vfunc(module=partial(obj, *args, **kwargs_dict)))
+            vfuncs.append(Vfunc(module=partial(obj, *args, **kwargs_dict), name=str(vkey_tup)))
+    if not verbose:
+        vkeys = None
+    return Vset(name, vfuncs, is_async=is_async, module_keys=vkeys,
+                output_matching=output_matching,  lazy=lazy,
+                cache_dir=cache_dir, tracking_dir=tracking_dir)
 
-    return Vset(name, vfuncs, is_async=is_async,
-                output_matching=output_matching, cache_dir=cache_dir,
-                tracking_dir=tracking_dir)</code></pre>
+def filter_vset_by_metric(metric_dict: dict, vset: Vset, *vsets: Vset, n_keep: int=1,
+                          bigger_is_better: bool=True, filter_on: list=[],
+                          group: bool=False) -&gt; Vset:
+    &#39;&#39;&#39;Returns a new Vset by filtering vset.modules based on values in filter_dict.
+
+    Params
+    -------
+    metric_dict: dict
+        output from a Vset, typically with metrics or other numeric values to use when
+        filtering vset.modules
+    vset: Vset
+        a Vsets
+    *vsets: Vset
+        zero or more additional Vsets
+    n_keep: int (optional)
+        number of entries to keep from vset.modules
+    bigger_is_better: bool (optional)
+        if True, then the top n_keep largest values are retained
+    filter_on: list[str] (optional)
+        if there are multiple metrics in metric_dict, you can specify a subset
+        to consider
+    group: bool (optional)
+        if True, average metrics after grouping values in metric_dict by the
+        input Vset names
+
+    Returns
+    -------
+    *new_vset : Vset
+        Copies of the input Vsets but with Vfuncs filtered based on metrics
+
+    &#39;&#39;&#39;
+    df = dict_to_df(metric_dict)
+    vsets = [vset, *vsets]
+    vset_names = []
+    for vset in vsets:
+        if not vset.name in df.columns:
+            raise ValueError(f&#39;{vset.name} should be one of the columns of dict_to_df(metric_dict)&#39;)
+        vset_names.append(vset.name)
+    if len(filter_on) &gt; 0:
+        filter_col = list(metric_dict.keys())[0][-1].origin
+        df = df[df[filter_col].isin(filter_on)]
+    if group:
+        df = df.groupby(by=vset_names, as_index=False).mean()
+    if bigger_is_better:
+        df = df.sort_values(by=&#39;out&#39;, ascending=False)
+    else:
+        df = df.sort_values(by=&#39;out&#39;)
+    df = df.iloc[0:n_keep]
+    for i, vset in enumerate(vsets):
+        vfuncs = vset.modules
+        vfunc_filter = [str(name) for name in df[vset.name].to_numpy()]
+        new_vfuncs = {k:v for k,v in vfuncs.items() if str(v.name) in vfunc_filter}
+        new_vset = Vset(&#39;filtered_&#39;+vset.name, new_vfuncs, is_async=vset._async,
+                        output_matching=vset._output_matching, lazy=vset._lazy,
+                        cache_dir=vset._cache_dir, tracking_dir=vset._tracking_dir)
+        setattr(new_vset, PREV_KEY, (metric_dict[PREV_KEY], vset,))
+        vsets[i] = new_vset
+    if len(vsets) == 1:
+        return vsets[0]
+    else:
+        return vsets</code></pre>
 </details>
 </section>
 <section>
@@ -105,8 +179,8 @@ def build_Vset(name: str, obj, param_dict: dict = {}, *args,
 <section>
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
-<dt id="vflow.helpers.build_Vset"><code class="name flex">
-<span>def <span class="ident">build_Vset</span></span>(<span>name: str, obj, param_dict: dict = {}, *args, is_async: bool = False, output_matching: bool = False, cache_dir: str = None, tracking_dir: str = None, **kwargs) ‑> <a title="vflow.vset.Vset" href="vset.html#vflow.vset.Vset">Vset</a></span>
+<dt id="vflow.helpers.build_vset"><code class="name flex">
+<span>def <span class="ident">build_vset</span></span>(<span>name: str, obj, param_dict: dict = {}, *args, is_async: bool = False, output_matching: bool = False, lazy: bool = False, cache_dir: str = None, verbose: bool = True, tracking_dir: str = None, **kwargs) ‑> <a title="vflow.vset.Vset" href="vset.html#vflow.vset.Vset">Vset</a></span>
 </code></dt>
 <dd>
 <div class="desc"><p>Builds a Vset by currying callable obj with all combinations of parameters in param_dict.</p>
@@ -127,6 +201,8 @@ in other Vsets
 cache_dir: str (optional)
 if provided, do caching and use cache_dir as the data store for
 joblib.Memory
+verbose : bool (optional)
+if True, modules are named with param_dict items as tuples of str("param_name=param_val")
 tracking_dir: str (optional)
 if provided, use the mlflow.tracking api to log outputs as metrics
 with params determined by input keys
@@ -141,9 +217,10 @@ additional fixed keyword arguments to pass to obj</p>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def build_Vset(name: str, obj, param_dict: dict = {}, *args,
+<pre><code class="python">def build_vset(name: str, obj, param_dict: dict = {}, *args,
                is_async: bool = False, output_matching: bool = False,
-               cache_dir: str = None, tracking_dir: str = None, **kwargs) -&gt; Vset:
+               lazy: bool = False, cache_dir: str = None, verbose: bool = True,
+               tracking_dir: str = None, **kwargs) -&gt; Vset:
     &#39;&#39;&#39;Builds a Vset by currying callable obj with all combinations of parameters in param_dict.
 
     Params
@@ -164,6 +241,8 @@ additional fixed keyword arguments to pass to obj</p>
     cache_dir: str (optional)
         if provided, do caching and use cache_dir as the data store for
         joblib.Memory
+    verbose : bool (optional)
+        if True, modules are named with param_dict items as tuples of str(&#34;param_name=param_val&#34;)
     tracking_dir: str (optional)
         if provided, use the mlflow.tracking api to log outputs as metrics
         with params determined by input keys
@@ -177,8 +256,10 @@ additional fixed keyword arguments to pass to obj</p>
     assert callable(obj), &#39;obj must be callable&#39;
 
     vfuncs = []
+    vkeys = []
 
     # TODO: better way to check this?
+    # check if obj is a class
     instantiate = isinstance(obj, type)
 
     param_names = list(param_dict.keys())
@@ -186,21 +267,122 @@ additional fixed keyword arguments to pass to obj</p>
     kwargs_tuples = product(*param_lists)
     for tup in kwargs_tuples:
         kwargs_dict = {}
+        vkey_tup = []
         for param_name, param_val in zip(param_names, tup):
             kwargs_dict[param_name] = param_val
-        # add additional fixed kwargs
+            vkey_tup.append(f&#39;{param_name}={param_val}&#39;)
+        # add module_key to vkeys
+        vkey_tup = tuple(vkey_tup)
+        vkeys.append(vkey_tup)
+        # add additional fixed kwargs to kwargs_dict
         for k, v in kwargs.items():
             kwargs_dict[k] = v
         if instantiate:
             # instantiate obj
-            vfuncs.append(Vfunc(module=obj(*args, **kwargs_dict)))
+            vfuncs.append(Vfunc(module=obj(*args, **kwargs_dict), name=str(vkey_tup)))
         else:
             # use partial to wrap obj
-            vfuncs.append(Vfunc(module=partial(obj, *args, **kwargs_dict)))
+            vfuncs.append(Vfunc(module=partial(obj, *args, **kwargs_dict), name=str(vkey_tup)))
+    if not verbose:
+        vkeys = None
+    return Vset(name, vfuncs, is_async=is_async, module_keys=vkeys,
+                output_matching=output_matching,  lazy=lazy,
+                cache_dir=cache_dir, tracking_dir=tracking_dir)</code></pre>
+</details>
+</dd>
+<dt id="vflow.helpers.filter_vset_by_metric"><code class="name flex">
+<span>def <span class="ident">filter_vset_by_metric</span></span>(<span>metric_dict: dict, vset: <a title="vflow.vset.Vset" href="vset.html#vflow.vset.Vset">Vset</a>, *vsets: <a title="vflow.vset.Vset" href="vset.html#vflow.vset.Vset">Vset</a>, n_keep: int = 1, bigger_is_better: bool = True, filter_on: list = [], group: bool = False) ‑> <a title="vflow.vset.Vset" href="vset.html#vflow.vset.Vset">Vset</a></span>
+</code></dt>
+<dd>
+<div class="desc"><p>Returns a new Vset by filtering vset.modules based on values in filter_dict.</p>
+<h2 id="params">Params</h2>
+<p>metric_dict: dict
+output from a Vset, typically with metrics or other numeric values to use when
+filtering vset.modules
+vset: Vset
+a Vsets
+*vsets: Vset
+zero or more additional Vsets
+n_keep: int (optional)
+number of entries to keep from vset.modules
+bigger_is_better: bool (optional)
+if True, then the top n_keep largest values are retained
+filter_on: list[str] (optional)
+if there are multiple metrics in metric_dict, you can specify a subset
+to consider
+group: bool (optional)
+if True, average metrics after grouping values in metric_dict by the
+input Vset names</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><strong><code>*new_vset</code></strong> :&ensp;<code>Vset</code></dt>
+<dd>Copies of the input Vsets but with Vfuncs filtered based on metrics</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def filter_vset_by_metric(metric_dict: dict, vset: Vset, *vsets: Vset, n_keep: int=1,
+                          bigger_is_better: bool=True, filter_on: list=[],
+                          group: bool=False) -&gt; Vset:
+    &#39;&#39;&#39;Returns a new Vset by filtering vset.modules based on values in filter_dict.
 
-    return Vset(name, vfuncs, is_async=is_async,
-                output_matching=output_matching, cache_dir=cache_dir,
-                tracking_dir=tracking_dir)</code></pre>
+    Params
+    -------
+    metric_dict: dict
+        output from a Vset, typically with metrics or other numeric values to use when
+        filtering vset.modules
+    vset: Vset
+        a Vsets
+    *vsets: Vset
+        zero or more additional Vsets
+    n_keep: int (optional)
+        number of entries to keep from vset.modules
+    bigger_is_better: bool (optional)
+        if True, then the top n_keep largest values are retained
+    filter_on: list[str] (optional)
+        if there are multiple metrics in metric_dict, you can specify a subset
+        to consider
+    group: bool (optional)
+        if True, average metrics after grouping values in metric_dict by the
+        input Vset names
+
+    Returns
+    -------
+    *new_vset : Vset
+        Copies of the input Vsets but with Vfuncs filtered based on metrics
+
+    &#39;&#39;&#39;
+    df = dict_to_df(metric_dict)
+    vsets = [vset, *vsets]
+    vset_names = []
+    for vset in vsets:
+        if not vset.name in df.columns:
+            raise ValueError(f&#39;{vset.name} should be one of the columns of dict_to_df(metric_dict)&#39;)
+        vset_names.append(vset.name)
+    if len(filter_on) &gt; 0:
+        filter_col = list(metric_dict.keys())[0][-1].origin
+        df = df[df[filter_col].isin(filter_on)]
+    if group:
+        df = df.groupby(by=vset_names, as_index=False).mean()
+    if bigger_is_better:
+        df = df.sort_values(by=&#39;out&#39;, ascending=False)
+    else:
+        df = df.sort_values(by=&#39;out&#39;)
+    df = df.iloc[0:n_keep]
+    for i, vset in enumerate(vsets):
+        vfuncs = vset.modules
+        vfunc_filter = [str(name) for name in df[vset.name].to_numpy()]
+        new_vfuncs = {k:v for k,v in vfuncs.items() if str(v.name) in vfunc_filter}
+        new_vset = Vset(&#39;filtered_&#39;+vset.name, new_vfuncs, is_async=vset._async,
+                        output_matching=vset._output_matching, lazy=vset._lazy,
+                        cache_dir=vset._cache_dir, tracking_dir=vset._tracking_dir)
+        setattr(new_vset, PREV_KEY, (metric_dict[PREV_KEY], vset,))
+        vsets[i] = new_vset
+    if len(vsets) == 1:
+        return vsets[0]
+    else:
+        return vsets</code></pre>
 </details>
 </dd>
 </dl>
@@ -221,7 +403,8 @@ additional fixed keyword arguments to pass to obj</p>
 </li>
 <li><h3><a href="#header-functions">Functions</a></h3>
 <ul class="">
-<li><code><a title="vflow.helpers.build_Vset" href="#vflow.helpers.build_Vset">build_Vset</a></code></li>
+<li><code><a title="vflow.helpers.build_vset" href="#vflow.helpers.build_vset">build_vset</a></code></li>
+<li><code><a title="vflow.helpers.filter_vset_by_metric" href="#vflow.helpers.filter_vset_by_metric">filter_vset_by_metric</a></code></li>
 </ul>
 </li>
 </ul>
