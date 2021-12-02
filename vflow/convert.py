@@ -64,21 +64,29 @@ def compute_interval(df: DataFrame, d_label, wrt_label, accum: list=['std']):
 
 def evaluate_uncertainty(preds, uncertainty, y_real):
     '''Returns uncertainty and cumulative accuracy intervals for
-    individual predictions, sorted in increasing order of uncertainty.'''
-    preds = base_dict(preds)
-    y_real = base_dict(y_real)
-    preds_arr = np.array(list(preds.values()))
-    y_real = np.array(list(y_real.values()))
-    # uncertainty = np.std(preds_arr, axis=0)
+    individual predictions, sorted in increasing order of uncertainty.
+    '''
     sorted_idx = np.argsort(uncertainty)
-    preds_arr, uncertainty, y_real = preds_arr[:,sorted_idx], uncertainty[sorted_idx], y_real[:,sorted_idx]
-    # todo: mean sqd err - calibration curve?
-    mse = np.cumsum(np.mean((preds_arr-y_real)**2, axis=0)) / len(uncertainty)
-    return uncertainty, mse
+    preds = np.array(dict_data(preds))[:,sorted_idx]
+    y_real = np.array(dict_data(y_real))[:,sorted_idx]
+    uncertainty = uncertainty[sorted_idx]
+    cum_acc = None
+    return uncertainty, cum_acc
 
 def base_dict(d: dict):
-    '''Remove PREV_KEY from dict d if present.'''
+    '''Remove PREV_KEY from dict d if present.
+    '''
     return {k:v for k,v in d.items() if k != PREV_KEY}
+
+def dict_data(d: dict):
+    '''Returns a list containing all data in dict d.
+    '''
+    return list(base_dict(d).values())
+
+def dict_keys(d: dict):
+    '''Returns a list containing all keys in dict d.
+    '''
+    return list(base_dict(d).keys())
 
 
 def to_tuple(lists: list):
