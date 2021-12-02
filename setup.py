@@ -23,7 +23,6 @@ setuptools.setup(
         'networkx',
         'pandas',
         'joblib',
-        'scikit-learn >=0.23.0',  # 0.23+ only works on py3.6+)
         'pytest',
         'ray',
         'mlflow',
@@ -33,6 +32,8 @@ setuptools.setup(
             'pytest',
             'tqdm',
             'jupyter',
+            'scikit-learn >=0.23.0',  # 0.23+ only works on py3.6+)
+            'torch >= 1.0.0',
         ]
     },
     python_requires='>=3.6',
