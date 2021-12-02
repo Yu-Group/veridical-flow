@@ -31,10 +31,15 @@ setuptools.setup(
         'dev': [
             'pytest',
             'tqdm',
+            'scikit-learn >=0.23.0',  # 0.23+ only works on py3.6+)
+        ],
+        'notebooks': [
+            'tqdm',
             'jupyter',
             'scikit-learn >=0.23.0',  # 0.23+ only works on py3.6+)
             'torch >= 1.0.0',
-        ]
+            'torchvision',
+        ],
     },
     python_requires='>=3.6',
     classifiers=[

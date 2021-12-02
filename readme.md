@@ -69,17 +69,17 @@ Once we've written this pipeline, we can easily measure the stability of metrics
 
 See the [docs](https://yu-group.github.io/veridical-flow/) for reference on the API
 
-> **Examples**
+> **Notebook examples** (Note that some of these require more dependencies than just those required for vflow - to install all, use the `notebooks` dependencies in the `setup.py` file)
 >
-> [synthetic classification](https://github.com/Yu-Group/veridical-flow/blob/master/notebooks/00_synthetic_classification.ipynb)
+> [Synthetic classification](https://github.com/Yu-Group/veridical-flow/blob/master/notebooks/00_synthetic_classification.ipynb)
 >
-> [enhancer genomics](https://github.com/Yu-Group/veridical-flow/blob/master/notebooks/01_enhancer.ipynb)
+> [Enhancer genomics](https://github.com/Yu-Group/veridical-flow/blob/master/notebooks/01_enhancer.ipynb)
 >
-> [fmri voxel prediction](https://github.com/Yu-Group/veridical-flow/blob/master/notebooks/02_fmri.ipynb)
+> [fMRI voxel prediction](https://github.com/Yu-Group/veridical-flow/blob/master/notebooks/02_fmri.ipynb)
 > 
-> [fashion mnist classification](https://github.com/Yu-Group/veridical-flow/blob/master/notebooks/03_computer_vision_dnn.ipynb)
+> [Fashion mnist classification](https://github.com/Yu-Group/veridical-flow/blob/master/notebooks/03_computer_vision_dnn.ipynb)
 > 
-> [clinical decision rule vetting](https://github.com/Yu-Group/rule-vetting)
+> [Clinical decision rule vetting](https://github.com/Yu-Group/rule-vetting)
 
 ## Installation
 
