@@ -29,27 +29,27 @@ Function arguments are each a list</p>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">&#39;&#39;&#39;Set of modules to be parallelized over in a pipeline.
+<pre><code class="python">&#34;&#34;&#34;Set of modules to be parallelized over in a pipeline.
 Function arguments are each a list
-&#39;&#39;&#39;
+&#34;&#34;&#34;
 PREV_KEY = &#39;__prev__&#39;
 
-import numpy as np
 import joblib
+import numpy as np
 import ray
-
-from  mlflow.tracking import MlflowClient
+from mlflow.tracking import MlflowClient
 
 from vflow.convert import *
-from vflow.vfunc import Vfunc, AsyncModule
 from vflow.subkey import Subkey
+from vflow.vfunc import Vfunc, AsyncModule
+
 
 class Vset:
     def __init__(self, name: str, modules, module_keys: list = None,
                  is_async: bool = False, output_matching: bool = False,
                  lazy: bool = False, cache_dir: str = None,
                  tracking_dir: str = None):
-        &#39;&#39;&#39;
+        &#34;&#34;&#34;
         todo: include prev and next and change functions to include that.
         Params
         -------
@@ -73,7 +73,7 @@ class Vset:
         tracking_dir: str (optional)
             if provided, use the mlflow.tracking api to log outputs as metrics
             with params determined by input keys
-        &#39;&#39;&#39;
+        &#34;&#34;&#34;
         self.name = name
         self._fitted = False
         self.out = None  # outputs
@@ -104,9 +104,9 @@ class Vset:
                 assert len(modules) == len(
                     module_keys), &#39;modules list and module_names list do not have the same length&#39;
                 # TODO: how best to handle tuple subkeys?
-                module_keys = [(self.__create_subkey(k), ) for k in module_keys]
+                module_keys = [(self.__create_subkey(k),) for k in module_keys]
             else:
-                module_keys = [(self.__create_subkey(f&#39;{name}_{i}&#39;), ) for i in range(len(modules))]
+                module_keys = [(self.__create_subkey(f&#39;{name}_{i}&#39;),) for i in range(len(modules))]
             # convert module keys to singleton tuples
             self.modules = dict(zip(module_keys, modules))
         # if needed, wrap the modules in the Vfunc or AsyncModule class
@@ -117,7 +117,7 @@ class Vset:
             elif not isinstance(v, Vfunc):
                 self.modules[k] = Vfunc(k[0], v)
 
-    def _apply_func(self, out_dict: dict=None, *args):
+    def _apply_func(self, out_dict: dict = None, *args):
         if out_dict is None:
             out_dict = deepcopy(self.modules)
 
@@ -153,7 +153,7 @@ class Vset:
                         param_name = subkey.origin
                         # check if the origin occurs multiple times
                         if np.sum(origins == param_name) &gt; 1:
-                            occurence  = np.sum(origins[:idx] == param_name)
+                            occurence = np.sum(origins[:idx] == param_name)
                             param_name = param_name + str(occurence)
                             self._mlflow.log_param(
                                 run_id, param_name, subkey.value
@@ -161,9 +161,9 @@ class Vset:
                 self._mlflow.log_metric(run_id, k[-1].value, v)
         return out_dict
 
-    def fit(self, *args, **kwargs):
-        &#39;&#39;&#39;
-        &#39;&#39;&#39;
+    def fit(self, *args):
+        &#34;&#34;&#34;
+        &#34;&#34;&#34;
         if self._fitted:
             return self
         out_dict = {}
@@ -177,9 +177,9 @@ class Vset:
         self._fitted = True
         return self
 
-    def transform(self, *args, **kwargs):
-        &#39;&#39;&#39;
-        &#39;&#39;&#39;
+    def transform(self, *args):
+        &#34;&#34;&#34;
+        &#34;&#34;&#34;
         if not self._fitted:
             raise AttributeError(&#39;Please fit the Vset object before calling the transform method.&#39;)
         out_dict = {}
@@ -188,7 +188,7 @@ class Vset:
                 out_dict[k] = v.transform
         return self._apply_func(out_dict, *args)
 
-    def predict(self, *args, **kwargs):
+    def predict(self, *args):
         if not self._fitted:
             raise AttributeError(&#39;Please fit the Vset object before calling the predict method.&#39;)
         pred_dict = {}
@@ -197,7 +197,7 @@ class Vset:
                 pred_dict[k] = v.predict
         return self._apply_func(pred_dict, *args)
 
-    def predict_proba(self, *args, **kwargs):
+    def predict_proba(self, *args):
         if not self._fitted:
             raise AttributeError(&#39;Please fit the Vset object before calling the predict_proba method.&#39;)
         pred_dict = {}
@@ -206,14 +206,16 @@ class Vset:
                 pred_dict[k] = v.predict_proba
         return self._apply_func(pred_dict, *args)
 
-    def evaluate(self, *args, **kwargs):
-        &#39;&#39;&#39;Combines dicts before calling _apply_func
-        &#39;&#39;&#39;
+    def evaluate(self, *args):
+        &#34;&#34;&#34;Combines dicts before calling _apply_func
+        &#34;&#34;&#34;
         return self._apply_func(None, *args)
 
-    def __call__(self, *args, n_out: int = None, keys: list = [], **kwargs):
-        &#39;&#39;&#39;
-        &#39;&#39;&#39;
+    def __call__(self, *args, n_out: int = None, keys=None, **kwargs):
+        &#34;&#34;&#34;
+        &#34;&#34;&#34;
+        if keys is None:
+            keys = []
         if n_out is None:
             n_out = len(args)
         out_dict = self._apply_func(None, *args)
@@ -224,19 +226,19 @@ class Vset:
         prev = out_dict[PREV_KEY]
         for i in range(n_out):
             if n_out == len(args):
-                out_dicts[i][PREV_KEY] = (prev[0],) + (prev[i+1],)
+                out_dicts[i][PREV_KEY] = (prev[0],) + (prev[i + 1],)
             else:
                 out_dicts[i][PREV_KEY] = prev
         return out_dicts
 
     def __getitem__(self, i):
-        &#39;&#39;&#39;Accesses ith item in the module set
-        &#39;&#39;&#39;
+        &#34;&#34;&#34;Accesses ith item in the module set
+        &#34;&#34;&#34;
         return self.modules[i]
 
     def __contains__(self, key):
-        &#39;&#39;&#39;Returns true if modules is a dict and key is one of its keys
-        &#39;&#39;&#39;
+        &#34;&#34;&#34;Returns true if modules is a dict and key is one of its keys
+        &#34;&#34;&#34;
         if isinstance(self.modules, dict):
             return key in self.modules.keys()
         return False
@@ -257,7 +259,7 @@ class Vset:
 
 
 def _apply_func_cached(out_dict: dict, is_async: bool, lazy: bool, *args):
-    &#39;&#39;&#39;
+    &#34;&#34;&#34;
     Params
     ------
     *args: List[Dict]: takes multiple dicts and combines them into one.
@@ -272,7 +274,7 @@ def _apply_func_cached(out_dict: dict, is_async: bool, lazy: bool, *args):
             e.g. inputs:    module = {LR : logistic}, data = {train_1 : [X1,y1], train2 : [X2,y2]}
                  out:    out_dict = {(train_1, LR)  : fitted logistic, (train_2, LR) :  fitted logistic}.
         Currently matching = &#39;subset&#39; is not used...
-    &#39;&#39;&#39;
+    &#34;&#34;&#34;
     async_args = []
     for in_dict in args:
         if not isinstance(in_dict, dict):
@@ -346,7 +348,7 @@ with params determined by input keys</p></div>
                  is_async: bool = False, output_matching: bool = False,
                  lazy: bool = False, cache_dir: str = None,
                  tracking_dir: str = None):
-        &#39;&#39;&#39;
+        &#34;&#34;&#34;
         todo: include prev and next and change functions to include that.
         Params
         -------
@@ -370,7 +372,7 @@ with params determined by input keys</p></div>
         tracking_dir: str (optional)
             if provided, use the mlflow.tracking api to log outputs as metrics
             with params determined by input keys
-        &#39;&#39;&#39;
+        &#34;&#34;&#34;
         self.name = name
         self._fitted = False
         self.out = None  # outputs
@@ -401,9 +403,9 @@ with params determined by input keys</p></div>
                 assert len(modules) == len(
                     module_keys), &#39;modules list and module_names list do not have the same length&#39;
                 # TODO: how best to handle tuple subkeys?
-                module_keys = [(self.__create_subkey(k), ) for k in module_keys]
+                module_keys = [(self.__create_subkey(k),) for k in module_keys]
             else:
-                module_keys = [(self.__create_subkey(f&#39;{name}_{i}&#39;), ) for i in range(len(modules))]
+                module_keys = [(self.__create_subkey(f&#39;{name}_{i}&#39;),) for i in range(len(modules))]
             # convert module keys to singleton tuples
             self.modules = dict(zip(module_keys, modules))
         # if needed, wrap the modules in the Vfunc or AsyncModule class
@@ -414,7 +416,7 @@ with params determined by input keys</p></div>
             elif not isinstance(v, Vfunc):
                 self.modules[k] = Vfunc(k[0], v)
 
-    def _apply_func(self, out_dict: dict=None, *args):
+    def _apply_func(self, out_dict: dict = None, *args):
         if out_dict is None:
             out_dict = deepcopy(self.modules)
 
@@ -450,7 +452,7 @@ with params determined by input keys</p></div>
                         param_name = subkey.origin
                         # check if the origin occurs multiple times
                         if np.sum(origins == param_name) &gt; 1:
-                            occurence  = np.sum(origins[:idx] == param_name)
+                            occurence = np.sum(origins[:idx] == param_name)
                             param_name = param_name + str(occurence)
                             self._mlflow.log_param(
                                 run_id, param_name, subkey.value
@@ -458,9 +460,9 @@ with params determined by input keys</p></div>
                 self._mlflow.log_metric(run_id, k[-1].value, v)
         return out_dict
 
-    def fit(self, *args, **kwargs):
-        &#39;&#39;&#39;
-        &#39;&#39;&#39;
+    def fit(self, *args):
+        &#34;&#34;&#34;
+        &#34;&#34;&#34;
         if self._fitted:
             return self
         out_dict = {}
@@ -474,9 +476,9 @@ with params determined by input keys</p></div>
         self._fitted = True
         return self
 
-    def transform(self, *args, **kwargs):
-        &#39;&#39;&#39;
-        &#39;&#39;&#39;
+    def transform(self, *args):
+        &#34;&#34;&#34;
+        &#34;&#34;&#34;
         if not self._fitted:
             raise AttributeError(&#39;Please fit the Vset object before calling the transform method.&#39;)
         out_dict = {}
@@ -485,7 +487,7 @@ with params determined by input keys</p></div>
                 out_dict[k] = v.transform
         return self._apply_func(out_dict, *args)
 
-    def predict(self, *args, **kwargs):
+    def predict(self, *args):
         if not self._fitted:
             raise AttributeError(&#39;Please fit the Vset object before calling the predict method.&#39;)
         pred_dict = {}
@@ -494,7 +496,7 @@ with params determined by input keys</p></div>
                 pred_dict[k] = v.predict
         return self._apply_func(pred_dict, *args)
 
-    def predict_proba(self, *args, **kwargs):
+    def predict_proba(self, *args):
         if not self._fitted:
             raise AttributeError(&#39;Please fit the Vset object before calling the predict_proba method.&#39;)
         pred_dict = {}
@@ -503,14 +505,16 @@ with params determined by input keys</p></div>
                 pred_dict[k] = v.predict_proba
         return self._apply_func(pred_dict, *args)
 
-    def evaluate(self, *args, **kwargs):
-        &#39;&#39;&#39;Combines dicts before calling _apply_func
-        &#39;&#39;&#39;
+    def evaluate(self, *args):
+        &#34;&#34;&#34;Combines dicts before calling _apply_func
+        &#34;&#34;&#34;
         return self._apply_func(None, *args)
 
-    def __call__(self, *args, n_out: int = None, keys: list = [], **kwargs):
-        &#39;&#39;&#39;
-        &#39;&#39;&#39;
+    def __call__(self, *args, n_out: int = None, keys=None, **kwargs):
+        &#34;&#34;&#34;
+        &#34;&#34;&#34;
+        if keys is None:
+            keys = []
         if n_out is None:
             n_out = len(args)
         out_dict = self._apply_func(None, *args)
@@ -521,19 +525,19 @@ with params determined by input keys</p></div>
         prev = out_dict[PREV_KEY]
         for i in range(n_out):
             if n_out == len(args):
-                out_dicts[i][PREV_KEY] = (prev[0],) + (prev[i+1],)
+                out_dicts[i][PREV_KEY] = (prev[0],) + (prev[i + 1],)
             else:
                 out_dicts[i][PREV_KEY] = prev
         return out_dicts
 
     def __getitem__(self, i):
-        &#39;&#39;&#39;Accesses ith item in the module set
-        &#39;&#39;&#39;
+        &#34;&#34;&#34;Accesses ith item in the module set
+        &#34;&#34;&#34;
         return self.modules[i]
 
     def __contains__(self, key):
-        &#39;&#39;&#39;Returns true if modules is a dict and key is one of its keys
-        &#39;&#39;&#39;
+        &#34;&#34;&#34;Returns true if modules is a dict and key is one of its keys
+        &#34;&#34;&#34;
         if isinstance(self.modules, dict):
             return key in self.modules.keys()
         return False
@@ -555,7 +559,7 @@ with params determined by input keys</p></div>
 <h3>Methods</h3>
 <dl>
 <dt id="vflow.vset.Vset.evaluate"><code class="name flex">
-<span>def <span class="ident">evaluate</span></span>(<span>self, *args, **kwargs)</span>
+<span>def <span class="ident">evaluate</span></span>(<span>self, *args)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Combines dicts before calling _apply_func</p></div>
@@ -563,14 +567,14 @@ with params determined by input keys</p></div>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def evaluate(self, *args, **kwargs):
-    &#39;&#39;&#39;Combines dicts before calling _apply_func
-    &#39;&#39;&#39;
+<pre><code class="python">def evaluate(self, *args):
+    &#34;&#34;&#34;Combines dicts before calling _apply_func
+    &#34;&#34;&#34;
     return self._apply_func(None, *args)</code></pre>
 </details>
 </dd>
 <dt id="vflow.vset.Vset.fit"><code class="name flex">
-<span>def <span class="ident">fit</span></span>(<span>self, *args, **kwargs)</span>
+<span>def <span class="ident">fit</span></span>(<span>self, *args)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -578,9 +582,9 @@ with params determined by input keys</p></div>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def fit(self, *args, **kwargs):
-    &#39;&#39;&#39;
-    &#39;&#39;&#39;
+<pre><code class="python">def fit(self, *args):
+    &#34;&#34;&#34;
+    &#34;&#34;&#34;
     if self._fitted:
         return self
     out_dict = {}
@@ -611,7 +615,7 @@ with params determined by input keys</p></div>
 </details>
 </dd>
 <dt id="vflow.vset.Vset.predict"><code class="name flex">
-<span>def <span class="ident">predict</span></span>(<span>self, *args, **kwargs)</span>
+<span>def <span class="ident">predict</span></span>(<span>self, *args)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -619,7 +623,7 @@ with params determined by input keys</p></div>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def predict(self, *args, **kwargs):
+<pre><code class="python">def predict(self, *args):
     if not self._fitted:
         raise AttributeError(&#39;Please fit the Vset object before calling the predict method.&#39;)
     pred_dict = {}
@@ -630,7 +634,7 @@ with params determined by input keys</p></div>
 </details>
 </dd>
 <dt id="vflow.vset.Vset.predict_proba"><code class="name flex">
-<span>def <span class="ident">predict_proba</span></span>(<span>self, *args, **kwargs)</span>
+<span>def <span class="ident">predict_proba</span></span>(<span>self, *args)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -638,7 +642,7 @@ with params determined by input keys</p></div>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def predict_proba(self, *args, **kwargs):
+<pre><code class="python">def predict_proba(self, *args):
     if not self._fitted:
         raise AttributeError(&#39;Please fit the Vset object before calling the predict_proba method.&#39;)
     pred_dict = {}
@@ -649,7 +653,7 @@ with params determined by input keys</p></div>
 </details>
 </dd>
 <dt id="vflow.vset.Vset.transform"><code class="name flex">
-<span>def <span class="ident">transform</span></span>(<span>self, *args, **kwargs)</span>
+<span>def <span class="ident">transform</span></span>(<span>self, *args)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -657,9 +661,9 @@ with params determined by input keys</p></div>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def transform(self, *args, **kwargs):
-    &#39;&#39;&#39;
-    &#39;&#39;&#39;
+<pre><code class="python">def transform(self, *args):
+    &#34;&#34;&#34;
+    &#34;&#34;&#34;
     if not self._fitted:
         raise AttributeError(&#39;Please fit the Vset object before calling the transform method.&#39;)
     out_dict = {}

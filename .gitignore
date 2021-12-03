@@ -27,7 +27,6 @@ venv
 
 build
 .gitmodules
-build
 dist
 
 **.gslides

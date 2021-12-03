@@ -6,7 +6,7 @@
 <meta name="generator" content="pdoc 0.10.0" />
 <title>vflow API documentation</title>
 <meta name="description" content="&lt;p align=&#34;center&#34;&gt;
-&lt;img src=&#34;https://yu-group.github.io/veridical-flow/logo_vflow_straight.png&#34; width=&#34;70%&#34;&gt;
+&lt;img src=&#34;https://yu-group.github.io/veridical-flow/logo_vflow_straight.png&#34; width=&#34;70%&#34; alt=&#34;vflow logo&#34;&gt;
 &lt;/p&gt; …" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
@@ -25,16 +25,16 @@
 </header>
 <section id="section-intro">
 <p align="center">
-<img src="https://yu-group.github.io/veridical-flow/logo_vflow_straight.png" width="70%">
+<img src="https://yu-group.github.io/veridical-flow/logo_vflow_straight.png" width="70%" alt="vflow logo">
 </p>
 <p align="center"> A library for making stability analysis simple, following the <a href="https://www.pnas.org/content/117/8/3920">veridical data-science</a> framework.
 </p>
 <p align="center">
-<img src="https://img.shields.io/badge/license-mit-blue.svg">
-<img src="https://img.shields.io/badge/python-3.6+-blue">
-<a href="https://github.com/Yu-group/pcs-pipeline/actions"><img src="https://github.com/Yu-group/pcs-pipeline/workflows/tests/badge.svg"></a>
-<img src="https://img.shields.io/github/checks-status/Yu-group/pcs-pipeline/master">
-<img src="https://img.shields.io/pypi/v/vflow?color=orange">
+<img src="https://img.shields.io/badge/license-mit-blue.svg" alt="mit license">
+<img src="https://img.shields.io/badge/python-3.6+-blue" alt="python3.6+">
+<a href="https://github.com/Yu-group/pcs-pipeline/actions"><img src="https://github.com/Yu-group/pcs-pipeline/workflows/tests/badge.svg" alt="tests"></a>
+<img src="https://img.shields.io/github/checks-status/Yu-group/pcs-pipeline/master" alt="checks">
+<img src="https://img.shields.io/pypi/v/vflow?color=orange" alt="downloads">
 </p>
 <h1 id="why-use-vflow">Why use <code><a title="vflow" href="#vflow">vflow</a></code>?</h1>
 <p>Using <code><a title="vflow" href="#vflow">vflow</a></code>'s simple wrappers easily enables many best practices for data science, and makes writing pipelines easy.</p>
@@ -70,7 +70,7 @@ X_train, X_test, y_train, y_test = init_args(
 subsampling_funcs = [
     sklearn.utils.resample for _ in range(3)
 ]
-subsampling_set = Vset(name='subsampling',
+subsampling_set = Vset(name=&quot;subsampling&quot;,
                        modules=subsampling_funcs,
                        output_matching=True)
 X_trains, y_trains = subsampling_set(X_train, y_train)
@@ -80,7 +80,7 @@ models = [
     sklearn.linear_model.LogisticRegression(),
     sklearn.tree.DecisionTreeClassifier()
 ]
-modeling_set = Vset(name='modeling',
+modeling_set = Vset(name=&quot;modeling&quot;,
                     modules=models,
                     module_keys=[&quot;LR&quot;, &quot;DT&quot;])
 modeling_set.fit(X_trains, y_trains)

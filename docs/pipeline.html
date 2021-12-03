@@ -27,8 +27,8 @@
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">&#39;&#39;&#39;Class that stores the entire pipeline of steps in a data-science workflow
-&#39;&#39;&#39;
+<pre><code class="python">&#34;&#34;&#34;Class that stores the entire pipeline of steps in a data-science workflow
+&#34;&#34;&#34;
 import itertools
 
 import joblib
@@ -40,8 +40,8 @@ from vflow.vset import PREV_KEY
 
 
 class PCSPipeline:
-    def __init__(self, steps: list = [], cache_dir=None):
-        &#39;&#39;&#39;Helper function that just calls build_graph_recur with an empty graph
+    def __init__(self, steps=None, cache_dir=None):
+        &#34;&#34;&#34;Helper function that just calls build_graph_recur with an empty graph
         Params
         ------
         steps: list
@@ -53,14 +53,16 @@ class PCSPipeline:
         Returns
         -------
         G: nx.Digraph()
-        &#39;&#39;&#39;
+        &#34;&#34;&#34;
+        if steps is None:
+            steps = []
         self.steps = steps
         # set up the cache
         self.memory = joblib.Memory(location=cache_dir)
 
     def run(self, *args, **kwargs):
-        &#39;&#39;&#39;Runs the pipeline
-        &#39;&#39;&#39;
+        &#34;&#34;&#34;Runs the pipeline
+        &#34;&#34;&#34;
         run_step_cached = self.memory.cache(_run_step)
         for i, step in enumerate(self.steps):
             try:
@@ -72,8 +74,8 @@ class PCSPipeline:
             self.steps[i] = fitted_step
 
     def __getitem__(self, i):
-        &#39;&#39;&#39;Accesses ith step of pipeline
-        &#39;&#39;&#39;
+        &#34;&#34;&#34;Accesses ith step of pipeline
+        &#34;&#34;&#34;
         return self.steps[i]
 
     def __len__(self):
@@ -95,7 +97,7 @@ class PCSPipeline:
 
 
 def build_graph(node, draw=True):
-    &#39;&#39;&#39;Helper function that just calls build_graph_recur with an empty graph
+    &#34;&#34;&#34;Helper function that just calls build_graph_recur with an empty graph
     Params
     ------
     node: dict or Vset
@@ -103,10 +105,10 @@ def build_graph(node, draw=True):
     Returns
     -------
     G: nx.Digraph()
-    &#39;&#39;&#39;
+    &#34;&#34;&#34;
 
     def unnest_node(node):
-        &#39;&#39;&#39;Unnest a node, if necessary (i.e., when node is a tuple)
+        &#34;&#34;&#34;Unnest a node, if necessary (i.e., when node is a tuple)
         Params
         ------
         node: str, dict, Vset, or tuple
@@ -114,7 +116,7 @@ def build_graph(node, draw=True):
         Returns
         -------
         unnested_node: str, Vset, or None
-        &#39;&#39;&#39;
+        &#34;&#34;&#34;
         node_type = type(node)
         if node_type is str or &#39;Vset&#39; in str(node_type):
             return node
@@ -123,7 +125,7 @@ def build_graph(node, draw=True):
         return None
 
     def build_graph_recur(node, G):
-        &#39;&#39;&#39;Builds a graph up using __prev__ and PREV_KEY pointers
+        &#34;&#34;&#34;Builds a graph up using __prev__ and PREV_KEY pointers
         Params
         ------
         node: str, dict, Vset, or tuple
@@ -132,7 +134,7 @@ def build_graph(node, draw=True):
         Returns
         -------
         G: nx.Digraph()
-        &#39;&#39;&#39;
+        &#34;&#34;&#34;
         # base case: reached starting node
         if type(node) is str:
             return G
@@ -205,7 +207,7 @@ Params</p>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def build_graph(node, draw=True):
-    &#39;&#39;&#39;Helper function that just calls build_graph_recur with an empty graph
+    &#34;&#34;&#34;Helper function that just calls build_graph_recur with an empty graph
     Params
     ------
     node: dict or Vset
@@ -213,10 +215,10 @@ Params</p>
     Returns
     -------
     G: nx.Digraph()
-    &#39;&#39;&#39;
+    &#34;&#34;&#34;
 
     def unnest_node(node):
-        &#39;&#39;&#39;Unnest a node, if necessary (i.e., when node is a tuple)
+        &#34;&#34;&#34;Unnest a node, if necessary (i.e., when node is a tuple)
         Params
         ------
         node: str, dict, Vset, or tuple
@@ -224,7 +226,7 @@ Params</p>
         Returns
         -------
         unnested_node: str, Vset, or None
-        &#39;&#39;&#39;
+        &#34;&#34;&#34;
         node_type = type(node)
         if node_type is str or &#39;Vset&#39; in str(node_type):
             return node
@@ -233,7 +235,7 @@ Params</p>
         return None
 
     def build_graph_recur(node, G):
-        &#39;&#39;&#39;Builds a graph up using __prev__ and PREV_KEY pointers
+        &#34;&#34;&#34;Builds a graph up using __prev__ and PREV_KEY pointers
         Params
         ------
         node: str, dict, Vset, or tuple
@@ -242,7 +244,7 @@ Params</p>
         Returns
         -------
         G: nx.Digraph()
-        &#39;&#39;&#39;
+        &#34;&#34;&#34;
         # base case: reached starting node
         if type(node) is str:
             return G
@@ -290,7 +292,7 @@ Params</p>
 <dl>
 <dt id="vflow.pipeline.PCSPipeline"><code class="flex name class">
 <span>class <span class="ident">PCSPipeline</span></span>
-<span>(</span><span>steps: list = [], cache_dir=None)</span>
+<span>(</span><span>steps=None, cache_dir=None)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Helper function that just calls build_graph_recur with an empty graph
@@ -311,8 +313,8 @@ caching.</p>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class PCSPipeline:
-    def __init__(self, steps: list = [], cache_dir=None):
-        &#39;&#39;&#39;Helper function that just calls build_graph_recur with an empty graph
+    def __init__(self, steps=None, cache_dir=None):
+        &#34;&#34;&#34;Helper function that just calls build_graph_recur with an empty graph
         Params
         ------
         steps: list
@@ -324,14 +326,16 @@ caching.</p>
         Returns
         -------
         G: nx.Digraph()
-        &#39;&#39;&#39;
+        &#34;&#34;&#34;
+        if steps is None:
+            steps = []
         self.steps = steps
         # set up the cache
         self.memory = joblib.Memory(location=cache_dir)
 
     def run(self, *args, **kwargs):
-        &#39;&#39;&#39;Runs the pipeline
-        &#39;&#39;&#39;
+        &#34;&#34;&#34;Runs the pipeline
+        &#34;&#34;&#34;
         run_step_cached = self.memory.cache(_run_step)
         for i, step in enumerate(self.steps):
             try:
@@ -343,8 +347,8 @@ caching.</p>
             self.steps[i] = fitted_step
 
     def __getitem__(self, i):
-        &#39;&#39;&#39;Accesses ith step of pipeline
-        &#39;&#39;&#39;
+        &#34;&#34;&#34;Accesses ith step of pipeline
+        &#34;&#34;&#34;
         return self.steps[i]
 
     def __len__(self):
@@ -400,8 +404,8 @@ caching.</p>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def run(self, *args, **kwargs):
-    &#39;&#39;&#39;Runs the pipeline
-    &#39;&#39;&#39;
+    &#34;&#34;&#34;Runs the pipeline
+    &#34;&#34;&#34;
     run_step_cached = self.memory.cache(_run_step)
     for i, step in enumerate(self.steps):
         try:

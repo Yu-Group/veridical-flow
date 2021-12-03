@@ -1,5 +1,5 @@
-'''Class that stores the entire pipeline of steps in a data-science workflow
-'''
+"""Class that stores the entire pipeline of steps in a data-science workflow
+"""
 import itertools
 
 import joblib
@@ -11,8 +11,8 @@ from vflow.vset import PREV_KEY
 
 
 class PCSPipeline:
-    def __init__(self, steps: list = [], cache_dir=None):
-        '''Helper function that just calls build_graph_recur with an empty graph
+    def __init__(self, steps=None, cache_dir=None):
+        """Helper function that just calls build_graph_recur with an empty graph
         Params
         ------
         steps: list
@@ -24,14 +24,16 @@ class PCSPipeline:
         Returns
         -------
         G: nx.Digraph()
-        '''
+        """
+        if steps is None:
+            steps = []
         self.steps = steps
         # set up the cache
         self.memory = joblib.Memory(location=cache_dir)
 
     def run(self, *args, **kwargs):
-        '''Runs the pipeline
-        '''
+        """Runs the pipeline
+        """
         run_step_cached = self.memory.cache(_run_step)
         for i, step in enumerate(self.steps):
             try:
@@ -43,8 +45,8 @@ class PCSPipeline:
             self.steps[i] = fitted_step
 
     def __getitem__(self, i):
-        '''Accesses ith step of pipeline
-        '''
+        """Accesses ith step of pipeline
+        """
         return self.steps[i]
 
     def __len__(self):
@@ -66,7 +68,7 @@ class PCSPipeline:
 
 
 def build_graph(node, draw=True):
-    '''Helper function that just calls build_graph_recur with an empty graph
+    """Helper function that just calls build_graph_recur with an empty graph
     Params
     ------
     node: dict or Vset
@@ -74,10 +76,10 @@ def build_graph(node, draw=True):
     Returns
     -------
     G: nx.Digraph()
-    '''
+    """
 
     def unnest_node(node):
-        '''Unnest a node, if necessary (i.e., when node is a tuple)
+        """Unnest a node, if necessary (i.e., when node is a tuple)
         Params
         ------
         node: str, dict, Vset, or tuple
@@ -85,7 +87,7 @@ def build_graph(node, draw=True):
         Returns
         -------
         unnested_node: str, Vset, or None
-        '''
+        """
         node_type = type(node)
         if node_type is str or 'Vset' in str(node_type):
             return node
@@ -94,7 +96,7 @@ def build_graph(node, draw=True):
         return None
 
     def build_graph_recur(node, G):
-        '''Builds a graph up using __prev__ and PREV_KEY pointers
+        """Builds a graph up using __prev__ and PREV_KEY pointers
         Params
         ------
         node: str, dict, Vset, or tuple
@@ -103,7 +105,7 @@ def build_graph(node, draw=True):
         Returns
         -------
         G: nx.Digraph()
-        '''
+        """
         # base case: reached starting node
         if type(node) is str:
             return G

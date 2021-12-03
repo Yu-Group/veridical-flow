@@ -1,18 +1,19 @@
-'''User-facing helper functions included at import vflow
-'''
-
-from vflow.vset import Vset, PREV_KEY
-from vflow.vfunc import Vfunc
-from vflow.convert import dict_to_df
-
-from itertools import product
+"""User-facing helper functions included at import vflow
+"""
 from functools import partial
+from itertools import product
+from typing import Union
 
-def build_vset(name: str, obj, param_dict: dict = {}, *args,
+from vflow.convert import dict_to_df
+from vflow.vfunc import Vfunc
+from vflow.vset import Vset, PREV_KEY
+
+
+def build_vset(name: str, obj, param_dict=None, *args,
                is_async: bool = False, output_matching: bool = False,
                lazy: bool = False, cache_dir: str = None, verbose: bool = True,
                tracking_dir: str = None, **kwargs) -> Vset:
-    '''Builds a Vset by currying callable obj with all combinations of parameters in param_dict.
+    """Builds a Vset by currying callable obj with all combinations of parameters in param_dict.
 
     Params
     -------
@@ -43,7 +44,9 @@ def build_vset(name: str, obj, param_dict: dict = {}, *args,
     Returns
     -------
     new_vset : Vset
-    '''
+    """
+    if param_dict is None:
+        param_dict = {}
     assert callable(obj), 'obj must be callable'
 
     vfuncs = []
@@ -77,13 +80,14 @@ def build_vset(name: str, obj, param_dict: dict = {}, *args,
     if not verbose:
         vkeys = None
     return Vset(name, vfuncs, is_async=is_async, module_keys=vkeys,
-                output_matching=output_matching,  lazy=lazy,
+                output_matching=output_matching, lazy=lazy,
                 cache_dir=cache_dir, tracking_dir=tracking_dir)
 
-def filter_vset_by_metric(metric_dict: dict, vset: Vset, *vsets: Vset, n_keep: int=1,
-                          bigger_is_better: bool=True, filter_on: list=[],
-                          group: bool=False) -> Vset:
-    '''Returns a new Vset by filtering vset.modules based on values in filter_dict.
+
+def filter_vset_by_metric(metric_dict: dict, vset: Vset, *vsets: Vset, n_keep: int = 1,
+                          bigger_is_better: bool = True, filter_on=None,
+                          group: bool = False) -> Union[Vset, list]:
+    """Returns a new Vset by filtering vset.modules based on values in filter_dict.
 
     Params
     -------
@@ -110,12 +114,14 @@ def filter_vset_by_metric(metric_dict: dict, vset: Vset, *vsets: Vset, n_keep: i
     *new_vset : Vset
         Copies of the input Vsets but with Vfuncs filtered based on metrics
 
-    '''
+    """
+    if filter_on is None:
+        filter_on = []
     df = dict_to_df(metric_dict)
     vsets = [vset, *vsets]
     vset_names = []
     for vset in vsets:
-        if not vset.name in df.columns:
+        if vset.name not in df.columns:
             raise ValueError(f'{vset.name} should be one of the columns of dict_to_df(metric_dict)')
         vset_names.append(vset.name)
     if len(filter_on) > 0:
@@ -131,8 +137,8 @@ def filter_vset_by_metric(metric_dict: dict, vset: Vset, *vsets: Vset, n_keep: i
     for i, vset in enumerate(vsets):
         vfuncs = vset.modules
         vfunc_filter = [str(name) for name in df[vset.name].to_numpy()]
-        new_vfuncs = {k:v for k,v in vfuncs.items() if str(v.name) in vfunc_filter}
-        new_vset = Vset('filtered_'+vset.name, new_vfuncs, is_async=vset._async,
+        new_vfuncs = {k: v for k, v in vfuncs.items() if str(v.name) in vfunc_filter}
+        new_vset = Vset('filtered_' + vset.name, new_vfuncs, is_async=vset._async,
                         output_matching=vset._output_matching, lazy=vset._lazy,
                         cache_dir=vset._cache_dir, tracking_dir=vset._tracking_dir)
         setattr(new_vset, PREV_KEY, (metric_dict[PREV_KEY], vset,))

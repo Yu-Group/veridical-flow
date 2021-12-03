@@ -1,15 +1,14 @@
-'''A perturbation that can be used as a step in a pipeline
-'''
-from abc import abstractmethod
+"""A perturbation that can be used as a step in a pipeline
+"""
 
 import ray
 
 
 class Vfunc:
-    '''Vfunc is basically a function along with a name attribute.
+    """Vfunc is basically a function along with a name attribute.
     It may support a "fit" function, but may also just have a "transform" function.
     If none of these is supported, it need only be a function
-    '''
+    """
 
     def __init__(self, name: str = '', module=lambda x: x):
         assert hasattr(module, 'fit') or callable(module), \
@@ -18,25 +17,26 @@ class Vfunc:
         self.module = module
 
     def fit(self, *args, **kwargs):
-        '''This function fits params for this module
-        '''
+        """This function fits params for this module
+        """
         if hasattr(self.module, 'fit'):
             return self.module.fit(*args, **kwargs)
         else:
             return self.module(*args, **kwargs)
 
     def transform(self, *args, **kwargs):
-        '''This function transforms its input in some way
-        '''
+        """This function transforms its input in some way
+        """
         if hasattr(self.module, 'transform'):
             return self.module.transform(*args, **kwargs)
         else:
             return self.module(*args, **kwargs)
 
     def __call__(self, *args, **kwargs):
-        '''This should decide what to call
-        '''
+        """This should decide what to call
+        """
         return self.fit(*args, **kwargs)
+
 
 @ray.remote
 def _remote_fun(module, *args, **kwargs):
@@ -44,10 +44,10 @@ def _remote_fun(module, *args, **kwargs):
 
 
 class AsyncModule:
-    '''An asynchronous version of the Vfunc class.
-    '''
+    """An asynchronous version of the Vfunc class.
+    """
 
-    def __init__(self, name: str = '', module=lambda x: x, *args, **kwargs):
+    def __init__(self, name: str = '', module=lambda x: x):
         self.name = name
         if isinstance(module, Vfunc):
             self.module = module.module
@@ -57,16 +57,16 @@ class AsyncModule:
             self.module = module
 
     def fit(self, *args, **kwargs):
-        '''This function fits params for this module
-        '''
+        """This function fits params for this module
+        """
         if hasattr(self.module, 'fit'):
             return _remote_fun.remote(self.module.fit, *args, **kwargs)
         else:
             return _remote_fun.remote(self.module, *args, **kwargs)
 
     def transform(self, *args, **kwargs):
-        '''This function transforms its input in some way
-        '''
+        """This function transforms its input in some way
+        """
         if hasattr(self.module, 'transform'):
             return _remote_fun.remote(self.module.transform, *args, **kwargs)
         else:
@@ -78,7 +78,7 @@ class AsyncModule:
 
 class VfuncPromise:
 
-    def __init__(self, vfunc: Vfunc, *args):
+    def __init__(self, vfunc: callable, *args):
         self.vfunc = vfunc
         self.args = args
         self.called = False
