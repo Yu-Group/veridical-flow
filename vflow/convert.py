@@ -63,7 +63,16 @@ def dict_to_df(d: dict, param_key=None):
         cols = [c if c != 'init' else init_step(idx, cols) for idx, c in enumerate(cols)]
         df.set_axis(cols, axis=1, inplace=True)
         if param_key:
-            df = df.join(pd.DataFrame(df[param_key].tolist()))
+            param_loc = df.columns.get_loc(param_key)
+            param_keys = df[param_key].tolist()
+            param_key_cols = [f"{p.split('=')[0]}-{param_key}" for p in param_keys[0]]
+            param_keys = [[s.split('=')[1] for s in t] for t in param_keys]
+            df = df.join(pd.DataFrame(param_keys)).drop(columns=param_key)
+            new_cols = df.columns[:len(cols)-1].tolist() + param_key_cols
+            df.set_axis(new_cols, axis=1, inplace=True)
+            new_idx = list(range(len(new_cols)))
+            new_idx = new_idx[:param_loc] + new_idx[len(cols)-1:] + new_idx[param_loc:len(cols)-1]
+            df = df.iloc[:, new_idx]
     return df
 
 

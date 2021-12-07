@@ -4,6 +4,7 @@ from numpy.testing import assert_equal
 
 from vflow.convert import *
 from vflow.subkey import Subkey as sm
+import pandas as pd
 
 
 @pytest.mark.parametrize(
@@ -1001,8 +1002,45 @@ class TestCombineDicts:
         ),
     ]
 )
+
 class TestApplyModules:
 
     def test_apply_modules(self, in_dicts, out_dict):
         result_dict = apply_modules(*in_dicts)
         assert_equal(result_dict, out_dict)
+
+class TestConvert:
+
+    def test_dict_to_df(self):
+        in_dict_1 = {(sm('X_train', 'init'), sm('feat_extract_0', 'feat_extract'), 
+            sm('y_train', 'init'), sm('DT', 'modeling'), sm('acc', 'metrics')): 0.9,
+            (sm('X_train', 'init'), sm('feat_extract_1', 'feat_extract'), 
+            sm('y_train', 'init'), sm('DT', 'modeling'), sm('acc', 'metrics')): 0.95}
+        out_df_1 = pd.DataFrame(data={'init-feat_extract': ['X_train', 'X_train'],
+                                'feat_extract': ['feat_extract_0', 'feat_extract_1'],
+                                'init-modeling': ['y_train', 'y_train'],
+                                'modeling': ['DT', 'DT'],
+                                'metrics': ['acc', 'acc'],
+                                'out': [0.9, 0.95]})
+        in_dict_2 = {(sm('X_train', 'init'), sm('sample_0', 'sample'), sm('y_train', 'init'), 
+                    sm(('k=10', 'e=1e-3'), 'modeling'), sm('s_0', 'stability')): 0.333,
+                    (sm('X_train', 'init'), sm('sample_0', 'sample'), sm('y_train', 'init'), 
+                    sm(('k=10', 'e=1e-5'), 'modeling'), sm('s_0', 'stability')): 0.452}
+        out_df_2 = pd.DataFrame(data={'init-sample': ['X_train', 'X_train'],
+                                'sample': ['sample_0', 'sample_0'],
+                                'init-modeling': ['y_train', 'y_train'],
+                                'k-modeling': ['10', '10'],
+                                'e-modeling': ['1e-3', '1e-5'],
+                                'stability': ['s_0', 's_0'],
+                                'out': [0.333, 0.452]})
+        assert dict_to_df(in_dict_1).equals(out_df_1)
+        assert dict_to_df(in_dict_2, param_key='modeling').equals(out_df_2)
+
+    def test_compute_interval(self):
+        in_dict = {(sm('X_train', 'init'), sm('feat_extract_0', 'feat_extract'), 
+            sm('y_train', 'init'), sm('DT', 'modeling'), sm('acc', 'metrics')): 0.9,
+            (sm('X_train', 'init'), sm('feat_extract_1', 'feat_extract'), 
+            sm('y_train', 'init'), sm('DT', 'modeling'), sm('acc', 'metrics')): 0.95}
+        df = dict_to_df(in_dict)
+        interval = compute_interval(df, 'out', 'metrics')
+        assert interval['out']['std'][0] == 0.03535533905932729

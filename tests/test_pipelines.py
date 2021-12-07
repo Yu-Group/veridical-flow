@@ -118,7 +118,7 @@ class TestPipelines:
         # inspect the pipeline
         # for k in hard_metrics:
         #     print(k, hard_metrics[k])
-        _ = build_graph(hard_metrics, draw=True)
+        # _ = build_graph(hard_metrics, draw=True)
 
         # asserts
         k1 = (sm('X_train', 'init'), sm('feat_extraction_0', 'feat_extraction', True), sm('X_train', 'init'),
