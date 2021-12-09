@@ -27,18 +27,17 @@
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">&#39;&#39;&#39;A perturbation that can be used as a step in a pipeline
-&#39;&#39;&#39;
-from abc import abstractmethod
+<pre><code class="python">&#34;&#34;&#34;A perturbation that can be used as a step in a pipeline
+&#34;&#34;&#34;
 
 import ray
 
 
 class Vfunc:
-    &#39;&#39;&#39;Vfunc is basically a function along with a name attribute.
+    &#34;&#34;&#34;Vfunc is basically a function along with a name attribute.
     It may support a &#34;fit&#34; function, but may also just have a &#34;transform&#34; function.
     If none of these is supported, it need only be a function
-    &#39;&#39;&#39;
+    &#34;&#34;&#34;
 
     def __init__(self, name: str = &#39;&#39;, module=lambda x: x):
         assert hasattr(module, &#39;fit&#39;) or callable(module), \
@@ -47,25 +46,26 @@ class Vfunc:
         self.module = module
 
     def fit(self, *args, **kwargs):
-        &#39;&#39;&#39;This function fits params for this module
-        &#39;&#39;&#39;
+        &#34;&#34;&#34;This function fits params for this module
+        &#34;&#34;&#34;
         if hasattr(self.module, &#39;fit&#39;):
             return self.module.fit(*args, **kwargs)
         else:
             return self.module(*args, **kwargs)
 
     def transform(self, *args, **kwargs):
-        &#39;&#39;&#39;This function transforms its input in some way
-        &#39;&#39;&#39;
+        &#34;&#34;&#34;This function transforms its input in some way
+        &#34;&#34;&#34;
         if hasattr(self.module, &#39;transform&#39;):
             return self.module.transform(*args, **kwargs)
         else:
             return self.module(*args, **kwargs)
 
     def __call__(self, *args, **kwargs):
-        &#39;&#39;&#39;This should decide what to call
-        &#39;&#39;&#39;
+        &#34;&#34;&#34;This should decide what to call
+        &#34;&#34;&#34;
         return self.fit(*args, **kwargs)
+
 
 @ray.remote
 def _remote_fun(module, *args, **kwargs):
@@ -73,10 +73,10 @@ def _remote_fun(module, *args, **kwargs):
 
 
 class AsyncModule:
-    &#39;&#39;&#39;An asynchronous version of the Vfunc class.
-    &#39;&#39;&#39;
+    &#34;&#34;&#34;An asynchronous version of the Vfunc class.
+    &#34;&#34;&#34;
 
-    def __init__(self, name: str = &#39;&#39;, module=lambda x: x, *args, **kwargs):
+    def __init__(self, name: str = &#39;&#39;, module=lambda x: x):
         self.name = name
         if isinstance(module, Vfunc):
             self.module = module.module
@@ -86,16 +86,16 @@ class AsyncModule:
             self.module = module
 
     def fit(self, *args, **kwargs):
-        &#39;&#39;&#39;This function fits params for this module
-        &#39;&#39;&#39;
+        &#34;&#34;&#34;This function fits params for this module
+        &#34;&#34;&#34;
         if hasattr(self.module, &#39;fit&#39;):
             return _remote_fun.remote(self.module.fit, *args, **kwargs)
         else:
             return _remote_fun.remote(self.module, *args, **kwargs)
 
     def transform(self, *args, **kwargs):
-        &#39;&#39;&#39;This function transforms its input in some way
-        &#39;&#39;&#39;
+        &#34;&#34;&#34;This function transforms its input in some way
+        &#34;&#34;&#34;
         if hasattr(self.module, &#39;transform&#39;):
             return _remote_fun.remote(self.module.transform, *args, **kwargs)
         else:
@@ -107,7 +107,7 @@ class AsyncModule:
 
 class VfuncPromise:
 
-    def __init__(self, vfunc: Vfunc, *args):
+    def __init__(self, vfunc: callable, *args):
         self.vfunc = vfunc
         self.args = args
         self.called = False
@@ -143,7 +143,7 @@ class VfuncPromise:
 <dl>
 <dt id="vflow.vfunc.AsyncModule"><code class="flex name class">
 <span>class <span class="ident">AsyncModule</span></span>
-<span>(</span><span>name: str = '', module=&lt;function AsyncModule.&lt;lambda&gt;&gt;, *args, **kwargs)</span>
+<span>(</span><span>name: str = '', module=&lt;function AsyncModule.&lt;lambda&gt;&gt;)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>An asynchronous version of the Vfunc class.</p></div>
@@ -152,10 +152,10 @@ class VfuncPromise:
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class AsyncModule:
-    &#39;&#39;&#39;An asynchronous version of the Vfunc class.
-    &#39;&#39;&#39;
+    &#34;&#34;&#34;An asynchronous version of the Vfunc class.
+    &#34;&#34;&#34;
 
-    def __init__(self, name: str = &#39;&#39;, module=lambda x: x, *args, **kwargs):
+    def __init__(self, name: str = &#39;&#39;, module=lambda x: x):
         self.name = name
         if isinstance(module, Vfunc):
             self.module = module.module
@@ -165,16 +165,16 @@ class VfuncPromise:
             self.module = module
 
     def fit(self, *args, **kwargs):
-        &#39;&#39;&#39;This function fits params for this module
-        &#39;&#39;&#39;
+        &#34;&#34;&#34;This function fits params for this module
+        &#34;&#34;&#34;
         if hasattr(self.module, &#39;fit&#39;):
             return _remote_fun.remote(self.module.fit, *args, **kwargs)
         else:
             return _remote_fun.remote(self.module, *args, **kwargs)
 
     def transform(self, *args, **kwargs):
-        &#39;&#39;&#39;This function transforms its input in some way
-        &#39;&#39;&#39;
+        &#34;&#34;&#34;This function transforms its input in some way
+        &#34;&#34;&#34;
         if hasattr(self.module, &#39;transform&#39;):
             return _remote_fun.remote(self.module.transform, *args, **kwargs)
         else:
@@ -195,8 +195,8 @@ class VfuncPromise:
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def fit(self, *args, **kwargs):
-    &#39;&#39;&#39;This function fits params for this module
-    &#39;&#39;&#39;
+    &#34;&#34;&#34;This function fits params for this module
+    &#34;&#34;&#34;
     if hasattr(self.module, &#39;fit&#39;):
         return _remote_fun.remote(self.module.fit, *args, **kwargs)
     else:
@@ -213,8 +213,8 @@ class VfuncPromise:
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def transform(self, *args, **kwargs):
-    &#39;&#39;&#39;This function transforms its input in some way
-    &#39;&#39;&#39;
+    &#34;&#34;&#34;This function transforms its input in some way
+    &#34;&#34;&#34;
     if hasattr(self.module, &#39;transform&#39;):
         return _remote_fun.remote(self.module.transform, *args, **kwargs)
     else:
@@ -236,10 +236,10 @@ If none of these is supported, it need only be a function</p></div>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class Vfunc:
-    &#39;&#39;&#39;Vfunc is basically a function along with a name attribute.
+    &#34;&#34;&#34;Vfunc is basically a function along with a name attribute.
     It may support a &#34;fit&#34; function, but may also just have a &#34;transform&#34; function.
     If none of these is supported, it need only be a function
-    &#39;&#39;&#39;
+    &#34;&#34;&#34;
 
     def __init__(self, name: str = &#39;&#39;, module=lambda x: x):
         assert hasattr(module, &#39;fit&#39;) or callable(module), \
@@ -248,24 +248,24 @@ If none of these is supported, it need only be a function</p></div>
         self.module = module
 
     def fit(self, *args, **kwargs):
-        &#39;&#39;&#39;This function fits params for this module
-        &#39;&#39;&#39;
+        &#34;&#34;&#34;This function fits params for this module
+        &#34;&#34;&#34;
         if hasattr(self.module, &#39;fit&#39;):
             return self.module.fit(*args, **kwargs)
         else:
             return self.module(*args, **kwargs)
 
     def transform(self, *args, **kwargs):
-        &#39;&#39;&#39;This function transforms its input in some way
-        &#39;&#39;&#39;
+        &#34;&#34;&#34;This function transforms its input in some way
+        &#34;&#34;&#34;
         if hasattr(self.module, &#39;transform&#39;):
             return self.module.transform(*args, **kwargs)
         else:
             return self.module(*args, **kwargs)
 
     def __call__(self, *args, **kwargs):
-        &#39;&#39;&#39;This should decide what to call
-        &#39;&#39;&#39;
+        &#34;&#34;&#34;This should decide what to call
+        &#34;&#34;&#34;
         return self.fit(*args, **kwargs)</code></pre>
 </details>
 <h3>Methods</h3>
@@ -280,8 +280,8 @@ If none of these is supported, it need only be a function</p></div>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def fit(self, *args, **kwargs):
-    &#39;&#39;&#39;This function fits params for this module
-    &#39;&#39;&#39;
+    &#34;&#34;&#34;This function fits params for this module
+    &#34;&#34;&#34;
     if hasattr(self.module, &#39;fit&#39;):
         return self.module.fit(*args, **kwargs)
     else:
@@ -298,8 +298,8 @@ If none of these is supported, it need only be a function</p></div>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def transform(self, *args, **kwargs):
-    &#39;&#39;&#39;This function transforms its input in some way
-    &#39;&#39;&#39;
+    &#34;&#34;&#34;This function transforms its input in some way
+    &#34;&#34;&#34;
     if hasattr(self.module, &#39;transform&#39;):
         return self.module.transform(*args, **kwargs)
     else:
@@ -310,7 +310,7 @@ If none of these is supported, it need only be a function</p></div>
 </dd>
 <dt id="vflow.vfunc.VfuncPromise"><code class="flex name class">
 <span>class <span class="ident">VfuncPromise</span></span>
-<span>(</span><span>vfunc: <a title="vflow.vfunc.Vfunc" href="#vflow.vfunc.Vfunc">Vfunc</a>, *args)</span>
+<span>(</span><span>vfunc: <built-in function callable>, *args)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -320,7 +320,7 @@ If none of these is supported, it need only be a function</p></div>
 </summary>
 <pre><code class="python">class VfuncPromise:
 
-    def __init__(self, vfunc: Vfunc, *args):
+    def __init__(self, vfunc: callable, *args):
         self.vfunc = vfunc
         self.args = args
         self.called = False

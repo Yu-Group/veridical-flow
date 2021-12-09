@@ -27,25 +27,27 @@
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">&#39;&#39;&#39;Useful functions for converting between different types (dicts, lists, tuples, etc.)
-&#39;&#39;&#39;
+<pre><code class="python">&#34;&#34;&#34;Useful functions for converting between different types (dicts, lists, tuples, etc.)
+&#34;&#34;&#34;
 from copy import deepcopy
+from typing import Union
 from uuid import uuid4
 
-from vflow.vset import PREV_KEY
-from vflow.vfunc import VfuncPromise
-from vflow.subkey import Subkey
 import pandas as pd
 from pandas import DataFrame
 
+from vflow.subkey import Subkey
+from vflow.vfunc import VfuncPromise
+from vflow.vset import PREV_KEY
 
-def init_args(args_tuple: tuple, names=None):
-    &#39;&#39;&#39; converts tuple of arguments to a list of dicts
+
+def init_args(args_tuple: Union[tuple, list], names=None):
+    &#34;&#34;&#34; converts tuple of arguments to a list of dicts
     Params
     ------
     names: optional, list-like
         gives names for each of the arguments in the tuple
-    &#39;&#39;&#39;
+    &#34;&#34;&#34;
     if names is None:
         names = [&#39;start&#39;] * len(args_tuple)
     else:
@@ -54,66 +56,75 @@ def init_args(args_tuple: tuple, names=None):
     output_dicts = []
     for (i, ele) in enumerate(args_tuple):
         output_dicts.append({
-            (Subkey(names[i], &#39;init&#39;), ): args_tuple[i],
-            PREV_KEY: (&#39;init&#39;, ),
+            (Subkey(names[i], &#39;init&#39;),): args_tuple[i],
+            PREV_KEY: (&#39;init&#39;,),
         })
     return output_dicts
 
 
 def s(x):
-    &#39;&#39;&#39;Gets shape of a list/tuple/ndarray
-    &#39;&#39;&#39;
+    &#34;&#34;&#34;Gets shape of a list/tuple/ndarray
+    &#34;&#34;&#34;
     if type(x) in [list, tuple]:
         return len(x)
     else:
         return x.shape
+
 
 def init_step(idx, cols):
     for i in range(idx, len(cols)):
         if cols[i] != &#39;init&#39;:
             return &#39;init-&#39; + cols[i]
 
+
 def dict_to_df(d: dict, param_key=None):
-    &#39;&#39;&#39;Converts a dictionary with tuple keys
+    &#34;&#34;&#34;Converts a dictionary with tuple keys
     into a pandas DataFrame, optionally seperating
     parameters in param_key if not None
-    &#39;&#39;&#39;
-    d_copy = {tuple([sk.value for sk in k]):d[k] for k in d if k != PREV_KEY}
+    &#34;&#34;&#34;
+    d_copy = {tuple([sk.value for sk in k]): d[k] for k in d if k != PREV_KEY}
     df = pd.Series(d_copy).reset_index()
     if len(d_copy.keys()) &gt; 0:
         key_list = list(d.keys())
         subkey_list = key_list[0] if key_list[0] != PREV_KEY else key_list[1]
         cols = [sk.origin for sk in subkey_list] + [&#39;out&#39;]
         # set each init col to init-{next_module_set}
-        cols = [c if c != &#39;init&#39; else init_step(idx, cols) for idx, c in enumerate(cols) ]
+        cols = [c if c != &#39;init&#39; else init_step(idx, cols) for idx, c in enumerate(cols)]
         df.set_axis(cols, axis=1, inplace=True)
         if param_key:
             df = df.join(pd.DataFrame(df[param_key].tolist()))
     return df
 
-def compute_interval(df: DataFrame, d_label, wrt_label, accum: list=[&#39;std&#39;]):
-    &#39;&#39;&#39;Compute an interval (std. dev) of d_label column with 
+
+def compute_interval(df: DataFrame, d_label, wrt_label, accum=None):
+    &#34;&#34;&#34;Compute an interval (std. dev) of d_label column with
     respect to pertubations in the wrt_label column
-    &#39;&#39;&#39;
+    &#34;&#34;&#34;
+    if accum is None:
+        accum = [&#39;std&#39;]
     df = df.astype({wrt_label: str})
     return df[[wrt_label, d_label]].groupby(wrt_label).agg(accum)
 
-def perturbation_stats(df: DataFrame, *groups: str, wrt_col: str=&#39;out&#39;,
-                       func: list=[&#39;count&#39;, &#39;mean&#39;, &#39;std&#39;]):
-    &#39;&#39;&#39;Compute statistics for wrt_col in df, conditional on groups
-    &#39;&#39;&#39;
+
+def perturbation_stats(df: DataFrame, *groups: str, wrt_col: str = &#39;out&#39;,
+                       func=None):
+    &#34;&#34;&#34;Compute statistics for wrt_col in df, conditional on groups
+    &#34;&#34;&#34;
+    if func is None:
+        func = [&#39;count&#39;, &#39;mean&#39;, &#39;std&#39;]
     groups = list(groups)
     df = df.groupby(groups).agg(func)[wrt_col]
     df.reset_index(inplace=True)
     return df.sort_values(groups[0])
 
+
 def to_tuple(lists: list):
-    &#39;&#39;&#39;Convert from lists to unpacked  tuple
+    &#34;&#34;&#34;Convert from lists to unpacked  tuple
     Ex. [[x1, y1], [x2, y2], [x3, y3]] -&gt; ([x1, x2, x3], [y1, y2, y3])
     Ex. [[x1, y1]] -&gt; ([x1], [y1])
     Ex. [m1, m2, m3] -&gt; [m1, m2, m3]
     Allows us to write X, y = ([x1, x2, x3], [y1, y2, y3])
-    &#39;&#39;&#39;
+    &#34;&#34;&#34;
     n_mods = len(lists)
     if n_mods &lt;= 1:
         return lists
@@ -128,7 +139,7 @@ def to_tuple(lists: list):
 
 
 def to_list(tup: tuple):
-    &#39;&#39;&#39;Convert from tuple to packed list
+    &#34;&#34;&#34;Convert from tuple to packed list
     Ex. ([x1, x2, x3], [y1, y2, y3]) -&gt; [[x1, y1], [x2, y2], [x3, y3]]
     Ex. ([x1], [y1]) -&gt; [[x1, y1]]
     Ex. ([x1, x2, x3]) -&gt; [[x1], [x2], [x3]]
@@ -137,7 +148,7 @@ def to_list(tup: tuple):
     Ex. (x1, x2, x3, y1, y2, y3) -&gt; [[x1, y1], [x2, y2], [x3, y3]]
     Ex. (x1, x2, x3, y1, y2) -&gt; Error
     Allows us to call function with arguments in a loop
-    &#39;&#39;&#39;
+    &#34;&#34;&#34;
     n_tup = len(tup)
     if n_tup == 0:
         return []
@@ -160,8 +171,8 @@ def to_list(tup: tuple):
     return lists_packed
 
 
-def sep_dicts(d: dict, n_out: int = 1, keys: list = []):
-    &#39;&#39;&#39;converts dictionary with value being saved as an iterable into multiple dictionaries
+def sep_dicts(d: dict, n_out: int = 1, keys=None):
+    &#34;&#34;&#34;converts dictionary with value being saved as an iterable into multiple dictionaries
     Assumes every value has same length n_out
 
     Params
@@ -172,7 +183,9 @@ def sep_dicts(d: dict, n_out: int = 1, keys: list = []):
     Returns
     -------
     sep_dicts: [{k1: x1, k2: x2, ..., &#39;__prev__&#39;: p}, {k1: y1, k2: y2, &#39;__prev__&#39;: p}]
-    &#39;&#39;&#39;
+    &#34;&#34;&#34;
+    if keys is None:
+        keys = []
     if len(keys) &gt; 0 and len(keys) != n_out:
         raise ValueError(f&#39;keys should be empty or have length n_out={n_out}&#39;)
     # empty dict -- return empty dict
@@ -180,8 +193,8 @@ def sep_dicts(d: dict, n_out: int = 1, keys: list = []):
         return d
     else:
         # try separating dict into multiple dicts
-        sep_dicts_id = str(uuid4()) # w/ high prob, uuid4 is unique
-        sep_dicts = [dict() for x in range(n_out)]
+        sep_dicts_id = str(uuid4())  # w/ high prob, uuid4 is unique
+        sep_dicts_list = [dict() for _ in range(n_out)]
         for key, value in d.items():
             if key != PREV_KEY:
                 for i in range(n_out):
@@ -189,18 +202,18 @@ def sep_dicts(d: dict, n_out: int = 1, keys: list = []):
                     if len(keys) == 0:
                         new_key = (key[i],) + key[n_out:]
                     else:
-                        new_sub = Subkey(value=keys[i], origin=key[-1].origin+&#39;-&#39;+str(i))
+                        new_sub = Subkey(value=keys[i], origin=key[-1].origin + &#39;-&#39; + str(i))
                         new_key = (new_sub,) + key
                     new_key[-1]._sep_dicts_id = sep_dicts_id
                     if isinstance(value, VfuncPromise):
                         # return a promise to get the value at index i of the
                         # original promise
-                        value_i = VfuncPromise(lambda v,i: v[i], value, i)
+                        value_i = VfuncPromise(lambda v, x: v[x], value, i)
                     else:
                         value_i = value[i]
-                    sep_dicts[i][new_key] = value_i
+                    sep_dicts_list[i][new_key] = value_i
 
-        return sep_dicts
+        return sep_dicts_list
 
 
 def combine_keys(left_key, right_key):
@@ -233,10 +246,10 @@ def combine_keys(left_key, right_key):
 
 
 def combine_dicts(*args: dict, base_case=True):
-    &#39;&#39;&#39;Combines any number of dictionaries into a single dictionary. Dictionaries
+    &#34;&#34;&#34;Combines any number of dictionaries into a single dictionary. Dictionaries
     are combined left to right, matching on the subkeys of the arg that has
     fewer matching requirements.
-    &#39;&#39;&#39;
+    &#34;&#34;&#34;
     n_args = len(args)
     combined_dict = {}
     if n_args == 0:
@@ -269,6 +282,7 @@ def combine_dicts(*args: dict, base_case=True):
     else:
         # combine the first two dicts and call recursively with remaining args
         return combine_dicts(combine_dicts(args[0], args[1]), *args[2:], base_case=False)
+
 
 def apply_modules(modules: dict, data_dict: dict, lazy: bool = False):
     out_dict = {}
@@ -358,10 +372,10 @@ fewer matching requirements.</p></div>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def combine_dicts(*args: dict, base_case=True):
-    &#39;&#39;&#39;Combines any number of dictionaries into a single dictionary. Dictionaries
+    &#34;&#34;&#34;Combines any number of dictionaries into a single dictionary. Dictionaries
     are combined left to right, matching on the subkeys of the arg that has
     fewer matching requirements.
-    &#39;&#39;&#39;
+    &#34;&#34;&#34;
     n_args = len(args)
     combined_dict = {}
     if n_args == 0:
@@ -435,7 +449,7 @@ fewer matching requirements.</p></div>
 </details>
 </dd>
 <dt id="vflow.convert.compute_interval"><code class="name flex">
-<span>def <span class="ident">compute_interval</span></span>(<span>df: pandas.core.frame.DataFrame, d_label, wrt_label, accum: list = ['std'])</span>
+<span>def <span class="ident">compute_interval</span></span>(<span>df: pandas.core.frame.DataFrame, d_label, wrt_label, accum=None)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Compute an interval (std. dev) of d_label column with
@@ -444,10 +458,12 @@ respect to pertubations in the wrt_label column</p></div>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def compute_interval(df: DataFrame, d_label, wrt_label, accum: list=[&#39;std&#39;]):
-    &#39;&#39;&#39;Compute an interval (std. dev) of d_label column with 
+<pre><code class="python">def compute_interval(df: DataFrame, d_label, wrt_label, accum=None):
+    &#34;&#34;&#34;Compute an interval (std. dev) of d_label column with
     respect to pertubations in the wrt_label column
-    &#39;&#39;&#39;
+    &#34;&#34;&#34;
+    if accum is None:
+        accum = [&#39;std&#39;]
     df = df.astype({wrt_label: str})
     return df[[wrt_label, d_label]].groupby(wrt_label).agg(accum)</code></pre>
 </details>
@@ -464,18 +480,18 @@ parameters in param_key if not None</p></div>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def dict_to_df(d: dict, param_key=None):
-    &#39;&#39;&#39;Converts a dictionary with tuple keys
+    &#34;&#34;&#34;Converts a dictionary with tuple keys
     into a pandas DataFrame, optionally seperating
     parameters in param_key if not None
-    &#39;&#39;&#39;
-    d_copy = {tuple([sk.value for sk in k]):d[k] for k in d if k != PREV_KEY}
+    &#34;&#34;&#34;
+    d_copy = {tuple([sk.value for sk in k]): d[k] for k in d if k != PREV_KEY}
     df = pd.Series(d_copy).reset_index()
     if len(d_copy.keys()) &gt; 0:
         key_list = list(d.keys())
         subkey_list = key_list[0] if key_list[0] != PREV_KEY else key_list[1]
         cols = [sk.origin for sk in subkey_list] + [&#39;out&#39;]
         # set each init col to init-{next_module_set}
-        cols = [c if c != &#39;init&#39; else init_step(idx, cols) for idx, c in enumerate(cols) ]
+        cols = [c if c != &#39;init&#39; else init_step(idx, cols) for idx, c in enumerate(cols)]
         df.set_axis(cols, axis=1, inplace=True)
         if param_key:
             df = df.join(pd.DataFrame(df[param_key].tolist()))
@@ -483,7 +499,7 @@ parameters in param_key if not None</p></div>
 </details>
 </dd>
 <dt id="vflow.convert.init_args"><code class="name flex">
-<span>def <span class="ident">init_args</span></span>(<span>args_tuple: tuple, names=None)</span>
+<span>def <span class="ident">init_args</span></span>(<span>args_tuple: Union[tuple, list], names=None)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>converts tuple of arguments to a list of dicts
@@ -495,13 +511,13 @@ gives names for each of the arguments in the tuple</p></div>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def init_args(args_tuple: tuple, names=None):
-    &#39;&#39;&#39; converts tuple of arguments to a list of dicts
+<pre><code class="python">def init_args(args_tuple: Union[tuple, list], names=None):
+    &#34;&#34;&#34; converts tuple of arguments to a list of dicts
     Params
     ------
     names: optional, list-like
         gives names for each of the arguments in the tuple
-    &#39;&#39;&#39;
+    &#34;&#34;&#34;
     if names is None:
         names = [&#39;start&#39;] * len(args_tuple)
     else:
@@ -510,8 +526,8 @@ gives names for each of the arguments in the tuple</p></div>
     output_dicts = []
     for (i, ele) in enumerate(args_tuple):
         output_dicts.append({
-            (Subkey(names[i], &#39;init&#39;), ): args_tuple[i],
-            PREV_KEY: (&#39;init&#39;, ),
+            (Subkey(names[i], &#39;init&#39;),): args_tuple[i],
+            PREV_KEY: (&#39;init&#39;,),
         })
     return output_dicts</code></pre>
 </details>
@@ -532,7 +548,7 @@ gives names for each of the arguments in the tuple</p></div>
 </details>
 </dd>
 <dt id="vflow.convert.perturbation_stats"><code class="name flex">
-<span>def <span class="ident">perturbation_stats</span></span>(<span>df: pandas.core.frame.DataFrame, *groups: str, wrt_col: str = 'out', func: list = ['count', 'mean', 'std'])</span>
+<span>def <span class="ident">perturbation_stats</span></span>(<span>df: pandas.core.frame.DataFrame, *groups: str, wrt_col: str = 'out', func=None)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Compute statistics for wrt_col in df, conditional on groups</p></div>
@@ -540,10 +556,12 @@ gives names for each of the arguments in the tuple</p></div>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def perturbation_stats(df: DataFrame, *groups: str, wrt_col: str=&#39;out&#39;,
-                       func: list=[&#39;count&#39;, &#39;mean&#39;, &#39;std&#39;]):
-    &#39;&#39;&#39;Compute statistics for wrt_col in df, conditional on groups
-    &#39;&#39;&#39;
+<pre><code class="python">def perturbation_stats(df: DataFrame, *groups: str, wrt_col: str = &#39;out&#39;,
+                       func=None):
+    &#34;&#34;&#34;Compute statistics for wrt_col in df, conditional on groups
+    &#34;&#34;&#34;
+    if func is None:
+        func = [&#39;count&#39;, &#39;mean&#39;, &#39;std&#39;]
     groups = list(groups)
     df = df.groupby(groups).agg(func)[wrt_col]
     df.reset_index(inplace=True)
@@ -560,8 +578,8 @@ gives names for each of the arguments in the tuple</p></div>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def s(x):
-    &#39;&#39;&#39;Gets shape of a list/tuple/ndarray
-    &#39;&#39;&#39;
+    &#34;&#34;&#34;Gets shape of a list/tuple/ndarray
+    &#34;&#34;&#34;
     if type(x) in [list, tuple]:
         return len(x)
     else:
@@ -569,7 +587,7 @@ gives names for each of the arguments in the tuple</p></div>
 </details>
 </dd>
 <dt id="vflow.convert.sep_dicts"><code class="name flex">
-<span>def <span class="ident">sep_dicts</span></span>(<span>d: dict, n_out: int = 1, keys: list = [])</span>
+<span>def <span class="ident">sep_dicts</span></span>(<span>d: dict, n_out: int = 1, keys=None)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>converts dictionary with value being saved as an iterable into multiple dictionaries
@@ -587,8 +605,8 @@ n_out: the number of dictionaries to separate d into</p>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def sep_dicts(d: dict, n_out: int = 1, keys: list = []):
-    &#39;&#39;&#39;converts dictionary with value being saved as an iterable into multiple dictionaries
+<pre><code class="python">def sep_dicts(d: dict, n_out: int = 1, keys=None):
+    &#34;&#34;&#34;converts dictionary with value being saved as an iterable into multiple dictionaries
     Assumes every value has same length n_out
 
     Params
@@ -599,7 +617,9 @@ n_out: the number of dictionaries to separate d into</p>
     Returns
     -------
     sep_dicts: [{k1: x1, k2: x2, ..., &#39;__prev__&#39;: p}, {k1: y1, k2: y2, &#39;__prev__&#39;: p}]
-    &#39;&#39;&#39;
+    &#34;&#34;&#34;
+    if keys is None:
+        keys = []
     if len(keys) &gt; 0 and len(keys) != n_out:
         raise ValueError(f&#39;keys should be empty or have length n_out={n_out}&#39;)
     # empty dict -- return empty dict
@@ -607,8 +627,8 @@ n_out: the number of dictionaries to separate d into</p>
         return d
     else:
         # try separating dict into multiple dicts
-        sep_dicts_id = str(uuid4()) # w/ high prob, uuid4 is unique
-        sep_dicts = [dict() for x in range(n_out)]
+        sep_dicts_id = str(uuid4())  # w/ high prob, uuid4 is unique
+        sep_dicts_list = [dict() for _ in range(n_out)]
         for key, value in d.items():
             if key != PREV_KEY:
                 for i in range(n_out):
@@ -616,18 +636,18 @@ n_out: the number of dictionaries to separate d into</p>
                     if len(keys) == 0:
                         new_key = (key[i],) + key[n_out:]
                     else:
-                        new_sub = Subkey(value=keys[i], origin=key[-1].origin+&#39;-&#39;+str(i))
+                        new_sub = Subkey(value=keys[i], origin=key[-1].origin + &#39;-&#39; + str(i))
                         new_key = (new_sub,) + key
                     new_key[-1]._sep_dicts_id = sep_dicts_id
                     if isinstance(value, VfuncPromise):
                         # return a promise to get the value at index i of the
                         # original promise
-                        value_i = VfuncPromise(lambda v,i: v[i], value, i)
+                        value_i = VfuncPromise(lambda v, x: v[x], value, i)
                     else:
                         value_i = value[i]
-                    sep_dicts[i][new_key] = value_i
+                    sep_dicts_list[i][new_key] = value_i
 
-        return sep_dicts</code></pre>
+        return sep_dicts_list</code></pre>
 </details>
 </dd>
 <dt id="vflow.convert.to_list"><code class="name flex">
@@ -648,7 +668,7 @@ Allows us to call function with arguments in a loop</p></div>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def to_list(tup: tuple):
-    &#39;&#39;&#39;Convert from tuple to packed list
+    &#34;&#34;&#34;Convert from tuple to packed list
     Ex. ([x1, x2, x3], [y1, y2, y3]) -&gt; [[x1, y1], [x2, y2], [x3, y3]]
     Ex. ([x1], [y1]) -&gt; [[x1, y1]]
     Ex. ([x1, x2, x3]) -&gt; [[x1], [x2], [x3]]
@@ -657,7 +677,7 @@ Allows us to call function with arguments in a loop</p></div>
     Ex. (x1, x2, x3, y1, y2, y3) -&gt; [[x1, y1], [x2, y2], [x3, y3]]
     Ex. (x1, x2, x3, y1, y2) -&gt; Error
     Allows us to call function with arguments in a loop
-    &#39;&#39;&#39;
+    &#34;&#34;&#34;
     n_tup = len(tup)
     if n_tup == 0:
         return []
@@ -695,12 +715,12 @@ Allows us to write X, y = ([x1, x2, x3], [y1, y2, y3])</p></div>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def to_tuple(lists: list):
-    &#39;&#39;&#39;Convert from lists to unpacked  tuple
+    &#34;&#34;&#34;Convert from lists to unpacked  tuple
     Ex. [[x1, y1], [x2, y2], [x3, y3]] -&gt; ([x1, x2, x3], [y1, y2, y3])
     Ex. [[x1, y1]] -&gt; ([x1], [y1])
     Ex. [m1, m2, m3] -&gt; [m1, m2, m3]
     Allows us to write X, y = ([x1, x2, x3], [y1, y2, y3])
-    &#39;&#39;&#39;
+    &#34;&#34;&#34;
     n_mods = len(lists)
     if n_mods &lt;= 1:
         return lists
