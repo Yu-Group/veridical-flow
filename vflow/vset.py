@@ -2,6 +2,7 @@
 Function arguments are each a list
 """
 PREV_KEY = '__prev__'
+FILTER_PREV_KEY = '__filter_prev__'
 
 import joblib
 import numpy as np
@@ -138,8 +139,8 @@ class Vset:
             out_dict[k] = v.fit
         self.out = self._apply_func(out_dict, *args)
         prev = self.out[PREV_KEY][1:]
-        if hasattr(self, PREV_KEY):
-            prev = getattr(self, PREV_KEY) + prev
+        if hasattr(self, FILTER_PREV_KEY):
+            prev = getattr(self, FILTER_PREV_KEY) + prev
         setattr(self, PREV_KEY, prev)
         self._fitted = True
         return self

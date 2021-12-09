@@ -6,7 +6,7 @@ from typing import Union
 
 from vflow.convert import dict_to_df
 from vflow.vfunc import Vfunc
-from vflow.vset import Vset, PREV_KEY
+from vflow.vset import Vset, PREV_KEY, FILTER_PREV_KEY
 
 
 def build_vset(name: str, obj, param_dict=None, *args, reps: int = 1,
@@ -147,7 +147,8 @@ def filter_vset_by_metric(metric_dict: dict, vset: Vset, *vsets: Vset, n_keep: i
         new_vset = Vset('filtered_' + vset.name, new_vfuncs, is_async=vset._async,
                         output_matching=vset._output_matching, lazy=vset._lazy,
                         cache_dir=vset._cache_dir, tracking_dir=vset._tracking_dir)
-        setattr(new_vset, PREV_KEY, (metric_dict[PREV_KEY], vset,))
+        setattr(new_vset, FILTER_PREV_KEY, (metric_dict[PREV_KEY], vset,))
+        setattr(new_vset, PREV_KEY, getattr(new_vset, FILTER_PREV_KEY))
         vsets[i] = new_vset
     if len(vsets) == 1:
         return vsets[0]
