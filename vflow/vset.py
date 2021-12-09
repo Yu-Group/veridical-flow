@@ -133,8 +133,6 @@ class Vset:
     def fit(self, *args):
         """
         """
-        if self._fitted:
-            return self
         out_dict = {}
         for k, v in self.modules.items():
             out_dict[k] = v.fit
@@ -145,6 +143,11 @@ class Vset:
         setattr(self, PREV_KEY, prev)
         self._fitted = True
         return self
+
+    def fit_transform(self, *args):
+        """Fits to args and transforms only the first arg.
+        """
+        return self.fit(*args).transform(args[0])
 
     def transform(self, *args):
         """
