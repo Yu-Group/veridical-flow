@@ -4,6 +4,7 @@ from copy import deepcopy
 from typing import Union
 from uuid import uuid4
 
+import numpy as np
 import pandas as pd
 from pandas import DataFrame
 
@@ -63,16 +64,21 @@ def dict_to_df(d: dict, param_key=None):
         cols = [c if c != 'init' else init_step(idx, cols) for idx, c in enumerate(cols)]
         df.set_axis(cols, axis=1, inplace=True)
         if param_key:
-            param_loc = df.columns.get_loc(param_key)
             param_keys = df[param_key].tolist()
-            param_key_cols = [f"{p.split('=')[0]}-{param_key}" for p in param_keys[0]]
-            param_keys = [[s.split('=')[1] for s in t] for t in param_keys]
-            df = df.join(pd.DataFrame(param_keys)).drop(columns=param_key)
-            new_cols = df.columns[:len(cols)-1].tolist() + param_key_cols
-            df.set_axis(new_cols, axis=1, inplace=True)
-            new_idx = list(range(len(new_cols)))
-            new_idx = new_idx[:param_loc] + new_idx[len(cols)-1:] + new_idx[param_loc:len(cols)-1]
-            df = df.iloc[:, new_idx]
+            if param_key == 'out' and hasattr(param_keys[0], '__iter__'):
+                param_df = pd.DataFrame(param_keys)
+                param_df.columns = [f'{param_key}-{col}' for col in param_df.columns]
+                df = df.join(param_df)
+            else:
+                param_loc = df.columns.get_loc(param_key)
+                param_key_cols = [f"{p.split('=')[0]}-{param_key}" for p in param_keys[0]]
+                param_keys = [[s.split('=')[1] for s in t] for t in param_keys]
+                df = df.join(pd.DataFrame(param_keys)).drop(columns=param_key)
+                new_cols = df.columns[:len(cols)-1].tolist() + param_key_cols
+                df.set_axis(new_cols, axis=1, inplace=True)
+                new_idx = list(range(len(new_cols)))
+                new_idx = new_idx[:param_loc] + new_idx[len(cols)-1:] + new_idx[param_loc:len(cols)-1]
+                df = df.iloc[:, new_idx]
     return df
 
 
@@ -86,16 +92,73 @@ def compute_interval(df: DataFrame, d_label, wrt_label, accum=None):
     return df[[wrt_label, d_label]].groupby(wrt_label).agg(accum)
 
 
-def perturbation_stats(df: DataFrame, *groups: str, wrt_col: str = 'out',
-                       func=None):
+def perturbation_stats(df: DataFrame, *groups: str, wrt_col: str='out',
+                       func=None, prefix: str=None, split: bool=False):
     """Compute statistics for wrt_col in df, conditional on groups
+
+    Params
+    ------
+    df: pandas.DataFrame
+        DataFrame on which to compute statistics.
+    *groups: str
+        Columns names in `df` to group on.
+    wrt_col: str (optional)
+        Column name in `df` on which to compute statistics. Defaults to `'out'`.
+    func: function, str, list or dict (optional), default None
+        A list of functions or function names to use for computing
+        statistics, analogous to the parameter of the same name in
+        pandas.core.groupby.DataFrameGroupBy.aggregate. If `None`, defaults to
+        `['count', 'mean', 'std']`.
+    prefix: str (optional), default None
+        A string to prefix to new columns in output DataFrame. If `None`,
+        uses the value of `wrt_col`.
+    split: bool (optional), default False
+        If `True` and `df[wrt_col]` has `list` or `numpy.ndarray` entries, will
+        attempt to split the entries into multiple columns for the output.
     """
     if func is None:
         func = ['count', 'mean', 'std']
+    if prefix is None:
+        prefix = wrt_col
     groups = list(groups)
-    df = df.groupby(groups).agg(func)[wrt_col]
-    df.reset_index(inplace=True)
-    return df.sort_values(groups[0])
+    gb = df.groupby(groups)[wrt_col]
+    mean_or_std = type(func) is list and 'mean' in func or 'std' in func
+    list_or_ndarray = type(df[wrt_col].iloc[0]) in [list, np.ndarray]
+    if mean_or_std and list_or_ndarray:
+        dfs = [gb.get_group(grp) for grp in gb.groups]
+        wrt_arrays = [np.stack(d.tolist()) for d in dfs]
+        n_cols = wrt_arrays[0].shape[1]
+        df_out = pd.DataFrame(gb.agg('count'))
+        df_out.columns = [f'{prefix}-count']
+        if 'mean' in func:
+            if split:
+                col_means = [arr.mean(axis=0) for arr in wrt_arrays]
+                col_names = [f'{prefix}{i}-mean' for i in range(n_cols)]
+                wrt_means = pd.DataFrame(col_means, columns=col_names,
+                                         index=gb.groups.keys())
+            else:
+                col_means = [{f'{prefix}-mean': arr.mean(axis=0)} for arr in wrt_arrays]
+                wrt_means = pd.DataFrame(col_means, index = gb.groups.keys())
+            wrt_means.index.names = df_out.index.names
+            df_out = df_out.join(wrt_means)
+        if 'std' in func:
+            if split:
+                col_stds = [arr.std(axis=0, ddof=1) for arr in wrt_arrays]
+                col_names = [f'{prefix}{i}-std' for i in range(n_cols)]
+                wrt_stds = pd.DataFrame(col_stds, columns=col_names,
+                                        index=gb.groups.keys())
+            else:
+                col_stds = [{f'{prefix}-std': arr.std(axis=0, ddof=1)} for arr in wrt_arrays]
+                wrt_stds = pd.DataFrame(col_stds, index = gb.groups.keys())
+            wrt_stds.index.names = df_out.index.names
+            df_out = df_out.join(wrt_stds)
+        if not 'count' in func:
+            df_out = df_out.drop(f'{prefix}-count')
+    else:
+        df_out = gb.agg(func)
+    df_out = df_out.reindex(sorted(df_out.columns), axis=1)
+    df_out.reset_index(inplace=True)
+    return df_out.sort_values(groups[0])
 
 
 def to_tuple(lists: list):

@@ -1033,8 +1033,34 @@ class TestConvert:
                                 'e-modeling': ['1e-3', '1e-5'],
                                 'stability': ['s_0', 's_0'],
                                 'out': [0.333, 0.452]})
+        in_dict_3 = {(sm('X_train', 'init'), sm('sample_0', 'sample'), sm('y_train', 'init'),
+                    sm(('k=10', 'e=1e-3'), 'modeling'), sm('s_0', 'stability')): [0.333, 0.222],
+                    (sm('X_train', 'init'), sm('sample_0', 'sample'), sm('y_train', 'init'),
+                     sm(('k=10', 'e=1e-5'), 'modeling'), sm('s_0', 'stability')): [0.452, 0.322]}
+        out_df_3 = pd.DataFrame(data={'init-sample': ['X_train', 'X_train'],
+                                'sample': ['sample_0', 'sample_0'],
+                                'init-modeling': ['y_train', 'y_train'],
+                                'modeling': [('k=10', 'e=1e-3'), ('k=10', 'e=1e-5')],
+                                'stability': ['s_0', 's_0'],
+                                'out': [[0.333, 0.222], [0.452, 0.322]],
+                                'out-0': [0.333, 0.452],
+                                'out-1': [0.222, 0.322]})
+        in_dict_4 = {(sm('X_train', 'init'), sm('sample_0', 'sample'), sm('y_train', 'init'),
+                    sm(('k=10', 'e=1e-3'), 'modeling'), sm('s_0', 'stability')): {'k1': 0.333, 'k2': 0.222},
+                    (sm('X_train', 'init'), sm('sample_0', 'sample'), sm('y_train', 'init'),
+                     sm(('k=10', 'e=1e-5'), 'modeling'), sm('s_0', 'stability')): {'k1': 0.452, 'k2': 0.322}}
+        out_df_4 = pd.DataFrame(data={'init-sample': ['X_train', 'X_train'],
+                                'sample': ['sample_0', 'sample_0'],
+                                'init-modeling': ['y_train', 'y_train'],
+                                'modeling': [('k=10', 'e=1e-3'), ('k=10', 'e=1e-5')],
+                                'stability': ['s_0', 's_0'],
+                                'out': [{'k1': 0.333, 'k2': 0.222}, {'k1': 0.452, 'k2': 0.322}],
+                                'out-k1': [0.333, 0.452],
+                                'out-k2': [0.222, 0.322]})
         assert dict_to_df(in_dict_1).equals(out_df_1)
         assert dict_to_df(in_dict_2, param_key='modeling').equals(out_df_2)
+        assert dict_to_df(in_dict_3, param_key='out').equals(out_df_3)
+        assert dict_to_df(in_dict_4, param_key='out').equals(out_df_4)
 
     def test_compute_interval(self):
         in_dict = {(sm('X_train', 'init'), sm('feat_extract_0', 'feat_extract'), 

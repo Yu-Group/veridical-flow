@@ -6,10 +6,10 @@ from typing import Union
 
 from vflow.convert import dict_to_df
 from vflow.vfunc import Vfunc
-from vflow.vset import Vset, PREV_KEY
+from vflow.vset import Vset, PREV_KEY, FILTER_PREV_KEY
 
 
-def build_vset(name: str, obj, param_dict=None, *args,
+def build_vset(name: str, obj, param_dict=None, *args, reps: int = 1,
                is_async: bool = False, output_matching: bool = False,
                lazy: bool = False, cache_dir: str = None, verbose: bool = True,
                tracking_dir: str = None, **kwargs) -> Vset:
@@ -25,6 +25,9 @@ def build_vset(name: str, obj, param_dict=None, *args,
         keys are obj kwarg names and values in the dict are lists of params to try
     *args
         additional fixed arguments to pass to obj
+    reps: int (optional)
+        the number of times to repeat the obj in the output Vset's modules for
+        each combination of params in param_dict
     is_async: bool (optional)
         if True, modules are computed asynchronously
     output_matching: bool (optional)
@@ -61,23 +64,26 @@ def build_vset(name: str, obj, param_dict=None, *args,
     kwargs_tuples = product(*param_lists)
     for tup in kwargs_tuples:
         kwargs_dict = {}
-        vkey_tup = []
+        vkey_tup = ()
         for param_name, param_val in zip(param_names, tup):
             kwargs_dict[param_name] = param_val
-            vkey_tup.append(f'{param_name}={param_val}')
-        # add module_key to vkeys
-        vkey_tup = tuple(vkey_tup)
-        vkeys.append(vkey_tup)
+            vkey_tup += (f'{param_name}={param_val}', )
         # add additional fixed kwargs to kwargs_dict
         for k, v in kwargs.items():
             kwargs_dict[k] = v
-        if instantiate:
-            # instantiate obj
-            vfuncs.append(Vfunc(module=obj(*args, **kwargs_dict), name=str(vkey_tup)))
-        else:
-            # use partial to wrap obj
-            vfuncs.append(Vfunc(module=partial(obj, *args, **kwargs_dict), name=str(vkey_tup)))
-    if not verbose:
+        for i in range(reps):
+            # add module key to vkeys
+            if reps > 1:
+                vkeys.append((f'rep={i}', ) + vkey_tup)
+            else:
+                vkeys.append(vkey_tup)
+            if instantiate:
+                # instantiate obj
+                vfuncs.append(Vfunc(module=obj(*args, **kwargs_dict), name=str(vkey_tup)))
+            else:
+                # use partial to wrap obj
+                vfuncs.append(Vfunc(module=partial(obj, *args, **kwargs_dict), name=str(vkey_tup)))
+    if not verbose or (len(param_dict) == 0 and reps == 1):
         vkeys = None
     return Vset(name, vfuncs, is_async=is_async, module_keys=vkeys,
                 output_matching=output_matching, lazy=lazy,
@@ -141,7 +147,8 @@ def filter_vset_by_metric(metric_dict: dict, vset: Vset, *vsets: Vset, n_keep: i
         new_vset = Vset('filtered_' + vset.name, new_vfuncs, is_async=vset._async,
                         output_matching=vset._output_matching, lazy=vset._lazy,
                         cache_dir=vset._cache_dir, tracking_dir=vset._tracking_dir)
-        setattr(new_vset, PREV_KEY, (metric_dict[PREV_KEY], vset,))
+        setattr(new_vset, FILTER_PREV_KEY, (metric_dict[PREV_KEY], vset,))
+        setattr(new_vset, PREV_KEY, getattr(new_vset, FILTER_PREV_KEY))
         vsets[i] = new_vset
     if len(vsets) == 1:
         return vsets[0]
