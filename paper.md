@@ -53,7 +53,7 @@ This enables a practitioner to represent a pipeline with many different perturba
 # Features
 
 Using `VeridicalFlows`'s simple wrappers easily enables many best practices for
-data science, and makes writing pipelines easy.
+data science and makes writing powerful pipelines straightforward.
 
 | Stability                                                    | Computability                                                | Reproducibility                          |
 | ------------------------------------------------------------ | ------------------------------------------------------------ | ---------------------------------------- |
@@ -66,9 +66,9 @@ reasonable or realistic perturbations. The central concept is the `Vset`, short
 for "veridical set", which replaces a given static pipeline step with a set of
 functions subject to different pipeline perturbations that are documented and
 argued for via PCS documentation [@yu2020veridical]. Then, a set of useful
-analysis functions and computations enable easily assessing the stability to
-these perturbations on top of predictive screening for reality checks to filter
-unstable pipeline paths from further analysis.
+analysis functions and computations enable simple assessment of the pipeline's
+stability to these perturbations on top of predictive screening for reality
+checks to filter unstable pipeline paths from further analysis.
 
 ## A stability analysis example
 
@@ -82,18 +82,23 @@ calculates the permutation importance metric via the function
 `sklearn.inspection.permutation_importance`.
 
 ```python
-from vflow import Vset
+from vflow import Vset, build_vset
+from sklearn.impute import KNNImputer, SimpleImputer
 from sklearn.inspection import permutation_importance
 
-# define preprocessing functions preproc_func{1,2,3}
-def preproc_func1(X, y):
-    ...
+preproc_list = [SimpleImputer(strategy='mean'),
+                SimpleImputer(strategy='median'),
+                KNNImputer()]
 
-# create a Vset which varies over the list of preprocessing functions
-preproc_set = Vset("preproc", [preproc_func1, preproc_func2, preproc_func3])
+# create a Vset which varies over preproc_list
+# we use output_matching=True to ensure that preprocessing strategies
+# match throughout the pipeline
+preproc_set = Vset("preproc", preproc_list, ['mean', 'med', 'knn'],
+                   output_matching=True)
 
-# create the feature importance Vset
-feat_imp_set = Vset('feat_imp', permutation_importance)
+# create the feature importance Vset using helper build_vset
+feat_imp_set = build_vset('feat_imp', permutation_importance,
+                          n_repeats=4)
 ```
 
 ### 2. Define model hyperparameter perturbations
@@ -104,23 +109,22 @@ helper `build_vset` to create hyperparameter perturbations for random forest.
 
 ```python
 from sklearn.ensemble import RandomForestRegressor as RF
-from vflow import build_vset
 
 # hyperparameters to try
 RF_params = {
     'n_estimators': [100, 300],
-    'min_samples_split': [2, 10],
-    'max_features': ['sqrt', 'log2']
+    'min_samples_split': [2, 10]
 }
 
-# we could instead pass a list of distinct models and corresponding param dicts
+# we could instead pass a list of distinct models
+# and corresponding param dicts
 RF_set = build_vset('RF', RF, RF_params)
 ```
 
 ### 3. Define data perturbations
 
 For stability analysis, it is often useful to add data perturbations such as the
-bootstrap in order to average over resampling variability in the data.
+bootstrap in order to assess stability over resampling variability in the data.
 
 ```python
 from sklearn.utils import resample
@@ -132,26 +136,26 @@ boot_set = build_vset('boot', resample, reps=100, lazy=True)
 
 ### 4. Fit all models for all combinations of resampling and preprocessing
 
-Now we can load in our data and fit each of the eight random forest models to
+Now we can load in our data and fit each of the four random forest models to
 the 300 combinations of resampled training data and preprocessing functions.
 
 ```python
 from vflow import init_args
 
 # read in some data
-X_train, y_train, X_test, y_test = ...
+X_train, y_train, X_val, y_val = ...
 
 # wrap data for use with vflow
-X_train, y_train, X_test, y_test = \
-    init_args(X_train, y_train, X_test, y_test)
+X_train, y_train, X_val, y_val = \
+    init_args([X_train, y_train, X_val, y_val])
 
 # bootstrap from training data by calling boot_fun
 X_trains, y_trains = boot_set(X_train, y_train)
 
 # apply three preprocessing methods to each bootstrap sample
-X_trains, y_trains = preproc_set(X_train, y_train)
+X_trains = preproc_set.fit_transform(X_train)
 
-# this results in fitting all 8 RF models to each of the 300 boot/preproc combos
+# fit the 4 RF models to each of the boot/preproc combos
 RF_set.fit(X_trains, y_trains)
 ```
 
@@ -160,8 +164,6 @@ function `build_graph`, which results in \autoref{fig:graph}.
 
 ```python
 from vflow import build_graph
-
-# examine the pipeline graph
 build_graph(RF_set)
 ```
 
@@ -172,33 +174,43 @@ build_graph(RF_set)
 Finally, we calculate the importance metric and examine its mean and standard
 deviation across bootstrap perturbations for each combination of data
 preprocessing and modeling hyperparameters. This allows us to assess the
-stability of the feature importances relative to different pipeline paths:
+stability of the feature importances conditioned on different pipeline paths:
 
 ```python
 from vflow import dict_to_df, perturbation_stats
 
 # calculate importances
-importances = feat_imp_set(RF_set.out, *preproc_set(X_test, y_test))
+importances = feat_imp_set(RF_set.out,
+                           preproc_set.fit_transform(X_val), y_val)
 
-# the helper dict_to_df converts the output to a pandas.DataFrame
+# the helper dict_to_df converts the output to a pandas.DataFrame and
 # using param_key='out' separates the importance dict into multiple cols
 importances_df = dict_to_df(importances, param_key='out')
 
-# get count, mean, and std of importances
-perturbation_stats(importances_df, 'preproc', 'RF')
+# get count, mean, and std of the permutation importances
+perturbation_stats(importances_df, 'preproc', 'RF',
+                   wrt_col='out-importances_mean',
+                   prefix='X', split=True)
 ```
+
+![Perturbation statistics of permutation feature importances.\label{fig:perturb}](docs/perturb_stats.png)
+
+From here, we can filter over the data preprocessing and modeling perturbations
+via the helper `filter_vset_by_metric` to select the top combinations in terms
+of stability (or another metric of interest) and continue our analysis on a
+held-out test set.
 
 ## Computation and tracking
 
 The package also helps users to improve the efficiency of their computational
-pipeline. Computation is (optionally) handled through Ray [@moritz2018ray],
+pipelines. Computation is (optionally) handled through Ray [@moritz2018ray],
 which easily facilitates parallelization across different machines and along
 different perturbations of the pipeline. Caching is handled via
 [joblib](https://joblib.readthedocs.io/en/latest/), so that individual parts of
-the pipeline do not need to be rerun. Moreover, as shown in the example above
-`vflow` supports lazy evaluation of `Vset` objects so that computation and data
-can be deferred to when it is needed, saving on memory and allowing the pipeline
-graph to be built and examined before beginning computation.
+the pipeline do not need to be rerun. Moreover, `vflow` supports lazy evaluation
+of `Vset`s, as shown in the example above. Thus, computation and data can be
+deferred to when it is needed, saving on memory and allowing the pipeline graph
+to be built and examined before beginning computation.
 
 Experiment-tracking and saving are (optionally) handled via integration with
 MLFlow [@zaharia2018accelerating], which enables automatic experiment tracking
@@ -225,6 +237,13 @@ backed by Ray's task graph.
 
 # Acknowledgements
 
-This work was supported in part by National Science Foundation (NSF) Grants DMS-1613002, DMS-1953191, DMS-2015341, IIS-1741340, the Center for Science of Information (CSoI, an NSF Science and Technology Center) under grant agreement CCF-0939370, NSF Grant DMS-2023505 on Collaborative Research: Foundations of Data Science Institute (FODSI), the NSF and the Simons Foundation for the Collaboration on the Theoretical Foundations of Deep Learning through awards DMS-2031883 and DMS-814639, a Chan Zuckerberg Biohub Intercampus Research Award, and a grant from the Weill Neurohub.
+This work was supported in part by National Science Foundation (NSF) Grants
+DMS-1613002, DMS-1953191, DMS-2015341, IIS-1741340, the Center for Science of
+Information (CSoI, an NSF Science and Technology Center) under grant agreement
+CCF-0939370, NSF Grant DMS-2023505 on Collaborative Research: Foundations of
+Data Science Institute (FODSI), the NSF and the Simons Foundation for the
+Collaboration on the Theoretical Foundations of Deep Learning through awards
+DMS-2031883 and DMS-814639, a Chan Zuckerberg Biohub Intercampus Research Award,
+and a grant from the Weill Neurohub.
 
 # References
