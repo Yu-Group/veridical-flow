@@ -1070,3 +1070,35 @@ class TestConvert:
         df = dict_to_df(in_dict)
         interval = compute_interval(df, 'out', 'metrics')
         assert interval['out']['std'][0] == 0.03535533905932729
+    
+    def test_perturbation_stats(self):
+        in_dict = {(sm('X_train', 'init'), sm('feat_extract_0', 'feat_extract'), 
+            sm('y_train', 'init'), sm('DT', 'modeling'), sm('feat_imp', 'metrics')): 0.455,
+            (sm('X_train', 'init'), sm('feat_extract_0', 'feat_extract'), 
+            sm('y_train', 'init'), sm('LR', 'modeling'), sm('feat_imp', 'metrics')): 0.522,
+            (sm('X_train', 'init'), sm('feat_extract_1', 'feat_extract'), 
+            sm('y_train', 'init'), sm('DT', 'modeling'), sm('feat_imp', 'metrics')): 0.76,
+            (sm('X_train', 'init'), sm('feat_extract_1', 'feat_extract'), 
+            sm('y_train', 'init'), sm('LR', 'modeling'), sm('feat_imp', 'metrics')): 0.95}
+        df = dict_to_df(in_dict)
+        stats = perturbation_stats(df, 'feat_extract')
+        cols = ['feat_extract', 'count', 'mean', 'std']
+        assert all(c in cols for c in stats.columns)
+        assert round(stats.loc[0]['mean'], 4) == 0.4885
+        assert round(stats.loc[1]['std'], 6) == 0.134350
+
+        in_dict = {(sm('X_train', 'init'), sm('feat_extract_0', 'feat_extract'), 
+            sm('y_train', 'init'), sm('DT', 'modeling'), sm('feat_imp', 'metrics')): [0.6, 0.3, 0.4],
+            (sm('X_train', 'init'), sm('feat_extract_0', 'feat_extract'), 
+            sm('y_train', 'init'), sm('LR', 'modeling'), sm('feat_imp', 'metrics')): [0.94, 0.33, 0.24],
+            (sm('X_train', 'init'), sm('feat_extract_1', 'feat_extract'), 
+            sm('y_train', 'init'), sm('DT', 'modeling'), sm('feat_imp', 'metrics')): [0.26, 0.31, 0.47],
+            (sm('X_train', 'init'), sm('feat_extract_1', 'feat_extract'), 
+            sm('y_train', 'init'), sm('LR', 'modeling'), sm('feat_imp', 'metrics')): [0.76, 0.883, 0.354]}
+        df = dict_to_df(in_dict)
+        stats = perturbation_stats(df, 'feat_extract', prefix='o', split=True)
+        assert len(stats.columns) == 8
+        assert stats.columns[1] == 'o-count'
+        assert stats.columns[-1] == 'o2-std'
+        assert stats.loc[1]['o2-std'] == 0.0820243866176395
+
