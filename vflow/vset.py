@@ -104,31 +104,32 @@ class Vset:
             run_dict = {}
             # log subkeys as params and value as metric
             for k, v in out_dict.items():
-                origins = np.array([subk.origin for subk in k])
-                # ignore init origins and the last origin (this Vset)
-                param_idx = [
-                    i for i in range(len(k[:-1])) if origins[i] != 'init'
-                ]
-                # get or create mlflow run
-                run_dict_key = tuple([subk.value for subk in k[:-1]])
-                if run_dict_key in run_dict:
-                    run_id = run_dict[run_dict_key]
-                else:
-                    run = self._mlflow.create_run(self._exp_id)
-                    run_id = run.info.run_id
-                    run_dict[run_dict_key] = run_id
-                    # log params
-                    for idx in param_idx:
-                        subkey = k[idx]
-                        param_name = subkey.origin
-                        # check if the origin occurs multiple times
-                        if np.sum(origins == param_name) > 1:
-                            occurence = np.sum(origins[:idx] == param_name)
-                            param_name = param_name + str(occurence)
-                            self._mlflow.log_param(
-                                run_id, param_name, subkey.value
-                            )
-                self._mlflow.log_metric(run_id, k[-1].value, v)
+                if not k == PREV_KEY:
+                    origins = np.array([subk.origin for subk in k])
+                    # ignore init origins and the last origin (this Vset)
+                    param_idx = [
+                        i for i in range(len(k[:-1])) if origins[i] != 'init'
+                    ]
+                    # get or create mlflow run
+                    run_dict_key = tuple([subk.value for subk in k[:-1]])
+                    if run_dict_key in run_dict:
+                        run_id = run_dict[run_dict_key]
+                    else:
+                        run = self._mlflow.create_run(self._exp_id)
+                        run_id = run.info.run_id
+                        run_dict[run_dict_key] = run_id
+                        # log params
+                        for idx in param_idx:
+                            subkey = k[idx]
+                            param_name = subkey.origin
+                            # check if the origin occurs multiple times
+                            if np.sum(origins == param_name) > 1:
+                                occurence = np.sum(origins[:idx] == param_name)
+                                param_name = param_name + str(occurence)
+                                self._mlflow.log_param(
+                                    run_id, param_name, subkey.value
+                                )
+                    self._mlflow.log_metric(run_id, k[-1].value, v)
         return out_dict
 
     def fit(self, *args):
