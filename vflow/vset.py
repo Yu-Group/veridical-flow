@@ -1,22 +1,25 @@
-'''Set of modules to be parallelized over in a pipeline.
+"""Set of modules to be parallelized over in a pipeline.
 Function arguments are each a list
-'''
+"""
 PREV_KEY = '__prev__'
+FILTER_PREV_KEY = '__filter_prev__'
 
-import numpy as np
 import joblib
+import numpy as np
 import ray
+from mlflow.tracking import MlflowClient
 
 from vflow.convert import *
+from vflow.subkey import Subkey
 from vflow.vfunc import Vfunc, AsyncModule
-from vflow.smart_subkey import SmartSubkey
 
 
 class Vset:
     def __init__(self, name: str, modules, module_keys: list = None,
                  is_async: bool = False, output_matching: bool = False,
-                 cache_dir: str = None):
-        '''
+                 lazy: bool = False, cache_dir: str = None,
+                 tracking_dir: str = None):
+        """
         todo: include prev and next and change functions to include that.
         Params
         -------
@@ -31,16 +34,34 @@ class Vset:
         output_matching: bool (optional)
             if True, then output keys from this Vset will be matched when used
             in other Vsets
+        lazy: bool (optional)
+            if True, then modules are evaluated lazily, i.e. outputs contain a
+            promise
         cache_dir: str (optional)
             if provided, do caching and use cache_dir as the data store for
             joblib.Memory
-        '''
+        tracking_dir: str (optional)
+            if provided, use the mlflow.tracking api to log outputs as metrics
+            with params determined by input keys
+        """
         self.name = name
         self._fitted = False
         self.out = None  # outputs
         self._async = is_async
         self._output_matching = output_matching
-        self._memory = joblib.Memory(cache_dir)
+        self._lazy = lazy
+        self._cache_dir = cache_dir
+        self._tracking_dir = tracking_dir
+        self._memory = joblib.Memory(self._cache_dir)
+        if self._tracking_dir is not None:
+            self._mlflow = MlflowClient(tracking_uri=self._tracking_dir)
+            experiment = self._mlflow.get_experiment_by_name(name=self.name)
+            if experiment is None:
+                self._exp_id = self._mlflow.create_experiment(name=self.name)
+            else:
+                self._exp_id = experiment.experiment_id
+        else:
+            self._mlflow = None
         # check if any of the modules are AsyncModules
         # if so, we'll make then all AsyncModules later on
         if not self._async and np.any([isinstance(mod, AsyncModule) for mod in modules]):
@@ -52,11 +73,10 @@ class Vset:
                 assert type(module_keys) is list, 'modules passed as list but module_names is not a list'
                 assert len(modules) == len(
                     module_keys), 'modules list and module_names list do not have the same length'
-                # TODO: add more checking of module_keys
-                module_keys = [self.__create_smart_subkey(k) if isinstance(k, tuple) else
-                                (self.__create_smart_subkey(k), ) for k in module_keys]
+                # TODO: how best to handle tuple subkeys?
+                module_keys = [(self.__create_subkey(k),) for k in module_keys]
             else:
-                module_keys = [(self.__create_smart_subkey(f'{name}_{i}'), ) for i in range(len(modules))]
+                module_keys = [(self.__create_subkey(f'{name}_{i}'),) for i in range(len(modules))]
             # convert module keys to singleton tuples
             self.modules = dict(zip(module_keys, modules))
         # if needed, wrap the modules in the Vfunc or AsyncModule class
@@ -67,39 +87,82 @@ class Vset:
             elif not isinstance(v, Vfunc):
                 self.modules[k] = Vfunc(k[0], v)
 
-    def _apply_func(self, out_dict, *args):
+    def _apply_func(self, out_dict: dict = None, *args):
         if out_dict is None:
-            out_dict = self.modules
+            out_dict = deepcopy(self.modules)
+
         apply_func_cached = self._memory.cache(_apply_func_cached)
-        data_dict, out_dict = apply_func_cached(
-            out_dict, self._async, self._output_matching, *args
-        )
-        self.__prev__ = data_dict[PREV_KEY]
-        out_dict[PREV_KEY] = (self,)
+        out_dict = apply_func_cached(out_dict, self._async, self._lazy, *args)
+
+        prev = tuple()
+        for arg in args:
+            if PREV_KEY in arg:
+                prev += (arg[PREV_KEY],)
+        out_dict[PREV_KEY] = (self,) + prev
+
+        if self._mlflow is not None:
+            run_dict = {}
+            # log subkeys as params and value as metric
+            for k, v in out_dict.items():
+                if not k == PREV_KEY:
+                    origins = np.array([subk.origin for subk in k])
+                    # ignore init origins and the last origin (this Vset)
+                    param_idx = [
+                        i for i in range(len(k[:-1])) if origins[i] != 'init'
+                    ]
+                    # get or create mlflow run
+                    run_dict_key = tuple([subk.value for subk in k[:-1]])
+                    if run_dict_key in run_dict:
+                        run_id = run_dict[run_dict_key]
+                    else:
+                        run = self._mlflow.create_run(self._exp_id)
+                        run_id = run.info.run_id
+                        run_dict[run_dict_key] = run_id
+                        # log params
+                        for idx in param_idx:
+                            subkey = k[idx]
+                            param_name = subkey.origin
+                            # check if the origin occurs multiple times
+                            if np.sum(origins == param_name) > 1:
+                                occurence = np.sum(origins[:idx] == param_name)
+                                param_name = param_name + str(occurence)
+                                self._mlflow.log_param(
+                                    run_id, param_name, subkey.value
+                                )
+                    self._mlflow.log_metric(run_id, k[-1].value, v)
         return out_dict
 
-    def fit(self, *args, **kwargs):
-        '''
-        '''
-        if self._fitted:
-            return self
+    def fit(self, *args):
+        """
+        """
         out_dict = {}
         for k, v in self.modules.items():
             out_dict[k] = v.fit
         self.out = self._apply_func(out_dict, *args)
+        prev = self.out[PREV_KEY][1:]
+        if hasattr(self, FILTER_PREV_KEY):
+            prev = getattr(self, FILTER_PREV_KEY) + prev
+        setattr(self, PREV_KEY, prev)
         self._fitted = True
         return self
 
-    def transform(self, *args, **kwargs):
-        '''todo: fix this method
-        '''
-        results = []
-        for out in self.output:
-            result = out.transform(*args, **kwargs)
-            results.append(result)
-        return results
+    def fit_transform(self, *args):
+        """Fits to args and transforms only the first arg.
+        """
+        return self.fit(*args).transform(args[0])
 
-    def predict(self, *args, **kwargs):
+    def transform(self, *args):
+        """
+        """
+        if not self._fitted:
+            raise AttributeError('Please fit the Vset object before calling the transform method.')
+        out_dict = {}
+        for k, v in self.out.items():
+            if hasattr(v, 'transform'):
+                out_dict[k] = v.transform
+        return self._apply_func(out_dict, *args)
+
+    def predict(self, *args):
         if not self._fitted:
             raise AttributeError('Please fit the Vset object before calling the predict method.')
         pred_dict = {}
@@ -108,7 +171,7 @@ class Vset:
                 pred_dict[k] = v.predict
         return self._apply_func(pred_dict, *args)
 
-    def predict_proba(self, *args, **kwargs):
+    def predict_proba(self, *args):
         if not self._fitted:
             raise AttributeError('Please fit the Vset object before calling the predict_proba method.')
         pred_dict = {}
@@ -124,27 +187,39 @@ class Vset:
         mean_preds = np.mean(preds_np, axis=0)
         return mean_preds, uncertainty
 
-    def evaluate(self, *args, **kwargs):
-        '''Combines dicts before calling _apply_func
-        '''
-        return self._apply_func(self.modules, *args)
+    def evaluate(self, *args):
+        """Combines dicts before calling _apply_func
+        """
+        return self._apply_func(None, *args)
 
-    def __call__(self, *args, n_out: int = None, **kwargs):
-        '''
-        '''
+    def __call__(self, *args, n_out: int = None, keys=None, **kwargs):
+        """
+        """
+        if keys is None:
+            keys = []
         if n_out is None:
             n_out = len(args)
-        out = sep_dicts(self._apply_func(self.modules, *args), n_out=n_out)
-        return out
+        out_dict = self._apply_func(None, *args)
+        if n_out == 1:
+            return out_dict
+        out_dicts = sep_dicts(out_dict, n_out=n_out, keys=keys)
+        # add back prev
+        prev = out_dict[PREV_KEY]
+        for i in range(n_out):
+            if n_out == len(args):
+                out_dicts[i][PREV_KEY] = (prev[0],) + (prev[i + 1],)
+            else:
+                out_dicts[i][PREV_KEY] = prev
+        return out_dicts
 
     def __getitem__(self, i):
-        '''Accesses ith item in the module set
-        '''
+        """Accesses ith item in the module set
+        """
         return self.modules[i]
 
     def __contains__(self, key):
-        '''Returns true if modules is a dict and key is one of its keys
-        '''
+        """Returns true if modules is a dict and key is one of its keys
+        """
         if isinstance(self.modules, dict):
             return key in self.modules.keys()
         return False
@@ -160,12 +235,12 @@ class Vset:
     def __str__(self):
         return 'Vset(' + self.name + ')'
 
-    def __create_smart_subkey(self, subkey):
-        return SmartSubkey(subkey, self.name, self._output_matching)
+    def __create_subkey(self, value):
+        return Subkey(value, self.name, self._output_matching)
 
 
-def _apply_func_cached(out_dict: dict, is_async: bool, output_matching: bool, *args):
-    '''
+def _apply_func_cached(out_dict: dict, is_async: bool, lazy: bool, *args):
+    """
     Params
     ------
     *args: List[Dict]: takes multiple dicts and combines them into one.
@@ -180,33 +255,29 @@ def _apply_func_cached(out_dict: dict, is_async: bool, output_matching: bool, *a
             e.g. inputs:    module = {LR : logistic}, data = {train_1 : [X1,y1], train2 : [X2,y2]}
                  out:    out_dict = {(train_1, LR)  : fitted logistic, (train_2, LR) :  fitted logistic}.
         Currently matching = 'subset' is not used...
-    '''
-    #out_dict = kwargs['out_dict']
-    #is_async = kwargs['is_async']
-    #is_async = kwargs['output_matching']
-
-    # deepcopy args to avoid mutating them
-    args = deepcopy(args)
-
-    for ele in args:
-        if not isinstance(ele, dict):
+    """
+    async_args = []
+    for in_dict in args:
+        if not isinstance(in_dict, dict):
             raise Exception('Need to run init_args before calling module_set!')
         if is_async:
+            remote_dict = {}
             # send data to the remote object store
-            for k, v in ele.items():
+            for k, v in in_dict.items():
                 if k != PREV_KEY:
-                    ele[k] = ray.put(v)
+                    remote_dict[k] = ray.put(v)
+                else:
+                    remote_dict[k] = v
+            async_args.append(remote_dict)
+    if is_async:
+        args = async_args
 
     data_dict = combine_dicts(*args)
-    out_dict = apply_modules(out_dict, data_dict)
+    out_dict = apply_modules(out_dict, data_dict, lazy)
 
     if is_async:
         out_keys = list(out_dict.keys())
         out_vals = ray.get(list(out_dict.values()))
         out_dict = dict(zip(out_keys, out_vals))
 
-    if output_matching:
-        # the final subkey of keys in out_dict should be key created during
-        # Vset.__init__()
-        out_keys = out_dict.keys()
-    return data_dict, out_dict
+    return out_dict

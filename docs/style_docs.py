@@ -16,7 +16,7 @@ data = data.replace('<a href="https://yu-group.github.io/veridical-flow/">Docs</
                     # '<a href="https://github.com/Yu-Group/pcs-pipeline">Github</a>')
 
 # data = data.replace('.html">imodels.', '.html">')
-data = data.replace('<h1 class="title">Module <code>vflow</code></h1>', '') # remove header
+data = data.replace('<h1 class="title">Package <code>vflow</code></h1>', '') # remove header
 # data = data.replace('<th>Reference</th>', '<th white-space: nowrap>Reference</th>')
 
 # add github corner

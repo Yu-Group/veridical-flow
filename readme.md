@@ -1,14 +1,17 @@
-<h1 align="center"> Veridical Flow 🌊 </h1>
-<p align="center"> A library for making stability analysis simple, following the veridical data-science framework.
+<p align="center">
+	<img src="https://yu-group.github.io/veridical-flow/logo_vflow_straight.png" width="70%" alt="vflow logo"> 
 </p>
 
 
+
+<p align="center"> A library for making stability analysis simple, following the <a href="https://www.pnas.org/content/117/8/3920">veridical data-science</a> framework.
+</p>
 <p align="center">
-  <img src="https://img.shields.io/badge/license-mit-blue.svg">
-  <img src="https://img.shields.io/badge/python-3.6+-blue">
-  <a href="https://github.com/Yu-group/pcs-pipeline/actions"><img src="https://github.com/Yu-group/pcs-pipeline/workflows/tests/badge.svg"></a>
-  <img src="https://img.shields.io/github/checks-status/Yu-group/pcs-pipeline/master">
-  <img src="https://img.shields.io/pypi/v/vflow?color=orange">
+  <img src="https://img.shields.io/badge/license-mit-blue.svg" alt="mit license">
+  <img src="https://img.shields.io/badge/python-3.6+-blue" alt="python3.6+">
+  <a href="https://github.com/Yu-group/pcs-pipeline/actions"><img src="https://github.com/Yu-group/pcs-pipeline/workflows/tests/badge.svg" alt="tests"></a>
+  <img src="https://img.shields.io/github/checks-status/Yu-group/pcs-pipeline/master" alt="checks">
+  <img src="https://img.shields.io/pypi/v/vflow?color=orange" alt="downloads">
 </p> 
 
 # Why use `vflow`?
@@ -37,7 +40,7 @@ X_train, X_test, y_train, y_test = init_args(
 subsampling_funcs = [
     sklearn.utils.resample for _ in range(3)
 ]
-subsampling_set = Vset(name='subsampling',
+subsampling_set = Vset(name="subsampling",
                        modules=subsampling_funcs,
                        output_matching=True)
 X_trains, y_trains = subsampling_set(X_train, y_train)
@@ -47,7 +50,7 @@ models = [
     sklearn.linear_model.LogisticRegression(),
     sklearn.tree.DecisionTreeClassifier()
 ]
-modeling_set = Vset(name='modeling',
+modeling_set = Vset(name="modeling",
                     modules=models,
                     module_keys=["LR", "DT"])
 modeling_set.fit(X_trains, y_trains)
@@ -60,19 +63,23 @@ binary_metrics_set = Vset(name='binary_metrics',
 binary_metrics = binary_metrics_set.evaluate(preds_test, y_test)
 ```
 
-Once we've written this pipeline, get very easily see how stable certain metrics (e.g. "Acc") are to our choice of subsampling or model.
+Once we've written this pipeline, we can easily measure the stability of metrics (e.g. "Accuracy") to our choice of subsampling or model.
 
 # Documentation
 
 See the [docs](https://yu-group.github.io/veridical-flow/) for reference on the API
 
-> **Examples**
+> **Notebook examples** (Note that some of these require more dependencies than just those required for vflow - to install all, use the `notebooks` dependencies in the `setup.py` file)
 >
-> [Synthetic classification example](https://github.com/Yu-Group/veridical-flow/blob/master/notebooks/00_synthetic_classification.ipynb)
+> [Synthetic classification](https://github.com/Yu-Group/veridical-flow/blob/master/notebooks/00_synthetic_classification.ipynb)
 >
-> [Enhancer example](https://github.com/Yu-Group/veridical-flow/blob/master/notebooks/01_enhancer.ipynb)
+> [Enhancer genomics](https://github.com/Yu-Group/veridical-flow/blob/master/notebooks/01_enhancer.ipynb)
 >
-> [fMRI example](https://github.com/Yu-Group/veridical-flow/blob/master/notebooks/02_fmri.ipynb)
+> [fMRI voxel prediction](https://github.com/Yu-Group/veridical-flow/blob/master/notebooks/02_fmri.ipynb)
+> 
+> [Fashion mnist classification](https://github.com/Yu-Group/veridical-flow/blob/master/notebooks/03_computer_vision_dnn.ipynb)
+> 
+> [Clinical decision rule vetting](https://github.com/Yu-Group/rule-vetting)
 
 ## Installation
 
