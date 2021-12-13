@@ -185,8 +185,8 @@ def to_list(tup: tuple):
     """Convert from tuple to packed list
     Ex. ([x1, x2, x3], [y1, y2, y3]) -> [[x1, y1], [x2, y2], [x3, y3]]
     Ex. ([x1], [y1]) -> [[x1, y1]]
-    Ex. ([x1, x2, x3]) -> [[x1], [x2], [x3]]
-    Ex. (x1) -> [[x1]]
+    Ex. ([x1, x2, x3], ) -> [[x1], [x2], [x3]]
+    Ex. (x1, ) -> [[x1]]
     Ex. (x1, y1) -> [[x1, y1]]
     Ex. (x1, x2, x3, y1, y2, y3) -> [[x1, y1], [x2, y2], [x3, y3]]
     Ex. (x1, x2, x3, y1, y2) -> Error
@@ -198,7 +198,7 @@ def to_list(tup: tuple):
     elif not isinstance(tup[0], list):
         # the first element is data
         if n_tup == 1:
-            return list(tup)
+            return [list(tup)]
         if n_tup % 2 != 0:
             raise ValueError('Don\'t know how to handle uneven number of args '
                              'without a list. Please wrap your args in a list.')
