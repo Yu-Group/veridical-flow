@@ -5,6 +5,7 @@ from shutil import rmtree
 
 import numpy as np
 import pandas as pd
+import ray
 import sklearn
 from numpy.testing import assert_equal
 from sklearn.datasets import make_classification
@@ -313,6 +314,54 @@ class TestPipelines:
         finally:
             # clean up
             rmtree(tmp_path)
+
+    def test_async(self):
+        def gen_data(n):
+            return np.random.randn(n)
+
+        def fun1(a, b=1):
+            return a + b
+
+        def fun2(a, b=1):
+            return a*b
+
+        data_param_dict = {'n': [1,2,3]}
+        data_vset = build_vset('data', gen_data, data_param_dict, reps=5, lazy=True)
+
+        assert len(data_vset.modules) == 15
+
+        fun_param_dict = {'b': [1,2,3]}
+        fun1_vset = build_vset('fun1', fun1, fun_param_dict, lazy=True)
+        fun1_vset_async = build_vset('fun1', fun1, fun_param_dict, lazy=True, is_async=True)
+        fun2_vset = build_vset('fun2', fun2, fun_param_dict)
+        fun2_vset_async = build_vset('fun2', fun2, fun_param_dict, is_async=True)
+
+        np.random.seed(13)
+        ray.init(local_mode=True)
+
+        data = data_vset()
+
+        fun1_res = fun1_vset(data)
+        fun1_res_async = fun1_vset_async(data)
+
+        fun2_res = fun2_vset(fun1_res)
+        fun2_res_async = fun2_vset_async(fun1_res_async)
+
+        ray.shutdown()
+
+        assert_equal(fun1_res[PREV_KEY][0], fun1_vset)
+        assert_equal(fun1_res_async[PREV_KEY][0], fun1_vset_async)
+        assert_equal(fun1_res[PREV_KEY][1][0], fun1_res_async[PREV_KEY][1][0])
+        assert_equal(fun2_res[PREV_KEY][0], fun2_vset)
+        assert_equal(fun2_res_async[PREV_KEY][0], fun2_vset_async)
+        assert_equal(fun2_res[PREV_KEY][1][0], fun1_vset)
+        assert_equal(fun2_res_async[PREV_KEY][1][0], fun1_vset_async)
+        assert_equal(fun2_res[PREV_KEY][1][1][0], fun2_res_async[PREV_KEY][1][1][0])
+
+        del fun2_res[PREV_KEY]
+        del fun2_res_async[PREV_KEY]
+
+        assert_equal(fun2_res, fun2_res_async)
 
 
 def costly_compute(data, row_index=0):
