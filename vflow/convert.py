@@ -82,13 +82,6 @@ def dict_to_df(d: dict, param_key=None):
                 df = df.iloc[:, new_idx]
     return df
 
-
-def compute_interval(df: DataFrame, d_label, wrt_label, accum=None):
-    '''Compute an interval (std. dev) of d_label column with
-    respect to pertubations in the wrt_label column
-    '''
-    return df[[wrt_label, d_label]].groupby(wrt_label).agg(accum)
-
 def evaluate_uncertainty(preds, uncertainty, y_real):
     '''Returns uncertainty and cumulative accuracy intervals for
     individual predictions, sorted in increasing order of uncertainty.

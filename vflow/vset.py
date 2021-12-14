@@ -180,12 +180,18 @@ class Vset:
                 pred_dict[k] = v.predict_proba
         return self._apply_func(pred_dict, *args)
     
-    def predict_with_uncertainties(self, *args, **kwargs):
-        preds_proba = base_dict(self.predict_proba(*args, **kwargs))
-        preds_np = np.array(list(preds_proba.values()))
-        uncertainty = np.std(preds_np, axis=0)
-        mean_preds = np.mean(preds_np, axis=0)
-        return mean_preds, uncertainty
+    def predict_with_uncertainties(self, *args, wrt: list=None, **kwargs):
+        preds_proba = self.predict_proba(*args, **kwargs)
+        preds_df = dict_to_df(preds_proba)
+        if wrt is None:
+            # just average over all predictions
+            preds_stats = perturbation_stats(preds_df)
+        else:
+            wrt = wrt + ['out']
+            groups = [col for col in preds_df.columns 
+                      if col not in wrt and not col.startswith('init-')]
+            preds_stats = perturbation_stats(preds_df, *groups)
+        return preds_stats
 
     def evaluate(self, *args):
         """Combines dicts before calling _apply_func
