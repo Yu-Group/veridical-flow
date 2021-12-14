@@ -8,10 +8,13 @@ import numpy as np
 import pandas as pd
 from pandas import DataFrame
 
+import ray
+from ray.remote_function import RemoteFunction as RayRemoteFun
+from ray._raylet import ObjectRef as RayObjRef
+
 from vflow.subkey import Subkey
 from vflow.vfunc import VfuncPromise
 from vflow.vset import PREV_KEY
-
 
 def init_args(args_tuple: Union[tuple, list], names=None):
     """ converts tuple of arguments to a list of dicts
@@ -327,7 +330,7 @@ def combine_dicts(*args: dict, base_case=True):
         return combine_dicts(combine_dicts(args[0], args[1]), *args[2:], base_case=False)
 
 
-def apply_modules(modules: dict, data_dict: dict, lazy: bool = False):
+def apply_modules(modules: dict, data_dict: dict, lazy: bool=False):
     out_dict = {}
     for mod_k in modules:
         if len(data_dict) == 0:
@@ -352,6 +355,13 @@ def apply_modules(modules: dict, data_dict: dict, lazy: bool = False):
                     for i, data in enumerate(data_list):
                         if isinstance(data, VfuncPromise):
                             data_list[i] = data()
+                        if isinstance(func, RayRemoteFun):
+                            if not isinstance(data_list[i], RayObjRef):
+                                # send data to Ray's remote object store
+                                data_list[i] = ray.put(data_list[i])
+                        elif isinstance(data_list[i], RayObjRef):
+                            # this is not a remote function so get the data
+                            data_list[i] = ray.get(data_list[i])
                     out_dict[combined_key] = func(*data_list)
 
     return out_dict
