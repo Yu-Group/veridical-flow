@@ -37,13 +37,12 @@ notebooks/joblib/
 # mlflow tracking directory
 notebooks/mlruns/
 
-# specify included data
-/data/*
-!/data/enhancer/
-!/data/fmri/
-!/data/fmri/*
 # pytorch data directory
-notebooks/data/
+notebooks/data/*
+# specify included data
+!notebooks/data/enhancer/
+!notebooks/data/fmri/
+!notebooks/data/fmri/*
 
 
 .hypothesis
