@@ -121,7 +121,10 @@ def perturbation_stats(df: DataFrame, *groups: str, wrt_col: str='out',
     if prefix is None:
         prefix = wrt_col
     groups = list(groups)
-    gb = df.groupby(groups)[wrt_col]
+    if len(groups) > 0:
+        gb = df.groupby(groups)[wrt_col]
+    else:
+        gb = df.groupby(lambda x: True)[wrt_col]
     mean_or_std = type(func) is list and 'mean' in func or 'std' in func
     list_or_ndarray = type(df[wrt_col].iloc[0]) in [list, np.ndarray]
     if mean_or_std and list_or_ndarray:
@@ -158,7 +161,10 @@ def perturbation_stats(df: DataFrame, *groups: str, wrt_col: str='out',
         df_out = gb.agg(func)
     df_out = df_out.reindex(sorted(df_out.columns), axis=1)
     df_out.reset_index(inplace=True)
-    return df_out.sort_values(groups[0])
+    if len(groups) > 0:
+        return df_out.sort_values(groups[0])
+    else:
+        return df_out
 
 
 def to_tuple(lists: list):
