@@ -92,14 +92,14 @@ def compute_interval(df: DataFrame, d_label, wrt_label, accum=None):
     return df[[wrt_label, d_label]].groupby(wrt_label).agg(accum)
 
 
-def perturbation_stats(df: DataFrame, *groups: str, wrt_col: str='out',
+def perturbation_stats(data: Union[DataFrame, dict], *groups: str, wrt_col: str='out',
                        func=None, prefix: str=None, split: bool=False):
     """Compute statistics for wrt_col in df, conditional on groups
 
     Params
     ------
-    df: pandas.DataFrame
-        DataFrame on which to compute statistics.
+    data: Union[pandas.DataFrame, dict]
+        DataFrame or Vset output dict on which to compute statistics.
     *groups: str
         Columns names in `df` to group on.
     wrt_col: str (optional)
@@ -120,6 +120,10 @@ def perturbation_stats(df: DataFrame, *groups: str, wrt_col: str='out',
         func = ['count', 'mean', 'std']
     if prefix is None:
         prefix = wrt_col
+    if isinstance(data, dict):
+        df = dict_to_df(data)
+    else:
+        df = data
     groups = list(groups)
     if len(groups) > 0:
         gb = df.groupby(groups)[wrt_col]
