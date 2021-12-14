@@ -11,7 +11,7 @@ from mlflow.tracking import MlflowClient
 
 from vflow.convert import *
 from vflow.subkey import Subkey
-from vflow.vfunc import Vfunc, AsyncModule
+from vflow.vfunc import Vfunc, AsyncModule, VfuncPromise, _remote_fun
 
 
 class Vset:
@@ -262,26 +262,14 @@ def _apply_func_cached(out_dict: dict, is_async: bool, lazy: bool, *args):
                  out:    out_dict = {(train_1, LR)  : fitted logistic, (train_2, LR) :  fitted logistic}.
         Currently matching = 'subset' is not used...
     """
-    async_args = []
     for in_dict in args:
         if not isinstance(in_dict, dict):
             raise Exception('Need to run init_args before calling module_set!')
-        if is_async:
-            remote_dict = {}
-            # send data to the remote object store
-            for k, v in in_dict.items():
-                if k != PREV_KEY:
-                    remote_dict[k] = ray.put(v)
-                else:
-                    remote_dict[k] = v
-            async_args.append(remote_dict)
-    if is_async:
-        args = async_args
 
     data_dict = combine_dicts(*args)
     out_dict = apply_modules(out_dict, data_dict, lazy)
 
-    if is_async:
+    if is_async and not lazy:
         out_keys = list(out_dict.keys())
         out_vals = ray.get(list(out_dict.values()))
         out_dict = dict(zip(out_keys, out_vals))

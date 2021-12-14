@@ -1,9 +1,11 @@
 import time
+import os
 from functools import partial
 from shutil import rmtree
 
 import numpy as np
 import pandas as pd
+import ray
 import sklearn
 from numpy.testing import assert_equal
 from sklearn.datasets import make_classification
@@ -280,6 +282,86 @@ class TestPipelines:
         finally:
             # clean up
             rmtree('./joblib')
+    
+    def test_mlflow_tracking(self, tmp_path):
+        try:
+            runs_path = os.path.join(tmp_path, 'mlruns')
+            np.random.seed(13)
+            X, y = make_classification(n_samples=50, n_features=5)
+            X_train, X_test, y_train, y_test = init_args(train_test_split(X, y, random_state=42),
+                                                names=['X_train', 'X_test', 'y_train','y_test'])
+            # fit models
+            modeling_set = Vset(name='modeling',
+                                modules=[LogisticRegression(C=1, max_iter=1000, tol=0.1)],
+                                module_keys=["LR"])
+
+            _ = modeling_set.fit(X_train, y_train)
+            preds_test = modeling_set.predict(X_test)
+            hard_metrics_set = Vset(name='hard_metrics',
+                                    modules=[accuracy_score, balanced_accuracy_score],
+                                    module_keys=["Acc", "Bal_Acc"],
+                                    tracking_dir=runs_path)
+            hard_metrics = hard_metrics_set.evaluate(y_test, preds_test)
+            runs_path = os.path.join(runs_path, '1')
+            assert os.path.isdir(runs_path)
+            assert len(os.listdir(runs_path)) == 2
+            runs_path = os.path.join(runs_path, [d for d in os.listdir(runs_path) if d != 'meta.yaml'][0])
+            runs_path = os.path.join(runs_path, 'metrics')
+            with open(os.path.join(runs_path, 'Acc')) as acc:
+                assert len(acc.read().split(" ")) == 3
+            with open(os.path.join(runs_path, 'Bal_Acc')) as bal_acc:
+                assert len(bal_acc.read().split(" ")) == 3
+        finally:
+            # clean up
+            rmtree(tmp_path)
+
+    def test_async(self):
+        def gen_data(n):
+            return np.random.randn(n)
+
+        def fun1(a, b=1):
+            return a + b
+
+        def fun2(a, b=1):
+            return a*b
+
+        data_param_dict = {'n': [1,2,3]}
+        data_vset = build_vset('data', gen_data, data_param_dict, reps=5, lazy=True)
+
+        assert len(data_vset.modules) == 15
+
+        fun_param_dict = {'b': [1,2,3]}
+        fun1_vset = build_vset('fun1', fun1, fun_param_dict, lazy=True)
+        fun1_vset_async = build_vset('fun1', fun1, fun_param_dict, lazy=True, is_async=True)
+        fun2_vset = build_vset('fun2', fun2, fun_param_dict)
+        fun2_vset_async = build_vset('fun2', fun2, fun_param_dict, is_async=True)
+
+        np.random.seed(13)
+        ray.init(local_mode=True)
+
+        data = data_vset()
+
+        fun1_res = fun1_vset(data)
+        fun1_res_async = fun1_vset_async(data)
+
+        fun2_res = fun2_vset(fun1_res)
+        fun2_res_async = fun2_vset_async(fun1_res_async)
+
+        ray.shutdown()
+
+        assert_equal(fun1_res[PREV_KEY][0], fun1_vset)
+        assert_equal(fun1_res_async[PREV_KEY][0], fun1_vset_async)
+        assert_equal(fun1_res[PREV_KEY][1][0], fun1_res_async[PREV_KEY][1][0])
+        assert_equal(fun2_res[PREV_KEY][0], fun2_vset)
+        assert_equal(fun2_res_async[PREV_KEY][0], fun2_vset_async)
+        assert_equal(fun2_res[PREV_KEY][1][0], fun1_vset)
+        assert_equal(fun2_res_async[PREV_KEY][1][0], fun1_vset_async)
+        assert_equal(fun2_res[PREV_KEY][1][1][0], fun2_res_async[PREV_KEY][1][1][0])
+
+        del fun2_res[PREV_KEY]
+        del fun2_res_async[PREV_KEY]
+
+        assert_equal(fun2_res, fun2_res_async)
 
 
 def costly_compute(data, row_index=0):

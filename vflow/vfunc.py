@@ -90,11 +90,22 @@ class VfuncPromise:
         tmp_args = []
         for i, arg in enumerate(self.args):
             tmp_args.append(arg)
-            if isinstance(arg, VfuncPromise):
-                tmp_args[i] = arg()
+            while isinstance(tmp_args[i], VfuncPromise):
+                tmp_args[i] = tmp_args[i]()
+        while isinstance(self.vfunc, VfuncPromise):
+            self.vfunc = self.vfunc()
         self.value = self.vfunc(*tmp_args)
         self.called = True
         return self.value
+
+    def transform(self, *args):
+        return self().transform(*args)
+
+    def predict(self, *args):
+        return self().predict(*args)
+
+    def predict_proba(self, *args):
+        return self().predict_proba(*args)
 
     def __repr__(self):
         if self.called:

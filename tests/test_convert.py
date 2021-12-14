@@ -1011,6 +1011,16 @@ class TestApplyModules:
 
 class TestConvert:
 
+    def test_to_list(self):
+        assert to_list((['x1', 'x2', 'x3'], ['y1', 'y2', 'y3'])) == [['x1', 'y1'], ['x2', 'y2'], ['x3', 'y3']]
+        assert to_list((['x1'], ['y1'])) == [['x1', 'y1']]
+        assert to_list((['x1', 'x2', 'x3'],)) == [['x1'], ['x2'], ['x3']]
+        assert to_list(('x1', )) == [['x1']]
+        assert to_list(('x1', 'y1')) == [['x1', 'y1']]
+        assert to_list(('x1', 'x2', 'x3', 'y1', 'y2', 'y3')) == [['x1', 'y1'], ['x2', 'y2'], ['x3', 'y3']]
+        with pytest.raises(ValueError):
+            to_list(('x1', 'x2', 'x3', 'y1', 'y2'))
+
     def test_dict_to_df(self):
         in_dict_1 = {(sm('X_train', 'init'), sm('feat_extract_0', 'feat_extract'), 
             sm('y_train', 'init'), sm('DT', 'modeling'), sm('acc', 'metrics')): 0.9,

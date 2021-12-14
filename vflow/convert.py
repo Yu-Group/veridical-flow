@@ -9,10 +9,13 @@ import pandas as pd
 import numpy as np
 from pandas import DataFrame
 
+import ray
+from ray.remote_function import RemoteFunction as RayRemoteFun
+from ray._raylet import ObjectRef as RayObjRef
+
 from vflow.subkey import Subkey
 from vflow.vfunc import VfuncPromise
 from vflow.vset import PREV_KEY
-
 
 def init_args(args_tuple: Union[tuple, list], names=None):
     """ converts tuple of arguments to a list of dicts
@@ -117,14 +120,15 @@ def compute_interval(df: DataFrame, d_label, wrt_label, accum=None):
     df = df.astype({wrt_label: str})
     return df[[wrt_label, d_label]].groupby(wrt_label).agg(accum)
 
-def perturbation_stats(df: DataFrame, *groups: str, wrt_col: str='out',
+
+def perturbation_stats(data: Union[DataFrame, dict], *groups: str, wrt_col: str='out',
                        func=None, prefix: str=None, split: bool=False):
     """Compute statistics for wrt_col in df, conditional on groups
 
     Params
     ------
-    df: pandas.DataFrame
-        DataFrame on which to compute statistics.
+    data: Union[pandas.DataFrame, dict]
+        DataFrame or Vset output dict on which to compute statistics.
     *groups: str
         Columns names in `df` to group on.
     wrt_col: str (optional)
@@ -145,8 +149,15 @@ def perturbation_stats(df: DataFrame, *groups: str, wrt_col: str='out',
         func = ['count', 'mean', 'std']
     if prefix is None:
         prefix = wrt_col
+    if isinstance(data, dict):
+        df = dict_to_df(data)
+    else:
+        df = data
     groups = list(groups)
-    gb = df.groupby(groups)[wrt_col]
+    if len(groups) > 0:
+        gb = df.groupby(groups)[wrt_col]
+    else:
+        gb = df.groupby(lambda x: True)[wrt_col]
     mean_or_std = type(func) is list and 'mean' in func or 'std' in func
     list_or_ndarray = type(df[wrt_col].iloc[0]) in [list, np.ndarray]
     if mean_or_std and list_or_ndarray:
@@ -183,7 +194,10 @@ def perturbation_stats(df: DataFrame, *groups: str, wrt_col: str='out',
         df_out = gb.agg(func)
     df_out = df_out.reindex(sorted(df_out.columns), axis=1)
     df_out.reset_index(inplace=True)
-    return df_out.sort_values(groups[0])
+    if len(groups) > 0:
+        return df_out.sort_values(groups[0])
+    else:
+        return df_out
 
 
 def to_tuple(lists: list):
@@ -210,8 +224,8 @@ def to_list(tup: tuple):
     """Convert from tuple to packed list
     Ex. ([x1, x2, x3], [y1, y2, y3]) -> [[x1, y1], [x2, y2], [x3, y3]]
     Ex. ([x1], [y1]) -> [[x1, y1]]
-    Ex. ([x1, x2, x3]) -> [[x1], [x2], [x3]]
-    Ex. (x1) -> [[x1]]
+    Ex. ([x1, x2, x3], ) -> [[x1], [x2], [x3]]
+    Ex. (x1, ) -> [[x1]]
     Ex. (x1, y1) -> [[x1, y1]]
     Ex. (x1, x2, x3, y1, y2, y3) -> [[x1, y1], [x2, y2], [x3, y3]]
     Ex. (x1, x2, x3, y1, y2) -> Error
@@ -223,7 +237,7 @@ def to_list(tup: tuple):
     elif not isinstance(tup[0], list):
         # the first element is data
         if n_tup == 1:
-            return list(tup)
+            return [list(tup)]
         if n_tup % 2 != 0:
             raise ValueError('Don\'t know how to handle uneven number of args '
                              'without a list. Please wrap your args in a list.')
@@ -352,7 +366,7 @@ def combine_dicts(*args: dict, base_case=True):
         return combine_dicts(combine_dicts(args[0], args[1]), *args[2:], base_case=False)
 
 
-def apply_modules(modules: dict, data_dict: dict, lazy: bool = False):
+def apply_modules(modules: dict, data_dict: dict, lazy: bool=False):
     out_dict = {}
     for mod_k in modules:
         if len(data_dict) == 0:
@@ -377,6 +391,13 @@ def apply_modules(modules: dict, data_dict: dict, lazy: bool = False):
                     for i, data in enumerate(data_list):
                         if isinstance(data, VfuncPromise):
                             data_list[i] = data()
+                        if isinstance(func, RayRemoteFun):
+                            if not isinstance(data_list[i], RayObjRef):
+                                # send data to Ray's remote object store
+                                data_list[i] = ray.put(data_list[i])
+                        elif isinstance(data_list[i], RayObjRef):
+                            # this is not a remote function so get the data
+                            data_list[i] = ray.get(data_list[i])
                     out_dict[combined_key] = func(*data_list)
 
     return out_dict

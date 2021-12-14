@@ -142,7 +142,6 @@ def build_graph(node, draw=True):
     G = build_graph_recur(node, G)
     if draw:
         nx.draw(G, with_labels=True, node_color='#CCCCCC')
-        plt.tight_layout()
     return G
 
 
