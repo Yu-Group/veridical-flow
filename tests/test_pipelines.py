@@ -1,4 +1,5 @@
 import time
+import os
 from functools import partial
 from shutil import rmtree
 
@@ -280,6 +281,38 @@ class TestPipelines:
         finally:
             # clean up
             rmtree('./joblib')
+    
+    def test_mlflow_tracking(self, tmp_path):
+        try:
+            runs_path = os.path.join(tmp_path, 'mlruns')
+            np.random.seed(13)
+            X, y = make_classification(n_samples=50, n_features=5)
+            X_train, X_test, y_train, y_test = init_args(train_test_split(X, y, random_state=42),
+                                                names=['X_train', 'X_test', 'y_train','y_test'])
+            # fit models
+            modeling_set = Vset(name='modeling',
+                                modules=[LogisticRegression(C=1, max_iter=1000, tol=0.1)],
+                                module_keys=["LR"])
+
+            _ = modeling_set.fit(X_train, y_train)
+            preds_test = modeling_set.predict(X_test)
+            hard_metrics_set = Vset(name='hard_metrics',
+                                    modules=[accuracy_score, balanced_accuracy_score],
+                                    module_keys=["Acc", "Bal_Acc"],
+                                    tracking_dir=runs_path)
+            hard_metrics = hard_metrics_set.evaluate(y_test, preds_test)
+            runs_path = os.path.join(runs_path, '1')
+            assert os.path.isdir(runs_path)
+            assert len(os.listdir(runs_path)) == 2
+            runs_path = os.path.join(runs_path, [d for d in os.listdir(runs_path) if d != 'meta.yaml'][0])
+            runs_path = os.path.join(runs_path, 'metrics')
+            with open(os.path.join(runs_path, 'Acc')) as acc:
+                assert len(acc.read().split(" ")) == 3
+            with open(os.path.join(runs_path, 'Bal_Acc')) as bal_acc:
+                assert len(bal_acc.read().split(" ")) == 3
+        finally:
+            # clean up
+            rmtree(tmp_path)
 
 
 def costly_compute(data, row_index=0):
