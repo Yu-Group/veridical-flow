@@ -181,6 +181,11 @@ class Vset:
         return self._apply_func(pred_dict, *args)
     
     def predict_with_uncertainties(self, *args, group_by: list=None, wrt_col: str='out', **kwargs):
+        '''
+        TODO: Add support for predict instead of predict_proba
+              Wrap output dicts in dict wrapper::XXX
+              Wrap subkeys in Subkey
+        '''
         preds_proba = self.predict_proba(*args, **kwargs)
         preds_df = dict_to_df(preds_proba)
         if group_by is None:
