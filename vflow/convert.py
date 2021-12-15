@@ -95,18 +95,21 @@ def compute_interval(df: DataFrame, d_label, wrt_label, accum=None):
     return df[[wrt_label, d_label]].groupby(wrt_label).agg(accum)
 
 
-def perturbation_stats(data: Union[DataFrame, dict], *groups: str, wrt_col: str='out',
+def perturbation_stats(data: Union[DataFrame, dict], *group_by: str, wrt: str='out',
                        func=None, prefix: str=None, split: bool=False):
-    """Compute statistics for wrt_col in df, conditional on groups
+    """Compute statistics for `wrt` in `data`, conditional on `group_by`
 
     Params
     ------
     data: Union[pandas.DataFrame, dict]
-        DataFrame or Vset output dict on which to compute statistics.
-    *groups: str
-        Columns names in `df` to group on.
-    wrt_col: str (optional)
-        Column name in `df` on which to compute statistics. Defaults to `'out'`.
+        DataFrame, as from calling `dict_to_df` on an output dict from a Vset,
+        or the output dict itself.
+    *group_by: str
+        Vset names in `data` to group on. If none provided, treats everything as one big
+        group.
+    wrt: str (optional)
+        Column name in `data` or `dict_to_df(data)` on which to compute statistics.
+        Defaults to `'out'`, the values of the original Vset output dict.
     func: function, str, list or dict (optional), default None
         A list of functions or function names to use for computing
         statistics, analogous to the parameter of the same name in
@@ -114,26 +117,31 @@ def perturbation_stats(data: Union[DataFrame, dict], *groups: str, wrt_col: str=
         `['count', 'mean', 'std']`.
     prefix: str (optional), default None
         A string to prefix to new columns in output DataFrame. If `None`,
-        uses the value of `wrt_col`.
+        uses the value of `wrt`.
     split: bool (optional), default False
-        If `True` and `df[wrt_col]` has `list` or `numpy.ndarray` entries, will
+        If `True` and `wrt` in `data` has `list` or `numpy.ndarray` entries, will
         attempt to split the entries into multiple columns for the output.
+
+    Returns
+    -------
+    df: pandas.DataFrame
+        A DataFrame with summary statistics on `wrt`.
     """
     if func is None:
         func = ['count', 'mean', 'std']
     if prefix is None:
-        prefix = wrt_col
+        prefix = wrt
     if isinstance(data, dict):
         df = dict_to_df(data)
     else:
         df = data
-    groups = list(groups)
-    if len(groups) > 0:
-        gb = df.groupby(groups)[wrt_col]
+    group_by = list(group_by)
+    if len(group_by) > 0:
+        gb = df.groupby(group_by)[wrt]
     else:
-        gb = df.groupby(lambda x: True)[wrt_col]
+        gb = df.groupby(lambda x: True)[wrt]
     mean_or_std = type(func) is list and 'mean' in func or 'std' in func
-    list_or_ndarray = type(df[wrt_col].iloc[0]) in [list, np.ndarray]
+    list_or_ndarray = type(df[wrt].iloc[0]) in [list, np.ndarray]
     if mean_or_std and list_or_ndarray:
         dfs = [gb.get_group(grp) for grp in gb.groups]
         wrt_arrays = [np.stack(d.tolist()) for d in dfs]
@@ -168,8 +176,8 @@ def perturbation_stats(data: Union[DataFrame, dict], *groups: str, wrt_col: str=
         df_out = gb.agg(func)
     df_out = df_out.reindex(sorted(df_out.columns), axis=1)
     df_out.reset_index(inplace=True)
-    if len(groups) > 0:
-        return df_out.sort_values(groups[0])
+    if len(group_by) > 0:
+        return df_out.sort_values(group_by[0])
     else:
         return df_out
 
