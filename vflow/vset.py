@@ -180,27 +180,41 @@ class Vset:
                 pred_dict[k] = v.predict_proba
         return self._apply_func(pred_dict, *args)
     
-    def predict_with_uncertainties(self, *args, group_by: list=None, wrt_col: str='out', **kwargs):
-        '''
-        TODO: Add support for predict instead of predict_proba
-              Wrap output dicts in dict wrapper::XXX
+    def predict_with_uncertainties(self, *args, group_by: list=None, proba: bool=True):
+        """Returns the mean and std predictions conditional on group_by
+
+        Params
+        ------
+        *args
+            fixed args to compute predictions on
+        group_by: list (optional), default None
+            list of groups to compute statistics upon
+        proba: bool (optional), default True
+            if True, stastics are computed on class probabilities
+
+        TODO: Wrap output dicts in dict wrapper::XXX
               Wrap subkeys in Subkey
-        '''
-        preds_proba = self.predict_proba(*args, **kwargs)
-        preds_df = dict_to_df(preds_proba)
+              Fix default group_by when averaging over all predictions
+        """
+        if proba:
+            preds = self.predict_proba(*args)
+        else:
+            preds = self.predict(*args)
+        preds_df = dict_to_df(preds)
         if group_by is None:
             # just average over all predictions
             preds_stats = perturbation_stats(preds_df)
+            group_by = ['index']
         else:
             preds_stats = perturbation_stats(preds_df, *group_by)
         mean_keys = [tuple(x) for x in preds_stats[group_by].to_numpy()]
-        mean_dict = dict(zip(mean_keys, preds_stats[f'{wrt_col}-mean']))
+        mean_dict = dict(zip(mean_keys, preds_stats['out-mean']))
         std_keys = [tuple(x) for x in preds_stats[group_by].to_numpy()]
-        std_dict = dict(zip(std_keys, preds_stats[f'{wrt_col}-std']))
+        std_dict = dict(zip(std_keys, preds_stats['out-std']))
         # add PREV_KEY to out dicts
-        mean_dict[PREV_KEY] = preds_proba[PREV_KEY]
-        std_dict[PREV_KEY] = preds_proba[PREV_KEY]
-        return mean_dict, std_dict
+        mean_dict[PREV_KEY] = preds[PREV_KEY]
+        std_dict[PREV_KEY] = preds[PREV_KEY]
+        return mean_dict, std_dict, preds_stats
 
     def evaluate(self, *args):
         """Combines dicts before calling _apply_func

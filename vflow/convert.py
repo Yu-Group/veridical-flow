@@ -5,6 +5,7 @@ from typing import Union
 from uuid import uuid4
 
 import numpy as np
+from numpy.core.fromnumeric import sort
 import pandas as pd
 import numpy as np
 from pandas import DataFrame
@@ -85,29 +86,36 @@ def dict_to_df(d: dict, param_key=None):
                 df = df.iloc[:, new_idx]
     return df
 
-def evaluate_uncertainty(preds, uncertainty, y_real):
+def evaluate_uncertainty(mean_preds, std_preds):
     '''Returns uncertainty and cumulative accuracy intervals for
-    individual predictions, sorted in increasing order of uncertainty.
+    individual predictions, sorted in increasing order of uncertainty
+
+    Params
+    ------
+    mean_preds: dict
+        mean predictions, output from Vset.predict_with_uncertainties
+    std_preds: dict
+        std predictions, output from Vset.predict_with_uncertainties
     '''
+    uncertainty = dict_data(std_preds)[0][:,1]
     sorted_idx = np.argsort(uncertainty)
-    preds = np.array(dict_data(preds))[:,sorted_idx]
-    y_real = np.array(dict_data(y_real))[:,sorted_idx]
+    preds = np.array(dict_data(mean_preds))[0][sorted_idx]
     uncertainty = uncertainty[sorted_idx]
-    cum_acc = None
+    cum_acc = np.cumsum(preds[:,1])
     return uncertainty, cum_acc
 
 def base_dict(d: dict):
-    '''Remove PREV_KEY from dict d if present.
+    '''Remove PREV_KEY from dict d if present
     '''
     return {k:v for k,v in d.items() if k != PREV_KEY}
 
 def dict_data(d: dict):
-    '''Returns a list containing all data in dict d.
+    '''Returns a list containing all data in dict d
     '''
     return list(base_dict(d).values())
 
 def dict_keys(d: dict):
-    '''Returns a list containing all keys in dict d.
+    '''Returns a list containing all keys in dict d
     '''
     return list(base_dict(d).keys())
 
