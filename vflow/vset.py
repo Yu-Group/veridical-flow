@@ -1,9 +1,6 @@
 """Set of modules to be parallelized over in a pipeline.
 Function arguments are each a list
 """
-PREV_KEY = '__prev__'
-FILTER_PREV_KEY = '__filter_prev__'
-
 import numpy as np
 import joblib
 import ray
@@ -12,8 +9,10 @@ from mlflow.tracking import MlflowClient
 from copy import deepcopy
 
 from vflow.subkey import Subkey
-from vflow.convert import apply_modules, combine_dicts, sep_dicts
+from vflow.convert import apply_modules, combine_dicts, sep_dicts, PREV_KEY
 from vflow.vfunc import Vfunc, AsyncModule
+
+FILTER_PREV_KEY = '__filter_prev__'
 
 
 class Vset:

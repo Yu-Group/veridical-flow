@@ -14,8 +14,8 @@ from ray._raylet import ObjectRef as RayObjRef
 
 from vflow.subkey import Subkey
 from vflow.vfunc import VfuncPromise
-from vflow.vset import PREV_KEY
 
+PREV_KEY = '__prev__'
 
 def init_args(args_tuple: Union[tuple, list], names=None):
     """ converts tuple of arguments to a list of dicts

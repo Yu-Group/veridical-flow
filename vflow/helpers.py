@@ -4,9 +4,9 @@ from functools import partial
 from itertools import product
 from typing import Union
 
-from vflow.convert import dict_to_df
+from vflow.convert import dict_to_df, PREV_KEY
 from vflow.vfunc import Vfunc
-from vflow.vset import Vset, PREV_KEY, FILTER_PREV_KEY
+from vflow.vset import Vset, FILTER_PREV_KEY
 
 
 def build_vset(name: str, obj, *args, param_dict=None, reps: int = 1,
