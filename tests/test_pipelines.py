@@ -356,6 +356,31 @@ class TestPipelines:
 
         assert_equal(fun2_res, fun2_res_async)
 
+    def test_lazy_async(self):
+        class learner:
+            def fit(self, a):
+                self.a = a
+                return self
+            def transform(self, b):
+                return self.a + b
+            def predict(self, x):
+                return self.a*x
+            def predict_proba(self, x):
+                y = np.exp(-self.a*x)
+                return 1 / (1 + y)
+
+        vset = Vset("learner", [learner()], is_async=True, lazy=True)
+        vset.fit(*init_args([.4]))
+        data = init_args([np.array([1, 2, 3])])[0]
+        transformed = vset.transform(data)
+        preds = vset.predict(transformed)
+        preds_proba = vset.predict_proba(transformed)
+
+        assert_equal(list(transformed.values())[0](), [1.4, 2.4, 3.4])
+        assert_equal(list(preds.values())[0](), np.array([1.4, 2.4, 3.4])*.4)
+        assert_equal(list(preds_proba.values())[0](),
+                     1 / (1 + np.exp(-np.array([1.4, 2.4, 3.4])*.4)))
+
 
 def costly_compute(data, row_index=0):
     """Simulate an expensive computation"""

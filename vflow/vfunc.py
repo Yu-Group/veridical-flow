@@ -94,14 +94,19 @@ class VfuncPromise:
         self.called = True
         return self.value
 
+    def _get_value(self):
+        if isinstance(self(), ray.ObjectRef):
+            self.value = ray.get(self.value)
+        return self.value
+
     def transform(self, *args):
-        return self().transform(*args)
+        return self._get_value().transform(*args)
 
     def predict(self, *args):
-        return self().predict(*args)
+        return self._get_value().predict(*args)
 
     def predict_proba(self, *args):
-        return self().predict_proba(*args)
+        return self._get_value().predict_proba(*args)
 
     def __repr__(self):
         if self.called:
