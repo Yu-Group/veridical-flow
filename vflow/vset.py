@@ -1,12 +1,13 @@
 """Set of modules to be parallelized over in a pipeline.
 Function arguments are each a list
 """
+from copy import deepcopy
+
 import numpy as np
 import joblib
 import ray
 
 from mlflow.tracking import MlflowClient
-from copy import deepcopy
 
 from vflow.subkey import Subkey
 from vflow.convert import apply_modules, combine_dicts, sep_dicts, PREV_KEY
@@ -16,6 +17,7 @@ FILTER_PREV_KEY = '__filter_prev__'
 
 
 class Vset:
+
     def __init__(self, name: str, modules, module_keys: list = None,
                  is_async: bool = False, output_matching: bool = False,
                  lazy: bool = False, cache_dir: str = None,
@@ -52,10 +54,9 @@ class Vset:
         self._output_matching = output_matching
         self._lazy = lazy
         self._cache_dir = cache_dir
-        self._tracking_dir = tracking_dir
         self._memory = joblib.Memory(self._cache_dir)
-        if self._tracking_dir is not None:
-            self._mlflow = MlflowClient(tracking_uri=self._tracking_dir)
+        if tracking_dir is not None:
+            self._mlflow = MlflowClient(tracking_uri=tracking_dir)
             experiment = self._mlflow.get_experiment_by_name(name=self.name)
             if experiment is None:
                 self._exp_id = self._mlflow.create_experiment(name=self.name)
@@ -67,11 +68,11 @@ class Vset:
         # if so, we'll make then all AsyncModules later on
         if not self._async and np.any([isinstance(mod, AsyncModule) for mod in modules]):
             self._async = True
-        if type(modules) is dict:
+        if isinstance(modules, dict):
             self.modules = modules
-        elif type(modules) is list:
+        elif isinstance(modules, list):
             if module_keys is not None:
-                assert type(module_keys) is list, 'modules passed as list but module_names is not a list'
+                assert isinstance(module_keys, list), 'modules passed as list but module_names is not a list'
                 assert len(modules) == len(
                     module_keys), 'modules list and module_names list do not have the same length'
                 # TODO: how best to handle tuple subkeys?

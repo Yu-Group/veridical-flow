@@ -10,7 +10,6 @@ from pandas import DataFrame
 
 import ray
 from ray.remote_function import RemoteFunction as RayRemoteFun
-from ray._raylet import ObjectRef as RayObjRef
 
 from vflow.subkey import Subkey
 from vflow.vfunc import VfuncPromise
@@ -30,7 +29,7 @@ def init_args(args_tuple: Union[tuple, list], names=None):
         assert len(names) == len(args_tuple), 'names should be same length as args_tuple'
 
     output_dicts = []
-    for i in range(len(args_tuple)):
+    for i, _ in enumerate(args_tuple):
         output_dicts.append({
             (Subkey(names[i], 'init'),): args_tuple[i],
             PREV_KEY: ('init',),
@@ -368,10 +367,10 @@ def apply_modules(modules: dict, data_dict: dict, lazy: bool = False):
                         if isinstance(data, VfuncPromise):
                             data_list[i] = data()
                         if isinstance(func, RayRemoteFun):
-                            if not isinstance(data_list[i], RayObjRef):
+                            if not isinstance(data_list[i], ray.ObjectRef):
                                 # send data to Ray's remote object store
                                 data_list[i] = ray.put(data_list[i])
-                        elif isinstance(data_list[i], RayObjRef):
+                        elif isinstance(data_list[i], ray.ObjectRef):
                             # this is not a remote function so get the data
                             data_list[i] = ray.get(data_list[i])
                     out_dict[combined_key] = func(*data_list)
