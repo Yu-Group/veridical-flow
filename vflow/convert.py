@@ -16,6 +16,7 @@ from vflow.subkey import Subkey
 from vflow.vfunc import VfuncPromise
 from vflow.vset import PREV_KEY
 
+
 def init_args(args_tuple: Union[tuple, list], names=None):
     """ converts tuple of arguments to a list of dicts
     Params
@@ -29,7 +30,7 @@ def init_args(args_tuple: Union[tuple, list], names=None):
         assert len(names) == len(args_tuple), 'names should be same length as args_tuple'
 
     output_dicts = []
-    for (i, ele) in enumerate(args_tuple):
+    for i in range(len(args_tuple)):
         output_dicts.append({
             (Subkey(names[i], 'init'),): args_tuple[i],
             PREV_KEY: ('init',),
@@ -42,14 +43,14 @@ def s(x):
     """
     if type(x) in [list, tuple]:
         return len(x)
-    else:
-        return x.shape
+    return x.shape
 
 
 def init_step(idx, cols):
     for i in range(idx, len(cols)):
         if cols[i] != 'init':
             return 'init-' + cols[i]
+    return None
 
 
 def dict_to_df(d: dict, param_key=None):
@@ -57,7 +58,7 @@ def dict_to_df(d: dict, param_key=None):
     into a pandas DataFrame, optionally seperating
     parameters in param_key if not None
     """
-    d_copy = {tuple([sk.value for sk in k]): d[k] for k in d if k != PREV_KEY}
+    d_copy = {tuple(sk.value for sk in k): d[k] for k in d if k != PREV_KEY}
     df = pd.Series(d_copy).reset_index()
     if len(d_copy.keys()) > 0:
         key_list = list(d.keys())
@@ -77,10 +78,10 @@ def dict_to_df(d: dict, param_key=None):
                 param_key_cols = [f"{p.split('=')[0]}-{param_key}" for p in param_keys[0]]
                 param_keys = [[s.split('=')[1] for s in t] for t in param_keys]
                 df = df.join(pd.DataFrame(param_keys)).drop(columns=param_key)
-                new_cols = df.columns[:len(cols)-1].tolist() + param_key_cols
+                new_cols = df.columns[:len(cols) - 1].tolist() + param_key_cols
                 df.set_axis(new_cols, axis=1, inplace=True)
                 new_idx = list(range(len(new_cols)))
-                new_idx = new_idx[:param_loc] + new_idx[len(cols)-1:] + new_idx[param_loc:len(cols)-1]
+                new_idx = new_idx[:param_loc] + new_idx[len(cols) - 1:] + new_idx[param_loc:len(cols) - 1]
                 df = df.iloc[:, new_idx]
     return df
 
@@ -95,8 +96,8 @@ def compute_interval(df: DataFrame, d_label, wrt_label, accum=None):
     return df[[wrt_label, d_label]].groupby(wrt_label).agg(accum)
 
 
-def perturbation_stats(data: Union[DataFrame, dict], *group_by: str, wrt: str='out',
-                       func=None, prefix: str=None, split: bool=False):
+def perturbation_stats(data: Union[DataFrame, dict], *group_by: str, wrt: str = 'out',
+                       func=None, prefix: str = None, split: bool = False):
     """Compute statistics for `wrt` in `data`, conditional on `group_by`
 
     Params
@@ -140,37 +141,35 @@ def perturbation_stats(data: Union[DataFrame, dict], *group_by: str, wrt: str='o
         gb = df.groupby(group_by)[wrt]
     else:
         gb = df.groupby(lambda x: True)[wrt]
-    mean_or_std = type(func) is list and 'mean' in func or 'std' in func
-    list_or_ndarray = type(df[wrt].iloc[0]) in [list, np.ndarray]
-    if mean_or_std and list_or_ndarray:
-        dfs = [gb.get_group(grp) for grp in gb.groups]
-        wrt_arrays = [np.stack(d.tolist()) for d in dfs]
+    if (isinstance(func, list) and 'mean' in func or 'std' in func) and \
+       (type(df[wrt].iloc[0]) in [list, np.ndarray]):
+        wrt_arrays = [np.stack(d.tolist()) for d in (gb.get_group(grp) for grp in gb.groups)]
         n_cols = wrt_arrays[0].shape[1]
         df_out = pd.DataFrame(gb.agg('count'))
         df_out.columns = [f'{prefix}-count']
         if 'mean' in func:
             if split:
                 col_means = [arr.mean(axis=0) for arr in wrt_arrays]
-                col_names = [f'{prefix}{i}-mean' for i in range(n_cols)]
-                wrt_means = pd.DataFrame(col_means, columns=col_names,
+                wrt_means = pd.DataFrame(col_means,
+                                         columns=[f'{prefix}{i}-mean' for i in range(n_cols)],
                                          index=gb.groups.keys())
             else:
                 col_means = [{f'{prefix}-mean': arr.mean(axis=0)} for arr in wrt_arrays]
-                wrt_means = pd.DataFrame(col_means, index = gb.groups.keys())
+                wrt_means = pd.DataFrame(col_means, index=gb.groups.keys())
             wrt_means.index.names = df_out.index.names
             df_out = df_out.join(wrt_means)
         if 'std' in func:
             if split:
                 col_stds = [arr.std(axis=0, ddof=1) for arr in wrt_arrays]
-                col_names = [f'{prefix}{i}-std' for i in range(n_cols)]
-                wrt_stds = pd.DataFrame(col_stds, columns=col_names,
+                wrt_stds = pd.DataFrame(col_stds,
+                                        columns=[f'{prefix}{i}-std' for i in range(n_cols)],
                                         index=gb.groups.keys())
             else:
                 col_stds = [{f'{prefix}-std': arr.std(axis=0, ddof=1)} for arr in wrt_arrays]
-                wrt_stds = pd.DataFrame(col_stds, index = gb.groups.keys())
+                wrt_stds = pd.DataFrame(col_stds, index=gb.groups.keys())
             wrt_stds.index.names = df_out.index.names
             df_out = df_out.join(wrt_stds)
-        if not 'count' in func:
+        if 'count' not in func:
             df_out = df_out.drop(f'{prefix}-count')
     else:
         df_out = gb.agg(func)
@@ -178,8 +177,7 @@ def perturbation_stats(data: Union[DataFrame, dict], *group_by: str, wrt: str='o
     df_out.reset_index(inplace=True)
     if len(group_by) > 0:
         return df_out.sort_values(group_by[0])
-    else:
-        return df_out
+    return df_out
 
 
 def to_tuple(lists: list):
@@ -192,7 +190,7 @@ def to_tuple(lists: list):
     n_mods = len(lists)
     if n_mods <= 1:
         return lists
-    if not type(lists[0]) == list:
+    if not isinstance(lists[0], list):
         return lists
     n_tup = len(lists[0])
     tup = [[] for _ in range(n_tup)]
@@ -216,7 +214,7 @@ def to_list(tup: tuple):
     n_tup = len(tup)
     if n_tup == 0:
         return []
-    elif not isinstance(tup[0], list):
+    if not isinstance(tup[0], list):
         # the first element is data
         if n_tup == 1:
             return [list(tup)]
@@ -225,7 +223,7 @@ def to_list(tup: tuple):
                              'without a list. Please wrap your args in a list.')
         # assume first half of args is input and second half is outcome
         return [list(el) for el in zip(tup[:(n_tup // 2)], tup[(n_tup // 2):])]
-    elif n_tup == 1:
+    if n_tup == 1:
         return [[x] for x in tup[0]]
     n_mods = len(tup[0])
     lists_packed = [[] for _ in range(n_mods)]
@@ -255,29 +253,28 @@ def sep_dicts(d: dict, n_out: int = 1, keys=None):
     # empty dict -- return empty dict
     if n_out <= 1:
         return d
-    else:
-        # try separating dict into multiple dicts
-        sep_dicts_id = str(uuid4())  # w/ high prob, uuid4 is unique
-        sep_dicts_list = [dict() for _ in range(n_out)]
-        for key, value in d.items():
-            if key != PREV_KEY:
-                for i in range(n_out):
-                    # assumes the correct sub-key for item i is in the i-th position
-                    if len(keys) == 0:
-                        new_key = (key[i],) + key[n_out:]
-                    else:
-                        new_sub = Subkey(value=keys[i], origin=key[-1].origin + '-' + str(i))
-                        new_key = (new_sub,) + key
-                    new_key[-1]._sep_dicts_id = sep_dicts_id
-                    if isinstance(value, VfuncPromise):
-                        # return a promise to get the value at index i of the
-                        # original promise
-                        value_i = VfuncPromise(lambda v, x: v[x], value, i)
-                    else:
-                        value_i = value[i]
-                    sep_dicts_list[i][new_key] = value_i
+    # try separating dict into multiple dicts
+    sep_dicts_id = str(uuid4())  # w/ high prob, uuid4 is unique
+    sep_dicts_list = [{} for _ in range(n_out)]
+    for key, value in d.items():
+        if key != PREV_KEY:
+            for i in range(n_out):
+                # assumes the correct sub-key for item i is in the i-th position
+                if len(keys) == 0:
+                    new_key = (key[i],) + key[n_out:]
+                else:
+                    new_sub = Subkey(value=keys[i], origin=key[-1].origin + '-' + str(i))
+                    new_key = (new_sub,) + key
+                new_key[-1].sep_dicts_id = sep_dicts_id
+                if isinstance(value, VfuncPromise):
+                    # return a promise to get the value at index i of the
+                    # original promise
+                    value_i = VfuncPromise(lambda v, x: v[x], value, i)
+                else:
+                    value_i = value[i]
+                sep_dicts_list[i][new_key] = value_i
 
-        return sep_dicts_list
+    return sep_dicts_list
 
 
 def combine_keys(left_key, right_key):
@@ -295,18 +292,16 @@ def combine_keys(left_key, right_key):
                 if subkey.matches(c_subkey):
                     matched_subkeys.append(subkey)
                     break
-                elif subkey.mismatches(c_subkey):
+                if subkey.mismatches(c_subkey):
                     # subkeys with same origin but different values are rejected
                     return ()
         if len(matched_subkeys) > 0:
             # always filter on right key
-            filtered_key = tuple([subkey for subkey in right_key if subkey not in matched_subkeys])
+            filtered_key = tuple(subkey for subkey in right_key if subkey not in matched_subkeys)
             combined_key = left_key + filtered_key
             return combined_key
-        else:
-            return left_key + right_key
-    else:
         return left_key + right_key
+    return left_key + right_key
 
 
 def combine_dicts(*args: dict, base_case=True):
@@ -318,7 +313,7 @@ def combine_dicts(*args: dict, base_case=True):
     combined_dict = {}
     if n_args == 0:
         return combined_dict
-    elif n_args == 1:
+    if n_args == 1:
         for k in args[0]:
             # wrap the dict values in tuples; this is helpful so that when we
             # pass the values to a module fun in we can just use * expansion
@@ -327,11 +322,11 @@ def combine_dicts(*args: dict, base_case=True):
             else:
                 combined_dict[k] = args[0][k]
         return combined_dict
-    elif n_args == 2:
+    if n_args == 2:
         for k0 in args[0]:
             for k1 in args[1]:
 
-                if k0 == PREV_KEY or k1 == PREV_KEY:
+                if PREV_KEY in (k0, k1):
                     continue
 
                 combined_key = combine_keys(k0, k1)
@@ -343,12 +338,11 @@ def combine_dicts(*args: dict, base_case=True):
                         combined_dict[combined_key] = args[0][k0] + (args[1][k1],)
 
         return combined_dict
-    else:
-        # combine the first two dicts and call recursively with remaining args
-        return combine_dicts(combine_dicts(args[0], args[1]), *args[2:], base_case=False)
+    # combine the first two dicts and call recursively with remaining args
+    return combine_dicts(combine_dicts(args[0], args[1]), *args[2:], base_case=False)
 
 
-def apply_modules(modules: dict, data_dict: dict, lazy: bool=False):
+def apply_modules(modules: dict, data_dict: dict, lazy: bool = False):
     out_dict = {}
     for mod_k in modules:
         if len(data_dict) == 0:
@@ -358,7 +352,7 @@ def apply_modules(modules: dict, data_dict: dict, lazy: bool=False):
             else:
                 out_dict[mod_k] = func()
         for data_k in data_dict:
-            if mod_k == PREV_KEY or data_k == PREV_KEY:
+            if PREV_KEY in (mod_k, data_k):
                 continue
 
             combined_key = combine_keys(data_k, mod_k)

@@ -4,14 +4,16 @@ Function arguments are each a list
 PREV_KEY = '__prev__'
 FILTER_PREV_KEY = '__filter_prev__'
 
-import joblib
 import numpy as np
+import joblib
 import ray
-from mlflow.tracking import MlflowClient
 
-from vflow.convert import *
+from mlflow.tracking import MlflowClient
+from copy import deepcopy
+
 from vflow.subkey import Subkey
-from vflow.vfunc import Vfunc, AsyncModule, VfuncPromise, _remote_fun
+from vflow.convert import apply_modules, combine_dicts, sep_dicts
+from vflow.vfunc import Vfunc, AsyncModule
 
 
 class Vset:
@@ -111,7 +113,7 @@ class Vset:
                         i for i in range(len(k[:-1])) if origins[i] != 'init'
                     ]
                     # get or create mlflow run
-                    run_dict_key = tuple([subk.value for subk in k[:-1]])
+                    run_dict_key = tuple(subk.value for subk in k[:-1])
                     if run_dict_key in run_dict:
                         run_id = run_dict[run_dict_key]
                     else:

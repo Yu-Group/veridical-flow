@@ -93,7 +93,7 @@ preproc_list = [SimpleImputer(strategy='mean'),
 # create a Vset which varies over preproc_list
 # we use output_matching=True to ensure that preprocessing strategies
 # match throughout the pipeline
-preproc_set = Vset("preproc", preproc_list, ['mean', 'med', 'knn'],
+preproc_set = Vset('preproc', preproc_list, ['mean', 'med', 'knn'],
                    output_matching=True)
 
 # create the feature importance Vset using helper build_vset
@@ -118,7 +118,7 @@ RF_params = {
 
 # we could instead pass a list of distinct models
 # and corresponding param dicts
-RF_set = build_vset('RF', RF, RF_params)
+RF_set = build_vset('RF', RF, param_dict=RF_params)
 ```
 
 ### 3. Define data perturbations
@@ -153,7 +153,7 @@ X_train, y_train, X_val, y_val = \
 X_trains, y_trains = boot_set(X_train, y_train)
 
 # apply three preprocessing methods to each bootstrap sample
-X_trains = preproc_set.fit_transform(X_train)
+X_trains = preproc_set.fit_transform(X_trains)
 
 # fit the 4 RF models to each of the boot/preproc combos
 RF_set.fit(X_trains, y_trains)

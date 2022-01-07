@@ -40,7 +40,7 @@ X_train, X_test, y_train, y_test = init_args(
 subsampling_funcs = [
     sklearn.utils.resample for _ in range(3)
 ]
-subsampling_set = Vset(name="subsampling",
+subsampling_set = Vset(name='subsampling',
                        modules=subsampling_funcs,
                        output_matching=True)
 X_trains, y_trains = subsampling_set(X_train, y_train)
@@ -50,7 +50,7 @@ models = [
     sklearn.linear_model.LogisticRegression(),
     sklearn.tree.DecisionTreeClassifier()
 ]
-modeling_set = Vset(name="modeling",
+modeling_set = Vset(name='modeling',
                     modules=models,
                     module_keys=["LR", "DT"])
 modeling_set.fit(X_trains, y_trains)

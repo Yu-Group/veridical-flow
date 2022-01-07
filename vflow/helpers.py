@@ -9,7 +9,7 @@ from vflow.vfunc import Vfunc
 from vflow.vset import Vset, PREV_KEY, FILTER_PREV_KEY
 
 
-def build_vset(name: str, obj, param_dict=None, *args, reps: int = 1,
+def build_vset(name: str, obj, *args, param_dict=None, reps: int = 1,
                is_async: bool = False, output_matching: bool = False,
                lazy: bool = False, cache_dir: str = None, verbose: bool = True,
                tracking_dir: str = None, **kwargs) -> Vset:
@@ -55,17 +55,11 @@ def build_vset(name: str, obj, param_dict=None, *args, reps: int = 1,
     vfuncs = []
     vkeys = []
 
-    # TODO: better way to check this?
-    # check if obj is a class
-    instantiate = isinstance(obj, type)
-
-    param_names = list(param_dict.keys())
-    param_lists = list(param_dict.values())
-    kwargs_tuples = product(*param_lists)
+    kwargs_tuples = product(*list(param_dict.values()))
     for tup in kwargs_tuples:
         kwargs_dict = {}
         vkey_tup = ()
-        for param_name, param_val in zip(param_names, tup):
+        for param_name, param_val in zip(list(param_dict.keys()), tup):
             kwargs_dict[param_name] = param_val
             vkey_tup += (f'{param_name}={param_val}', )
         # add additional fixed kwargs to kwargs_dict
@@ -77,7 +71,8 @@ def build_vset(name: str, obj, param_dict=None, *args, reps: int = 1,
                 vkeys.append((f'rep={i}', ) + vkey_tup)
             else:
                 vkeys.append(vkey_tup)
-            if instantiate:
+            # check if obj is a class
+            if isinstance(obj, type):
                 # instantiate obj
                 vfuncs.append(Vfunc(module=obj(*args, **kwargs_dict), name=str(vkey_tup)))
             else:
@@ -126,10 +121,11 @@ def filter_vset_by_metric(metric_dict: dict, vset: Vset, *vsets: Vset, n_keep: i
     df = dict_to_df(metric_dict)
     vsets = [vset, *vsets]
     vset_names = []
-    for vset in vsets:
-        if vset.name not in df.columns:
-            raise ValueError(f'{vset.name} should be one of the columns of dict_to_df(metric_dict)')
-        vset_names.append(vset.name)
+    for vset_i in vsets:
+        if vset_i.name not in df.columns:
+            raise ValueError((f'{vset_i.name} should be one '
+                              'of the columns of dict_to_df(metric_dict)'))
+        vset_names.append(vset_i.name)
     if len(filter_on) > 0:
         filter_col = list(metric_dict.keys())[0][-1].origin
         df = df[df[filter_col].isin(filter_on)]
@@ -140,17 +136,16 @@ def filter_vset_by_metric(metric_dict: dict, vset: Vset, *vsets: Vset, n_keep: i
     else:
         df = df.sort_values(by='out')
     df = df.iloc[0:n_keep]
-    for i, vset in enumerate(vsets):
-        vfuncs = vset.modules
-        vfunc_filter = [str(name) for name in df[vset.name].to_numpy()]
+    for i, vset_i in enumerate(vsets):
+        vfuncs = vset_i.modules
+        vfunc_filter = [str(name) for name in df[vset_i.name].to_numpy()]
         new_vfuncs = {k: v for k, v in vfuncs.items() if str(v.name) in vfunc_filter}
-        new_vset = Vset('filtered_' + vset.name, new_vfuncs, is_async=vset._async,
-                        output_matching=vset._output_matching, lazy=vset._lazy,
-                        cache_dir=vset._cache_dir, tracking_dir=vset._tracking_dir)
-        setattr(new_vset, FILTER_PREV_KEY, (metric_dict[PREV_KEY], vset,))
+        new_vset = Vset('filtered_' + vset_i.name, new_vfuncs, is_async=vset_i._async,
+                        output_matching=vset_i._output_matching, lazy=vset_i._lazy,
+                        cache_dir=vset_i._cache_dir, tracking_dir=vset_i._tracking_dir)
+        setattr(new_vset, FILTER_PREV_KEY, (metric_dict[PREV_KEY], vset_i,))
         setattr(new_vset, PREV_KEY, getattr(new_vset, FILTER_PREV_KEY))
         vsets[i] = new_vset
     if len(vsets) == 1:
         return vsets[0]
-    else:
-        return vsets
+    return vsets
