@@ -193,7 +193,6 @@ class Vset:
             if True, stastics are computed on class probabilities
 
         TODO: Wrap output dicts in dict wrapper::XXX
-              Wrap subkeys in Subkey
               Fix default group_by when averaging over all predictions
         """
         if proba:
@@ -207,7 +206,10 @@ class Vset:
             group_by = ['index']
         else:
             preds_stats = perturbation_stats(preds_df, *group_by)
-        keys = [tuple(x) for x in preds_stats[group_by].to_numpy()]
+        origins = preds_stats[group_by].columns
+        keys = preds_stats[group_by].to_numpy()
+        # wrap subkey values in Subkey
+        keys = [tuple(Subkey(sk, origins[idx]) for idx, sk in enumerate(x)) for x in keys]
         mean_dict = dict(zip(keys, preds_stats['out-mean']))
         std_dict = dict(zip(keys, preds_stats['out-std']))
         # add PREV_KEY to out dicts
