@@ -87,8 +87,8 @@ def dict_to_df(d: dict, param_key=None):
     return df
 
 def evaluate_uncertainty(mean_preds, std_preds):
-    '''Returns uncertainty and cumulative accuracy intervals for
-    individual predictions, sorted in increasing order of uncertainty
+    """Returns uncertainty and cumulative accuracy intervals for
+    grouped binary predictions, sorted in increasing order of uncertainty
 
     Params
     ------
@@ -96,27 +96,31 @@ def evaluate_uncertainty(mean_preds, std_preds):
         mean predictions, output from Vset.predict_with_uncertainties
     std_preds: dict
         std predictions, output from Vset.predict_with_uncertainties
-    '''
-    uncertainty = dict_data(std_preds)[0][:,1]
-    sorted_idx = np.argsort(uncertainty)
-    preds = np.array(dict_data(mean_preds))[0][sorted_idx]
-    uncertainty = uncertainty[sorted_idx]
-    cum_acc = np.cumsum(preds[:,1])
+    """
+    assert dict_keys(mean_preds) == dict_keys(std_preds), \
+        "mean_preds and std_preds must share the same keys"
+    # match predictions on keys
+    paired_preds = [[d[k] for d in [mean_preds, std_preds]] for k in dict_keys(mean_preds)]
+    mean_preds, std_preds = (np.array(p)[:,:,1] for p in zip(*paired_preds))
+    sorted_idx = np.argsort(std_preds, axis=1)
+    mean_preds = np.take_along_axis(mean_preds, sorted_idx, 1)
+    uncertainty = np.take_along_axis(std_preds, sorted_idx, 1)
+    cum_acc = np.cumsum(mean_preds, axis=1)
     return uncertainty, cum_acc
 
 def base_dict(d: dict):
-    '''Remove PREV_KEY from dict d if present
-    '''
+    """Remove PREV_KEY from dict d if present
+    """
     return {k:v for k,v in d.items() if k != PREV_KEY}
 
 def dict_data(d: dict):
-    '''Returns a list containing all data in dict d
-    '''
+    """Returns a list containing all data in dict d
+    """
     return list(base_dict(d).values())
 
 def dict_keys(d: dict):
-    '''Returns a list containing all keys in dict d
-    '''
+    """Returns a list containing all keys in dict d
+    """
     return list(base_dict(d).keys())
 
 def compute_interval(df: DataFrame, d_label, wrt_label, accum=None):

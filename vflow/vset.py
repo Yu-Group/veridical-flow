@@ -180,7 +180,7 @@ class Vset:
                 pred_dict[k] = v.predict_proba
         return self._apply_func(pred_dict, *args)
     
-    def predict_with_uncertainties(self, *args, group_by: list=None, proba: bool=True):
+    def predict_with_uncertainties(self, *args, group_by: list=None, proba: bool=False):
         """Returns the mean and std predictions conditional on group_by
 
         Params
@@ -207,14 +207,13 @@ class Vset:
             group_by = ['index']
         else:
             preds_stats = perturbation_stats(preds_df, *group_by)
-        mean_keys = [tuple(x) for x in preds_stats[group_by].to_numpy()]
-        mean_dict = dict(zip(mean_keys, preds_stats['out-mean']))
-        std_keys = [tuple(x) for x in preds_stats[group_by].to_numpy()]
-        std_dict = dict(zip(std_keys, preds_stats['out-std']))
+        keys = [tuple(x) for x in preds_stats[group_by].to_numpy()]
+        mean_dict = dict(zip(keys, preds_stats['out-mean']))
+        std_dict = dict(zip(keys, preds_stats['out-std']))
         # add PREV_KEY to out dicts
         mean_dict[PREV_KEY] = preds[PREV_KEY]
         std_dict[PREV_KEY] = preds[PREV_KEY]
-        return mean_dict, std_dict, preds_stats
+        return mean_dict, std_dict
 
     def evaluate(self, *args):
         """Combines dicts before calling _apply_func
