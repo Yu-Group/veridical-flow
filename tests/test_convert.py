@@ -1,4 +1,5 @@
 import numpy as np
+from numpy.testing._private.utils import assert_array_almost_equal, assert_array_equal
 import pytest
 from numpy.testing import assert_equal
 
@@ -1112,3 +1113,12 @@ class TestConvert:
         assert stats.columns[-1] == 'o2-std'
         assert stats.loc[1]['o2-std'] == 0.0820243866176395
 
+    def test_evaluate_uncertainty(self):
+        mean_dict = {'group_0': np.array([[0.2, 0.8], [0.25, 0.75], [0.1, 0.9]]), 
+                     'group_1': np.array([[0.4, 0.6], [0.5, 0.5], [0.45, 0.55]])}
+        std_dict = {'group_0': np.array([[0.003, 0.003], [0.146, 0.146], [0.0023, 0.0023]]),
+                    'group_1': np.array([[0.0054, 0.0054], [0.2344, 0.2344], [0.5166, 0.5166]])}
+        u, c = evaluate_uncertainty(mean_dict, std_dict)
+        assert u.shape == c.shape == (2, 3)
+        assert_array_almost_equal(u[0], [0.0023, 0.003, 0.146])
+        assert_array_almost_equal(c[0], [0.9, 1.7, 2.45])
