@@ -73,11 +73,11 @@ See the [docs](https://yu-group.github.io/veridical-flow/) for reference on the 
 >
 > [Synthetic classification](https://yu-group.github.io/veridical-flow/notebooks/00_synthetic_classification.html)
 >
-> [Enhancer genomics](https://yu-group.github.io/veridical-flow/notebooks/notebooks/01_enhancer.html)
+> [Enhancer genomics](https://yu-group.github.io/veridical-flow/notebooks/01_enhancer.html)
 >
-> [fMRI voxel prediction](https://yu-group.github.io/veridical-flow/notebooks/notebooks/02_fmri.html)
+> [fMRI voxel prediction](https://yu-group.github.io/veridical-flow/notebooks/02_fmri.html)
 > 
-> [Fashion mnist classification](https://yu-group.github.io/veridical-flow/notebooks/notebooks/03_computer_vision_dnn.html)
+> [Fashion mnist classification](https://yu-group.github.io/veridical-flow/notebooks/03_computer_vision_dnn.html)
 > 
 > [Clinical decision rule vetting](https://github.com/Yu-Group/rule-vetting)
 
