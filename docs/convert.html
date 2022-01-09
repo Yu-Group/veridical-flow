@@ -33,13 +33,17 @@ from copy import deepcopy
 from typing import Union
 from uuid import uuid4
 
+import numpy as np
 import pandas as pd
 from pandas import DataFrame
+
+import ray
+from ray.remote_function import RemoteFunction as RayRemoteFun
+from ray._raylet import ObjectRef as RayObjRef
 
 from vflow.subkey import Subkey
 from vflow.vfunc import VfuncPromise
 from vflow.vset import PREV_KEY
-
 
 def init_args(args_tuple: Union[tuple, list], names=None):
     &#34;&#34;&#34; converts tuple of arguments to a list of dicts
@@ -92,7 +96,21 @@ def dict_to_df(d: dict, param_key=None):
         cols = [c if c != &#39;init&#39; else init_step(idx, cols) for idx, c in enumerate(cols)]
         df.set_axis(cols, axis=1, inplace=True)
         if param_key:
-            df = df.join(pd.DataFrame(df[param_key].tolist()))
+            param_keys = df[param_key].tolist()
+            if param_key == &#39;out&#39; and hasattr(param_keys[0], &#39;__iter__&#39;):
+                param_df = pd.DataFrame(param_keys)
+                param_df.columns = [f&#39;{param_key}-{col}&#39; for col in param_df.columns]
+                df = df.join(param_df)
+            else:
+                param_loc = df.columns.get_loc(param_key)
+                param_key_cols = [f&#34;{p.split(&#39;=&#39;)[0]}-{param_key}&#34; for p in param_keys[0]]
+                param_keys = [[s.split(&#39;=&#39;)[1] for s in t] for t in param_keys]
+                df = df.join(pd.DataFrame(param_keys)).drop(columns=param_key)
+                new_cols = df.columns[:len(cols)-1].tolist() + param_key_cols
+                df.set_axis(new_cols, axis=1, inplace=True)
+                new_idx = list(range(len(new_cols)))
+                new_idx = new_idx[:param_loc] + new_idx[len(cols)-1:] + new_idx[param_loc:len(cols)-1]
+                df = df.iloc[:, new_idx]
     return df
 
 
@@ -106,16 +124,91 @@ def compute_interval(df: DataFrame, d_label, wrt_label, accum=None):
     return df[[wrt_label, d_label]].groupby(wrt_label).agg(accum)
 
 
-def perturbation_stats(df: DataFrame, *groups: str, wrt_col: str = &#39;out&#39;,
-                       func=None):
-    &#34;&#34;&#34;Compute statistics for wrt_col in df, conditional on groups
+def perturbation_stats(data: Union[DataFrame, dict], *group_by: str, wrt: str=&#39;out&#39;,
+                       func=None, prefix: str=None, split: bool=False):
+    &#34;&#34;&#34;Compute statistics for `wrt` in `data`, conditional on `group_by`
+
+    Params
+    ------
+    data: Union[pandas.DataFrame, dict]
+        DataFrame, as from calling `dict_to_df` on an output dict from a Vset,
+        or the output dict itself.
+    *group_by: str
+        Vset names in `data` to group on. If none provided, treats everything as one big
+        group.
+    wrt: str (optional)
+        Column name in `data` or `dict_to_df(data)` on which to compute statistics.
+        Defaults to `&#39;out&#39;`, the values of the original Vset output dict.
+    func: function, str, list or dict (optional), default None
+        A list of functions or function names to use for computing
+        statistics, analogous to the parameter of the same name in
+        pandas.core.groupby.DataFrameGroupBy.aggregate. If `None`, defaults to
+        `[&#39;count&#39;, &#39;mean&#39;, &#39;std&#39;]`.
+    prefix: str (optional), default None
+        A string to prefix to new columns in output DataFrame. If `None`,
+        uses the value of `wrt`.
+    split: bool (optional), default False
+        If `True` and `wrt` in `data` has `list` or `numpy.ndarray` entries, will
+        attempt to split the entries into multiple columns for the output.
+
+    Returns
+    -------
+    df: pandas.DataFrame
+        A DataFrame with summary statistics on `wrt`.
     &#34;&#34;&#34;
     if func is None:
         func = [&#39;count&#39;, &#39;mean&#39;, &#39;std&#39;]
-    groups = list(groups)
-    df = df.groupby(groups).agg(func)[wrt_col]
-    df.reset_index(inplace=True)
-    return df.sort_values(groups[0])
+    if prefix is None:
+        prefix = wrt
+    if isinstance(data, dict):
+        df = dict_to_df(data)
+    else:
+        df = data
+    group_by = list(group_by)
+    if len(group_by) &gt; 0:
+        gb = df.groupby(group_by)[wrt]
+    else:
+        gb = df.groupby(lambda x: True)[wrt]
+    mean_or_std = type(func) is list and &#39;mean&#39; in func or &#39;std&#39; in func
+    list_or_ndarray = type(df[wrt].iloc[0]) in [list, np.ndarray]
+    if mean_or_std and list_or_ndarray:
+        dfs = [gb.get_group(grp) for grp in gb.groups]
+        wrt_arrays = [np.stack(d.tolist()) for d in dfs]
+        n_cols = wrt_arrays[0].shape[1]
+        df_out = pd.DataFrame(gb.agg(&#39;count&#39;))
+        df_out.columns = [f&#39;{prefix}-count&#39;]
+        if &#39;mean&#39; in func:
+            if split:
+                col_means = [arr.mean(axis=0) for arr in wrt_arrays]
+                col_names = [f&#39;{prefix}{i}-mean&#39; for i in range(n_cols)]
+                wrt_means = pd.DataFrame(col_means, columns=col_names,
+                                         index=gb.groups.keys())
+            else:
+                col_means = [{f&#39;{prefix}-mean&#39;: arr.mean(axis=0)} for arr in wrt_arrays]
+                wrt_means = pd.DataFrame(col_means, index = gb.groups.keys())
+            wrt_means.index.names = df_out.index.names
+            df_out = df_out.join(wrt_means)
+        if &#39;std&#39; in func:
+            if split:
+                col_stds = [arr.std(axis=0, ddof=1) for arr in wrt_arrays]
+                col_names = [f&#39;{prefix}{i}-std&#39; for i in range(n_cols)]
+                wrt_stds = pd.DataFrame(col_stds, columns=col_names,
+                                        index=gb.groups.keys())
+            else:
+                col_stds = [{f&#39;{prefix}-std&#39;: arr.std(axis=0, ddof=1)} for arr in wrt_arrays]
+                wrt_stds = pd.DataFrame(col_stds, index = gb.groups.keys())
+            wrt_stds.index.names = df_out.index.names
+            df_out = df_out.join(wrt_stds)
+        if not &#39;count&#39; in func:
+            df_out = df_out.drop(f&#39;{prefix}-count&#39;)
+    else:
+        df_out = gb.agg(func)
+    df_out = df_out.reindex(sorted(df_out.columns), axis=1)
+    df_out.reset_index(inplace=True)
+    if len(group_by) &gt; 0:
+        return df_out.sort_values(group_by[0])
+    else:
+        return df_out
 
 
 def to_tuple(lists: list):
@@ -142,8 +235,8 @@ def to_list(tup: tuple):
     &#34;&#34;&#34;Convert from tuple to packed list
     Ex. ([x1, x2, x3], [y1, y2, y3]) -&gt; [[x1, y1], [x2, y2], [x3, y3]]
     Ex. ([x1], [y1]) -&gt; [[x1, y1]]
-    Ex. ([x1, x2, x3]) -&gt; [[x1], [x2], [x3]]
-    Ex. (x1) -&gt; [[x1]]
+    Ex. ([x1, x2, x3], ) -&gt; [[x1], [x2], [x3]]
+    Ex. (x1, ) -&gt; [[x1]]
     Ex. (x1, y1) -&gt; [[x1, y1]]
     Ex. (x1, x2, x3, y1, y2, y3) -&gt; [[x1, y1], [x2, y2], [x3, y3]]
     Ex. (x1, x2, x3, y1, y2) -&gt; Error
@@ -155,7 +248,7 @@ def to_list(tup: tuple):
     elif not isinstance(tup[0], list):
         # the first element is data
         if n_tup == 1:
-            return list(tup)
+            return [list(tup)]
         if n_tup % 2 != 0:
             raise ValueError(&#39;Don\&#39;t know how to handle uneven number of args &#39;
                              &#39;without a list. Please wrap your args in a list.&#39;)
@@ -284,7 +377,7 @@ def combine_dicts(*args: dict, base_case=True):
         return combine_dicts(combine_dicts(args[0], args[1]), *args[2:], base_case=False)
 
 
-def apply_modules(modules: dict, data_dict: dict, lazy: bool = False):
+def apply_modules(modules: dict, data_dict: dict, lazy: bool=False):
     out_dict = {}
     for mod_k in modules:
         if len(data_dict) == 0:
@@ -309,6 +402,13 @@ def apply_modules(modules: dict, data_dict: dict, lazy: bool = False):
                     for i, data in enumerate(data_list):
                         if isinstance(data, VfuncPromise):
                             data_list[i] = data()
+                        if isinstance(func, RayRemoteFun):
+                            if not isinstance(data_list[i], RayObjRef):
+                                # send data to Ray&#39;s remote object store
+                                data_list[i] = ray.put(data_list[i])
+                        elif isinstance(data_list[i], RayObjRef):
+                            # this is not a remote function so get the data
+                            data_list[i] = ray.get(data_list[i])
                     out_dict[combined_key] = func(*data_list)
 
     return out_dict</code></pre>
@@ -330,7 +430,7 @@ def apply_modules(modules: dict, data_dict: dict, lazy: bool = False):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def apply_modules(modules: dict, data_dict: dict, lazy: bool = False):
+<pre><code class="python">def apply_modules(modules: dict, data_dict: dict, lazy: bool=False):
     out_dict = {}
     for mod_k in modules:
         if len(data_dict) == 0:
@@ -355,6 +455,13 @@ def apply_modules(modules: dict, data_dict: dict, lazy: bool = False):
                     for i, data in enumerate(data_list):
                         if isinstance(data, VfuncPromise):
                             data_list[i] = data()
+                        if isinstance(func, RayRemoteFun):
+                            if not isinstance(data_list[i], RayObjRef):
+                                # send data to Ray&#39;s remote object store
+                                data_list[i] = ray.put(data_list[i])
+                        elif isinstance(data_list[i], RayObjRef):
+                            # this is not a remote function so get the data
+                            data_list[i] = ray.get(data_list[i])
                     out_dict[combined_key] = func(*data_list)
 
     return out_dict</code></pre>
@@ -494,7 +601,21 @@ parameters in param_key if not None</p></div>
         cols = [c if c != &#39;init&#39; else init_step(idx, cols) for idx, c in enumerate(cols)]
         df.set_axis(cols, axis=1, inplace=True)
         if param_key:
-            df = df.join(pd.DataFrame(df[param_key].tolist()))
+            param_keys = df[param_key].tolist()
+            if param_key == &#39;out&#39; and hasattr(param_keys[0], &#39;__iter__&#39;):
+                param_df = pd.DataFrame(param_keys)
+                param_df.columns = [f&#39;{param_key}-{col}&#39; for col in param_df.columns]
+                df = df.join(param_df)
+            else:
+                param_loc = df.columns.get_loc(param_key)
+                param_key_cols = [f&#34;{p.split(&#39;=&#39;)[0]}-{param_key}&#34; for p in param_keys[0]]
+                param_keys = [[s.split(&#39;=&#39;)[1] for s in t] for t in param_keys]
+                df = df.join(pd.DataFrame(param_keys)).drop(columns=param_key)
+                new_cols = df.columns[:len(cols)-1].tolist() + param_key_cols
+                df.set_axis(new_cols, axis=1, inplace=True)
+                new_idx = list(range(len(new_cols)))
+                new_idx = new_idx[:param_loc] + new_idx[len(cols)-1:] + new_idx[param_loc:len(cols)-1]
+                df = df.iloc[:, new_idx]
     return df</code></pre>
 </details>
 </dd>
@@ -548,24 +669,125 @@ gives names for each of the arguments in the tuple</p></div>
 </details>
 </dd>
 <dt id="vflow.convert.perturbation_stats"><code class="name flex">
-<span>def <span class="ident">perturbation_stats</span></span>(<span>df: pandas.core.frame.DataFrame, *groups: str, wrt_col: str = 'out', func=None)</span>
+<span>def <span class="ident">perturbation_stats</span></span>(<span>data: Union[pandas.core.frame.DataFrame, dict], *group_by: str, wrt: str = 'out', func=None, prefix: str = None, split: bool = False)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Compute statistics for wrt_col in df, conditional on groups</p></div>
+<div class="desc"><p>Compute statistics for <code>wrt</code> in <code>data</code>, conditional on <code>group_by</code></p>
+<h2 id="params">Params</h2>
+<p>data: Union[pandas.DataFrame, dict]
+DataFrame, as from calling <code><a title="vflow.convert.dict_to_df" href="#vflow.convert.dict_to_df">dict_to_df()</a></code> on an output dict from a Vset,
+or the output dict itself.
+*group_by: str
+Vset names in <code>data</code> to group on. If none provided, treats everything as one big
+group.
+wrt: str (optional)
+Column name in <code>data</code> or <code><a title="vflow.convert.dict_to_df" href="#vflow.convert.dict_to_df">dict_to_df()</a>(data)</code> on which to compute statistics.
+Defaults to <code>'out'</code>, the values of the original Vset output dict.
+func: function, str, list or dict (optional), default None
+A list of functions or function names to use for computing
+statistics, analogous to the parameter of the same name in
+pandas.core.groupby.DataFrameGroupBy.aggregate. If <code>None</code>, defaults to
+<code>['count', 'mean', 'std']</code>.
+prefix: str (optional), default None
+A string to prefix to new columns in output DataFrame. If <code>None</code>,
+uses the value of <code>wrt</code>.
+split: bool (optional), default False
+If <code>True</code> and <code>wrt</code> in <code>data</code> has <code>list</code> or <code>numpy.ndarray</code> entries, will
+attempt to split the entries into multiple columns for the output.</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><strong><code>df</code></strong> :&ensp;<code>pandas.DataFrame</code></dt>
+<dd>A DataFrame with summary statistics on <code>wrt</code>.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def perturbation_stats(df: DataFrame, *groups: str, wrt_col: str = &#39;out&#39;,
-                       func=None):
-    &#34;&#34;&#34;Compute statistics for wrt_col in df, conditional on groups
+<pre><code class="python">def perturbation_stats(data: Union[DataFrame, dict], *group_by: str, wrt: str=&#39;out&#39;,
+                       func=None, prefix: str=None, split: bool=False):
+    &#34;&#34;&#34;Compute statistics for `wrt` in `data`, conditional on `group_by`
+
+    Params
+    ------
+    data: Union[pandas.DataFrame, dict]
+        DataFrame, as from calling `dict_to_df` on an output dict from a Vset,
+        or the output dict itself.
+    *group_by: str
+        Vset names in `data` to group on. If none provided, treats everything as one big
+        group.
+    wrt: str (optional)
+        Column name in `data` or `dict_to_df(data)` on which to compute statistics.
+        Defaults to `&#39;out&#39;`, the values of the original Vset output dict.
+    func: function, str, list or dict (optional), default None
+        A list of functions or function names to use for computing
+        statistics, analogous to the parameter of the same name in
+        pandas.core.groupby.DataFrameGroupBy.aggregate. If `None`, defaults to
+        `[&#39;count&#39;, &#39;mean&#39;, &#39;std&#39;]`.
+    prefix: str (optional), default None
+        A string to prefix to new columns in output DataFrame. If `None`,
+        uses the value of `wrt`.
+    split: bool (optional), default False
+        If `True` and `wrt` in `data` has `list` or `numpy.ndarray` entries, will
+        attempt to split the entries into multiple columns for the output.
+
+    Returns
+    -------
+    df: pandas.DataFrame
+        A DataFrame with summary statistics on `wrt`.
     &#34;&#34;&#34;
     if func is None:
         func = [&#39;count&#39;, &#39;mean&#39;, &#39;std&#39;]
-    groups = list(groups)
-    df = df.groupby(groups).agg(func)[wrt_col]
-    df.reset_index(inplace=True)
-    return df.sort_values(groups[0])</code></pre>
+    if prefix is None:
+        prefix = wrt
+    if isinstance(data, dict):
+        df = dict_to_df(data)
+    else:
+        df = data
+    group_by = list(group_by)
+    if len(group_by) &gt; 0:
+        gb = df.groupby(group_by)[wrt]
+    else:
+        gb = df.groupby(lambda x: True)[wrt]
+    mean_or_std = type(func) is list and &#39;mean&#39; in func or &#39;std&#39; in func
+    list_or_ndarray = type(df[wrt].iloc[0]) in [list, np.ndarray]
+    if mean_or_std and list_or_ndarray:
+        dfs = [gb.get_group(grp) for grp in gb.groups]
+        wrt_arrays = [np.stack(d.tolist()) for d in dfs]
+        n_cols = wrt_arrays[0].shape[1]
+        df_out = pd.DataFrame(gb.agg(&#39;count&#39;))
+        df_out.columns = [f&#39;{prefix}-count&#39;]
+        if &#39;mean&#39; in func:
+            if split:
+                col_means = [arr.mean(axis=0) for arr in wrt_arrays]
+                col_names = [f&#39;{prefix}{i}-mean&#39; for i in range(n_cols)]
+                wrt_means = pd.DataFrame(col_means, columns=col_names,
+                                         index=gb.groups.keys())
+            else:
+                col_means = [{f&#39;{prefix}-mean&#39;: arr.mean(axis=0)} for arr in wrt_arrays]
+                wrt_means = pd.DataFrame(col_means, index = gb.groups.keys())
+            wrt_means.index.names = df_out.index.names
+            df_out = df_out.join(wrt_means)
+        if &#39;std&#39; in func:
+            if split:
+                col_stds = [arr.std(axis=0, ddof=1) for arr in wrt_arrays]
+                col_names = [f&#39;{prefix}{i}-std&#39; for i in range(n_cols)]
+                wrt_stds = pd.DataFrame(col_stds, columns=col_names,
+                                        index=gb.groups.keys())
+            else:
+                col_stds = [{f&#39;{prefix}-std&#39;: arr.std(axis=0, ddof=1)} for arr in wrt_arrays]
+                wrt_stds = pd.DataFrame(col_stds, index = gb.groups.keys())
+            wrt_stds.index.names = df_out.index.names
+            df_out = df_out.join(wrt_stds)
+        if not &#39;count&#39; in func:
+            df_out = df_out.drop(f&#39;{prefix}-count&#39;)
+    else:
+        df_out = gb.agg(func)
+    df_out = df_out.reindex(sorted(df_out.columns), axis=1)
+    df_out.reset_index(inplace=True)
+    if len(group_by) &gt; 0:
+        return df_out.sort_values(group_by[0])
+    else:
+        return df_out</code></pre>
 </details>
 </dd>
 <dt id="vflow.convert.s"><code class="name flex">
@@ -657,8 +879,8 @@ n_out: the number of dictionaries to separate d into</p>
 <div class="desc"><p>Convert from tuple to packed list
 Ex. ([x1, x2, x3], [y1, y2, y3]) -&gt; [[x1, y1], [x2, y2], [x3, y3]]
 Ex. ([x1], [y1]) -&gt; [[x1, y1]]
-Ex. ([x1, x2, x3]) -&gt; [[x1], [x2], [x3]]
-Ex. (x1) -&gt; [[x1]]
+Ex. ([x1, x2, x3], ) -&gt; [[x1], [x2], [x3]]
+Ex. (x1, ) -&gt; [[x1]]
 Ex. (x1, y1) -&gt; [[x1, y1]]
 Ex. (x1, x2, x3, y1, y2, y3) -&gt; [[x1, y1], [x2, y2], [x3, y3]]
 Ex. (x1, x2, x3, y1, y2) -&gt; Error
@@ -671,8 +893,8 @@ Allows us to call function with arguments in a loop</p></div>
     &#34;&#34;&#34;Convert from tuple to packed list
     Ex. ([x1, x2, x3], [y1, y2, y3]) -&gt; [[x1, y1], [x2, y2], [x3, y3]]
     Ex. ([x1], [y1]) -&gt; [[x1, y1]]
-    Ex. ([x1, x2, x3]) -&gt; [[x1], [x2], [x3]]
-    Ex. (x1) -&gt; [[x1]]
+    Ex. ([x1, x2, x3], ) -&gt; [[x1], [x2], [x3]]
+    Ex. (x1, ) -&gt; [[x1]]
     Ex. (x1, y1) -&gt; [[x1, y1]]
     Ex. (x1, x2, x3, y1, y2, y3) -&gt; [[x1, y1], [x2, y2], [x3, y3]]
     Ex. (x1, x2, x3, y1, y2) -&gt; Error
@@ -684,7 +906,7 @@ Allows us to call function with arguments in a loop</p></div>
     elif not isinstance(tup[0], list):
         # the first element is data
         if n_tup == 1:
-            return list(tup)
+            return [list(tup)]
         if n_tup % 2 != 0:
             raise ValueError(&#39;Don\&#39;t know how to handle uneven number of args &#39;
                              &#39;without a list. Please wrap your args in a list.&#39;)
