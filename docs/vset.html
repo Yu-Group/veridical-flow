@@ -33,6 +33,7 @@ Function arguments are each a list</p>
 Function arguments are each a list
 &#34;&#34;&#34;
 PREV_KEY = &#39;__prev__&#39;
+FILTER_PREV_KEY = &#39;__filter_prev__&#39;
 
 import joblib
 import numpy as np
@@ -41,7 +42,7 @@ from mlflow.tracking import MlflowClient
 
 from vflow.convert import *
 from vflow.subkey import Subkey
-from vflow.vfunc import Vfunc, AsyncModule
+from vflow.vfunc import Vfunc, AsyncModule, VfuncPromise, _remote_fun
 
 
 class Vset:
@@ -134,48 +135,52 @@ class Vset:
             run_dict = {}
             # log subkeys as params and value as metric
             for k, v in out_dict.items():
-                origins = np.array([subk.origin for subk in k])
-                # ignore init origins and the last origin (this Vset)
-                param_idx = [
-                    i for i in range(len(k[:-1])) if origins[i] != &#39;init&#39;
-                ]
-                # get or create mlflow run
-                run_dict_key = tuple([subk.value for subk in k[:-1]])
-                if run_dict_key in run_dict:
-                    run_id = run_dict[run_dict_key]
-                else:
-                    run = self._mlflow.create_run(self._exp_id)
-                    run_id = run.info.run_id
-                    run_dict[run_dict_key] = run_id
-                    # log params
-                    for idx in param_idx:
-                        subkey = k[idx]
-                        param_name = subkey.origin
-                        # check if the origin occurs multiple times
-                        if np.sum(origins == param_name) &gt; 1:
-                            occurence = np.sum(origins[:idx] == param_name)
-                            param_name = param_name + str(occurence)
-                            self._mlflow.log_param(
-                                run_id, param_name, subkey.value
-                            )
-                self._mlflow.log_metric(run_id, k[-1].value, v)
+                if not k == PREV_KEY:
+                    origins = np.array([subk.origin for subk in k])
+                    # ignore init origins and the last origin (this Vset)
+                    param_idx = [
+                        i for i in range(len(k[:-1])) if origins[i] != &#39;init&#39;
+                    ]
+                    # get or create mlflow run
+                    run_dict_key = tuple([subk.value for subk in k[:-1]])
+                    if run_dict_key in run_dict:
+                        run_id = run_dict[run_dict_key]
+                    else:
+                        run = self._mlflow.create_run(self._exp_id)
+                        run_id = run.info.run_id
+                        run_dict[run_dict_key] = run_id
+                        # log params
+                        for idx in param_idx:
+                            subkey = k[idx]
+                            param_name = subkey.origin
+                            # check if the origin occurs multiple times
+                            if np.sum(origins == param_name) &gt; 1:
+                                occurence = np.sum(origins[:idx] == param_name)
+                                param_name = param_name + str(occurence)
+                                self._mlflow.log_param(
+                                    run_id, param_name, subkey.value
+                                )
+                    self._mlflow.log_metric(run_id, k[-1].value, v)
         return out_dict
 
     def fit(self, *args):
         &#34;&#34;&#34;
         &#34;&#34;&#34;
-        if self._fitted:
-            return self
         out_dict = {}
         for k, v in self.modules.items():
             out_dict[k] = v.fit
         self.out = self._apply_func(out_dict, *args)
         prev = self.out[PREV_KEY][1:]
-        if hasattr(self, PREV_KEY):
-            prev = getattr(self, PREV_KEY) + prev
+        if hasattr(self, FILTER_PREV_KEY):
+            prev = getattr(self, FILTER_PREV_KEY) + prev
         setattr(self, PREV_KEY, prev)
         self._fitted = True
         return self
+
+    def fit_transform(self, *args):
+        &#34;&#34;&#34;Fits to args and transforms only the first arg.
+        &#34;&#34;&#34;
+        return self.fit(*args).transform(args[0])
 
     def transform(self, *args):
         &#34;&#34;&#34;
@@ -275,26 +280,14 @@ def _apply_func_cached(out_dict: dict, is_async: bool, lazy: bool, *args):
                  out:    out_dict = {(train_1, LR)  : fitted logistic, (train_2, LR) :  fitted logistic}.
         Currently matching = &#39;subset&#39; is not used...
     &#34;&#34;&#34;
-    async_args = []
     for in_dict in args:
         if not isinstance(in_dict, dict):
             raise Exception(&#39;Need to run init_args before calling module_set!&#39;)
-        if is_async:
-            remote_dict = {}
-            # send data to the remote object store
-            for k, v in in_dict.items():
-                if k != PREV_KEY:
-                    remote_dict[k] = ray.put(v)
-                else:
-                    remote_dict[k] = v
-            async_args.append(remote_dict)
-    if is_async:
-        args = async_args
 
     data_dict = combine_dicts(*args)
     out_dict = apply_modules(out_dict, data_dict, lazy)
 
-    if is_async:
+    if is_async and not lazy:
         out_keys = list(out_dict.keys())
         out_vals = ray.get(list(out_dict.values()))
         out_dict = dict(zip(out_keys, out_vals))
@@ -433,48 +426,52 @@ with params determined by input keys</p></div>
             run_dict = {}
             # log subkeys as params and value as metric
             for k, v in out_dict.items():
-                origins = np.array([subk.origin for subk in k])
-                # ignore init origins and the last origin (this Vset)
-                param_idx = [
-                    i for i in range(len(k[:-1])) if origins[i] != &#39;init&#39;
-                ]
-                # get or create mlflow run
-                run_dict_key = tuple([subk.value for subk in k[:-1]])
-                if run_dict_key in run_dict:
-                    run_id = run_dict[run_dict_key]
-                else:
-                    run = self._mlflow.create_run(self._exp_id)
-                    run_id = run.info.run_id
-                    run_dict[run_dict_key] = run_id
-                    # log params
-                    for idx in param_idx:
-                        subkey = k[idx]
-                        param_name = subkey.origin
-                        # check if the origin occurs multiple times
-                        if np.sum(origins == param_name) &gt; 1:
-                            occurence = np.sum(origins[:idx] == param_name)
-                            param_name = param_name + str(occurence)
-                            self._mlflow.log_param(
-                                run_id, param_name, subkey.value
-                            )
-                self._mlflow.log_metric(run_id, k[-1].value, v)
+                if not k == PREV_KEY:
+                    origins = np.array([subk.origin for subk in k])
+                    # ignore init origins and the last origin (this Vset)
+                    param_idx = [
+                        i for i in range(len(k[:-1])) if origins[i] != &#39;init&#39;
+                    ]
+                    # get or create mlflow run
+                    run_dict_key = tuple([subk.value for subk in k[:-1]])
+                    if run_dict_key in run_dict:
+                        run_id = run_dict[run_dict_key]
+                    else:
+                        run = self._mlflow.create_run(self._exp_id)
+                        run_id = run.info.run_id
+                        run_dict[run_dict_key] = run_id
+                        # log params
+                        for idx in param_idx:
+                            subkey = k[idx]
+                            param_name = subkey.origin
+                            # check if the origin occurs multiple times
+                            if np.sum(origins == param_name) &gt; 1:
+                                occurence = np.sum(origins[:idx] == param_name)
+                                param_name = param_name + str(occurence)
+                                self._mlflow.log_param(
+                                    run_id, param_name, subkey.value
+                                )
+                    self._mlflow.log_metric(run_id, k[-1].value, v)
         return out_dict
 
     def fit(self, *args):
         &#34;&#34;&#34;
         &#34;&#34;&#34;
-        if self._fitted:
-            return self
         out_dict = {}
         for k, v in self.modules.items():
             out_dict[k] = v.fit
         self.out = self._apply_func(out_dict, *args)
         prev = self.out[PREV_KEY][1:]
-        if hasattr(self, PREV_KEY):
-            prev = getattr(self, PREV_KEY) + prev
+        if hasattr(self, FILTER_PREV_KEY):
+            prev = getattr(self, FILTER_PREV_KEY) + prev
         setattr(self, PREV_KEY, prev)
         self._fitted = True
         return self
+
+    def fit_transform(self, *args):
+        &#34;&#34;&#34;Fits to args and transforms only the first arg.
+        &#34;&#34;&#34;
+        return self.fit(*args).transform(args[0])
 
     def transform(self, *args):
         &#34;&#34;&#34;
@@ -585,18 +582,31 @@ with params determined by input keys</p></div>
 <pre><code class="python">def fit(self, *args):
     &#34;&#34;&#34;
     &#34;&#34;&#34;
-    if self._fitted:
-        return self
     out_dict = {}
     for k, v in self.modules.items():
         out_dict[k] = v.fit
     self.out = self._apply_func(out_dict, *args)
     prev = self.out[PREV_KEY][1:]
-    if hasattr(self, PREV_KEY):
-        prev = getattr(self, PREV_KEY) + prev
+    if hasattr(self, FILTER_PREV_KEY):
+        prev = getattr(self, FILTER_PREV_KEY) + prev
     setattr(self, PREV_KEY, prev)
     self._fitted = True
     return self</code></pre>
+</details>
+</dd>
+<dt id="vflow.vset.Vset.fit_transform"><code class="name flex">
+<span>def <span class="ident">fit_transform</span></span>(<span>self, *args)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Fits to args and transforms only the first arg.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def fit_transform(self, *args):
+    &#34;&#34;&#34;Fits to args and transforms only the first arg.
+    &#34;&#34;&#34;
+    return self.fit(*args).transform(args[0])</code></pre>
 </details>
 </dd>
 <dt id="vflow.vset.Vset.keys"><code class="name flex">
@@ -696,6 +706,7 @@ with params determined by input keys</p></div>
 <ul class="two-column">
 <li><code><a title="vflow.vset.Vset.evaluate" href="#vflow.vset.Vset.evaluate">evaluate</a></code></li>
 <li><code><a title="vflow.vset.Vset.fit" href="#vflow.vset.Vset.fit">fit</a></code></li>
+<li><code><a title="vflow.vset.Vset.fit_transform" href="#vflow.vset.Vset.fit_transform">fit_transform</a></code></li>
 <li><code><a title="vflow.vset.Vset.keys" href="#vflow.vset.Vset.keys">keys</a></code></li>
 <li><code><a title="vflow.vset.Vset.predict" href="#vflow.vset.Vset.predict">predict</a></code></li>
 <li><code><a title="vflow.vset.Vset.predict_proba" href="#vflow.vset.Vset.predict_proba">predict_proba</a></code></li>
