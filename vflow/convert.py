@@ -5,7 +5,6 @@ from typing import Union
 from uuid import uuid4
 
 import numpy as np
-from numpy.core.fromnumeric import sort
 import pandas as pd
 import numpy as np
 from pandas import DataFrame
@@ -86,9 +85,9 @@ def dict_to_df(d: dict, param_key=None):
                 df = df.iloc[:, new_idx]
     return df
 
-def evaluate_uncertainty(mean_preds, std_preds):
-    """Returns uncertainty and cumulative accuracy intervals for
-    grouped binary predictions, sorted in increasing order of uncertainty
+def cum_acc_by_uncertainty(mean_preds, std_preds, true_labels):
+    """Returns uncertainty and cumulative accuracy for grouped class predictions,
+    sorted in increasing order of uncertainty
 
     Params
     ------
@@ -96,17 +95,27 @@ def evaluate_uncertainty(mean_preds, std_preds):
         mean predictions, output from Vset.predict_with_uncertainties
     std_preds: dict
         std predictions, output from Vset.predict_with_uncertainties
+    true_labels: dict or list-like
+
+    TODO: generalize to multi-class classification
     """
     assert dict_keys(mean_preds) == dict_keys(std_preds), \
         "mean_preds and std_preds must share the same keys"
     # match predictions on keys
     paired_preds = [[d[k] for d in [mean_preds, std_preds]] for k in dict_keys(mean_preds)]
     mean_preds, std_preds = (np.array(p)[:,:,1] for p in zip(*paired_preds))
+    if isinstance(true_labels, dict):
+        true_labels = dict_data(true_labels)
+        assert len(true_labels) == 1, 'true_labels should have a single 1D vector entry'
+        true_labels = true_labels[0]
+    n_obs = len(mean_preds[0])
+    assert len(true_labels) == n_obs, \
+        f'true_labels has {len(true_labels)} obs. but should have same as predictions ({n_obs})'
     sorted_idx = np.argsort(std_preds, axis=1)
-    mean_preds = np.take_along_axis(mean_preds, sorted_idx, 1)
+    correct_labels = np.take_along_axis(np.around(mean_preds) - true_labels == 0, sorted_idx, 1)
     uncertainty = np.take_along_axis(std_preds, sorted_idx, 1)
-    cum_acc = np.cumsum(mean_preds, axis=1)
-    return uncertainty, cum_acc
+    cum_acc = np.cumsum(correct_labels, axis=1) / range(1, n_obs+1)
+    return uncertainty, cum_acc, sorted_idx
 
 def base_dict(d: dict):
     """Remove PREV_KEY from dict d if present
@@ -208,8 +217,7 @@ def perturbation_stats(data: Union[DataFrame, dict], *groups: str, wrt_col: str=
     df_out.reset_index(inplace=True)
     if len(groups) > 0:
         return df_out.sort_values(groups[0])
-    else:
-        return df_out
+    return df_out
 
 
 def to_tuple(lists: list):
