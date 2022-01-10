@@ -162,60 +162,29 @@ class Vset:
                 out_dict[k] = v.transform
         return self._apply_func(out_dict, *args)
 
-    def predict(self, *args):
+    def predict(self, *args, with_uncertainty: bool=False, group_by: list=None):
         if not self._fitted:
-            raise AttributeError('Please fit the Vset object before calling the predict method.')
+            raise AttributeError('Please fit the Vset object before calling predict.')
         pred_dict = {}
         for k, v in self.out.items():
             if hasattr(v, 'predict'):
                 pred_dict[k] = v.predict
-        return self._apply_func(pred_dict, *args)
+        preds = self._apply_func(pred_dict, *args)
+        if with_uncertainty:
+            return prediction_uncertainty(preds, group_by)
+        return preds
 
-    def predict_proba(self, *args):
+    def predict_proba(self, *args, with_uncertainty: bool=False, group_by: list=None):
         if not self._fitted:
-            raise AttributeError('Please fit the Vset object before calling the predict_proba method.')
+            raise AttributeError('Please fit the Vset object before calling predict_proba.')
         pred_dict = {}
         for k, v in self.out.items():
             if hasattr(v, 'predict_proba'):
                 pred_dict[k] = v.predict_proba
+        preds = self._apply_func(pred_dict, *args)
+        if with_uncertainty:
+            return prediction_uncertainty(preds, group_by)
         return self._apply_func(pred_dict, *args)
-    
-    def predict_with_uncertainties(self, *args, group_by: list=None, proba: bool=False):
-        """Returns the mean and std predictions conditional on group_by
-
-        Params
-        ------
-        *args
-            fixed args to compute predictions on
-        group_by: list (optional), default None
-            list of groups to compute statistics upon
-        proba: bool (optional), default True
-            if True, stastics are computed on class probabilities
-
-        TODO: Wrap output dicts in dict wrapper::XXX
-              Fix default group_by when averaging over all predictions
-        """
-        if proba:
-            preds = self.predict_proba(*args)
-        else:
-            preds = self.predict(*args)
-        preds_df = dict_to_df(preds)
-        if group_by is None:
-            # just average over all predictions
-            preds_stats = perturbation_stats(preds_df)
-            group_by = ['index']
-        else:
-            preds_stats = perturbation_stats(preds_df, *group_by)
-        origins = preds_stats[group_by].columns
-        keys = preds_stats[group_by].to_numpy()
-        # wrap subkey values in Subkey
-        keys = [tuple(Subkey(sk, origins[idx]) for idx, sk in enumerate(x)) for x in keys]
-        mean_dict = dict(zip(keys, preds_stats['out-mean']))
-        std_dict = dict(zip(keys, preds_stats['out-std']))
-        # add PREV_KEY to out dicts
-        mean_dict[PREV_KEY] = preds[PREV_KEY]
-        std_dict[PREV_KEY] = preds[PREV_KEY]
-        return mean_dict, std_dict
 
     def evaluate(self, *args):
         """Combines dicts before calling _apply_func
@@ -299,3 +268,35 @@ def _apply_func_cached(out_dict: dict, is_async: bool, lazy: bool, *args):
         out_dict = dict(zip(out_keys, out_vals))
 
     return out_dict
+
+def prediction_uncertainty(preds, group_by: list=None):
+    """Returns the mean and std predictions conditional on group_by
+
+    Params
+    ------
+    preds
+        predictions as returned by Vset.predict or Vset.predict_proba
+    group_by: list (optional), default None
+        list of groups to compute statistics upon
+
+    TODO: Wrap output dicts in dict wrapper::XXX
+          Wrap subkeys in Subkey
+          Fix default group_by when averaging over all predictions
+    """
+    preds_df = dict_to_df(preds)
+    if group_by is None:
+        # just average over all predictions
+        preds_stats = perturbation_stats(preds_df)
+        group_by = ['index']
+    else:
+        preds_stats = perturbation_stats(preds_df, *group_by)
+    origins = preds_stats[group_by].columns
+    keys = preds_stats[group_by].to_numpy()
+    # wrap subkey values in Subkey
+    keys = [tuple(Subkey(sk, origins[idx]) for idx, sk in enumerate(x)) for x in keys]
+    mean_dict = dict(zip(keys, preds_stats['out-mean']))
+    std_dict = dict(zip(keys, preds_stats['out-std']))
+    # add PREV_KEY to out dicts
+    mean_dict[PREV_KEY] = preds[PREV_KEY]
+    std_dict[PREV_KEY] = preds[PREV_KEY]
+    return mean_dict, std_dict, preds_stats
