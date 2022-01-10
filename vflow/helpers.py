@@ -93,26 +93,26 @@ def build_vset(name: str, obj, param_dict=None, *args, reps: int = 1,
 def filter_vset_by_metric(metric_dict: dict, vset: Vset, *vsets: Vset, n_keep: int = 1,
                           bigger_is_better: bool = True, filter_on=None,
                           group: bool = False) -> Union[Vset, list]:
-    """Returns a new Vset by filtering vset.modules based on values in filter_dict.
+    """Returns a new Vset by filtering `vset.modules` based on values in filter_dict.
 
     Parameters
     ----------
     metric_dict: dict
         output from a Vset, typically with metrics or other numeric values to use when
-        filtering vset.modules
+        filtering `vset.modules`
     vset: Vset
         a Vsets
     *vsets: Vset
         zero or more additional Vsets
     n_keep: int (optional)
-        number of entries to keep from vset.modules
+        number of entries to keep from `vset.modules`
     bigger_is_better: bool (optional)
-        if True, then the top n_keep largest values are retained
+        if True, then the top `n_keep` largest values are retained
     filter_on: list[str] (optional)
-        if there are multiple metrics in metric_dict, you can specify a subset
+        if there are multiple metrics in `metric_dict`, you can specify a subset
         to consider
     group: bool (optional)
-        if True, average metrics after grouping values in metric_dict by the
+        if True, average metrics after grouping values in `metric_dict` by the
         input Vset names
 
     Returns

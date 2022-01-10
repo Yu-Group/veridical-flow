@@ -4,7 +4,7 @@ class Subkey:
         """
         Parameters
         ----------
-        value:
+        value: Any
             subkey value corresponding to a Vset module
         origin: str
             name of the origin Vset of this Subkey
@@ -53,7 +53,6 @@ class Subkey:
         1. output_matching is True, origin is same, value is different
         2. output_matching is False, _sep_dicts_id is same and not None, origin
            is same, value is different
-
         """
         if isinstance(o, self.__class__):
             # one of the two keys is output_matching

@@ -18,7 +18,7 @@ class PCSPipeline:
         steps: list
             a list of Vset instances
         cache_dir: str, default=None
-            The directory to use as data store by joblib. If None, won't do
+            The directory to use as data store by `joblib`. If None, won't do
             caching.
         """
         if steps is None:
@@ -65,6 +65,7 @@ class PCSPipeline:
 
 def build_graph(node, draw=True):
     """Helper function that just calls build_graph_recur with an empty graph
+
     Parameters
     ----------
     node: dict or Vset
@@ -76,8 +77,9 @@ def build_graph(node, draw=True):
 
     def unnest_node(node):
         """Unnest a node, if necessary (i.e., when node is a tuple)
-        Params
-        ------
+
+        Parameters
+        ----------
         node: str, dict, Vset, or tuple
 
         Returns
@@ -93,6 +95,7 @@ def build_graph(node, draw=True):
 
     def build_graph_recur(node, G):
         """Builds a graph up using __prev__ and PREV_KEY pointers
+
         Parameters
         ----------
         node: str, dict, Vset, or tuple

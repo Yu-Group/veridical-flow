@@ -269,7 +269,6 @@ def to_list(tup: tuple):
     [[x1, y1]]
     >>> to_list((x1, x2, x3, y1, y2, y3))
     [[x1, y1], [x2, y2], [x3, y3]]
-    >>> to_list((x1, x2, x3, y1, y2))
     """
     n_tup = len(tup)
     if n_tup == 0:
@@ -350,7 +349,7 @@ def sep_dicts(d: dict, n_out: int = 1, keys=None):
 
 
 def combine_keys(left_key, right_key):
-    """Combines `left_key` and `right_key`, attempting to match on any `Subkey.is_matching`
+    """Combines `left_key` and `right_key`, attempting to match on any `vflow.subkey.Subkey.is_matching`
 
     Returns an empty key on failed matches (`Subkey` with same origin but different values).
     Always filters on `right_key` and returns `combined_key` with `left_key` prefix.
@@ -365,8 +364,8 @@ def combine_keys(left_key, right_key):
     Returns
     -------
     combined_key: tuple
-        Combined tuple key filtered according to `Subkey.matches` rules,
-        which is empty according to `Subkey.mismatches` rule.
+        Combined tuple key filtered according to `vflow.subkey.Subkey.matches` rules,
+        which is empty according to `vflow.subkey.Subkey.mismatches` rule.
     """
     if len(left_key) < len(right_key):
         match_key = left_key
@@ -446,7 +445,7 @@ def combine_dicts(*args: dict, base_case=True):
 
 def apply_modules(modules: dict, data_dict: dict, lazy: bool=False):
     """Apply a dictionary of functions `modules` to each item of `data_dict`,
-    optionally returning a dictionary of `VfuncPromise` objects if `lazy` is True
+    optionally returning a dictionary of `vflow.vfunc.VfuncPromise` objects if `lazy` is True
 
     Output keys are determined by applying `combine_keys` to each pair of items from
     `modules` and `data_dict`. This function is used by all Vsets to apply functions.
@@ -458,7 +457,7 @@ def apply_modules(modules: dict, data_dict: dict, lazy: bool=False):
     data_dict: dict
         Dictionary of parameters to call each function in `modules`.
     lazy: bool (option), default False
-        If True, `modules` are applied lazily, returning `VfuncPromise`
+        If True, `modules` are applied lazily, returning `vflow.vfunc.VfuncPromise`
         objects,
     
     Returns

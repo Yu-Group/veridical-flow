@@ -34,7 +34,7 @@ class Vset:
             If True, then output keys from this Vset will be matched when used
             in other Vsets
         lazy: bool (optional)
-            If True, then modules are evaluated lazily, i.e. outputs are `VfuncPromise`
+            If True, then modules are evaluated lazily, i.e. outputs are `vset.vfunc.VfuncPromise`
         cache_dir: str (optional)
             If provided, do caching and use `cache_dir` as the data store for
             `joblib.Memory`.
@@ -91,7 +91,7 @@ class Vset:
         """Apply functions in out_dict to combined args dict
 
         Optionally logs output Subkeys and values as params and metrics using
-        `MlflowClient` if this Vset has a `_tracking_dir`.
+        `mlflow.tracking` if this Vset has a `_tracking_dir`.
 
         Parameters
         ----------
