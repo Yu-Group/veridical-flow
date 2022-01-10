@@ -102,10 +102,14 @@ class AsyncModule:
             return _remote_fun.remote(self.module, *args, **kwargs)
 
     def __call__(self, *args, **kwargs):
+        &#34;&#34;&#34;This should decide what to call
+        &#34;&#34;&#34;
         return self.fit(*args, **kwargs)
 
 
 class VfuncPromise:
+    &#34;&#34;&#34;A Vfunc promise used for lazy evaluation.
+    &#34;&#34;&#34;
 
     def __init__(self, vfunc: callable, *args):
         self.vfunc = vfunc
@@ -114,6 +118,8 @@ class VfuncPromise:
         self.value = None
 
     def __call__(self):
+        &#34;&#34;&#34;This should decide what to call
+        &#34;&#34;&#34;
         if self.called:
             return self.value
         tmp_args = []
@@ -128,12 +134,18 @@ class VfuncPromise:
         return self.value
 
     def transform(self, *args):
+        &#34;&#34;&#34;This function transforms its input in some way
+        &#34;&#34;&#34;
         return self().transform(*args)
 
     def predict(self, *args):
+        &#34;&#34;&#34;This function calls predict on its inputs
+        &#34;&#34;&#34;
         return self().predict(*args)
 
     def predict_proba(self, *args):
+        &#34;&#34;&#34;This function calls predict_proba on its inputs
+        &#34;&#34;&#34;
         return self().predict_proba(*args)
 
     def __repr__(self):
@@ -192,6 +204,8 @@ class VfuncPromise:
             return _remote_fun.remote(self.module, *args, **kwargs)
 
     def __call__(self, *args, **kwargs):
+        &#34;&#34;&#34;This should decide what to call
+        &#34;&#34;&#34;
         return self.fit(*args, **kwargs)</code></pre>
 </details>
 <h3>Methods</h3>
@@ -324,12 +338,14 @@ If none of these is supported, it need only be a function</p></div>
 <span>(</span><span>vfunc: <built-in function callable>, *args)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>A Vfunc promise used for lazy evaluation.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class VfuncPromise:
+    &#34;&#34;&#34;A Vfunc promise used for lazy evaluation.
+    &#34;&#34;&#34;
 
     def __init__(self, vfunc: callable, *args):
         self.vfunc = vfunc
@@ -338,6 +354,8 @@ If none of these is supported, it need only be a function</p></div>
         self.value = None
 
     def __call__(self):
+        &#34;&#34;&#34;This should decide what to call
+        &#34;&#34;&#34;
         if self.called:
             return self.value
         tmp_args = []
@@ -352,12 +370,18 @@ If none of these is supported, it need only be a function</p></div>
         return self.value
 
     def transform(self, *args):
+        &#34;&#34;&#34;This function transforms its input in some way
+        &#34;&#34;&#34;
         return self().transform(*args)
 
     def predict(self, *args):
+        &#34;&#34;&#34;This function calls predict on its inputs
+        &#34;&#34;&#34;
         return self().predict(*args)
 
     def predict_proba(self, *args):
+        &#34;&#34;&#34;This function calls predict_proba on its inputs
+        &#34;&#34;&#34;
         return self().predict_proba(*args)
 
     def __repr__(self):
@@ -372,12 +396,14 @@ If none of these is supported, it need only be a function</p></div>
 <span>def <span class="ident">predict</span></span>(<span>self, *args)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>This function calls predict on its inputs</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def predict(self, *args):
+    &#34;&#34;&#34;This function calls predict on its inputs
+    &#34;&#34;&#34;
     return self().predict(*args)</code></pre>
 </details>
 </dd>
@@ -385,12 +411,14 @@ If none of these is supported, it need only be a function</p></div>
 <span>def <span class="ident">predict_proba</span></span>(<span>self, *args)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>This function calls predict_proba on its inputs</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def predict_proba(self, *args):
+    &#34;&#34;&#34;This function calls predict_proba on its inputs
+    &#34;&#34;&#34;
     return self().predict_proba(*args)</code></pre>
 </details>
 </dd>
@@ -398,12 +426,14 @@ If none of these is supported, it need only be a function</p></div>
 <span>def <span class="ident">transform</span></span>(<span>self, *args)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>This function transforms its input in some way</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def transform(self, *args):
+    &#34;&#34;&#34;This function transforms its input in some way
+    &#34;&#34;&#34;
     return self().transform(*args)</code></pre>
 </details>
 </dd>

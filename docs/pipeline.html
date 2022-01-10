@@ -41,18 +41,14 @@ from vflow.vset import PREV_KEY
 
 class PCSPipeline:
     def __init__(self, steps=None, cache_dir=None):
-        &#34;&#34;&#34;Helper function that just calls build_graph_recur with an empty graph
-        Params
-        ------
+        &#34;&#34;&#34;
+        Parameters
+        ----------
         steps: list
             a list of Vset instances
         cache_dir: str, default=None
-            The directory to use as data store by joblib. If None, won&#39;t do
+            The directory to use as data store by `joblib`. If None, won&#39;t do
             caching.
-
-        Returns
-        -------
-        G: nx.Digraph()
         &#34;&#34;&#34;
         if steps is None:
             steps = []
@@ -98,8 +94,9 @@ class PCSPipeline:
 
 def build_graph(node, draw=True):
     &#34;&#34;&#34;Helper function that just calls build_graph_recur with an empty graph
-    Params
-    ------
+
+    Parameters
+    ----------
     node: dict or Vset
 
     Returns
@@ -109,8 +106,9 @@ def build_graph(node, draw=True):
 
     def unnest_node(node):
         &#34;&#34;&#34;Unnest a node, if necessary (i.e., when node is a tuple)
-        Params
-        ------
+
+        Parameters
+        ----------
         node: str, dict, Vset, or tuple
 
         Returns
@@ -126,8 +124,9 @@ def build_graph(node, draw=True):
 
     def build_graph_recur(node, G):
         &#34;&#34;&#34;Builds a graph up using __prev__ and PREV_KEY pointers
-        Params
-        ------
+
+        Parameters
+        ----------
         node: str, dict, Vset, or tuple
         G: nx.Digraph()
 
@@ -192,10 +191,12 @@ def _run_step(step, *args, **kwargs):
 <span>def <span class="ident">build_graph</span></span>(<span>node, draw=True)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Helper function that just calls build_graph_recur with an empty graph
-Params</p>
-<hr>
-<p>node: dict or Vset</p>
+<div class="desc"><p>Helper function that just calls build_graph_recur with an empty graph</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>node</code></strong> :&ensp;<code>dict</code> or <code>Vset</code></dt>
+<dd>&nbsp;</dd>
+</dl>
 <h2 id="returns">Returns</h2>
 <dl>
 <dt><strong><code>G</code></strong> :&ensp;<code>nx.Digraph()</code></dt>
@@ -207,8 +208,9 @@ Params</p>
 </summary>
 <pre><code class="python">def build_graph(node, draw=True):
     &#34;&#34;&#34;Helper function that just calls build_graph_recur with an empty graph
-    Params
-    ------
+
+    Parameters
+    ----------
     node: dict or Vset
 
     Returns
@@ -218,8 +220,9 @@ Params</p>
 
     def unnest_node(node):
         &#34;&#34;&#34;Unnest a node, if necessary (i.e., when node is a tuple)
-        Params
-        ------
+
+        Parameters
+        ----------
         node: str, dict, Vset, or tuple
 
         Returns
@@ -235,8 +238,9 @@ Params</p>
 
     def build_graph_recur(node, G):
         &#34;&#34;&#34;Builds a graph up using __prev__ and PREV_KEY pointers
-        Params
-        ------
+
+        Parameters
+        ----------
         node: str, dict, Vset, or tuple
         G: nx.Digraph()
 
@@ -293,18 +297,13 @@ Params</p>
 <span>(</span><span>steps=None, cache_dir=None)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Helper function that just calls build_graph_recur with an empty graph
-Params</p>
-<hr>
-<p>steps: list
-a list of Vset instances
-cache_dir: str, default=None
-The directory to use as data store by joblib. If None, won't do
-caching.</p>
-<h2 id="returns">Returns</h2>
+<div class="desc"><h2 id="parameters">Parameters</h2>
 <dl>
-<dt><strong><code>G</code></strong> :&ensp;<code>nx.Digraph()</code></dt>
-<dd>&nbsp;</dd>
+<dt><strong><code>steps</code></strong> :&ensp;<code>list</code></dt>
+<dd>a list of Vset instances</dd>
+<dt><strong><code>cache_dir</code></strong> :&ensp;<code>str</code>, default=<code>None</code></dt>
+<dd>The directory to use as data store by <code>joblib</code>. If None, won't do
+caching.</dd>
 </dl></div>
 <details class="source">
 <summary>
@@ -312,18 +311,14 @@ caching.</p>
 </summary>
 <pre><code class="python">class PCSPipeline:
     def __init__(self, steps=None, cache_dir=None):
-        &#34;&#34;&#34;Helper function that just calls build_graph_recur with an empty graph
-        Params
-        ------
+        &#34;&#34;&#34;
+        Parameters
+        ----------
         steps: list
             a list of Vset instances
         cache_dir: str, default=None
-            The directory to use as data store by joblib. If None, won&#39;t do
+            The directory to use as data store by `joblib`. If None, won&#39;t do
             caching.
-
-        Returns
-        -------
-        G: nx.Digraph()
         &#34;&#34;&#34;
         if steps is None:
             steps = []

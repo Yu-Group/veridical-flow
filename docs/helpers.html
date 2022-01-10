@@ -44,8 +44,8 @@ def build_vset(name: str, obj, param_dict=None, *args, reps: int = 1,
                tracking_dir: str = None, **kwargs) -&gt; Vset:
     &#34;&#34;&#34;Builds a Vset by currying callable obj with all combinations of parameters in param_dict.
 
-    Params
-    -------
+    Parameters
+    ----------
     name: str
         a name for the output Vset
     obj: callable
@@ -122,33 +122,32 @@ def build_vset(name: str, obj, param_dict=None, *args, reps: int = 1,
 def filter_vset_by_metric(metric_dict: dict, vset: Vset, *vsets: Vset, n_keep: int = 1,
                           bigger_is_better: bool = True, filter_on=None,
                           group: bool = False) -&gt; Union[Vset, list]:
-    &#34;&#34;&#34;Returns a new Vset by filtering vset.modules based on values in filter_dict.
+    &#34;&#34;&#34;Returns a new Vset by filtering `vset.modules` based on values in filter_dict.
 
-    Params
-    -------
+    Parameters
+    ----------
     metric_dict: dict
         output from a Vset, typically with metrics or other numeric values to use when
-        filtering vset.modules
+        filtering `vset.modules`
     vset: Vset
         a Vsets
     *vsets: Vset
         zero or more additional Vsets
     n_keep: int (optional)
-        number of entries to keep from vset.modules
+        number of entries to keep from `vset.modules`
     bigger_is_better: bool (optional)
-        if True, then the top n_keep largest values are retained
+        if True, then the top `n_keep` largest values are retained
     filter_on: list[str] (optional)
-        if there are multiple metrics in metric_dict, you can specify a subset
+        if there are multiple metrics in `metric_dict`, you can specify a subset
         to consider
     group: bool (optional)
-        if True, average metrics after grouping values in metric_dict by the
+        if True, average metrics after grouping values in `metric_dict` by the
         input Vset names
 
     Returns
     -------
     *new_vset : Vset
         Copies of the input Vsets but with Vfuncs filtered based on metrics
-
     &#34;&#34;&#34;
     if filter_on is None:
         filter_on = []
@@ -197,33 +196,35 @@ def filter_vset_by_metric(metric_dict: dict, vset: Vset, *vsets: Vset, n_keep: i
 </code></dt>
 <dd>
 <div class="desc"><p>Builds a Vset by currying callable obj with all combinations of parameters in param_dict.</p>
-<h2 id="params">Params</h2>
-<p>name: str
-a name for the output Vset
-obj: callable
-a callable to use as the base for Vfuncs in the output Vset
-param_dict: dict[str, list]
-keys are obj kwarg names and values in the dict are lists of params to try
-<em>args
-additional fixed arguments to pass to obj
-reps: int (optional)
-the number of times to repeat the obj in the output Vset's modules for
-each combination of params in param_dict
-is_async: bool (optional)
-if True, modules are computed asynchronously
-output_matching: bool (optional)
-if True, then output keys from Vset will be matched when used
-in other Vsets
-cache_dir: str (optional)
-if provided, do caching and use cache_dir as the data store for
-joblib.Memory
-verbose : bool (optional)
-if True, modules are named with param_dict items as tuples of str("param_name=param_val")
-tracking_dir: str (optional)
-if provided, use the mlflow.tracking api to log outputs as metrics
-with params determined by input keys
-</em>*kwargs
-additional fixed keyword arguments to pass to obj</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>name</code></strong> :&ensp;<code>str</code></dt>
+<dd>a name for the output Vset</dd>
+<dt><strong><code>obj</code></strong> :&ensp;<code>callable</code></dt>
+<dd>a callable to use as the base for Vfuncs in the output Vset</dd>
+<dt><strong><code>param_dict</code></strong> :&ensp;<code>dict[str, list]</code></dt>
+<dd>keys are obj kwarg names and values in the dict are lists of params to try</dd>
+<dt><strong><code>*args</code></strong></dt>
+<dd>additional fixed arguments to pass to obj</dd>
+<dt><strong><code>reps</code></strong> :&ensp;<code>int (optional)</code></dt>
+<dd>the number of times to repeat the obj in the output Vset's modules for
+each combination of params in param_dict</dd>
+<dt><strong><code>is_async</code></strong> :&ensp;<code>bool (optional)</code></dt>
+<dd>if True, modules are computed asynchronously</dd>
+<dt><strong><code>output_matching</code></strong> :&ensp;<code>bool (optional)</code></dt>
+<dd>if True, then output keys from Vset will be matched when used
+in other Vsets</dd>
+<dt><strong><code>cache_dir</code></strong> :&ensp;<code>str (optional)</code></dt>
+<dd>if provided, do caching and use cache_dir as the data store for
+joblib.Memory</dd>
+<dt><strong><code>verbose</code></strong> :&ensp;<code>bool (optional)</code></dt>
+<dd>if True, modules are named with param_dict items as tuples of str("param_name=param_val")</dd>
+<dt><strong><code>tracking_dir</code></strong> :&ensp;<code>str (optional)</code></dt>
+<dd>if provided, use the mlflow.tracking api to log outputs as metrics
+with params determined by input keys</dd>
+<dt><strong><code>**kwargs</code></strong></dt>
+<dd>additional fixed keyword arguments to pass to obj</dd>
+</dl>
 <h2 id="returns">Returns</h2>
 <dl>
 <dt><strong><code>new_vset</code></strong> :&ensp;<code>Vset</code></dt>
@@ -239,8 +240,8 @@ additional fixed keyword arguments to pass to obj</p>
                tracking_dir: str = None, **kwargs) -&gt; Vset:
     &#34;&#34;&#34;Builds a Vset by currying callable obj with all combinations of parameters in param_dict.
 
-    Params
-    -------
+    Parameters
+    ----------
     name: str
         a name for the output Vset
     obj: callable
@@ -318,25 +319,27 @@ additional fixed keyword arguments to pass to obj</p>
 <span>def <span class="ident">filter_vset_by_metric</span></span>(<span>metric_dict: dict, vset: <a title="vflow.vset.Vset" href="vset.html#vflow.vset.Vset">Vset</a>, *vsets: <a title="vflow.vset.Vset" href="vset.html#vflow.vset.Vset">Vset</a>, n_keep: int = 1, bigger_is_better: bool = True, filter_on=None, group: bool = False) ‑> Union[<a title="vflow.vset.Vset" href="vset.html#vflow.vset.Vset">Vset</a>, list]</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Returns a new Vset by filtering vset.modules based on values in filter_dict.</p>
-<h2 id="params">Params</h2>
-<p>metric_dict: dict
-output from a Vset, typically with metrics or other numeric values to use when
-filtering vset.modules
-vset: Vset
-a Vsets
-*vsets: Vset
-zero or more additional Vsets
-n_keep: int (optional)
-number of entries to keep from vset.modules
-bigger_is_better: bool (optional)
-if True, then the top n_keep largest values are retained
-filter_on: list[str] (optional)
-if there are multiple metrics in metric_dict, you can specify a subset
-to consider
-group: bool (optional)
-if True, average metrics after grouping values in metric_dict by the
-input Vset names</p>
+<div class="desc"><p>Returns a new Vset by filtering <code>vset.modules</code> based on values in filter_dict.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>metric_dict</code></strong> :&ensp;<code>dict</code></dt>
+<dd>output from a Vset, typically with metrics or other numeric values to use when
+filtering <code>vset.modules</code></dd>
+<dt><strong><code>vset</code></strong> :&ensp;<code>Vset</code></dt>
+<dd>a Vsets</dd>
+<dt><strong><code>*vsets</code></strong> :&ensp;<code>Vset</code></dt>
+<dd>zero or more additional Vsets</dd>
+<dt><strong><code>n_keep</code></strong> :&ensp;<code>int (optional)</code></dt>
+<dd>number of entries to keep from <code>vset.modules</code></dd>
+<dt><strong><code>bigger_is_better</code></strong> :&ensp;<code>bool (optional)</code></dt>
+<dd>if True, then the top <code>n_keep</code> largest values are retained</dd>
+<dt><strong><code>filter_on</code></strong> :&ensp;<code>list[str] (optional)</code></dt>
+<dd>if there are multiple metrics in <code>metric_dict</code>, you can specify a subset
+to consider</dd>
+<dt><strong><code>group</code></strong> :&ensp;<code>bool (optional)</code></dt>
+<dd>if True, average metrics after grouping values in <code>metric_dict</code> by the
+input Vset names</dd>
+</dl>
 <h2 id="returns">Returns</h2>
 <dl>
 <dt><strong><code>*new_vset</code></strong> :&ensp;<code>Vset</code></dt>
@@ -349,33 +352,32 @@ input Vset names</p>
 <pre><code class="python">def filter_vset_by_metric(metric_dict: dict, vset: Vset, *vsets: Vset, n_keep: int = 1,
                           bigger_is_better: bool = True, filter_on=None,
                           group: bool = False) -&gt; Union[Vset, list]:
-    &#34;&#34;&#34;Returns a new Vset by filtering vset.modules based on values in filter_dict.
+    &#34;&#34;&#34;Returns a new Vset by filtering `vset.modules` based on values in filter_dict.
 
-    Params
-    -------
+    Parameters
+    ----------
     metric_dict: dict
         output from a Vset, typically with metrics or other numeric values to use when
-        filtering vset.modules
+        filtering `vset.modules`
     vset: Vset
         a Vsets
     *vsets: Vset
         zero or more additional Vsets
     n_keep: int (optional)
-        number of entries to keep from vset.modules
+        number of entries to keep from `vset.modules`
     bigger_is_better: bool (optional)
-        if True, then the top n_keep largest values are retained
+        if True, then the top `n_keep` largest values are retained
     filter_on: list[str] (optional)
-        if there are multiple metrics in metric_dict, you can specify a subset
+        if there are multiple metrics in `metric_dict`, you can specify a subset
         to consider
     group: bool (optional)
-        if True, average metrics after grouping values in metric_dict by the
+        if True, average metrics after grouping values in `metric_dict` by the
         input Vset names
 
     Returns
     -------
     *new_vset : Vset
         Copies of the input Vsets but with Vfuncs filtered based on metrics
-
     &#34;&#34;&#34;
     if filter_on is None:
         filter_on = []
