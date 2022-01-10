@@ -15,8 +15,8 @@ def build_vset(name: str, obj, param_dict=None, *args, reps: int = 1,
                tracking_dir: str = None, **kwargs) -> Vset:
     """Builds a Vset by currying callable obj with all combinations of parameters in param_dict.
 
-    Params
-    -------
+    Parameters
+    ----------
     name: str
         a name for the output Vset
     obj: callable
@@ -95,8 +95,8 @@ def filter_vset_by_metric(metric_dict: dict, vset: Vset, *vsets: Vset, n_keep: i
                           group: bool = False) -> Union[Vset, list]:
     """Returns a new Vset by filtering vset.modules based on values in filter_dict.
 
-    Params
-    -------
+    Parameters
+    ----------
     metric_dict: dict
         output from a Vset, typically with metrics or other numeric values to use when
         filtering vset.modules
@@ -119,7 +119,6 @@ def filter_vset_by_metric(metric_dict: dict, vset: Vset, *vsets: Vset, n_keep: i
     -------
     *new_vset : Vset
         Copies of the input Vsets but with Vfuncs filtered based on metrics
-
     """
     if filter_on is None:
         filter_on = []
