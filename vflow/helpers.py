@@ -7,7 +7,7 @@ from typing import Union
 import pandas as pd
 import numpy as np
 
-from vflow.utils import dict_keys, dict_data
+from vflow.utils import dict_to_df, dict_keys, dict_data
 from vflow.vfunc import Vfunc
 from vflow.vset import Vset, Subkey, PREV_KEY, FILTER_PREV_KEY
 
