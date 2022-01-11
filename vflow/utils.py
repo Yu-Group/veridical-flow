@@ -6,23 +6,23 @@ from uuid import uuid4
 
 import numpy as np
 import pandas as pd
-import numpy as np
 
 import ray
 from ray.remote_function import RemoteFunction as RayRemoteFun
-from ray._raylet import ObjectRef as RayObjRef
 
 from vflow.subkey import Subkey
 from vflow.vfunc import VfuncPromise
-from vflow.vset import PREV_KEY
+
+
+PREV_KEY = '__prev__'
 
 def s(x):
     """Gets shape of a list/tuple/ndarray
     """
     if type(x) in [list, tuple]:
         return len(x)
-    else:
-        return x.shape
+    return x.shape
+
 
 def init_step(idx, cols):
     """Helper function to find init suffix
@@ -38,21 +38,26 @@ def init_step(idx, cols):
     for i in range(idx, len(cols)):
         if cols[i] != 'init':
             return 'init-' + cols[i]
+    return None
+
 
 def base_dict(d: dict):
     """Remove PREV_KEY from dict d if present
     """
     return {k:v for k,v in d.items() if k != PREV_KEY}
 
+
 def dict_data(d: dict):
     """Returns a list containing all data in dict d
     """
     return list(base_dict(d).values())
 
+
 def dict_keys(d: dict):
     """Returns a list containing all keys in dict d
     """
     return list(base_dict(d).keys())
+
 
 def to_tuple(lists: list):
     """Convert from lists to unpacked tuple
@@ -70,13 +75,13 @@ def to_tuple(lists: list):
     ([x1, x2, x3], [y1, y2, y3])
     >>> to_tuple([[x1, y1]])
     ([x1], [y1])
-    >>> to_tuple([m1, m2, m3]) 
+    >>> to_tuple([m1, m2, m3])
     [m1, m2, m3]
     """
     n_mods = len(lists)
     if n_mods <= 1:
         return lists
-    if not type(lists[0]) == list:
+    if not isinstance(lists[0], list):
         return lists
     n_tup = len(lists[0])
     tup = [[] for _ in range(n_tup)]
@@ -88,7 +93,7 @@ def to_tuple(lists: list):
 
 def to_list(tup: tuple):
     """Convert from tuple to packed list
-    
+
     Allows us to call function with arguments in a loop
 
     Parameters
@@ -100,7 +105,7 @@ def to_list(tup: tuple):
     ------
     ValueError
         If passed uneven number of arguments without a list. Please wrap your args in a list.
-    
+
     Examples
     --------
     >>> to_list(([x1, x2, x3], [y1, y2, y3]))
@@ -119,7 +124,7 @@ def to_list(tup: tuple):
     n_tup = len(tup)
     if n_tup == 0:
         return []
-    elif not isinstance(tup[0], list):
+    if not isinstance(tup[0], list):
         # the first element is data
         if n_tup == 1:
             return [list(tup)]
@@ -128,7 +133,7 @@ def to_list(tup: tuple):
                              'without a list. Please wrap your args in a list.')
         # assume first half of args is input and second half is outcome
         return [list(el) for el in zip(tup[:(n_tup // 2)], tup[(n_tup // 2):])]
-    elif n_tup == 1:
+    if n_tup == 1:
         return [[x] for x in tup[0]]
     n_mods = len(tup[0])
     lists_packed = [[] for _ in range(n_mods)]
@@ -151,12 +156,12 @@ def sep_dicts(d: dict, n_out: int = 1, keys=None):
         The number of dictionaries to separate d into.
     keys: list-like, default None
         Optional list of keys to use in output dicts.
-    
+
     Returns
     -------
     sep_dicts_list: list
         List of seperated dictionaries.
-    
+
     Examples
     --------
     >>> sep_dicts({k1: (x1, y1), k2: (x2, y2), ...,  '__prev__': p})
@@ -169,29 +174,28 @@ def sep_dicts(d: dict, n_out: int = 1, keys=None):
     # empty dict -- return empty dict
     if n_out <= 1:
         return d
-    else:
-        # try separating dict into multiple dicts
-        sep_dicts_id = str(uuid4())  # w/ high prob, uuid4 is unique
-        sep_dicts_list = [dict() for _ in range(n_out)]
-        for key, value in d.items():
-            if key != PREV_KEY:
-                for i in range(n_out):
-                    # assumes the correct sub-key for item i is in the i-th position
-                    if len(keys) == 0:
-                        new_key = (key[i],) + key[n_out:]
-                    else:
-                        new_sub = Subkey(value=keys[i], origin=key[-1].origin + '-' + str(i))
-                        new_key = (new_sub,) + key
-                    new_key[-1]._sep_dicts_id = sep_dicts_id
-                    if isinstance(value, VfuncPromise):
-                        # return a promise to get the value at index i of the
-                        # original promise
-                        value_i = VfuncPromise(lambda v, x: v[x], value, i)
-                    else:
-                        value_i = value[i]
-                    sep_dicts_list[i][new_key] = value_i
+    # try separating dict into multiple dicts
+    sep_dicts_id = str(uuid4())  # w/ high prob, uuid4 is unique
+    sep_dicts_list = [{} for _ in range(n_out)]
+    for key, value in d.items():
+        if key != PREV_KEY:
+            for i in range(n_out):
+                # assumes the correct sub-key for item i is in the i-th position
+                if len(keys) == 0:
+                    new_key = (key[i],) + key[n_out:]
+                else:
+                    new_sub = Subkey(value=keys[i], origin=key[-1].origin + '-' + str(i))
+                    new_key = (new_sub,) + key
+                new_key[-1].sep_dicts_id = sep_dicts_id
+                if isinstance(value, VfuncPromise):
+                    # return a promise to get the value at index i of the
+                    # original promise
+                    value_i = VfuncPromise(lambda v, x: v[x], value, i)
+                else:
+                    value_i = value[i]
+                sep_dicts_list[i][new_key] = value_i
 
-        return sep_dicts_list
+    return sep_dicts_list
 
 def dict_to_df(d: dict, param_key=None):
     """Converts a dictionary with tuple keys
@@ -210,7 +214,7 @@ def dict_to_df(d: dict, param_key=None):
     df: pandas.DataFrame
         A DataFrame with `d` tuple keys seperated into columns.
     """
-    d_copy = {tuple([sk.value for sk in k]): d[k] for k in d if k != PREV_KEY}
+    d_copy = {tuple(sk.value for sk in k): d[k] for k in d if k != PREV_KEY}
     df = pd.Series(d_copy).reset_index()
     if len(d_copy.keys()) > 0:
         key_list = list(d.keys())
@@ -237,8 +241,9 @@ def dict_to_df(d: dict, param_key=None):
                 df = df.iloc[:, new_idx]
     return df
 
-def perturbation_stats(data: Union[pd.DataFrame, dict], *group_by: str, wrt: str='out',
-                       func=None, prefix: str=None, split: bool=False):
+
+def perturbation_stats(data: Union[pd.DataFrame, dict], *group_by: str, wrt: str = 'out',
+                       func=None, prefix: str = None, split: bool = False):
     """Compute statistics for `wrt` in `data`, conditional on `group_by`
 
     Parameters
@@ -282,37 +287,35 @@ def perturbation_stats(data: Union[pd.DataFrame, dict], *group_by: str, wrt: str
         gb = df.groupby(group_by)[wrt]
     else:
         gb = df.groupby(lambda x: True)[wrt]
-    mean_or_std = type(func) is list and 'mean' in func or 'std' in func
-    list_or_ndarray = type(df[wrt].iloc[0]) in [list, np.ndarray]
-    if mean_or_std and list_or_ndarray:
-        dfs = [gb.get_group(grp) for grp in gb.groups]
-        wrt_arrays = [np.stack(d.tolist()) for d in dfs]
+    if (isinstance(func, list) and 'mean' in func or 'std' in func) and \
+       (type(df[wrt].iloc[0]) in [list, np.ndarray]):
+        wrt_arrays = [np.stack(d.tolist()) for d in (gb.get_group(grp) for grp in gb.groups)]
         n_cols = wrt_arrays[0].shape[1]
         df_out = pd.DataFrame(gb.agg('count'))
         df_out.columns = [f'{prefix}-count']
         if 'mean' in func:
             if split:
                 col_means = [arr.mean(axis=0) for arr in wrt_arrays]
-                col_names = [f'{prefix}{i}-mean' for i in range(n_cols)]
-                wrt_means = pd.DataFrame(col_means, columns=col_names,
+                wrt_means = pd.DataFrame(col_means,
+                                         columns=[f'{prefix}{i}-mean' for i in range(n_cols)],
                                          index=gb.groups.keys())
             else:
                 col_means = [{f'{prefix}-mean': arr.mean(axis=0)} for arr in wrt_arrays]
-                wrt_means = pd.DataFrame(col_means, index = gb.groups.keys())
+                wrt_means = pd.DataFrame(col_means, index=gb.groups.keys())
             wrt_means.index.names = df_out.index.names
             df_out = df_out.join(wrt_means)
         if 'std' in func:
             if split:
                 col_stds = [arr.std(axis=0, ddof=1) for arr in wrt_arrays]
-                col_names = [f'{prefix}{i}-std' for i in range(n_cols)]
-                wrt_stds = pd.DataFrame(col_stds, columns=col_names,
+                wrt_stds = pd.DataFrame(col_stds,
+                                        columns=[f'{prefix}{i}-std' for i in range(n_cols)],
                                         index=gb.groups.keys())
             else:
                 col_stds = [{f'{prefix}-std': arr.std(axis=0, ddof=1)} for arr in wrt_arrays]
-                wrt_stds = pd.DataFrame(col_stds, index = gb.groups.keys())
+                wrt_stds = pd.DataFrame(col_stds, index=gb.groups.keys())
             wrt_stds.index.names = df_out.index.names
             df_out = df_out.join(wrt_stds)
-        if not 'count' in func:
+        if 'count' not in func:
             df_out = df_out.drop(f'{prefix}-count')
     else:
         df_out = gb.agg(func)
@@ -321,6 +324,7 @@ def perturbation_stats(data: Union[pd.DataFrame, dict], *group_by: str, wrt: str
     if len(group_by) > 0:
         return df_out.sort_values(group_by[0])
     return df_out
+
 
 def combine_keys(left_key, right_key):
     """Combines `left_key` and `right_key`, attempting to match on any `vflow.subkey.Subkey.is_matching`
@@ -334,7 +338,7 @@ def combine_keys(left_key, right_key):
         Left tuple key to combine.
     right_key: tuple
         Right tuple key to combine.
-    
+
     Returns
     -------
     combined_key: tuple
@@ -355,18 +359,16 @@ def combine_keys(left_key, right_key):
                 if subkey.matches(c_subkey):
                     matched_subkeys.append(subkey)
                     break
-                elif subkey.mismatches(c_subkey):
+                if subkey.mismatches(c_subkey):
                     # subkeys with same origin but different values are rejected
                     return ()
         if len(matched_subkeys) > 0:
             # always filter on right key
-            filtered_key = tuple([subkey for subkey in right_key if subkey not in matched_subkeys])
+            filtered_key = tuple(subkey for subkey in right_key if subkey not in matched_subkeys)
             combined_key = left_key + filtered_key
             return combined_key
-        else:
-            return left_key + right_key
-    else:
         return left_key + right_key
+    return left_key + right_key
 
 
 def combine_dicts(*args: dict, base_case=True):
@@ -377,7 +379,7 @@ def combine_dicts(*args: dict, base_case=True):
     ----------
     *args: dict
         Dictionaries to recursively combine left to right.
-    
+
     Returns
     -------
     combined_dict: dict
@@ -387,7 +389,7 @@ def combine_dicts(*args: dict, base_case=True):
     combined_dict = {}
     if n_args == 0:
         return combined_dict
-    elif n_args == 1:
+    if n_args == 1:
         for k in args[0]:
             # wrap the dict values in tuples; this is helpful so that when we
             # pass the values to a module fun in we can just use * expansion
@@ -396,11 +398,11 @@ def combine_dicts(*args: dict, base_case=True):
             else:
                 combined_dict[k] = args[0][k]
         return combined_dict
-    elif n_args == 2:
+    if n_args == 2:
         for k0 in args[0]:
             for k1 in args[1]:
 
-                if k0 == PREV_KEY or k1 == PREV_KEY:
+                if PREV_KEY in (k0, k1):
                     continue
 
                 combined_key = combine_keys(k0, k1)
@@ -412,9 +414,8 @@ def combine_dicts(*args: dict, base_case=True):
                         combined_dict[combined_key] = args[0][k0] + (args[1][k1],)
 
         return combined_dict
-    else:
-        # combine the first two dicts and call recursively with remaining args
-        return combine_dicts(combine_dicts(args[0], args[1]), *args[2:], base_case=False)
+    # combine the first two dicts and call recursively with remaining args
+    return combine_dicts(combine_dicts(args[0], args[1]), *args[2:], base_case=False)
 
 
 def apply_modules(modules: dict, data_dict: dict, lazy: bool=False):
@@ -433,7 +434,7 @@ def apply_modules(modules: dict, data_dict: dict, lazy: bool=False):
     lazy: bool (option), default False
         If True, `modules` are applied lazily, returning `vflow.vfunc.VfuncPromise`
         objects,
-    
+
     Returns
     -------
     out_dict: dict
@@ -448,28 +449,29 @@ def apply_modules(modules: dict, data_dict: dict, lazy: bool=False):
             else:
                 out_dict[mod_k] = func()
         for data_k in data_dict:
-            if mod_k == PREV_KEY or data_k == PREV_KEY:
+            if PREV_KEY in (mod_k, data_k):
                 continue
 
             combined_key = combine_keys(data_k, mod_k)
 
-            if len(combined_key) > 0:
-                func = deepcopy(modules[mod_k])
-                if lazy:
-                    # return a promise
-                    out_dict[combined_key] = VfuncPromise(func, *data_dict[data_k])
-                else:
-                    data_list = list(data_dict[data_k])
-                    for i, data in enumerate(data_list):
-                        if isinstance(data, VfuncPromise):
-                            data_list[i] = data()
-                        if isinstance(func, RayRemoteFun):
-                            if not isinstance(data_list[i], RayObjRef):
-                                # send data to Ray's remote object store
-                                data_list[i] = ray.put(data_list[i])
-                        elif isinstance(data_list[i], RayObjRef):
-                            # this is not a remote function so get the data
-                            data_list[i] = ray.get(data_list[i])
-                    out_dict[combined_key] = func(*data_list)
+            if not len(combined_key) > 0:
+                continue
+
+            func = deepcopy(modules[mod_k])
+            if lazy:
+                # return a promise
+                out_dict[combined_key] = VfuncPromise(func, *data_dict[data_k])
+            else:
+                data_list = list(data_dict[data_k])
+                for i, data in enumerate(data_list):
+                    if isinstance(data, VfuncPromise):
+                        data_list[i] = data()
+                    if isinstance(func, RayRemoteFun) and not isinstance(data_list[i], ray.ObjectRef):
+                        # send data to Ray's remote object store
+                        data_list[i] = ray.put(data_list[i])
+                    elif isinstance(data_list[i], ray.ObjectRef):
+                        # this is not a remote function so get the data
+                        data_list[i] = ray.get(data_list[i])
+                out_dict[combined_key] = func(*data_list)
 
     return out_dict

@@ -21,16 +21,14 @@ class Vfunc:
         """
         if hasattr(self.module, 'fit'):
             return self.module.fit(*args, **kwargs)
-        else:
-            return self.module(*args, **kwargs)
+        return self.module(*args, **kwargs)
 
     def transform(self, *args, **kwargs):
         """This function transforms its input in some way
         """
         if hasattr(self.module, 'transform'):
             return self.module.transform(*args, **kwargs)
-        else:
-            return self.module(*args, **kwargs)
+        return self.module(*args, **kwargs)
 
     def __call__(self, *args, **kwargs):
         """This should decide what to call
@@ -61,16 +59,14 @@ class AsyncModule:
         """
         if hasattr(self.module, 'fit'):
             return _remote_fun.remote(self.module.fit, *args, **kwargs)
-        else:
-            return _remote_fun.remote(self.module, *args, **kwargs)
+        return _remote_fun.remote(self.module, *args, **kwargs)
 
     def transform(self, *args, **kwargs):
         """This function transforms its input in some way
         """
         if hasattr(self.module, 'transform'):
             return _remote_fun.remote(self.module.transform, *args, **kwargs)
-        else:
-            return _remote_fun.remote(self.module, *args, **kwargs)
+        return _remote_fun.remote(self.module, *args, **kwargs)
 
     def __call__(self, *args, **kwargs):
         """This should decide what to call
@@ -104,23 +100,27 @@ class VfuncPromise:
         self.called = True
         return self.value
 
+    def _get_value(self):
+        if isinstance(self(), ray.ObjectRef):
+            self.value = ray.get(self.value)
+        return self.value
+
     def transform(self, *args):
         """This function transforms its input in some way
         """
-        return self().transform(*args)
+        return self._get_value().transform(*args)
 
     def predict(self, *args):
         """This function calls predict on its inputs
         """
-        return self().predict(*args)
+        return self._get_value().predict(*args)
 
     def predict_proba(self, *args):
         """This function calls predict_proba on its inputs
         """
-        return self().predict_proba(*args)
+        return self._get_value().predict_proba(*args)
 
     def __repr__(self):
         if self.called:
             return f'Fulfilled VfuncPromise({self.value})'
-        else:
-            return f'Unfulfilled VfuncPromise(func={self.vfunc}, args={self.args})'
+        return f'Unfulfilled VfuncPromise(func={self.vfunc}, args={self.args})'

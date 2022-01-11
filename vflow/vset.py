@@ -1,19 +1,25 @@
 """Set of modules to be parallelized over in a pipeline.
 Function arguments are each a list
 """
-PREV_KEY = '__prev__'
-FILTER_PREV_KEY = '__filter_prev__'
+from copy import deepcopy
 
-import joblib
 import numpy as np
+import joblib
 import ray
+
 from mlflow.tracking import MlflowClient
 
-from vflow.utils import *
 from vflow.subkey import Subkey
-from vflow.vfunc import Vfunc, AsyncModule, VfuncPromise, _remote_fun
+from vflow.utils import apply_modules, combine_dicts, dict_to_df, perturbation_stats, sep_dicts, \
+    PREV_KEY
+from vflow.vfunc import Vfunc, AsyncModule
+
+
+FILTER_PREV_KEY = '__filter_prev__'
+
 
 class Vset:
+
     def __init__(self, name: str, modules, module_keys: list = None,
                  is_async: bool = False, output_matching: bool = False,
                  lazy: bool = False, cache_dir: str = None,
@@ -40,7 +46,7 @@ class Vset:
         tracking_dir: str (optional)
             If provided, use the `mlflow.tracking` api to log outputs as metrics
             with params determined by input keys.
-        
+
         .. todo:: include prev and next and change functions to include that.
         """
         self.name = name
@@ -50,10 +56,9 @@ class Vset:
         self._output_matching = output_matching
         self._lazy = lazy
         self._cache_dir = cache_dir
-        self._tracking_dir = tracking_dir
         self._memory = joblib.Memory(self._cache_dir)
-        if self._tracking_dir is not None:
-            self._mlflow = MlflowClient(tracking_uri=self._tracking_dir)
+        if tracking_dir is not None:
+            self._mlflow = MlflowClient(tracking_uri=tracking_dir)
             experiment = self._mlflow.get_experiment_by_name(name=self.name)
             if experiment is None:
                 self._exp_id = self._mlflow.create_experiment(name=self.name)
@@ -65,11 +70,11 @@ class Vset:
         # if so, we'll make then all AsyncModules later on
         if not self._async and np.any([isinstance(mod, AsyncModule) for mod in modules]):
             self._async = True
-        if type(modules) is dict:
+        if isinstance(modules, dict):
             self.modules = modules
-        elif type(modules) is list:
+        elif isinstance(modules, list):
             if module_keys is not None:
-                assert type(module_keys) is list, 'modules passed as list but module_names is not a list'
+                assert isinstance(module_keys, list), 'modules passed as list but module_names is not a list'
                 assert len(modules) == len(
                     module_keys), 'modules list and module_names list do not have the same length'
                 # TODO: how best to handle tuple subkeys?
@@ -86,7 +91,7 @@ class Vset:
             elif not isinstance(v, Vfunc):
                 self.modules[k] = Vfunc(k[0], v)
 
-    def _apply_func(self, out_dict: dict = None, *args):
+    def _apply_func(self, *args, out_dict: dict = None):
         """Apply functions in out_dict to combined args dict
 
         Optionally logs output Subkeys and values as params and metrics using
@@ -105,7 +110,7 @@ class Vset:
         out_dict: dict
             Dictionary with items being determined by functions in module set.
             Functions and input dictionaries are currently matched using a cartesian matching format.
-        
+
         Examples
         --------
         >>> modules, data = {LR : logistic}, {train_1 : [X1,y1], train2 : [X2,y2]}
@@ -127,32 +132,33 @@ class Vset:
             run_dict = {}
             # log subkeys as params and value as metric
             for k, v in out_dict.items():
-                if not k == PREV_KEY:
-                    origins = np.array([subk.origin for subk in k])
-                    # ignore init origins and the last origin (this Vset)
-                    param_idx = [
-                        i for i in range(len(k[:-1])) if origins[i] != 'init'
-                    ]
-                    # get or create mlflow run
-                    run_dict_key = tuple([subk.value for subk in k[:-1]])
-                    if run_dict_key in run_dict:
-                        run_id = run_dict[run_dict_key]
-                    else:
-                        run = self._mlflow.create_run(self._exp_id)
-                        run_id = run.info.run_id
-                        run_dict[run_dict_key] = run_id
-                        # log params
-                        for idx in param_idx:
-                            subkey = k[idx]
-                            param_name = subkey.origin
-                            # check if the origin occurs multiple times
-                            if np.sum(origins == param_name) > 1:
-                                occurence = np.sum(origins[:idx] == param_name)
-                                param_name = param_name + str(occurence)
-                                self._mlflow.log_param(
-                                    run_id, param_name, subkey.value
-                                )
-                    self._mlflow.log_metric(run_id, k[-1].value, v)
+                if k == PREV_KEY:
+                    continue
+                origins = np.array([subk.origin for subk in k])
+                # ignore init origins and the last origin (this Vset)
+                param_idx = [
+                    i for i in range(len(k[:-1])) if origins[i] != 'init'
+                ]
+                # get or create mlflow run
+                run_dict_key = tuple(subk.value for subk in k[:-1])
+                if run_dict_key in run_dict:
+                    run_id = run_dict[run_dict_key]
+                else:
+                    run = self._mlflow.create_run(self._exp_id)
+                    run_id = run.info.run_id
+                    run_dict[run_dict_key] = run_id
+                    # log params
+                    for idx in param_idx:
+                        subkey = k[idx]
+                        param_name = subkey.origin
+                        # check if the origin occurs multiple times
+                        if np.sum(origins == param_name) > 1:
+                            occurence = np.sum(origins[:idx] == param_name)
+                            param_name = param_name + str(occurence)
+                            self._mlflow.log_param(
+                                run_id, param_name, subkey.value
+                            )
+                self._mlflow.log_metric(run_id, k[-1].value, v)
         return out_dict
 
     def fit(self, *args):
@@ -161,7 +167,7 @@ class Vset:
         out_dict = {}
         for k, v in self.modules.items():
             out_dict[k] = v.fit
-        self.out = self._apply_func(out_dict, *args)
+        self.out = self._apply_func(*args, out_dict=out_dict)
         prev = self.out[PREV_KEY][1:]
         if hasattr(self, FILTER_PREV_KEY):
             prev = getattr(self, FILTER_PREV_KEY) + prev
@@ -183,7 +189,7 @@ class Vset:
         for k, v in self.out.items():
             if hasattr(v, 'transform'):
                 out_dict[k] = v.transform
-        return self._apply_func(out_dict, *args)
+        return self._apply_func(*args, out_dict=out_dict)
 
     def predict(self, *args, with_uncertainty: bool=False, group_by: list=None):
         """Predicts args using `_apply_func`
@@ -194,7 +200,7 @@ class Vset:
         for k, v in self.out.items():
             if hasattr(v, 'predict'):
                 pred_dict[k] = v.predict
-        preds = self._apply_func(pred_dict, *args)
+        preds = self._apply_func(*args, out_dict=pred_dict)
         if with_uncertainty:
             return prediction_uncertainty(preds, group_by)
         return preds
@@ -208,15 +214,15 @@ class Vset:
         for k, v in self.out.items():
             if hasattr(v, 'predict_proba'):
                 pred_dict[k] = v.predict_proba
-        preds = self._apply_func(pred_dict, *args)
+        preds = self._apply_func(*args, out_dict=pred_dict)
         if with_uncertainty:
             return prediction_uncertainty(preds, group_by)
-        return self._apply_func(pred_dict, *args)
+        return preds
 
     def evaluate(self, *args):
         """Combines dicts before calling `_apply_func`
         """
-        return self._apply_func(None, *args)
+        return self._apply_func(*args)
 
     def __call__(self, *args, n_out: int = None, keys=None, **kwargs):
         """Call args using `_apply_func`, optionally seperating
@@ -226,7 +232,7 @@ class Vset:
             keys = []
         if n_out is None:
             n_out = len(args)
-        out_dict = self._apply_func(None, *args)
+        out_dict = self._apply_func(*args)
         if n_out == 1:
             return out_dict
         out_dicts = sep_dicts(out_dict, n_out=n_out, keys=keys)
@@ -304,6 +310,7 @@ def _apply_func_cached(out_dict: dict, is_async: bool, lazy: bool, *args):
         out_dict = dict(zip(out_keys, out_vals))
 
     return out_dict
+
 
 def prediction_uncertainty(preds, group_by: list=None):
     """Returns the mean and std predictions conditional on group_by
