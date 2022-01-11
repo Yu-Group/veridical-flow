@@ -7,7 +7,6 @@ from uuid import uuid4
 import numpy as np
 import pandas as pd
 import numpy as np
-from pandas import DataFrame
 
 import ray
 from ray.remote_function import RemoteFunction as RayRemoteFun
@@ -17,28 +16,6 @@ from vflow.subkey import Subkey
 from vflow.vfunc import VfuncPromise
 from vflow.vset import PREV_KEY
 
-def init_args(args_tuple: Union[tuple, list], names=None):
-    """Converts tuple of arguments to a list of dicts
-    
-    Parameters
-    ----------
-    names: list-like (optional), default None
-        given names for each of the arguments in the tuple
-    """
-    if names is None:
-        names = ['start'] * len(args_tuple)
-    else:
-        assert len(names) == len(args_tuple), 'names should be same length as args_tuple'
-
-    output_dicts = []
-    for (i, ele) in enumerate(args_tuple):
-        output_dicts.append({
-            (Subkey(names[i], 'init'),): args_tuple[i],
-            PREV_KEY: ('init',),
-        })
-    return output_dicts
-
-
 def s(x):
     """Gets shape of a list/tuple/ndarray
     """
@@ -46,7 +23,6 @@ def s(x):
         return len(x)
     else:
         return x.shape
-
 
 def init_step(idx, cols):
     """Helper function to find init suffix
@@ -63,83 +39,6 @@ def init_step(idx, cols):
         if cols[i] != 'init':
             return 'init-' + cols[i]
 
-
-def dict_to_df(d: dict, param_key=None):
-    """Converts a dictionary with tuple keys
-    into a pandas DataFrame, optionally seperating
-    parameters in `param_key` if not None
-
-    Parameters
-    ----------
-    d: dict
-        Output dictionary with tuple keys from a Vset.
-    param_key: str (optional), default None
-        Name of parameter to seperate into multiple columns.
-
-    Returns
-    -------
-    df: pandas.DataFrame
-        A DataFrame with `d` tuple keys seperated into columns.
-    """
-    d_copy = {tuple([sk.value for sk in k]): d[k] for k in d if k != PREV_KEY}
-    df = pd.Series(d_copy).reset_index()
-    if len(d_copy.keys()) > 0:
-        key_list = list(d.keys())
-        subkey_list = key_list[0] if key_list[0] != PREV_KEY else key_list[1]
-        cols = [sk.origin for sk in subkey_list] + ['out']
-        # set each init col to init-{next_module_set}
-        cols = [c if c != 'init' else init_step(idx, cols) for idx, c in enumerate(cols)]
-        df.set_axis(cols, axis=1, inplace=True)
-        if param_key:
-            param_keys = df[param_key].tolist()
-            if param_key == 'out' and hasattr(param_keys[0], '__iter__'):
-                param_df = pd.DataFrame(param_keys)
-                param_df.columns = [f'{param_key}-{col}' for col in param_df.columns]
-                df = df.join(param_df)
-            else:
-                param_loc = df.columns.get_loc(param_key)
-                param_key_cols = [f"{p.split('=')[0]}-{param_key}" for p in param_keys[0]]
-                param_keys = [[s.split('=')[1] for s in t] for t in param_keys]
-                df = df.join(pd.DataFrame(param_keys)).drop(columns=param_key)
-                new_cols = df.columns[:len(cols)-1].tolist() + param_key_cols
-                df.set_axis(new_cols, axis=1, inplace=True)
-                new_idx = list(range(len(new_cols)))
-                new_idx = new_idx[:param_loc] + new_idx[len(cols)-1:] + new_idx[param_loc:len(cols)-1]
-                df = df.iloc[:, new_idx]
-    return df
-
-def cum_acc_by_uncertainty(mean_preds, std_preds, true_labels):
-    """Returns uncertainty and cumulative accuracy for grouped class predictions,
-    sorted in increasing order of uncertainty
-
-    Params
-    ------
-    mean_preds: dict
-        mean predictions, output from Vset.predict_with_uncertainties
-    std_preds: dict
-        std predictions, output from Vset.predict_with_uncertainties
-    true_labels: dict or list-like
-
-    TODO: generalize to multi-class classification
-    """
-    assert dict_keys(mean_preds) == dict_keys(std_preds), \
-        "mean_preds and std_preds must share the same keys"
-    # match predictions on keys
-    paired_preds = [[d[k] for d in [mean_preds, std_preds]] for k in dict_keys(mean_preds)]
-    mean_preds, std_preds = (np.array(p)[:,:,1] for p in zip(*paired_preds))
-    if isinstance(true_labels, dict):
-        true_labels = dict_data(true_labels)
-        assert len(true_labels) == 1, 'true_labels should have a single 1D vector entry'
-        true_labels = true_labels[0]
-    n_obs = len(mean_preds[0])
-    assert len(true_labels) == n_obs, \
-        f'true_labels has {len(true_labels)} obs. but should have same as predictions ({n_obs})'
-    sorted_idx = np.argsort(std_preds, axis=1)
-    correct_labels = np.take_along_axis(np.around(mean_preds) - true_labels == 0, sorted_idx, 1)
-    uncertainty = np.take_along_axis(std_preds, sorted_idx, 1)
-    cum_acc = np.cumsum(correct_labels, axis=1) / range(1, n_obs+1)
-    return uncertainty, cum_acc, sorted_idx
-
 def base_dict(d: dict):
     """Remove PREV_KEY from dict d if present
     """
@@ -154,105 +53,6 @@ def dict_keys(d: dict):
     """Returns a list containing all keys in dict d
     """
     return list(base_dict(d).keys())
-
-def compute_interval(df: DataFrame, d_label, wrt_label, accum=None):
-    """Compute an interval (std. dev) of `d_label` column with
-    respect to pertubations in the `wrt_label` column
-
-    .. deprecated:: 0.0.2
-        functionality is replaced by `perturbation_stats`
-    """
-    if accum is None:
-        accum = ['std']
-    df = df.astype({wrt_label: str})
-    return df[[wrt_label, d_label]].groupby(wrt_label).agg(accum)
-
-
-def perturbation_stats(data: Union[DataFrame, dict], *group_by: str, wrt: str='out',
-                       func=None, prefix: str=None, split: bool=False):
-    """Compute statistics for `wrt` in `data`, conditional on `group_by`
-
-    Parameters
-    ----------
-    data: Union[pandas.DataFrame, dict]
-        DataFrame, as from calling `dict_to_df` on an output dict from a Vset,
-        or the output dict itself.
-    *group_by: str
-        Vset names in `data` to group on. If none provided, treats everything as one big
-        group.
-    wrt: str (optional)
-        Column name in `data` or `dict_to_df(data)` on which to compute statistics.
-        Defaults to `'out'`, the values of the original Vset output dict.
-    func: function, str, list or dict (optional), default None
-        A list of functions or function names to use for computing
-        statistics, analogous to the parameter of the same name in
-        pandas.core.groupby.DataFrameGroupBy.aggregate. If `None`, defaults to
-        `['count', 'mean', 'std']`.
-    prefix: str (optional), default None
-        A string to prefix to new columns in output DataFrame. If `None`,
-        uses the value of `wrt`.
-    split: bool (optional), default False
-        If `True` and `wrt` in `data` has `list` or `numpy.ndarray` entries, will
-        attempt to split the entries into multiple columns for the output.
-
-    Returns
-    -------
-    df: pandas.DataFrame
-        A DataFrame with summary statistics on `wrt`.
-    """
-    if func is None:
-        func = ['count', 'mean', 'std']
-    if prefix is None:
-        prefix = wrt
-    if isinstance(data, dict):
-        df = dict_to_df(data)
-    else:
-        df = data
-    group_by = list(group_by)
-    if len(group_by) > 0:
-        gb = df.groupby(group_by)[wrt]
-    else:
-        gb = df.groupby(lambda x: True)[wrt]
-    mean_or_std = type(func) is list and 'mean' in func or 'std' in func
-    list_or_ndarray = type(df[wrt].iloc[0]) in [list, np.ndarray]
-    if mean_or_std and list_or_ndarray:
-        dfs = [gb.get_group(grp) for grp in gb.groups]
-        wrt_arrays = [np.stack(d.tolist()) for d in dfs]
-        n_cols = wrt_arrays[0].shape[1]
-        df_out = pd.DataFrame(gb.agg('count'))
-        df_out.columns = [f'{prefix}-count']
-        if 'mean' in func:
-            if split:
-                col_means = [arr.mean(axis=0) for arr in wrt_arrays]
-                col_names = [f'{prefix}{i}-mean' for i in range(n_cols)]
-                wrt_means = pd.DataFrame(col_means, columns=col_names,
-                                         index=gb.groups.keys())
-            else:
-                col_means = [{f'{prefix}-mean': arr.mean(axis=0)} for arr in wrt_arrays]
-                wrt_means = pd.DataFrame(col_means, index = gb.groups.keys())
-            wrt_means.index.names = df_out.index.names
-            df_out = df_out.join(wrt_means)
-        if 'std' in func:
-            if split:
-                col_stds = [arr.std(axis=0, ddof=1) for arr in wrt_arrays]
-                col_names = [f'{prefix}{i}-std' for i in range(n_cols)]
-                wrt_stds = pd.DataFrame(col_stds, columns=col_names,
-                                        index=gb.groups.keys())
-            else:
-                col_stds = [{f'{prefix}-std': arr.std(axis=0, ddof=1)} for arr in wrt_arrays]
-                wrt_stds = pd.DataFrame(col_stds, index = gb.groups.keys())
-            wrt_stds.index.names = df_out.index.names
-            df_out = df_out.join(wrt_stds)
-        if not 'count' in func:
-            df_out = df_out.drop(f'{prefix}-count')
-    else:
-        df_out = gb.agg(func)
-    df_out = df_out.reindex(sorted(df_out.columns), axis=1)
-    df_out.reset_index(inplace=True)
-    if len(group_by) > 0:
-        return df_out.sort_values(group_by[0])
-    return df_out
-
 
 def to_tuple(lists: list):
     """Convert from lists to unpacked tuple
@@ -393,6 +193,134 @@ def sep_dicts(d: dict, n_out: int = 1, keys=None):
 
         return sep_dicts_list
 
+def dict_to_df(d: dict, param_key=None):
+    """Converts a dictionary with tuple keys
+    into a pandas DataFrame, optionally seperating
+    parameters in `param_key` if not None
+
+    Parameters
+    ----------
+    d: dict
+        Output dictionary with tuple keys from a Vset.
+    param_key: str (optional), default None
+        Name of parameter to seperate into multiple columns.
+
+    Returns
+    -------
+    df: pandas.DataFrame
+        A DataFrame with `d` tuple keys seperated into columns.
+    """
+    d_copy = {tuple([sk.value for sk in k]): d[k] for k in d if k != PREV_KEY}
+    df = pd.Series(d_copy).reset_index()
+    if len(d_copy.keys()) > 0:
+        key_list = list(d.keys())
+        subkey_list = key_list[0] if key_list[0] != PREV_KEY else key_list[1]
+        cols = [sk.origin for sk in subkey_list] + ['out']
+        # set each init col to init-{next_module_set}
+        cols = [c if c != 'init' else init_step(idx, cols) for idx, c in enumerate(cols)]
+        df.set_axis(cols, axis=1, inplace=True)
+        if param_key:
+            param_keys = df[param_key].tolist()
+            if param_key == 'out' and hasattr(param_keys[0], '__iter__'):
+                param_df = pd.DataFrame(param_keys)
+                param_df.columns = [f'{param_key}-{col}' for col in param_df.columns]
+                df = df.join(param_df)
+            else:
+                param_loc = df.columns.get_loc(param_key)
+                param_key_cols = [f"{p.split('=')[0]}-{param_key}" for p in param_keys[0]]
+                param_keys = [[s.split('=')[1] for s in t] for t in param_keys]
+                df = df.join(pd.DataFrame(param_keys)).drop(columns=param_key)
+                new_cols = df.columns[:len(cols)-1].tolist() + param_key_cols
+                df.set_axis(new_cols, axis=1, inplace=True)
+                new_idx = list(range(len(new_cols)))
+                new_idx = new_idx[:param_loc] + new_idx[len(cols)-1:] + new_idx[param_loc:len(cols)-1]
+                df = df.iloc[:, new_idx]
+    return df
+
+def perturbation_stats(data: Union[pd.DataFrame, dict], *group_by: str, wrt: str='out',
+                       func=None, prefix: str=None, split: bool=False):
+    """Compute statistics for `wrt` in `data`, conditional on `group_by`
+
+    Parameters
+    ----------
+    data: Union[pandas.DataFrame, dict]
+        DataFrame, as from calling `dict_to_df` on an output dict from a Vset,
+        or the output dict itself.
+    *group_by: str
+        Vset names in `data` to group on. If none provided, treats everything as one big
+        group.
+    wrt: str (optional)
+        Column name in `data` or `dict_to_df(data)` on which to compute statistics.
+        Defaults to `'out'`, the values of the original Vset output dict.
+    func: function, str, list or dict (optional), default None
+        A list of functions or function names to use for computing
+        statistics, analogous to the parameter of the same name in
+        pandas.core.groupby.DataFrameGroupBy.aggregate. If `None`, defaults to
+        `['count', 'mean', 'std']`.
+    prefix: str (optional), default None
+        A string to prefix to new columns in output DataFrame. If `None`,
+        uses the value of `wrt`.
+    split: bool (optional), default False
+        If `True` and `wrt` in `data` has `list` or `numpy.ndarray` entries, will
+        attempt to split the entries into multiple columns for the output.
+
+    Returns
+    -------
+    df: pandas.DataFrame
+        A DataFrame with summary statistics on `wrt`.
+    """
+    if func is None:
+        func = ['count', 'mean', 'std']
+    if prefix is None:
+        prefix = wrt
+    if isinstance(data, dict):
+        df = dict_to_df(data)
+    else:
+        df = data
+    group_by = list(group_by)
+    if len(group_by) > 0:
+        gb = df.groupby(group_by)[wrt]
+    else:
+        gb = df.groupby(lambda x: True)[wrt]
+    mean_or_std = type(func) is list and 'mean' in func or 'std' in func
+    list_or_ndarray = type(df[wrt].iloc[0]) in [list, np.ndarray]
+    if mean_or_std and list_or_ndarray:
+        dfs = [gb.get_group(grp) for grp in gb.groups]
+        wrt_arrays = [np.stack(d.tolist()) for d in dfs]
+        n_cols = wrt_arrays[0].shape[1]
+        df_out = pd.DataFrame(gb.agg('count'))
+        df_out.columns = [f'{prefix}-count']
+        if 'mean' in func:
+            if split:
+                col_means = [arr.mean(axis=0) for arr in wrt_arrays]
+                col_names = [f'{prefix}{i}-mean' for i in range(n_cols)]
+                wrt_means = pd.DataFrame(col_means, columns=col_names,
+                                         index=gb.groups.keys())
+            else:
+                col_means = [{f'{prefix}-mean': arr.mean(axis=0)} for arr in wrt_arrays]
+                wrt_means = pd.DataFrame(col_means, index = gb.groups.keys())
+            wrt_means.index.names = df_out.index.names
+            df_out = df_out.join(wrt_means)
+        if 'std' in func:
+            if split:
+                col_stds = [arr.std(axis=0, ddof=1) for arr in wrt_arrays]
+                col_names = [f'{prefix}{i}-std' for i in range(n_cols)]
+                wrt_stds = pd.DataFrame(col_stds, columns=col_names,
+                                        index=gb.groups.keys())
+            else:
+                col_stds = [{f'{prefix}-std': arr.std(axis=0, ddof=1)} for arr in wrt_arrays]
+                wrt_stds = pd.DataFrame(col_stds, index = gb.groups.keys())
+            wrt_stds.index.names = df_out.index.names
+            df_out = df_out.join(wrt_stds)
+        if not 'count' in func:
+            df_out = df_out.drop(f'{prefix}-count')
+    else:
+        df_out = gb.agg(func)
+    df_out = df_out.reindex(sorted(df_out.columns), axis=1)
+    df_out.reset_index(inplace=True)
+    if len(group_by) > 0:
+        return df_out.sort_values(group_by[0])
+    return df_out
 
 def combine_keys(left_key, right_key):
     """Combines `left_key` and `right_key`, attempting to match on any `vflow.subkey.Subkey.is_matching`

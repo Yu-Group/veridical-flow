@@ -2,9 +2,8 @@ import numpy as np
 import pytest
 from numpy.testing import assert_equal
 
-from vflow.convert import *
+from vflow.utils import *
 from vflow.subkey import Subkey as sm
-import pandas as pd
 
 
 @pytest.mark.parametrize(
@@ -1009,17 +1008,7 @@ class TestApplyModules:
         result_dict = apply_modules(*in_dicts)
         assert_equal(result_dict, out_dict)
 
-class TestConvert:
-
-    def test_to_list(self):
-        assert to_list((['x1', 'x2', 'x3'], ['y1', 'y2', 'y3'])) == [['x1', 'y1'], ['x2', 'y2'], ['x3', 'y3']]
-        assert to_list((['x1'], ['y1'])) == [['x1', 'y1']]
-        assert to_list((['x1', 'x2', 'x3'],)) == [['x1'], ['x2'], ['x3']]
-        assert to_list(('x1', )) == [['x1']]
-        assert to_list(('x1', 'y1')) == [['x1', 'y1']]
-        assert to_list(('x1', 'x2', 'x3', 'y1', 'y2', 'y3')) == [['x1', 'y1'], ['x2', 'y2'], ['x3', 'y3']]
-        with pytest.raises(ValueError):
-            to_list(('x1', 'x2', 'x3', 'y1', 'y2'))
+class TestUtils:
 
     def test_dict_to_df(self):
         in_dict_1 = {(sm('X_train', 'init'), sm('feat_extract_0', 'feat_extract'), 
@@ -1071,15 +1060,6 @@ class TestConvert:
         assert dict_to_df(in_dict_2, param_key='modeling').equals(out_df_2)
         assert dict_to_df(in_dict_3, param_key='out').equals(out_df_3)
         assert dict_to_df(in_dict_4, param_key='out').equals(out_df_4)
-
-    def test_compute_interval(self):
-        in_dict = {(sm('X_train', 'init'), sm('feat_extract_0', 'feat_extract'), 
-            sm('y_train', 'init'), sm('DT', 'modeling'), sm('acc', 'metrics')): 0.9,
-            (sm('X_train', 'init'), sm('feat_extract_1', 'feat_extract'), 
-            sm('y_train', 'init'), sm('DT', 'modeling'), sm('acc', 'metrics')): 0.95}
-        df = dict_to_df(in_dict)
-        interval = compute_interval(df, 'out', 'metrics')
-        assert interval['out']['std'][0] == 0.03535533905932729
     
     def test_perturbation_stats(self):
         in_dict = {(sm('X_train', 'init'), sm('feat_extract_0', 'feat_extract'), 
@@ -1111,23 +1091,3 @@ class TestConvert:
         assert stats.columns[1] == 'o-count'
         assert stats.columns[-1] == 'o2-std'
         assert stats.loc[1]['o2-std'] == 0.0820243866176395
-
-    def test_cum_acc_by_uncertainty(self):
-        mean_dict = {'group_0': np.array([[0.2, 0.8], [0.25, 0.75], [0.1, 0.9]]),
-                     'group_1': np.array([[0.4, 0.6], [0.5, 0.5], [0.45, 0.55]])}
-        std_dict = {'group_0': np.array([[0.003, 0.003], [0.146, 0.146], [0.0023, 0.0023]]),
-                    'group_1': np.array([[0.0054, 0.0054], [0.2344, 0.2344], [0.5166, 0.5166]])}
-        true_labels = [0, 1, 1]
-        true_labels_dict = {'y': [0, 1, 1]}
-        u0, c0, idx0 = cum_acc_by_uncertainty(mean_dict, std_dict, true_labels)
-        u1, c1, idx1 = cum_acc_by_uncertainty(mean_dict, std_dict, true_labels_dict)
-        assert_equal(u0, u1)
-        assert_equal(c0, c1)
-        assert_equal(idx0, idx1)
-        assert u0.shape == c0.shape == (2, 3)
-        assert_equal(u0[0], sorted(x[1] for x in std_dict['group_0']))
-        assert_equal(u0[1], sorted(x[1] for x in std_dict['group_1']))
-        assert_equal(c0[0], [1, 1/2, 2/3])
-        assert_equal(c0[1], [0, 0, 1/3])
-        assert_equal(idx0[0], [2, 0, 1])
-        assert_equal(idx0[1], [0, 1, 2])

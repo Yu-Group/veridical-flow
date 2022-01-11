@@ -9,10 +9,9 @@ import numpy as np
 import ray
 from mlflow.tracking import MlflowClient
 
-from vflow.convert import *
+from vflow.utils import *
 from vflow.subkey import Subkey
 from vflow.vfunc import Vfunc, AsyncModule, VfuncPromise, _remote_fun
-
 
 class Vset:
     def __init__(self, name: str, modules, module_keys: list = None,

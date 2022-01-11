@@ -33,10 +33,33 @@ from functools import partial
 from itertools import product
 from typing import Union
 
-from vflow.convert import dict_to_df
-from vflow.vfunc import Vfunc
-from vflow.vset import Vset, PREV_KEY, FILTER_PREV_KEY
+import pandas as pd
+import numpy as np
 
+from vflow.utils import dict_keys, dict_data
+from vflow.vfunc import Vfunc
+from vflow.vset import Vset, Subkey, PREV_KEY, FILTER_PREV_KEY
+
+def init_args(args_tuple: Union[tuple, list], names=None):
+    &#34;&#34;&#34;Converts tuple of arguments to a list of dicts
+    
+    Parameters
+    ----------
+    names: list-like (optional), default None
+        given names for each of the arguments in the tuple
+    &#34;&#34;&#34;
+    if names is None:
+        names = [&#39;start&#39;] * len(args_tuple)
+    else:
+        assert len(names) == len(args_tuple), &#39;names should be same length as args_tuple&#39;
+
+    output_dicts = []
+    for (i, ele) in enumerate(args_tuple):
+        output_dicts.append({
+            (Subkey(names[i], &#39;init&#39;),): args_tuple[i],
+            PREV_KEY: (&#39;init&#39;,),
+        })
+    return output_dicts
 
 def build_vset(name: str, obj, param_dict=None, *args, reps: int = 1,
                is_async: bool = False, output_matching: bool = False,
@@ -181,7 +204,39 @@ def filter_vset_by_metric(metric_dict: dict, vset: Vset, *vsets: Vset, n_keep: i
     if len(vsets) == 1:
         return vsets[0]
     else:
-        return vsets</code></pre>
+        return vsets
+
+def cum_acc_by_uncertainty(mean_preds, std_preds, true_labels):
+    &#34;&#34;&#34;Returns uncertainty and cumulative accuracy for grouped class predictions,
+    sorted in increasing order of uncertainty
+
+    Params
+    ------
+    mean_preds: dict
+        mean predictions, output from Vset.predict_with_uncertainties
+    std_preds: dict
+        std predictions, output from Vset.predict_with_uncertainties
+    true_labels: dict or list-like
+
+    TODO: generalize to multi-class classification
+    &#34;&#34;&#34;
+    assert dict_keys(mean_preds) == dict_keys(std_preds), \
+        &#34;mean_preds and std_preds must share the same keys&#34;
+    # match predictions on keys
+    paired_preds = [[d[k] for d in [mean_preds, std_preds]] for k in dict_keys(mean_preds)]
+    mean_preds, std_preds = (np.array(p)[:,:,1] for p in zip(*paired_preds))
+    if isinstance(true_labels, dict):
+        true_labels = dict_data(true_labels)
+        assert len(true_labels) == 1, &#39;true_labels should have a single 1D vector entry&#39;
+        true_labels = true_labels[0]
+    n_obs = len(mean_preds[0])
+    assert len(true_labels) == n_obs, \
+        f&#39;true_labels has {len(true_labels)} obs. but should have same as predictions ({n_obs})&#39;
+    sorted_idx = np.argsort(std_preds, axis=1)
+    correct_labels = np.take_along_axis(np.around(mean_preds) - true_labels == 0, sorted_idx, 1)
+    uncertainty = np.take_along_axis(std_preds, sorted_idx, 1)
+    cum_acc = np.cumsum(correct_labels, axis=1) / range(1, n_obs+1)
+    return uncertainty, cum_acc, sorted_idx</code></pre>
 </details>
 </section>
 <section>
@@ -315,6 +370,56 @@ with params determined by input keys</dd>
                 cache_dir=cache_dir, tracking_dir=tracking_dir)</code></pre>
 </details>
 </dd>
+<dt id="vflow.helpers.cum_acc_by_uncertainty"><code class="name flex">
+<span>def <span class="ident">cum_acc_by_uncertainty</span></span>(<span>mean_preds, std_preds, true_labels)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Returns uncertainty and cumulative accuracy for grouped class predictions,
+sorted in increasing order of uncertainty</p>
+<h2 id="params">Params</h2>
+<p>mean_preds: dict
+mean predictions, output from Vset.predict_with_uncertainties
+std_preds: dict
+std predictions, output from Vset.predict_with_uncertainties
+true_labels: dict or list-like</p>
+<p>TODO: generalize to multi-class classification</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def cum_acc_by_uncertainty(mean_preds, std_preds, true_labels):
+    &#34;&#34;&#34;Returns uncertainty and cumulative accuracy for grouped class predictions,
+    sorted in increasing order of uncertainty
+
+    Params
+    ------
+    mean_preds: dict
+        mean predictions, output from Vset.predict_with_uncertainties
+    std_preds: dict
+        std predictions, output from Vset.predict_with_uncertainties
+    true_labels: dict or list-like
+
+    TODO: generalize to multi-class classification
+    &#34;&#34;&#34;
+    assert dict_keys(mean_preds) == dict_keys(std_preds), \
+        &#34;mean_preds and std_preds must share the same keys&#34;
+    # match predictions on keys
+    paired_preds = [[d[k] for d in [mean_preds, std_preds]] for k in dict_keys(mean_preds)]
+    mean_preds, std_preds = (np.array(p)[:,:,1] for p in zip(*paired_preds))
+    if isinstance(true_labels, dict):
+        true_labels = dict_data(true_labels)
+        assert len(true_labels) == 1, &#39;true_labels should have a single 1D vector entry&#39;
+        true_labels = true_labels[0]
+    n_obs = len(mean_preds[0])
+    assert len(true_labels) == n_obs, \
+        f&#39;true_labels has {len(true_labels)} obs. but should have same as predictions ({n_obs})&#39;
+    sorted_idx = np.argsort(std_preds, axis=1)
+    correct_labels = np.take_along_axis(np.around(mean_preds) - true_labels == 0, sorted_idx, 1)
+    uncertainty = np.take_along_axis(std_preds, sorted_idx, 1)
+    cum_acc = np.cumsum(correct_labels, axis=1) / range(1, n_obs+1)
+    return uncertainty, cum_acc, sorted_idx</code></pre>
+</details>
+</dd>
 <dt id="vflow.helpers.filter_vset_by_metric"><code class="name flex">
 <span>def <span class="ident">filter_vset_by_metric</span></span>(<span>metric_dict: dict, vset: <a title="vflow.vset.Vset" href="vset.html#vflow.vset.Vset">Vset</a>, *vsets: <a title="vflow.vset.Vset" href="vset.html#vflow.vset.Vset">Vset</a>, n_keep: int = 1, bigger_is_better: bool = True, filter_on=None, group: bool = False) ‑> Union[<a title="vflow.vset.Vset" href="vset.html#vflow.vset.Vset">Vset</a>, list]</span>
 </code></dt>
@@ -414,6 +519,42 @@ input Vset names</dd>
         return vsets</code></pre>
 </details>
 </dd>
+<dt id="vflow.helpers.init_args"><code class="name flex">
+<span>def <span class="ident">init_args</span></span>(<span>args_tuple: Union[tuple, list], names=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Converts tuple of arguments to a list of dicts</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>names</code></strong> :&ensp;<code>list-like (optional)</code>, default <code>None</code></dt>
+<dd>given names for each of the arguments in the tuple</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def init_args(args_tuple: Union[tuple, list], names=None):
+    &#34;&#34;&#34;Converts tuple of arguments to a list of dicts
+    
+    Parameters
+    ----------
+    names: list-like (optional), default None
+        given names for each of the arguments in the tuple
+    &#34;&#34;&#34;
+    if names is None:
+        names = [&#39;start&#39;] * len(args_tuple)
+    else:
+        assert len(names) == len(args_tuple), &#39;names should be same length as args_tuple&#39;
+
+    output_dicts = []
+    for (i, ele) in enumerate(args_tuple):
+        output_dicts.append({
+            (Subkey(names[i], &#39;init&#39;),): args_tuple[i],
+            PREV_KEY: (&#39;init&#39;,),
+        })
+    return output_dicts</code></pre>
+</details>
+</dd>
 </dl>
 </section>
 <section>
@@ -433,7 +574,9 @@ input Vset names</dd>
 <li><h3><a href="#header-functions">Functions</a></h3>
 <ul class="">
 <li><code><a title="vflow.helpers.build_vset" href="#vflow.helpers.build_vset">build_vset</a></code></li>
+<li><code><a title="vflow.helpers.cum_acc_by_uncertainty" href="#vflow.helpers.cum_acc_by_uncertainty">cum_acc_by_uncertainty</a></code></li>
 <li><code><a title="vflow.helpers.filter_vset_by_metric" href="#vflow.helpers.filter_vset_by_metric">filter_vset_by_metric</a></code></li>
+<li><code><a title="vflow.helpers.init_args" href="#vflow.helpers.init_args">init_args</a></code></li>
 </ul>
 </li>
 </ul>
