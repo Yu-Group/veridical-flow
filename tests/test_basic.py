@@ -1,5 +1,5 @@
 import vflow
-from vflow.convert import to_tuple, to_list
+from vflow.utils import to_tuple, to_list
 
 
 class TestBasic:
