@@ -50,16 +50,14 @@ class Vfunc:
         &#34;&#34;&#34;
         if hasattr(self.module, &#39;fit&#39;):
             return self.module.fit(*args, **kwargs)
-        else:
-            return self.module(*args, **kwargs)
+        return self.module(*args, **kwargs)
 
     def transform(self, *args, **kwargs):
         &#34;&#34;&#34;This function transforms its input in some way
         &#34;&#34;&#34;
         if hasattr(self.module, &#39;transform&#39;):
             return self.module.transform(*args, **kwargs)
-        else:
-            return self.module(*args, **kwargs)
+        return self.module(*args, **kwargs)
 
     def __call__(self, *args, **kwargs):
         &#34;&#34;&#34;This should decide what to call
@@ -90,16 +88,14 @@ class AsyncModule:
         &#34;&#34;&#34;
         if hasattr(self.module, &#39;fit&#39;):
             return _remote_fun.remote(self.module.fit, *args, **kwargs)
-        else:
-            return _remote_fun.remote(self.module, *args, **kwargs)
+        return _remote_fun.remote(self.module, *args, **kwargs)
 
     def transform(self, *args, **kwargs):
         &#34;&#34;&#34;This function transforms its input in some way
         &#34;&#34;&#34;
         if hasattr(self.module, &#39;transform&#39;):
             return _remote_fun.remote(self.module.transform, *args, **kwargs)
-        else:
-            return _remote_fun.remote(self.module, *args, **kwargs)
+        return _remote_fun.remote(self.module, *args, **kwargs)
 
     def __call__(self, *args, **kwargs):
         &#34;&#34;&#34;This should decide what to call
@@ -133,26 +129,30 @@ class VfuncPromise:
         self.called = True
         return self.value
 
+    def _get_value(self):
+        if isinstance(self(), ray.ObjectRef):
+            self.value = ray.get(self.value)
+        return self.value
+
     def transform(self, *args):
         &#34;&#34;&#34;This function transforms its input in some way
         &#34;&#34;&#34;
-        return self().transform(*args)
+        return self._get_value().transform(*args)
 
     def predict(self, *args):
         &#34;&#34;&#34;This function calls predict on its inputs
         &#34;&#34;&#34;
-        return self().predict(*args)
+        return self._get_value().predict(*args)
 
     def predict_proba(self, *args):
         &#34;&#34;&#34;This function calls predict_proba on its inputs
         &#34;&#34;&#34;
-        return self().predict_proba(*args)
+        return self._get_value().predict_proba(*args)
 
     def __repr__(self):
         if self.called:
             return f&#39;Fulfilled VfuncPromise({self.value})&#39;
-        else:
-            return f&#39;Unfulfilled VfuncPromise(func={self.vfunc}, args={self.args})&#39;</code></pre>
+        return f&#39;Unfulfilled VfuncPromise(func={self.vfunc}, args={self.args})&#39;</code></pre>
 </details>
 </section>
 <section>
@@ -192,16 +192,14 @@ class VfuncPromise:
         &#34;&#34;&#34;
         if hasattr(self.module, &#39;fit&#39;):
             return _remote_fun.remote(self.module.fit, *args, **kwargs)
-        else:
-            return _remote_fun.remote(self.module, *args, **kwargs)
+        return _remote_fun.remote(self.module, *args, **kwargs)
 
     def transform(self, *args, **kwargs):
         &#34;&#34;&#34;This function transforms its input in some way
         &#34;&#34;&#34;
         if hasattr(self.module, &#39;transform&#39;):
             return _remote_fun.remote(self.module.transform, *args, **kwargs)
-        else:
-            return _remote_fun.remote(self.module, *args, **kwargs)
+        return _remote_fun.remote(self.module, *args, **kwargs)
 
     def __call__(self, *args, **kwargs):
         &#34;&#34;&#34;This should decide what to call
@@ -224,8 +222,7 @@ class VfuncPromise:
     &#34;&#34;&#34;
     if hasattr(self.module, &#39;fit&#39;):
         return _remote_fun.remote(self.module.fit, *args, **kwargs)
-    else:
-        return _remote_fun.remote(self.module, *args, **kwargs)</code></pre>
+    return _remote_fun.remote(self.module, *args, **kwargs)</code></pre>
 </details>
 </dd>
 <dt id="vflow.vfunc.AsyncModule.transform"><code class="name flex">
@@ -242,8 +239,7 @@ class VfuncPromise:
     &#34;&#34;&#34;
     if hasattr(self.module, &#39;transform&#39;):
         return _remote_fun.remote(self.module.transform, *args, **kwargs)
-    else:
-        return _remote_fun.remote(self.module, *args, **kwargs)</code></pre>
+    return _remote_fun.remote(self.module, *args, **kwargs)</code></pre>
 </details>
 </dd>
 </dl>
@@ -277,16 +273,14 @@ If none of these is supported, it need only be a function</p></div>
         &#34;&#34;&#34;
         if hasattr(self.module, &#39;fit&#39;):
             return self.module.fit(*args, **kwargs)
-        else:
-            return self.module(*args, **kwargs)
+        return self.module(*args, **kwargs)
 
     def transform(self, *args, **kwargs):
         &#34;&#34;&#34;This function transforms its input in some way
         &#34;&#34;&#34;
         if hasattr(self.module, &#39;transform&#39;):
             return self.module.transform(*args, **kwargs)
-        else:
-            return self.module(*args, **kwargs)
+        return self.module(*args, **kwargs)
 
     def __call__(self, *args, **kwargs):
         &#34;&#34;&#34;This should decide what to call
@@ -309,8 +303,7 @@ If none of these is supported, it need only be a function</p></div>
     &#34;&#34;&#34;
     if hasattr(self.module, &#39;fit&#39;):
         return self.module.fit(*args, **kwargs)
-    else:
-        return self.module(*args, **kwargs)</code></pre>
+    return self.module(*args, **kwargs)</code></pre>
 </details>
 </dd>
 <dt id="vflow.vfunc.Vfunc.transform"><code class="name flex">
@@ -327,8 +320,7 @@ If none of these is supported, it need only be a function</p></div>
     &#34;&#34;&#34;
     if hasattr(self.module, &#39;transform&#39;):
         return self.module.transform(*args, **kwargs)
-    else:
-        return self.module(*args, **kwargs)</code></pre>
+    return self.module(*args, **kwargs)</code></pre>
 </details>
 </dd>
 </dl>
@@ -369,26 +361,30 @@ If none of these is supported, it need only be a function</p></div>
         self.called = True
         return self.value
 
+    def _get_value(self):
+        if isinstance(self(), ray.ObjectRef):
+            self.value = ray.get(self.value)
+        return self.value
+
     def transform(self, *args):
         &#34;&#34;&#34;This function transforms its input in some way
         &#34;&#34;&#34;
-        return self().transform(*args)
+        return self._get_value().transform(*args)
 
     def predict(self, *args):
         &#34;&#34;&#34;This function calls predict on its inputs
         &#34;&#34;&#34;
-        return self().predict(*args)
+        return self._get_value().predict(*args)
 
     def predict_proba(self, *args):
         &#34;&#34;&#34;This function calls predict_proba on its inputs
         &#34;&#34;&#34;
-        return self().predict_proba(*args)
+        return self._get_value().predict_proba(*args)
 
     def __repr__(self):
         if self.called:
             return f&#39;Fulfilled VfuncPromise({self.value})&#39;
-        else:
-            return f&#39;Unfulfilled VfuncPromise(func={self.vfunc}, args={self.args})&#39;</code></pre>
+        return f&#39;Unfulfilled VfuncPromise(func={self.vfunc}, args={self.args})&#39;</code></pre>
 </details>
 <h3>Methods</h3>
 <dl>
@@ -404,7 +400,7 @@ If none of these is supported, it need only be a function</p></div>
 <pre><code class="python">def predict(self, *args):
     &#34;&#34;&#34;This function calls predict on its inputs
     &#34;&#34;&#34;
-    return self().predict(*args)</code></pre>
+    return self._get_value().predict(*args)</code></pre>
 </details>
 </dd>
 <dt id="vflow.vfunc.VfuncPromise.predict_proba"><code class="name flex">
@@ -419,7 +415,7 @@ If none of these is supported, it need only be a function</p></div>
 <pre><code class="python">def predict_proba(self, *args):
     &#34;&#34;&#34;This function calls predict_proba on its inputs
     &#34;&#34;&#34;
-    return self().predict_proba(*args)</code></pre>
+    return self._get_value().predict_proba(*args)</code></pre>
 </details>
 </dd>
 <dt id="vflow.vfunc.VfuncPromise.transform"><code class="name flex">
@@ -434,7 +430,7 @@ If none of these is supported, it need only be a function</p></div>
 <pre><code class="python">def transform(self, *args):
     &#34;&#34;&#34;This function transforms its input in some way
     &#34;&#34;&#34;
-    return self().transform(*args)</code></pre>
+    return self._get_value().transform(*args)</code></pre>
 </details>
 </dd>
 </dl>
