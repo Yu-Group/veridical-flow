@@ -32,48 +32,53 @@ Function arguments are each a list</p>
 <pre><code class="python">&#34;&#34;&#34;Set of modules to be parallelized over in a pipeline.
 Function arguments are each a list
 &#34;&#34;&#34;
-PREV_KEY = &#39;__prev__&#39;
-FILTER_PREV_KEY = &#39;__filter_prev__&#39;
+from copy import deepcopy
 
-import joblib
 import numpy as np
+import joblib
 import ray
+
 from mlflow.tracking import MlflowClient
 
-from vflow.convert import *
 from vflow.subkey import Subkey
-from vflow.vfunc import Vfunc, AsyncModule, VfuncPromise, _remote_fun
+from vflow.utils import apply_modules, combine_dicts, dict_to_df, perturbation_stats, sep_dicts, \
+    PREV_KEY
+from vflow.vfunc import Vfunc, AsyncModule
+
+
+FILTER_PREV_KEY = &#39;__filter_prev__&#39;
 
 
 class Vset:
+
     def __init__(self, name: str, modules, module_keys: list = None,
                  is_async: bool = False, output_matching: bool = False,
                  lazy: bool = False, cache_dir: str = None,
                  tracking_dir: str = None):
         &#34;&#34;&#34;
-        todo: include prev and next and change functions to include that.
-        Params
-        -------
+        Parameters
+        ----------
         name: str
-            name of this moduleset
+            Name of this Vset.
         modules: list or dict
-            dictionary of functions that we want to associate with
+            Dictionary of functions that we want to associate with
         module_keys: list (optional)
-            list of names corresponding to each module
+            List of names corresponding to each module
         is_async: bool (optional)
-            if True, modules are computed asynchronously
+            If True, `modules` are computed asynchronously
         output_matching: bool (optional)
-            if True, then output keys from this Vset will be matched when used
+            If True, then output keys from this Vset will be matched when used
             in other Vsets
         lazy: bool (optional)
-            if True, then modules are evaluated lazily, i.e. outputs contain a
-            promise
+            If True, then modules are evaluated lazily, i.e. outputs are `vset.vfunc.VfuncPromise`
         cache_dir: str (optional)
-            if provided, do caching and use cache_dir as the data store for
-            joblib.Memory
+            If provided, do caching and use `cache_dir` as the data store for
+            `joblib.Memory`.
         tracking_dir: str (optional)
-            if provided, use the mlflow.tracking api to log outputs as metrics
-            with params determined by input keys
+            If provided, use the `mlflow.tracking` api to log outputs as metrics
+            with params determined by input keys.
+
+        .. todo:: include prev and next and change functions to include that.
         &#34;&#34;&#34;
         self.name = name
         self._fitted = False
@@ -82,10 +87,9 @@ class Vset:
         self._output_matching = output_matching
         self._lazy = lazy
         self._cache_dir = cache_dir
-        self._tracking_dir = tracking_dir
         self._memory = joblib.Memory(self._cache_dir)
-        if self._tracking_dir is not None:
-            self._mlflow = MlflowClient(tracking_uri=self._tracking_dir)
+        if tracking_dir is not None:
+            self._mlflow = MlflowClient(tracking_uri=tracking_dir)
             experiment = self._mlflow.get_experiment_by_name(name=self.name)
             if experiment is None:
                 self._exp_id = self._mlflow.create_experiment(name=self.name)
@@ -97,11 +101,11 @@ class Vset:
         # if so, we&#39;ll make then all AsyncModules later on
         if not self._async and np.any([isinstance(mod, AsyncModule) for mod in modules]):
             self._async = True
-        if type(modules) is dict:
+        if isinstance(modules, dict):
             self.modules = modules
-        elif type(modules) is list:
+        elif isinstance(modules, list):
             if module_keys is not None:
-                assert type(module_keys) is list, &#39;modules passed as list but module_names is not a list&#39;
+                assert isinstance(module_keys, list), &#39;modules passed as list but module_names is not a list&#39;
                 assert len(modules) == len(
                     module_keys), &#39;modules list and module_names list do not have the same length&#39;
                 # TODO: how best to handle tuple subkeys?
@@ -118,7 +122,31 @@ class Vset:
             elif not isinstance(v, Vfunc):
                 self.modules[k] = Vfunc(k[0], v)
 
-    def _apply_func(self, out_dict: dict = None, *args):
+    def _apply_func(self, *args, out_dict: dict = None):
+        &#34;&#34;&#34;Apply functions in out_dict to combined args dict
+
+        Optionally logs output Subkeys and values as params and metrics using
+        `mlflow.tracking` if this Vset has a `_tracking_dir`.
+
+        Parameters
+        ----------
+        *args: dict
+            Takes multiple dicts and combines them into one.
+            Then runs modules on each item in combined dict.
+        out_dict: dict (optional), default None
+            The dictionary to pass to the matching function. If None, defaults to self.modules.
+
+        Returns
+        -------
+        out_dict: dict
+            Dictionary with items being determined by functions in module set.
+            Functions and input dictionaries are currently matched using a cartesian matching format.
+
+        Examples
+        --------
+        &gt;&gt;&gt; modules, data = {LR : logistic}, {train_1 : [X1,y1], train2 : [X2,y2]}
+        {(train_1, LR) : fitted logistic, (train_2, LR) :  fitted logistic}
+        &#34;&#34;&#34;
         if out_dict is None:
             out_dict = deepcopy(self.modules)
 
@@ -135,41 +163,42 @@ class Vset:
             run_dict = {}
             # log subkeys as params and value as metric
             for k, v in out_dict.items():
-                if not k == PREV_KEY:
-                    origins = np.array([subk.origin for subk in k])
-                    # ignore init origins and the last origin (this Vset)
-                    param_idx = [
-                        i for i in range(len(k[:-1])) if origins[i] != &#39;init&#39;
-                    ]
-                    # get or create mlflow run
-                    run_dict_key = tuple([subk.value for subk in k[:-1]])
-                    if run_dict_key in run_dict:
-                        run_id = run_dict[run_dict_key]
-                    else:
-                        run = self._mlflow.create_run(self._exp_id)
-                        run_id = run.info.run_id
-                        run_dict[run_dict_key] = run_id
-                        # log params
-                        for idx in param_idx:
-                            subkey = k[idx]
-                            param_name = subkey.origin
-                            # check if the origin occurs multiple times
-                            if np.sum(origins == param_name) &gt; 1:
-                                occurence = np.sum(origins[:idx] == param_name)
-                                param_name = param_name + str(occurence)
-                                self._mlflow.log_param(
-                                    run_id, param_name, subkey.value
-                                )
-                    self._mlflow.log_metric(run_id, k[-1].value, v)
+                if k == PREV_KEY:
+                    continue
+                origins = np.array([subk.origin for subk in k])
+                # ignore init origins and the last origin (this Vset)
+                param_idx = [
+                    i for i in range(len(k[:-1])) if origins[i] != &#39;init&#39;
+                ]
+                # get or create mlflow run
+                run_dict_key = tuple(subk.value for subk in k[:-1])
+                if run_dict_key in run_dict:
+                    run_id = run_dict[run_dict_key]
+                else:
+                    run = self._mlflow.create_run(self._exp_id)
+                    run_id = run.info.run_id
+                    run_dict[run_dict_key] = run_id
+                    # log params
+                    for idx in param_idx:
+                        subkey = k[idx]
+                        param_name = subkey.origin
+                        # check if the origin occurs multiple times
+                        if np.sum(origins == param_name) &gt; 1:
+                            occurence = np.sum(origins[:idx] == param_name)
+                            param_name = param_name + str(occurence)
+                            self._mlflow.log_param(
+                                run_id, param_name, subkey.value
+                            )
+                self._mlflow.log_metric(run_id, k[-1].value, v)
         return out_dict
 
     def fit(self, *args):
-        &#34;&#34;&#34;
+        &#34;&#34;&#34;Fits to args using `_apply_func`
         &#34;&#34;&#34;
         out_dict = {}
         for k, v in self.modules.items():
             out_dict[k] = v.fit
-        self.out = self._apply_func(out_dict, *args)
+        self.out = self._apply_func(*args, out_dict=out_dict)
         prev = self.out[PREV_KEY][1:]
         if hasattr(self, FILTER_PREV_KEY):
             prev = getattr(self, FILTER_PREV_KEY) + prev
@@ -183,7 +212,7 @@ class Vset:
         return self.fit(*args).transform(args[0])
 
     def transform(self, *args):
-        &#34;&#34;&#34;
+        &#34;&#34;&#34;Transforms args using `_apply_func`
         &#34;&#34;&#34;
         if not self._fitted:
             raise AttributeError(&#39;Please fit the Vset object before calling the transform method.&#39;)
@@ -191,39 +220,50 @@ class Vset:
         for k, v in self.out.items():
             if hasattr(v, &#39;transform&#39;):
                 out_dict[k] = v.transform
-        return self._apply_func(out_dict, *args)
+        return self._apply_func(*args, out_dict=out_dict)
 
-    def predict(self, *args):
+    def predict(self, *args, with_uncertainty: bool=False, group_by: list=None):
+        &#34;&#34;&#34;Predicts args using `_apply_func`
+        &#34;&#34;&#34;
         if not self._fitted:
-            raise AttributeError(&#39;Please fit the Vset object before calling the predict method.&#39;)
+            raise AttributeError(&#39;Please fit the Vset object before calling predict.&#39;)
         pred_dict = {}
         for k, v in self.out.items():
             if hasattr(v, &#39;predict&#39;):
                 pred_dict[k] = v.predict
-        return self._apply_func(pred_dict, *args)
+        preds = self._apply_func(*args, out_dict=pred_dict)
+        if with_uncertainty:
+            return prediction_uncertainty(preds, group_by)
+        return preds
 
-    def predict_proba(self, *args):
+    def predict_proba(self, *args, with_uncertainty: bool=False, group_by: list=None):
+        &#34;&#34;&#34;Calls predict_proba on args using `_apply_func`
+        &#34;&#34;&#34;
         if not self._fitted:
-            raise AttributeError(&#39;Please fit the Vset object before calling the predict_proba method.&#39;)
+            raise AttributeError(&#39;Please fit the Vset object before calling predict_proba.&#39;)
         pred_dict = {}
         for k, v in self.out.items():
             if hasattr(v, &#39;predict_proba&#39;):
                 pred_dict[k] = v.predict_proba
-        return self._apply_func(pred_dict, *args)
+        preds = self._apply_func(*args, out_dict=pred_dict)
+        if with_uncertainty:
+            return prediction_uncertainty(preds, group_by)
+        return preds
 
     def evaluate(self, *args):
-        &#34;&#34;&#34;Combines dicts before calling _apply_func
+        &#34;&#34;&#34;Combines dicts before calling `_apply_func`
         &#34;&#34;&#34;
-        return self._apply_func(None, *args)
+        return self._apply_func(*args)
 
     def __call__(self, *args, n_out: int = None, keys=None, **kwargs):
-        &#34;&#34;&#34;
+        &#34;&#34;&#34;Call args using `_apply_func`, optionally seperating
+        output dictionary into `n_out` dictionaries with `keys`
         &#34;&#34;&#34;
         if keys is None:
             keys = []
         if n_out is None:
             n_out = len(args)
-        out_dict = self._apply_func(None, *args)
+        out_dict = self._apply_func(*args)
         if n_out == 1:
             return out_dict
         out_dicts = sep_dicts(out_dict, n_out=n_out, keys=keys)
@@ -249,6 +289,8 @@ class Vset:
         return False
 
     def keys(self):
+        &#34;&#34;&#34;Returns Vset module keys
+        &#34;&#34;&#34;
         if isinstance(self.modules, dict):
             return self.modules.keys()
         return {}.keys()
@@ -260,6 +302,9 @@ class Vset:
         return &#39;Vset(&#39; + self.name + &#39;)&#39;
 
     def __create_subkey(self, value):
+        &#34;&#34;&#34;Helper function to construct `Subkey` with
+        this Vset determining origin and output_matching
+        &#34;&#34;&#34;
         return Subkey(value, self.name, self._output_matching)
 
 
@@ -267,18 +312,21 @@ def _apply_func_cached(out_dict: dict, is_async: bool, lazy: bool, *args):
     &#34;&#34;&#34;
     Params
     ------
-    *args: List[Dict]: takes multiple dicts and combines them into one.
-            Then runs modules on each item in combined dict.
-    out_dict: the dictionary to pass to the matching function. If None, defaults to self.modules.
+    *args: dict
+        Takes multiple dicts and combines them into one.
+        Then runs modules on each item in combined dict.
+    out_dict: dict
+        The dictionary to pass to the matching function.
+    is_async: bool
+        If True, outputs are computed asynchronously.
+    lazy: bool
+        If True, outputs are evaluated lazily, i.e. outputs are `VfuncPromise`.
 
     Returns
     -------
-    results: dict
-        with items being determined by functions in module set.
-        Functions and input dictionaries are currently matched using  matching = &#39;cartesian&#39; format.
-            e.g. inputs:    module = {LR : logistic}, data = {train_1 : [X1,y1], train2 : [X2,y2]}
-                 out:    out_dict = {(train_1, LR)  : fitted logistic, (train_2, LR) :  fitted logistic}.
-        Currently matching = &#39;subset&#39; is not used...
+    out_dict: dict
+        Dictionary with items being determined by functions in module set.
+        Functions and input dictionaries are currently matched using cartesian matching format.
     &#34;&#34;&#34;
     for in_dict in args:
         if not isinstance(in_dict, dict):
@@ -292,7 +340,40 @@ def _apply_func_cached(out_dict: dict, is_async: bool, lazy: bool, *args):
         out_vals = ray.get(list(out_dict.values()))
         out_dict = dict(zip(out_keys, out_vals))
 
-    return out_dict</code></pre>
+    return out_dict
+
+
+def prediction_uncertainty(preds, group_by: list=None):
+    &#34;&#34;&#34;Returns the mean and std predictions conditional on group_by
+
+    Params
+    ------
+    preds
+        predictions as returned by Vset.predict or Vset.predict_proba
+    group_by: list (optional), default None
+        list of groups to compute statistics upon
+
+    TODO: Wrap output dicts in dict wrapper::XXX
+          Wrap subkeys in Subkey
+          Fix default group_by when averaging over all predictions
+    &#34;&#34;&#34;
+    preds_df = dict_to_df(preds)
+    if group_by is None:
+        # just average over all predictions
+        preds_stats = perturbation_stats(preds_df)
+        group_by = [&#39;index&#39;]
+    else:
+        preds_stats = perturbation_stats(preds_df, *group_by)
+    origins = preds_stats[group_by].columns
+    keys = preds_stats[group_by].to_numpy()
+    # wrap subkey values in Subkey
+    keys = [tuple(Subkey(sk, origins[idx]) for idx, sk in enumerate(x)) for x in keys]
+    mean_dict = dict(zip(keys, preds_stats[&#39;out-mean&#39;]))
+    std_dict = dict(zip(keys, preds_stats[&#39;out-std&#39;]))
+    # add PREV_KEY to out dicts
+    mean_dict[PREV_KEY] = preds[PREV_KEY]
+    std_dict[PREV_KEY] = preds[PREV_KEY]
+    return mean_dict, std_dict, preds_stats</code></pre>
 </details>
 </section>
 <section>
@@ -300,6 +381,59 @@ def _apply_func_cached(out_dict: dict, is_async: bool, lazy: bool, *args):
 <section>
 </section>
 <section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="vflow.vset.prediction_uncertainty"><code class="name flex">
+<span>def <span class="ident">prediction_uncertainty</span></span>(<span>preds, group_by: list = None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Returns the mean and std predictions conditional on group_by</p>
+<h2 id="params">Params</h2>
+<p>preds
+predictions as returned by Vset.predict or Vset.predict_proba
+group_by: list (optional), default None
+list of groups to compute statistics upon</p>
+<p>TODO: Wrap output dicts in dict wrapper::XXX
+Wrap subkeys in Subkey
+Fix default group_by when averaging over all predictions</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def prediction_uncertainty(preds, group_by: list=None):
+    &#34;&#34;&#34;Returns the mean and std predictions conditional on group_by
+
+    Params
+    ------
+    preds
+        predictions as returned by Vset.predict or Vset.predict_proba
+    group_by: list (optional), default None
+        list of groups to compute statistics upon
+
+    TODO: Wrap output dicts in dict wrapper::XXX
+          Wrap subkeys in Subkey
+          Fix default group_by when averaging over all predictions
+    &#34;&#34;&#34;
+    preds_df = dict_to_df(preds)
+    if group_by is None:
+        # just average over all predictions
+        preds_stats = perturbation_stats(preds_df)
+        group_by = [&#39;index&#39;]
+    else:
+        preds_stats = perturbation_stats(preds_df, *group_by)
+    origins = preds_stats[group_by].columns
+    keys = preds_stats[group_by].to_numpy()
+    # wrap subkey values in Subkey
+    keys = [tuple(Subkey(sk, origins[idx]) for idx, sk in enumerate(x)) for x in keys]
+    mean_dict = dict(zip(keys, preds_stats[&#39;out-mean&#39;]))
+    std_dict = dict(zip(keys, preds_stats[&#39;out-std&#39;]))
+    # add PREV_KEY to out dicts
+    mean_dict[PREV_KEY] = preds[PREV_KEY]
+    std_dict[PREV_KEY] = preds[PREV_KEY]
+    return mean_dict, std_dict, preds_stats</code></pre>
+</details>
+</dd>
+</dl>
 </section>
 <section>
 <h2 class="section-title" id="header-classes">Classes</h2>
@@ -309,62 +443,66 @@ def _apply_func_cached(out_dict: dict, is_async: bool, lazy: bool, *args):
 <span>(</span><span>name: str, modules, module_keys: list = None, is_async: bool = False, output_matching: bool = False, lazy: bool = False, cache_dir: str = None, tracking_dir: str = None)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>todo: include prev and next and change functions to include that.
-Params</p>
-<hr>
-<p>name: str
-name of this moduleset
-modules: list or dict
-dictionary of functions that we want to associate with
-module_keys: list (optional)
-list of names corresponding to each module
-is_async: bool (optional)
-if True, modules are computed asynchronously
-output_matching: bool (optional)
-if True, then output keys from this Vset will be matched when used
-in other Vsets
-lazy: bool (optional)
-if True, then modules are evaluated lazily, i.e. outputs contain a
-promise
-cache_dir: str (optional)
-if provided, do caching and use cache_dir as the data store for
-joblib.Memory
-tracking_dir: str (optional)
-if provided, use the mlflow.tracking api to log outputs as metrics
-with params determined by input keys</p></div>
+<div class="desc"><h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>name</code></strong> :&ensp;<code>str</code></dt>
+<dd>Name of this Vset.</dd>
+<dt><strong><code>modules</code></strong> :&ensp;<code>list</code> or <code>dict</code></dt>
+<dd>Dictionary of functions that we want to associate with</dd>
+<dt><strong><code>module_keys</code></strong> :&ensp;<code>list (optional)</code></dt>
+<dd>List of names corresponding to each module</dd>
+<dt><strong><code>is_async</code></strong> :&ensp;<code>bool (optional)</code></dt>
+<dd>If True, <code>modules</code> are computed asynchronously</dd>
+<dt><strong><code>output_matching</code></strong> :&ensp;<code>bool (optional)</code></dt>
+<dd>If True, then output keys from this Vset will be matched when used
+in other Vsets</dd>
+<dt><strong><code>lazy</code></strong> :&ensp;<code>bool (optional)</code></dt>
+<dd>If True, then modules are evaluated lazily, i.e. outputs are <code>vset.vfunc.VfuncPromise</code></dd>
+<dt><strong><code>cache_dir</code></strong> :&ensp;<code>str (optional)</code></dt>
+<dd>If provided, do caching and use <code>cache_dir</code> as the data store for
+<code>joblib.Memory</code>.</dd>
+<dt><strong><code>tracking_dir</code></strong> :&ensp;<code>str (optional)</code></dt>
+<dd>If provided, use the <code>mlflow.tracking</code> api to log outputs as metrics
+with params determined by input keys.</dd>
+</dl>
+<div class="admonition todo">
+<p class="admonition-title">TODO</p>
+<p>include prev and next and change functions to include that.</p>
+</div></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class Vset:
+
     def __init__(self, name: str, modules, module_keys: list = None,
                  is_async: bool = False, output_matching: bool = False,
                  lazy: bool = False, cache_dir: str = None,
                  tracking_dir: str = None):
         &#34;&#34;&#34;
-        todo: include prev and next and change functions to include that.
-        Params
-        -------
+        Parameters
+        ----------
         name: str
-            name of this moduleset
+            Name of this Vset.
         modules: list or dict
-            dictionary of functions that we want to associate with
+            Dictionary of functions that we want to associate with
         module_keys: list (optional)
-            list of names corresponding to each module
+            List of names corresponding to each module
         is_async: bool (optional)
-            if True, modules are computed asynchronously
+            If True, `modules` are computed asynchronously
         output_matching: bool (optional)
-            if True, then output keys from this Vset will be matched when used
+            If True, then output keys from this Vset will be matched when used
             in other Vsets
         lazy: bool (optional)
-            if True, then modules are evaluated lazily, i.e. outputs contain a
-            promise
+            If True, then modules are evaluated lazily, i.e. outputs are `vset.vfunc.VfuncPromise`
         cache_dir: str (optional)
-            if provided, do caching and use cache_dir as the data store for
-            joblib.Memory
+            If provided, do caching and use `cache_dir` as the data store for
+            `joblib.Memory`.
         tracking_dir: str (optional)
-            if provided, use the mlflow.tracking api to log outputs as metrics
-            with params determined by input keys
+            If provided, use the `mlflow.tracking` api to log outputs as metrics
+            with params determined by input keys.
+
+        .. todo:: include prev and next and change functions to include that.
         &#34;&#34;&#34;
         self.name = name
         self._fitted = False
@@ -373,10 +511,9 @@ with params determined by input keys</p></div>
         self._output_matching = output_matching
         self._lazy = lazy
         self._cache_dir = cache_dir
-        self._tracking_dir = tracking_dir
         self._memory = joblib.Memory(self._cache_dir)
-        if self._tracking_dir is not None:
-            self._mlflow = MlflowClient(tracking_uri=self._tracking_dir)
+        if tracking_dir is not None:
+            self._mlflow = MlflowClient(tracking_uri=tracking_dir)
             experiment = self._mlflow.get_experiment_by_name(name=self.name)
             if experiment is None:
                 self._exp_id = self._mlflow.create_experiment(name=self.name)
@@ -388,11 +525,11 @@ with params determined by input keys</p></div>
         # if so, we&#39;ll make then all AsyncModules later on
         if not self._async and np.any([isinstance(mod, AsyncModule) for mod in modules]):
             self._async = True
-        if type(modules) is dict:
+        if isinstance(modules, dict):
             self.modules = modules
-        elif type(modules) is list:
+        elif isinstance(modules, list):
             if module_keys is not None:
-                assert type(module_keys) is list, &#39;modules passed as list but module_names is not a list&#39;
+                assert isinstance(module_keys, list), &#39;modules passed as list but module_names is not a list&#39;
                 assert len(modules) == len(
                     module_keys), &#39;modules list and module_names list do not have the same length&#39;
                 # TODO: how best to handle tuple subkeys?
@@ -409,7 +546,31 @@ with params determined by input keys</p></div>
             elif not isinstance(v, Vfunc):
                 self.modules[k] = Vfunc(k[0], v)
 
-    def _apply_func(self, out_dict: dict = None, *args):
+    def _apply_func(self, *args, out_dict: dict = None):
+        &#34;&#34;&#34;Apply functions in out_dict to combined args dict
+
+        Optionally logs output Subkeys and values as params and metrics using
+        `mlflow.tracking` if this Vset has a `_tracking_dir`.
+
+        Parameters
+        ----------
+        *args: dict
+            Takes multiple dicts and combines them into one.
+            Then runs modules on each item in combined dict.
+        out_dict: dict (optional), default None
+            The dictionary to pass to the matching function. If None, defaults to self.modules.
+
+        Returns
+        -------
+        out_dict: dict
+            Dictionary with items being determined by functions in module set.
+            Functions and input dictionaries are currently matched using a cartesian matching format.
+
+        Examples
+        --------
+        &gt;&gt;&gt; modules, data = {LR : logistic}, {train_1 : [X1,y1], train2 : [X2,y2]}
+        {(train_1, LR) : fitted logistic, (train_2, LR) :  fitted logistic}
+        &#34;&#34;&#34;
         if out_dict is None:
             out_dict = deepcopy(self.modules)
 
@@ -426,41 +587,42 @@ with params determined by input keys</p></div>
             run_dict = {}
             # log subkeys as params and value as metric
             for k, v in out_dict.items():
-                if not k == PREV_KEY:
-                    origins = np.array([subk.origin for subk in k])
-                    # ignore init origins and the last origin (this Vset)
-                    param_idx = [
-                        i for i in range(len(k[:-1])) if origins[i] != &#39;init&#39;
-                    ]
-                    # get or create mlflow run
-                    run_dict_key = tuple([subk.value for subk in k[:-1]])
-                    if run_dict_key in run_dict:
-                        run_id = run_dict[run_dict_key]
-                    else:
-                        run = self._mlflow.create_run(self._exp_id)
-                        run_id = run.info.run_id
-                        run_dict[run_dict_key] = run_id
-                        # log params
-                        for idx in param_idx:
-                            subkey = k[idx]
-                            param_name = subkey.origin
-                            # check if the origin occurs multiple times
-                            if np.sum(origins == param_name) &gt; 1:
-                                occurence = np.sum(origins[:idx] == param_name)
-                                param_name = param_name + str(occurence)
-                                self._mlflow.log_param(
-                                    run_id, param_name, subkey.value
-                                )
-                    self._mlflow.log_metric(run_id, k[-1].value, v)
+                if k == PREV_KEY:
+                    continue
+                origins = np.array([subk.origin for subk in k])
+                # ignore init origins and the last origin (this Vset)
+                param_idx = [
+                    i for i in range(len(k[:-1])) if origins[i] != &#39;init&#39;
+                ]
+                # get or create mlflow run
+                run_dict_key = tuple(subk.value for subk in k[:-1])
+                if run_dict_key in run_dict:
+                    run_id = run_dict[run_dict_key]
+                else:
+                    run = self._mlflow.create_run(self._exp_id)
+                    run_id = run.info.run_id
+                    run_dict[run_dict_key] = run_id
+                    # log params
+                    for idx in param_idx:
+                        subkey = k[idx]
+                        param_name = subkey.origin
+                        # check if the origin occurs multiple times
+                        if np.sum(origins == param_name) &gt; 1:
+                            occurence = np.sum(origins[:idx] == param_name)
+                            param_name = param_name + str(occurence)
+                            self._mlflow.log_param(
+                                run_id, param_name, subkey.value
+                            )
+                self._mlflow.log_metric(run_id, k[-1].value, v)
         return out_dict
 
     def fit(self, *args):
-        &#34;&#34;&#34;
+        &#34;&#34;&#34;Fits to args using `_apply_func`
         &#34;&#34;&#34;
         out_dict = {}
         for k, v in self.modules.items():
             out_dict[k] = v.fit
-        self.out = self._apply_func(out_dict, *args)
+        self.out = self._apply_func(*args, out_dict=out_dict)
         prev = self.out[PREV_KEY][1:]
         if hasattr(self, FILTER_PREV_KEY):
             prev = getattr(self, FILTER_PREV_KEY) + prev
@@ -474,7 +636,7 @@ with params determined by input keys</p></div>
         return self.fit(*args).transform(args[0])
 
     def transform(self, *args):
-        &#34;&#34;&#34;
+        &#34;&#34;&#34;Transforms args using `_apply_func`
         &#34;&#34;&#34;
         if not self._fitted:
             raise AttributeError(&#39;Please fit the Vset object before calling the transform method.&#39;)
@@ -482,39 +644,50 @@ with params determined by input keys</p></div>
         for k, v in self.out.items():
             if hasattr(v, &#39;transform&#39;):
                 out_dict[k] = v.transform
-        return self._apply_func(out_dict, *args)
+        return self._apply_func(*args, out_dict=out_dict)
 
-    def predict(self, *args):
+    def predict(self, *args, with_uncertainty: bool=False, group_by: list=None):
+        &#34;&#34;&#34;Predicts args using `_apply_func`
+        &#34;&#34;&#34;
         if not self._fitted:
-            raise AttributeError(&#39;Please fit the Vset object before calling the predict method.&#39;)
+            raise AttributeError(&#39;Please fit the Vset object before calling predict.&#39;)
         pred_dict = {}
         for k, v in self.out.items():
             if hasattr(v, &#39;predict&#39;):
                 pred_dict[k] = v.predict
-        return self._apply_func(pred_dict, *args)
+        preds = self._apply_func(*args, out_dict=pred_dict)
+        if with_uncertainty:
+            return prediction_uncertainty(preds, group_by)
+        return preds
 
-    def predict_proba(self, *args):
+    def predict_proba(self, *args, with_uncertainty: bool=False, group_by: list=None):
+        &#34;&#34;&#34;Calls predict_proba on args using `_apply_func`
+        &#34;&#34;&#34;
         if not self._fitted:
-            raise AttributeError(&#39;Please fit the Vset object before calling the predict_proba method.&#39;)
+            raise AttributeError(&#39;Please fit the Vset object before calling predict_proba.&#39;)
         pred_dict = {}
         for k, v in self.out.items():
             if hasattr(v, &#39;predict_proba&#39;):
                 pred_dict[k] = v.predict_proba
-        return self._apply_func(pred_dict, *args)
+        preds = self._apply_func(*args, out_dict=pred_dict)
+        if with_uncertainty:
+            return prediction_uncertainty(preds, group_by)
+        return preds
 
     def evaluate(self, *args):
-        &#34;&#34;&#34;Combines dicts before calling _apply_func
+        &#34;&#34;&#34;Combines dicts before calling `_apply_func`
         &#34;&#34;&#34;
-        return self._apply_func(None, *args)
+        return self._apply_func(*args)
 
     def __call__(self, *args, n_out: int = None, keys=None, **kwargs):
-        &#34;&#34;&#34;
+        &#34;&#34;&#34;Call args using `_apply_func`, optionally seperating
+        output dictionary into `n_out` dictionaries with `keys`
         &#34;&#34;&#34;
         if keys is None:
             keys = []
         if n_out is None:
             n_out = len(args)
-        out_dict = self._apply_func(None, *args)
+        out_dict = self._apply_func(*args)
         if n_out == 1:
             return out_dict
         out_dicts = sep_dicts(out_dict, n_out=n_out, keys=keys)
@@ -540,6 +713,8 @@ with params determined by input keys</p></div>
         return False
 
     def keys(self):
+        &#34;&#34;&#34;Returns Vset module keys
+        &#34;&#34;&#34;
         if isinstance(self.modules, dict):
             return self.modules.keys()
         return {}.keys()
@@ -551,6 +726,9 @@ with params determined by input keys</p></div>
         return &#39;Vset(&#39; + self.name + &#39;)&#39;
 
     def __create_subkey(self, value):
+        &#34;&#34;&#34;Helper function to construct `Subkey` with
+        this Vset determining origin and output_matching
+        &#34;&#34;&#34;
         return Subkey(value, self.name, self._output_matching)</code></pre>
 </details>
 <h3>Methods</h3>
@@ -559,33 +737,33 @@ with params determined by input keys</p></div>
 <span>def <span class="ident">evaluate</span></span>(<span>self, *args)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Combines dicts before calling _apply_func</p></div>
+<div class="desc"><p>Combines dicts before calling <code>_apply_func</code></p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def evaluate(self, *args):
-    &#34;&#34;&#34;Combines dicts before calling _apply_func
+    &#34;&#34;&#34;Combines dicts before calling `_apply_func`
     &#34;&#34;&#34;
-    return self._apply_func(None, *args)</code></pre>
+    return self._apply_func(*args)</code></pre>
 </details>
 </dd>
 <dt id="vflow.vset.Vset.fit"><code class="name flex">
 <span>def <span class="ident">fit</span></span>(<span>self, *args)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Fits to args using <code>_apply_func</code></p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def fit(self, *args):
-    &#34;&#34;&#34;
+    &#34;&#34;&#34;Fits to args using `_apply_func`
     &#34;&#34;&#34;
     out_dict = {}
     for k, v in self.modules.items():
         out_dict[k] = v.fit
-    self.out = self._apply_func(out_dict, *args)
+    self.out = self._apply_func(*args, out_dict=out_dict)
     prev = self.out[PREV_KEY][1:]
     if hasattr(self, FILTER_PREV_KEY):
         prev = getattr(self, FILTER_PREV_KEY) + prev
@@ -613,66 +791,78 @@ with params determined by input keys</p></div>
 <span>def <span class="ident">keys</span></span>(<span>self)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Returns Vset module keys</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def keys(self):
+    &#34;&#34;&#34;Returns Vset module keys
+    &#34;&#34;&#34;
     if isinstance(self.modules, dict):
         return self.modules.keys()
     return {}.keys()</code></pre>
 </details>
 </dd>
 <dt id="vflow.vset.Vset.predict"><code class="name flex">
-<span>def <span class="ident">predict</span></span>(<span>self, *args)</span>
+<span>def <span class="ident">predict</span></span>(<span>self, *args, with_uncertainty: bool = False, group_by: list = None)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Predicts args using <code>_apply_func</code></p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def predict(self, *args):
+<pre><code class="python">def predict(self, *args, with_uncertainty: bool=False, group_by: list=None):
+    &#34;&#34;&#34;Predicts args using `_apply_func`
+    &#34;&#34;&#34;
     if not self._fitted:
-        raise AttributeError(&#39;Please fit the Vset object before calling the predict method.&#39;)
+        raise AttributeError(&#39;Please fit the Vset object before calling predict.&#39;)
     pred_dict = {}
     for k, v in self.out.items():
         if hasattr(v, &#39;predict&#39;):
             pred_dict[k] = v.predict
-    return self._apply_func(pred_dict, *args)</code></pre>
+    preds = self._apply_func(*args, out_dict=pred_dict)
+    if with_uncertainty:
+        return prediction_uncertainty(preds, group_by)
+    return preds</code></pre>
 </details>
 </dd>
 <dt id="vflow.vset.Vset.predict_proba"><code class="name flex">
-<span>def <span class="ident">predict_proba</span></span>(<span>self, *args)</span>
+<span>def <span class="ident">predict_proba</span></span>(<span>self, *args, with_uncertainty: bool = False, group_by: list = None)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Calls predict_proba on args using <code>_apply_func</code></p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def predict_proba(self, *args):
+<pre><code class="python">def predict_proba(self, *args, with_uncertainty: bool=False, group_by: list=None):
+    &#34;&#34;&#34;Calls predict_proba on args using `_apply_func`
+    &#34;&#34;&#34;
     if not self._fitted:
-        raise AttributeError(&#39;Please fit the Vset object before calling the predict_proba method.&#39;)
+        raise AttributeError(&#39;Please fit the Vset object before calling predict_proba.&#39;)
     pred_dict = {}
     for k, v in self.out.items():
         if hasattr(v, &#39;predict_proba&#39;):
             pred_dict[k] = v.predict_proba
-    return self._apply_func(pred_dict, *args)</code></pre>
+    preds = self._apply_func(*args, out_dict=pred_dict)
+    if with_uncertainty:
+        return prediction_uncertainty(preds, group_by)
+    return preds</code></pre>
 </details>
 </dd>
 <dt id="vflow.vset.Vset.transform"><code class="name flex">
 <span>def <span class="ident">transform</span></span>(<span>self, *args)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Transforms args using <code>_apply_func</code></p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def transform(self, *args):
-    &#34;&#34;&#34;
+    &#34;&#34;&#34;Transforms args using `_apply_func`
     &#34;&#34;&#34;
     if not self._fitted:
         raise AttributeError(&#39;Please fit the Vset object before calling the transform method.&#39;)
@@ -680,7 +870,7 @@ with params determined by input keys</p></div>
     for k, v in self.out.items():
         if hasattr(v, &#39;transform&#39;):
             out_dict[k] = v.transform
-    return self._apply_func(out_dict, *args)</code></pre>
+    return self._apply_func(*args, out_dict=out_dict)</code></pre>
 </details>
 </dd>
 </dl>
@@ -697,6 +887,11 @@ with params determined by input keys</p></div>
 <li><h3>Super-module</h3>
 <ul>
 <li><code><a title="vflow" href="index.html">vflow</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="vflow.vset.prediction_uncertainty" href="#vflow.vset.prediction_uncertainty">prediction_uncertainty</a></code></li>
 </ul>
 </li>
 <li><h3><a href="#header-classes">Classes</a></h3>

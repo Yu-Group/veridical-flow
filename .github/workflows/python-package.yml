@@ -26,3 +26,6 @@ jobs:
       - name: Test with pytest
         run: |
           pytest
+      - name: Lint with pylint
+        run: |
+          pylint vflow *.py --rcfile=.pylintrc

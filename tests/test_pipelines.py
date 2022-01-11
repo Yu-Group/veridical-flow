@@ -15,10 +15,8 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, balanced_accuracy_score, r2_score
 from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
-from sklearn.utils import resample
 
 from vflow import Vset, init_args, build_vset  # must install vflow first (pip install vflow)
-from vflow.pipeline import build_graph
 from vflow.subkey import Subkey as sm
 from vflow.vset import PREV_KEY
 
@@ -117,11 +115,6 @@ class TestPipelines:
                                 module_keys=["r2"])
         hard_metrics = hard_metrics_set.evaluate(preds_all, y_train)
 
-        # inspect the pipeline
-        # for k in hard_metrics:
-        #     print(k, hard_metrics[k])
-        # _ = build_graph(hard_metrics, draw=True)
-
         # asserts
         k1 = (sm('X_train', 'init'), sm('feat_extraction_0', 'feat_extraction', True), sm('X_train', 'init'),
               sm('y_train', 'init'),
@@ -213,7 +206,7 @@ class TestPipelines:
         assert_equal(f_res.keys(), f_lazy_res.keys())
 
         def g(tup, arg_name: str = '', i: int = 0):
-            return (*tup, arg_name, f'g_iter={i}')
+            return tup, arg_name, f'g_iter={i}'
 
         g_modules = [partial(g, i=i) for i in range(2)]
         g_arg = init_args(('g_arg',), names=['g_init'])[0]
@@ -227,7 +220,7 @@ class TestPipelines:
         assert_equal(g_res.keys(), g_lazy_res.keys())
 
         def h(tup, arg_name: str = '', i: int = 0):
-            return (*tup, arg_name, f'h_iter={i}')
+            return tup, arg_name, f'h_iter={i}'
 
         h_modules = [partial(h, i=i) for i in range(2)]
         h_arg = init_args(('h_arg',), names=['h_init'])[0]
@@ -282,14 +275,14 @@ class TestPipelines:
         finally:
             # clean up
             rmtree('./joblib')
-    
+
     def test_mlflow_tracking(self, tmp_path):
         try:
             runs_path = os.path.join(tmp_path, 'mlruns')
             np.random.seed(13)
             X, y = make_classification(n_samples=50, n_features=5)
             X_train, X_test, y_train, y_test = init_args(train_test_split(X, y, random_state=42),
-                                                names=['X_train', 'X_test', 'y_train','y_test'])
+                                                         names=['X_train', 'X_test', 'y_train', 'y_test'])
             # fit models
             modeling_set = Vset(name='modeling',
                                 modules=[LogisticRegression(C=1, max_iter=1000, tol=0.1)],
@@ -323,18 +316,18 @@ class TestPipelines:
             return a + b
 
         def fun2(a, b=1):
-            return a*b
+            return a * b
 
-        data_param_dict = {'n': [1,2,3]}
-        data_vset = build_vset('data', gen_data, data_param_dict, reps=5, lazy=True)
+        data_param_dict = {'n': [1, 2, 3]}
+        data_vset = build_vset('data', gen_data, param_dict=data_param_dict, reps=5, lazy=True)
 
         assert len(data_vset.modules) == 15
 
-        fun_param_dict = {'b': [1,2,3]}
-        fun1_vset = build_vset('fun1', fun1, fun_param_dict, lazy=True)
-        fun1_vset_async = build_vset('fun1', fun1, fun_param_dict, lazy=True, is_async=True)
-        fun2_vset = build_vset('fun2', fun2, fun_param_dict)
-        fun2_vset_async = build_vset('fun2', fun2, fun_param_dict, is_async=True)
+        fun_param_dict = {'b': [1, 2, 3]}
+        fun1_vset = build_vset('fun1', fun1, param_dict=fun_param_dict, lazy=True)
+        fun1_vset_async = build_vset('fun1', fun1, param_dict=fun_param_dict, lazy=True, is_async=True)
+        fun2_vset = build_vset('fun2', fun2, param_dict=fun_param_dict)
+        fun2_vset_async = build_vset('fun2', fun2, param_dict=fun_param_dict, is_async=True)
 
         np.random.seed(13)
         ray.init(local_mode=True)
@@ -363,8 +356,33 @@ class TestPipelines:
 
         assert_equal(fun2_res, fun2_res_async)
 
+    def test_lazy_async(self):
+        class learner:
+            def fit(self, a):
+                self.a = a
+                return self
+            def transform(self, b):
+                return self.a + b
+            def predict(self, x):
+                return self.a*x
+            def predict_proba(self, x):
+                y = np.exp(-self.a*x)
+                return 1 / (1 + y)
+
+        vset = Vset("learner", [learner()], is_async=True, lazy=True)
+        vset.fit(*init_args([.4]))
+        data = init_args([np.array([1, 2, 3])])[0]
+        transformed = vset.transform(data)
+        preds = vset.predict(transformed)
+        preds_proba = vset.predict_proba(transformed)
+
+        assert_equal(list(transformed.values())[0](), [1.4, 2.4, 3.4])
+        assert_equal(list(preds.values())[0](), np.array([1.4, 2.4, 3.4])*.4)
+        assert_equal(list(preds_proba.values())[0](),
+                     1 / (1 + np.exp(-np.array([1.4, 2.4, 3.4])*.4)))
+
 
 def costly_compute(data, row_index=0):
     """Simulate an expensive computation"""
     time.sleep(1)
-    return data[row_index, ]
+    return data[row_index,]

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 <meta name="generator" content="pdoc 0.10.0" />
 <title>vflow.subkey API documentation</title>
-<meta name="description" content="" />
+<meta name="description" content="Defines a parameter from some origin Vset" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
 <link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
@@ -22,90 +22,95 @@
 <h1 class="title">Module <code>vflow.subkey</code></h1>
 </header>
 <section id="section-intro">
+<p>Defines a parameter from some origin Vset</p>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class Subkey:
+<pre><code class="python">&#34;&#34;&#34;Defines a parameter from some origin Vset
+&#34;&#34;&#34;
+class Subkey:
 
     def __init__(self, value, origin: str, output_matching: bool = False):
         &#34;&#34;&#34;
-        Params
-        -------
-        value:
+        Parameters
+        ----------
+        value: Any
             subkey value corresponding to a Vset module
         origin: str
             name of the origin Vset of this Subkey
-        output_matching: inherited from the Vset where the Subkey is created
+        output_matching: bool (optional), default False
+            inherited from the Vset where the Subkey is created
         &#34;&#34;&#34;
         self.value = value
         self.origin = origin
-        self._output_matching = output_matching
-        # _sep_dicts_id identifies the particular call to sep_dicts() that this
+        self.output_matching = output_matching
+        # sep_dicts_id identifies the particular call to sep_dicts() that this
         # key&#39;s dictionary went through (if any).
-        self._sep_dicts_id = None
+        self.sep_dicts_id = None
 
     def is_matching(self):
-        return self._output_matching or self._sep_dicts_id is not None
+        &#34;&#34;&#34;Checks if subkey should be matched in other Vsets
+        &#34;&#34;&#34;
+        return self.output_matching or self.sep_dicts_id is not None
 
-    def matches_sep_dict_id(self, o: object):
-        if isinstance(o, self.__class__):
-            return self._sep_dicts_id is not None \
-                   and self._sep_dicts_id == o._sep_dicts_id
+    def matches_sep_dict_id(self, other: object):
+        &#34;&#34;&#34;Helper to match Subkey by _sep_dict_id
+        &#34;&#34;&#34;
+        if isinstance(other, self.__class__):
+            return self.sep_dicts_id is not None \
+                   and self.sep_dicts_id == other.sep_dicts_id
         return False
 
-    def matches(self, o: object):
+    def matches(self, other: object):
         &#34;&#34;&#34;When Subkey matching is required, determines if this Subkey is compatible
         with another, meaning that the origins and values match, and either the
-        _sep_dicts_ids match or both Subkeys have _output_matching True.
-
+        _sep_dicts_id matches or both Subkeys have _output_matching True.
         &#34;&#34;&#34;
-        if isinstance(o, self.__class__):
+        if isinstance(other, self.__class__):
             # they&#39;re both matching
-            cond0 = self.is_matching() and o.is_matching()
+            cond0 = self.is_matching() and other.is_matching()
             # value and origins match
-            cond1 = self.value == o.value and self.origin == o.origin
-            # _sep_dicts_id matches
-            cond2 = self._sep_dicts_id == o._sep_dicts_id or (self._output_matching and o._output_matching)
+            cond1 = self.value == other.value and self.origin == other.origin
+            # sep_dicts_id matches
+            cond2 = self.sep_dicts_id == other.sep_dicts_id or \
+                    (self.output_matching and other.output_matching)
             return cond0 and cond1 and cond2
         return False
 
-    def mismatches(self, o: object):
+    def mismatches(self, other: object):
         &#34;&#34;&#34;When Subkey matching is required, determines if this Subkey and another are
         a bad match, meaning either:
 
         1. output_matching is True, origin is same, value is different
-        2. output_matching is False, _sep_dicts_id is same and not None, origin
+        2. output_matching is False, sep_dicts_id is same and not None, origin
            is same, value is different
-
         &#34;&#34;&#34;
-        if isinstance(o, self.__class__):
+        if isinstance(other, self.__class__):
             # one of the two keys is output_matching
-            cond0 = self._output_matching or o._output_matching
+            cond0 = self.output_matching or other.output_matching
             # neither key is output_matching but sep_dict_ids not None and match
-            cond1 = not cond0 and self.matches_sep_dict_id(o)
+            cond1 = not cond0 and self.matches_sep_dict_id(other)
             # origins match and values mismatch
-            cond2 = self.origin == o.origin and self.value != o.value
+            cond2 = self.origin == other.origin and self.value != other.value
             return (cond0 or cond1) and cond2
         return True
 
-    def __eq__(self, o: object):
+    def __eq__(self, other: object):
+        &#34;&#34;&#34;Mainly used for testing purposes.
         &#34;&#34;&#34;
-        Mainly used for testing purposes.
-        &#34;&#34;&#34;
-        if isinstance(o, self.__class__):
+        if isinstance(other, self.__class__):
             # value and origins match
-            return self.value == o.value and self.origin == o.origin
+            return self.value == other.value and self.origin == other.origin
         return False
 
-    def __repr__(self) -&gt; str:
+    def __repr__(self):
         return str(self.value)
 
     def __hash__(self):
+        &#34;&#34;&#34;Mainly used for testing purposes.
         &#34;&#34;&#34;
-        Mainly used for testing purposes.
-        &#34;&#34;&#34;
-        return hash(self.value) ^ hash(self.origin) ^ hash(self._output_matching)</code></pre>
+        return hash(self.value) ^ hash(self.origin) ^ hash(self.output_matching)</code></pre>
 </details>
 </section>
 <section>
@@ -122,12 +127,15 @@
 <span>(</span><span>value, origin: str, output_matching: bool = False)</span>
 </code></dt>
 <dd>
-<div class="desc"><h2 id="params">Params</h2>
-<p>value:
-subkey value corresponding to a Vset module
-origin: str
-name of the origin Vset of this Subkey
-output_matching: inherited from the Vset where the Subkey is created</p></div>
+<div class="desc"><h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>value</code></strong> :&ensp;<code>Any</code></dt>
+<dd>subkey value corresponding to a Vset module</dd>
+<dt><strong><code>origin</code></strong> :&ensp;<code>str</code></dt>
+<dd>name of the origin Vset of this Subkey</dd>
+<dt><strong><code>output_matching</code></strong> :&ensp;<code>bool (optional)</code>, default <code>False</code></dt>
+<dd>inherited from the Vset where the Subkey is created</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -136,82 +144,84 @@ output_matching: inherited from the Vset where the Subkey is created</p></div>
 
     def __init__(self, value, origin: str, output_matching: bool = False):
         &#34;&#34;&#34;
-        Params
-        -------
-        value:
+        Parameters
+        ----------
+        value: Any
             subkey value corresponding to a Vset module
         origin: str
             name of the origin Vset of this Subkey
-        output_matching: inherited from the Vset where the Subkey is created
+        output_matching: bool (optional), default False
+            inherited from the Vset where the Subkey is created
         &#34;&#34;&#34;
         self.value = value
         self.origin = origin
-        self._output_matching = output_matching
-        # _sep_dicts_id identifies the particular call to sep_dicts() that this
+        self.output_matching = output_matching
+        # sep_dicts_id identifies the particular call to sep_dicts() that this
         # key&#39;s dictionary went through (if any).
-        self._sep_dicts_id = None
+        self.sep_dicts_id = None
 
     def is_matching(self):
-        return self._output_matching or self._sep_dicts_id is not None
+        &#34;&#34;&#34;Checks if subkey should be matched in other Vsets
+        &#34;&#34;&#34;
+        return self.output_matching or self.sep_dicts_id is not None
 
-    def matches_sep_dict_id(self, o: object):
-        if isinstance(o, self.__class__):
-            return self._sep_dicts_id is not None \
-                   and self._sep_dicts_id == o._sep_dicts_id
+    def matches_sep_dict_id(self, other: object):
+        &#34;&#34;&#34;Helper to match Subkey by _sep_dict_id
+        &#34;&#34;&#34;
+        if isinstance(other, self.__class__):
+            return self.sep_dicts_id is not None \
+                   and self.sep_dicts_id == other.sep_dicts_id
         return False
 
-    def matches(self, o: object):
+    def matches(self, other: object):
         &#34;&#34;&#34;When Subkey matching is required, determines if this Subkey is compatible
         with another, meaning that the origins and values match, and either the
-        _sep_dicts_ids match or both Subkeys have _output_matching True.
-
+        _sep_dicts_id matches or both Subkeys have _output_matching True.
         &#34;&#34;&#34;
-        if isinstance(o, self.__class__):
+        if isinstance(other, self.__class__):
             # they&#39;re both matching
-            cond0 = self.is_matching() and o.is_matching()
+            cond0 = self.is_matching() and other.is_matching()
             # value and origins match
-            cond1 = self.value == o.value and self.origin == o.origin
-            # _sep_dicts_id matches
-            cond2 = self._sep_dicts_id == o._sep_dicts_id or (self._output_matching and o._output_matching)
+            cond1 = self.value == other.value and self.origin == other.origin
+            # sep_dicts_id matches
+            cond2 = self.sep_dicts_id == other.sep_dicts_id or \
+                    (self.output_matching and other.output_matching)
             return cond0 and cond1 and cond2
         return False
 
-    def mismatches(self, o: object):
+    def mismatches(self, other: object):
         &#34;&#34;&#34;When Subkey matching is required, determines if this Subkey and another are
         a bad match, meaning either:
 
         1. output_matching is True, origin is same, value is different
-        2. output_matching is False, _sep_dicts_id is same and not None, origin
+        2. output_matching is False, sep_dicts_id is same and not None, origin
            is same, value is different
-
         &#34;&#34;&#34;
-        if isinstance(o, self.__class__):
+        if isinstance(other, self.__class__):
             # one of the two keys is output_matching
-            cond0 = self._output_matching or o._output_matching
+            cond0 = self.output_matching or other.output_matching
             # neither key is output_matching but sep_dict_ids not None and match
-            cond1 = not cond0 and self.matches_sep_dict_id(o)
+            cond1 = not cond0 and self.matches_sep_dict_id(other)
             # origins match and values mismatch
-            cond2 = self.origin == o.origin and self.value != o.value
+            cond2 = self.origin == other.origin and self.value != other.value
             return (cond0 or cond1) and cond2
         return True
 
-    def __eq__(self, o: object):
+    def __eq__(self, other: object):
+        &#34;&#34;&#34;Mainly used for testing purposes.
         &#34;&#34;&#34;
-        Mainly used for testing purposes.
-        &#34;&#34;&#34;
-        if isinstance(o, self.__class__):
+        if isinstance(other, self.__class__):
             # value and origins match
-            return self.value == o.value and self.origin == o.origin
+            return self.value == other.value and self.origin == other.origin
         return False
 
-    def __repr__(self) -&gt; str:
+    def __repr__(self):
         return str(self.value)
 
     def __hash__(self):
+        &#34;&#34;&#34;Mainly used for testing purposes.
         &#34;&#34;&#34;
-        Mainly used for testing purposes.
-        &#34;&#34;&#34;
-        return hash(self.value) ^ hash(self.origin) ^ hash(self._output_matching)</code></pre>
+        return hash(self.value) ^ hash(self.origin) ^ hash(self.output_matching)</code></pre>
 </details>
 <h3>Methods</h3>
 <dl>
@@ -219,90 +229,93 @@ output_matching: inherited from the Vset where the Subkey is created</p></div>
 <span>def <span class="ident">is_matching</span></span>(<span>self)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Checks if subkey should be matched in other Vsets</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def is_matching(self):
-    return self._output_matching or self._sep_dicts_id is not None</code></pre>
+    &#34;&#34;&#34;Checks if subkey should be matched in other Vsets
+    &#34;&#34;&#34;
+    return self.output_matching or self.sep_dicts_id is not None</code></pre>
 </details>
 </dd>
 <dt id="vflow.subkey.Subkey.matches"><code class="name flex">
-<span>def <span class="ident">matches</span></span>(<span>self, o: object)</span>
+<span>def <span class="ident">matches</span></span>(<span>self, other: object)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>When Subkey matching is required, determines if this Subkey is compatible
 with another, meaning that the origins and values match, and either the
-_sep_dicts_ids match or both Subkeys have _output_matching True.</p></div>
+_sep_dicts_id matches or both Subkeys have _output_matching True.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def matches(self, o: object):
+<pre><code class="python">def matches(self, other: object):
     &#34;&#34;&#34;When Subkey matching is required, determines if this Subkey is compatible
     with another, meaning that the origins and values match, and either the
-    _sep_dicts_ids match or both Subkeys have _output_matching True.
-
+    _sep_dicts_id matches or both Subkeys have _output_matching True.
     &#34;&#34;&#34;
-    if isinstance(o, self.__class__):
+    if isinstance(other, self.__class__):
         # they&#39;re both matching
-        cond0 = self.is_matching() and o.is_matching()
+        cond0 = self.is_matching() and other.is_matching()
         # value and origins match
-        cond1 = self.value == o.value and self.origin == o.origin
-        # _sep_dicts_id matches
-        cond2 = self._sep_dicts_id == o._sep_dicts_id or (self._output_matching and o._output_matching)
+        cond1 = self.value == other.value and self.origin == other.origin
+        # sep_dicts_id matches
+        cond2 = self.sep_dicts_id == other.sep_dicts_id or \
+                (self.output_matching and other.output_matching)
         return cond0 and cond1 and cond2
     return False</code></pre>
 </details>
 </dd>
 <dt id="vflow.subkey.Subkey.matches_sep_dict_id"><code class="name flex">
-<span>def <span class="ident">matches_sep_dict_id</span></span>(<span>self, o: object)</span>
+<span>def <span class="ident">matches_sep_dict_id</span></span>(<span>self, other: object)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Helper to match Subkey by _sep_dict_id</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def matches_sep_dict_id(self, o: object):
-    if isinstance(o, self.__class__):
-        return self._sep_dicts_id is not None \
-               and self._sep_dicts_id == o._sep_dicts_id
+<pre><code class="python">def matches_sep_dict_id(self, other: object):
+    &#34;&#34;&#34;Helper to match Subkey by _sep_dict_id
+    &#34;&#34;&#34;
+    if isinstance(other, self.__class__):
+        return self.sep_dicts_id is not None \
+               and self.sep_dicts_id == other.sep_dicts_id
     return False</code></pre>
 </details>
 </dd>
 <dt id="vflow.subkey.Subkey.mismatches"><code class="name flex">
-<span>def <span class="ident">mismatches</span></span>(<span>self, o: object)</span>
+<span>def <span class="ident">mismatches</span></span>(<span>self, other: object)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>When Subkey matching is required, determines if this Subkey and another are
 a bad match, meaning either:</p>
 <ol>
 <li>output_matching is True, origin is same, value is different</li>
-<li>output_matching is False, _sep_dicts_id is same and not None, origin
+<li>output_matching is False, sep_dicts_id is same and not None, origin
 is same, value is different</li>
 </ol></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def mismatches(self, o: object):
+<pre><code class="python">def mismatches(self, other: object):
     &#34;&#34;&#34;When Subkey matching is required, determines if this Subkey and another are
     a bad match, meaning either:
 
     1. output_matching is True, origin is same, value is different
-    2. output_matching is False, _sep_dicts_id is same and not None, origin
+    2. output_matching is False, sep_dicts_id is same and not None, origin
        is same, value is different
-
     &#34;&#34;&#34;
-    if isinstance(o, self.__class__):
+    if isinstance(other, self.__class__):
         # one of the two keys is output_matching
-        cond0 = self._output_matching or o._output_matching
+        cond0 = self.output_matching or other.output_matching
         # neither key is output_matching but sep_dict_ids not None and match
-        cond1 = not cond0 and self.matches_sep_dict_id(o)
+        cond1 = not cond0 and self.matches_sep_dict_id(other)
         # origins match and values mismatch
-        cond2 = self.origin == o.origin and self.value != o.value
+        cond2 = self.origin == other.origin and self.value != other.value
         return (cond0 or cond1) and cond2
     return True</code></pre>
 </details>

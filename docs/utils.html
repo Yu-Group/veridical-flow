@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 <meta name="generator" content="pdoc 0.10.0" />
-<title>vflow.convert API documentation</title>
+<title>vflow.utils API documentation</title>
 <meta name="description" content="Useful functions for converting between different types (dicts, lists, tuples, etc.)" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
@@ -19,7 +19,7 @@
 <main>
 <article id="content">
 <header>
-<h1 class="title">Module <code>vflow.convert</code></h1>
+<h1 class="title">Module <code>vflow.utils</code></h1>
 </header>
 <section id="section-intro">
 <p>Useful functions for converting between different types (dicts, lists, tuples, etc.)</p>
@@ -35,45 +35,22 @@ from uuid import uuid4
 
 import numpy as np
 import pandas as pd
-from pandas import DataFrame
 
 import ray
 from ray.remote_function import RemoteFunction as RayRemoteFun
-from ray._raylet import ObjectRef as RayObjRef
 
 from vflow.subkey import Subkey
 from vflow.vfunc import VfuncPromise
-from vflow.vset import PREV_KEY
 
-def init_args(args_tuple: Union[tuple, list], names=None):
-    &#34;&#34;&#34;Converts tuple of arguments to a list of dicts
-    
-    Parameters
-    ----------
-    names: list-like (optional), default None
-        given names for each of the arguments in the tuple
-    &#34;&#34;&#34;
-    if names is None:
-        names = [&#39;start&#39;] * len(args_tuple)
-    else:
-        assert len(names) == len(args_tuple), &#39;names should be same length as args_tuple&#39;
 
-    output_dicts = []
-    for (i, ele) in enumerate(args_tuple):
-        output_dicts.append({
-            (Subkey(names[i], &#39;init&#39;),): args_tuple[i],
-            PREV_KEY: (&#39;init&#39;,),
-        })
-    return output_dicts
-
+PREV_KEY = &#39;__prev__&#39;
 
 def s(x):
     &#34;&#34;&#34;Gets shape of a list/tuple/ndarray
     &#34;&#34;&#34;
     if type(x) in [list, tuple]:
         return len(x)
-    else:
-        return x.shape
+    return x.shape
 
 
 def init_step(idx, cols):
@@ -90,7 +67,164 @@ def init_step(idx, cols):
     for i in range(idx, len(cols)):
         if cols[i] != &#39;init&#39;:
             return &#39;init-&#39; + cols[i]
+    return None
 
+
+def base_dict(d: dict):
+    &#34;&#34;&#34;Remove PREV_KEY from dict d if present
+    &#34;&#34;&#34;
+    return {k:v for k,v in d.items() if k != PREV_KEY}
+
+
+def dict_data(d: dict):
+    &#34;&#34;&#34;Returns a list containing all data in dict d
+    &#34;&#34;&#34;
+    return list(base_dict(d).values())
+
+
+def dict_keys(d: dict):
+    &#34;&#34;&#34;Returns a list containing all keys in dict d
+    &#34;&#34;&#34;
+    return list(base_dict(d).keys())
+
+
+def to_tuple(lists: list):
+    &#34;&#34;&#34;Convert from lists to unpacked tuple
+
+    Allows us to write `X, y = to_tuple([[x1, y1], [x2, y2], [x3, y3]])`
+
+    Parameters
+    ----------
+    lists: list
+        list of objects to convert to unpacked tuple
+
+    Examples
+    --------
+    &gt;&gt;&gt; to_tuple([[x1, y1], [x2, y2], [x3, y3]])
+    ([x1, x2, x3], [y1, y2, y3])
+    &gt;&gt;&gt; to_tuple([[x1, y1]])
+    ([x1], [y1])
+    &gt;&gt;&gt; to_tuple([m1, m2, m3])
+    [m1, m2, m3]
+    &#34;&#34;&#34;
+    n_mods = len(lists)
+    if n_mods &lt;= 1:
+        return lists
+    if not isinstance(lists[0], list):
+        return lists
+    n_tup = len(lists[0])
+    tup = [[] for _ in range(n_tup)]
+    for i in range(n_mods):
+        for j in range(n_tup):
+            tup[j].append(lists[i][j])
+    return tuple(tup)
+
+
+def to_list(tup: tuple):
+    &#34;&#34;&#34;Convert from tuple to packed list
+
+    Allows us to call function with arguments in a loop
+
+    Parameters
+    ----------
+    tup: tuple
+        tuple of objects to convert to packed list
+
+    Raises
+    ------
+    ValueError
+        If passed uneven number of arguments without a list. Please wrap your args in a list.
+
+    Examples
+    --------
+    &gt;&gt;&gt; to_list(([x1, x2, x3], [y1, y2, y3]))
+    [[x1, y1], [x2, y2], [x3, y3]]
+    &gt;&gt;&gt; to_list(([x1], [y1]))
+    [[x1, y1]]
+    &gt;&gt;&gt; to_list(([x1, x2, x3], ))
+    [[x1], [x2], [x3]]
+    &gt;&gt;&gt; to_list((x1, ))
+    [[x1]]
+    &gt;&gt;&gt; to_list((x1, y1))
+    [[x1, y1]]
+    &gt;&gt;&gt; to_list((x1, x2, x3, y1, y2, y3))
+    [[x1, y1], [x2, y2], [x3, y3]]
+    &#34;&#34;&#34;
+    n_tup = len(tup)
+    if n_tup == 0:
+        return []
+    if not isinstance(tup[0], list):
+        # the first element is data
+        if n_tup == 1:
+            return [list(tup)]
+        if n_tup % 2 != 0:
+            raise ValueError(&#39;Don\&#39;t know how to handle uneven number of args &#39;
+                             &#39;without a list. Please wrap your args in a list.&#39;)
+        # assume first half of args is input and second half is outcome
+        return [list(el) for el in zip(tup[:(n_tup // 2)], tup[(n_tup // 2):])]
+    if n_tup == 1:
+        return [[x] for x in tup[0]]
+    n_mods = len(tup[0])
+    lists_packed = [[] for _ in range(n_mods)]
+    for i in range(n_mods):
+        for j in range(n_tup):
+            lists_packed[i].append(tup[j][i])
+    return lists_packed
+
+
+def sep_dicts(d: dict, n_out: int = 1, keys=None):
+    &#34;&#34;&#34;Converts dictionary with value being saved as an iterable into multiple dictionaries
+
+    Assumes every value has same length n_out
+
+    Parameters
+    ----------
+    d: dict
+        Dictionary with iterable values to be converted.
+    n_out: int, default 1
+        The number of dictionaries to separate d into.
+    keys: list-like, default None
+        Optional list of keys to use in output dicts.
+
+    Returns
+    -------
+    sep_dicts_list: list
+        List of seperated dictionaries.
+
+    Examples
+    --------
+    &gt;&gt;&gt; sep_dicts({k1: (x1, y1), k2: (x2, y2), ...,  &#39;__prev__&#39;: p})
+    [{k1: x1, k2: x2, ..., &#39;__prev__&#39;: p}, {k1: y1, k2: y2, ..., &#39;__prev__&#39;: p}]
+    &#34;&#34;&#34;
+    if keys is None:
+        keys = []
+    if len(keys) &gt; 0 and len(keys) != n_out:
+        raise ValueError(f&#39;keys should be empty or have length n_out={n_out}&#39;)
+    # empty dict -- return empty dict
+    if n_out &lt;= 1:
+        return d
+    # try separating dict into multiple dicts
+    sep_dicts_id = str(uuid4())  # w/ high prob, uuid4 is unique
+    sep_dicts_list = [{} for _ in range(n_out)]
+    for key, value in d.items():
+        if key != PREV_KEY:
+            for i in range(n_out):
+                # assumes the correct sub-key for item i is in the i-th position
+                if len(keys) == 0:
+                    new_key = (key[i],) + key[n_out:]
+                else:
+                    new_sub = Subkey(value=keys[i], origin=key[-1].origin + &#39;-&#39; + str(i))
+                    new_key = (new_sub,) + key
+                new_key[-1].sep_dicts_id = sep_dicts_id
+                if isinstance(value, VfuncPromise):
+                    # return a promise to get the value at index i of the
+                    # original promise
+                    value_i = VfuncPromise(lambda v, x: v[x], value, i)
+                else:
+                    value_i = value[i]
+                sep_dicts_list[i][new_key] = value_i
+
+    return sep_dicts_list
 
 def dict_to_df(d: dict, param_key=None):
     &#34;&#34;&#34;Converts a dictionary with tuple keys
@@ -109,7 +243,7 @@ def dict_to_df(d: dict, param_key=None):
     df: pandas.DataFrame
         A DataFrame with `d` tuple keys seperated into columns.
     &#34;&#34;&#34;
-    d_copy = {tuple([sk.value for sk in k]): d[k] for k in d if k != PREV_KEY}
+    d_copy = {tuple(sk.value for sk in k): d[k] for k in d if k != PREV_KEY}
     df = pd.Series(d_copy).reset_index()
     if len(d_copy.keys()) &gt; 0:
         key_list = list(d.keys())
@@ -137,21 +271,8 @@ def dict_to_df(d: dict, param_key=None):
     return df
 
 
-def compute_interval(df: DataFrame, d_label, wrt_label, accum=None):
-    &#34;&#34;&#34;Compute an interval (std. dev) of `d_label` column with
-    respect to pertubations in the `wrt_label` column
-
-    .. deprecated:: 0.0.2
-        functionality is replaced by `perturbation_stats`
-    &#34;&#34;&#34;
-    if accum is None:
-        accum = [&#39;std&#39;]
-    df = df.astype({wrt_label: str})
-    return df[[wrt_label, d_label]].groupby(wrt_label).agg(accum)
-
-
-def perturbation_stats(data: Union[DataFrame, dict], *group_by: str, wrt: str=&#39;out&#39;,
-                       func=None, prefix: str=None, split: bool=False):
+def perturbation_stats(data: Union[pd.DataFrame, dict], *group_by: str, wrt: str = &#39;out&#39;,
+                       func=None, prefix: str = None, split: bool = False):
     &#34;&#34;&#34;Compute statistics for `wrt` in `data`, conditional on `group_by`
 
     Parameters
@@ -195,37 +316,35 @@ def perturbation_stats(data: Union[DataFrame, dict], *group_by: str, wrt: str=&#
         gb = df.groupby(group_by)[wrt]
     else:
         gb = df.groupby(lambda x: True)[wrt]
-    mean_or_std = type(func) is list and &#39;mean&#39; in func or &#39;std&#39; in func
-    list_or_ndarray = type(df[wrt].iloc[0]) in [list, np.ndarray]
-    if mean_or_std and list_or_ndarray:
-        dfs = [gb.get_group(grp) for grp in gb.groups]
-        wrt_arrays = [np.stack(d.tolist()) for d in dfs]
+    if (isinstance(func, list) and &#39;mean&#39; in func or &#39;std&#39; in func) and \
+       (type(df[wrt].iloc[0]) in [list, np.ndarray]):
+        wrt_arrays = [np.stack(d.tolist()) for d in (gb.get_group(grp) for grp in gb.groups)]
         n_cols = wrt_arrays[0].shape[1]
         df_out = pd.DataFrame(gb.agg(&#39;count&#39;))
         df_out.columns = [f&#39;{prefix}-count&#39;]
         if &#39;mean&#39; in func:
             if split:
                 col_means = [arr.mean(axis=0) for arr in wrt_arrays]
-                col_names = [f&#39;{prefix}{i}-mean&#39; for i in range(n_cols)]
-                wrt_means = pd.DataFrame(col_means, columns=col_names,
+                wrt_means = pd.DataFrame(col_means,
+                                         columns=[f&#39;{prefix}{i}-mean&#39; for i in range(n_cols)],
                                          index=gb.groups.keys())
             else:
                 col_means = [{f&#39;{prefix}-mean&#39;: arr.mean(axis=0)} for arr in wrt_arrays]
-                wrt_means = pd.DataFrame(col_means, index = gb.groups.keys())
+                wrt_means = pd.DataFrame(col_means, index=gb.groups.keys())
             wrt_means.index.names = df_out.index.names
             df_out = df_out.join(wrt_means)
         if &#39;std&#39; in func:
             if split:
                 col_stds = [arr.std(axis=0, ddof=1) for arr in wrt_arrays]
-                col_names = [f&#39;{prefix}{i}-std&#39; for i in range(n_cols)]
-                wrt_stds = pd.DataFrame(col_stds, columns=col_names,
+                wrt_stds = pd.DataFrame(col_stds,
+                                        columns=[f&#39;{prefix}{i}-std&#39; for i in range(n_cols)],
                                         index=gb.groups.keys())
             else:
                 col_stds = [{f&#39;{prefix}-std&#39;: arr.std(axis=0, ddof=1)} for arr in wrt_arrays]
-                wrt_stds = pd.DataFrame(col_stds, index = gb.groups.keys())
+                wrt_stds = pd.DataFrame(col_stds, index=gb.groups.keys())
             wrt_stds.index.names = df_out.index.names
             df_out = df_out.join(wrt_stds)
-        if not &#39;count&#39; in func:
+        if &#39;count&#39; not in func:
             df_out = df_out.drop(f&#39;{prefix}-count&#39;)
     else:
         df_out = gb.agg(func)
@@ -233,148 +352,7 @@ def perturbation_stats(data: Union[DataFrame, dict], *group_by: str, wrt: str=&#
     df_out.reset_index(inplace=True)
     if len(group_by) &gt; 0:
         return df_out.sort_values(group_by[0])
-    else:
-        return df_out
-
-
-def to_tuple(lists: list):
-    &#34;&#34;&#34;Convert from lists to unpacked tuple
-
-    Allows us to write `X, y = to_tuple([[x1, y1], [x2, y2], [x3, y3]])`
-
-    Parameters
-    ----------
-    lists: list
-        list of objects to convert to unpacked tuple
-
-    Examples
-    --------
-    &gt;&gt;&gt; to_tuple([[x1, y1], [x2, y2], [x3, y3]])
-    ([x1, x2, x3], [y1, y2, y3])
-    &gt;&gt;&gt; to_tuple([[x1, y1]])
-    ([x1], [y1])
-    &gt;&gt;&gt; to_tuple([m1, m2, m3]) 
-    [m1, m2, m3]
-    &#34;&#34;&#34;
-    n_mods = len(lists)
-    if n_mods &lt;= 1:
-        return lists
-    if not type(lists[0]) == list:
-        return lists
-    n_tup = len(lists[0])
-    tup = [[] for _ in range(n_tup)]
-    for i in range(n_mods):
-        for j in range(n_tup):
-            tup[j].append(lists[i][j])
-    return tuple(tup)
-
-
-def to_list(tup: tuple):
-    &#34;&#34;&#34;Convert from tuple to packed list
-    
-    Allows us to call function with arguments in a loop
-
-    Parameters
-    ----------
-    tup: tuple
-        tuple of objects to convert to packed list
-
-    Raises
-    ------
-    ValueError
-        If passed uneven number of arguments without a list. Please wrap your args in a list.
-    
-    Examples
-    --------
-    &gt;&gt;&gt; to_list(([x1, x2, x3], [y1, y2, y3]))
-    [[x1, y1], [x2, y2], [x3, y3]]
-    &gt;&gt;&gt; to_list(([x1], [y1]))
-    [[x1, y1]]
-    &gt;&gt;&gt; to_list(([x1, x2, x3], ))
-    [[x1], [x2], [x3]]
-    &gt;&gt;&gt; to_list((x1, ))
-    [[x1]]
-    &gt;&gt;&gt; to_list((x1, y1))
-    [[x1, y1]]
-    &gt;&gt;&gt; to_list((x1, x2, x3, y1, y2, y3))
-    [[x1, y1], [x2, y2], [x3, y3]]
-    &#34;&#34;&#34;
-    n_tup = len(tup)
-    if n_tup == 0:
-        return []
-    elif not isinstance(tup[0], list):
-        # the first element is data
-        if n_tup == 1:
-            return [list(tup)]
-        if n_tup % 2 != 0:
-            raise ValueError(&#39;Don\&#39;t know how to handle uneven number of args &#39;
-                             &#39;without a list. Please wrap your args in a list.&#39;)
-        # assume first half of args is input and second half is outcome
-        return [list(el) for el in zip(tup[:(n_tup // 2)], tup[(n_tup // 2):])]
-    elif n_tup == 1:
-        return [[x] for x in tup[0]]
-    n_mods = len(tup[0])
-    lists_packed = [[] for _ in range(n_mods)]
-    for i in range(n_mods):
-        for j in range(n_tup):
-            lists_packed[i].append(tup[j][i])
-    return lists_packed
-
-
-def sep_dicts(d: dict, n_out: int = 1, keys=None):
-    &#34;&#34;&#34;Converts dictionary with value being saved as an iterable into multiple dictionaries
-
-    Assumes every value has same length n_out
-
-    Parameters
-    ----------
-    d: dict
-        Dictionary with iterable values to be converted.
-    n_out: int, default 1
-        The number of dictionaries to separate d into.
-    keys: list-like, default None
-        Optional list of keys to use in output dicts.
-    
-    Returns
-    -------
-    sep_dicts_list: list
-        List of seperated dictionaries.
-    
-    Examples
-    --------
-    &gt;&gt;&gt; sep_dicts({k1: (x1, y1), k2: (x2, y2), ...,  &#39;__prev__&#39;: p})
-    [{k1: x1, k2: x2, ..., &#39;__prev__&#39;: p}, {k1: y1, k2: y2, ..., &#39;__prev__&#39;: p}]
-    &#34;&#34;&#34;
-    if keys is None:
-        keys = []
-    if len(keys) &gt; 0 and len(keys) != n_out:
-        raise ValueError(f&#39;keys should be empty or have length n_out={n_out}&#39;)
-    # empty dict -- return empty dict
-    if n_out &lt;= 1:
-        return d
-    else:
-        # try separating dict into multiple dicts
-        sep_dicts_id = str(uuid4())  # w/ high prob, uuid4 is unique
-        sep_dicts_list = [dict() for _ in range(n_out)]
-        for key, value in d.items():
-            if key != PREV_KEY:
-                for i in range(n_out):
-                    # assumes the correct sub-key for item i is in the i-th position
-                    if len(keys) == 0:
-                        new_key = (key[i],) + key[n_out:]
-                    else:
-                        new_sub = Subkey(value=keys[i], origin=key[-1].origin + &#39;-&#39; + str(i))
-                        new_key = (new_sub,) + key
-                    new_key[-1]._sep_dicts_id = sep_dicts_id
-                    if isinstance(value, VfuncPromise):
-                        # return a promise to get the value at index i of the
-                        # original promise
-                        value_i = VfuncPromise(lambda v, x: v[x], value, i)
-                    else:
-                        value_i = value[i]
-                    sep_dicts_list[i][new_key] = value_i
-
-        return sep_dicts_list
+    return df_out
 
 
 def combine_keys(left_key, right_key):
@@ -389,7 +367,7 @@ def combine_keys(left_key, right_key):
         Left tuple key to combine.
     right_key: tuple
         Right tuple key to combine.
-    
+
     Returns
     -------
     combined_key: tuple
@@ -410,18 +388,16 @@ def combine_keys(left_key, right_key):
                 if subkey.matches(c_subkey):
                     matched_subkeys.append(subkey)
                     break
-                elif subkey.mismatches(c_subkey):
+                if subkey.mismatches(c_subkey):
                     # subkeys with same origin but different values are rejected
                     return ()
         if len(matched_subkeys) &gt; 0:
             # always filter on right key
-            filtered_key = tuple([subkey for subkey in right_key if subkey not in matched_subkeys])
+            filtered_key = tuple(subkey for subkey in right_key if subkey not in matched_subkeys)
             combined_key = left_key + filtered_key
             return combined_key
-        else:
-            return left_key + right_key
-    else:
         return left_key + right_key
+    return left_key + right_key
 
 
 def combine_dicts(*args: dict, base_case=True):
@@ -432,7 +408,7 @@ def combine_dicts(*args: dict, base_case=True):
     ----------
     *args: dict
         Dictionaries to recursively combine left to right.
-    
+
     Returns
     -------
     combined_dict: dict
@@ -442,7 +418,7 @@ def combine_dicts(*args: dict, base_case=True):
     combined_dict = {}
     if n_args == 0:
         return combined_dict
-    elif n_args == 1:
+    if n_args == 1:
         for k in args[0]:
             # wrap the dict values in tuples; this is helpful so that when we
             # pass the values to a module fun in we can just use * expansion
@@ -451,11 +427,11 @@ def combine_dicts(*args: dict, base_case=True):
             else:
                 combined_dict[k] = args[0][k]
         return combined_dict
-    elif n_args == 2:
+    if n_args == 2:
         for k0 in args[0]:
             for k1 in args[1]:
 
-                if k0 == PREV_KEY or k1 == PREV_KEY:
+                if PREV_KEY in (k0, k1):
                     continue
 
                 combined_key = combine_keys(k0, k1)
@@ -467,9 +443,8 @@ def combine_dicts(*args: dict, base_case=True):
                         combined_dict[combined_key] = args[0][k0] + (args[1][k1],)
 
         return combined_dict
-    else:
-        # combine the first two dicts and call recursively with remaining args
-        return combine_dicts(combine_dicts(args[0], args[1]), *args[2:], base_case=False)
+    # combine the first two dicts and call recursively with remaining args
+    return combine_dicts(combine_dicts(args[0], args[1]), *args[2:], base_case=False)
 
 
 def apply_modules(modules: dict, data_dict: dict, lazy: bool=False):
@@ -488,7 +463,7 @@ def apply_modules(modules: dict, data_dict: dict, lazy: bool=False):
     lazy: bool (option), default False
         If True, `modules` are applied lazily, returning `vflow.vfunc.VfuncPromise`
         objects,
-    
+
     Returns
     -------
     out_dict: dict
@@ -503,29 +478,30 @@ def apply_modules(modules: dict, data_dict: dict, lazy: bool=False):
             else:
                 out_dict[mod_k] = func()
         for data_k in data_dict:
-            if mod_k == PREV_KEY or data_k == PREV_KEY:
+            if PREV_KEY in (mod_k, data_k):
                 continue
 
             combined_key = combine_keys(data_k, mod_k)
 
-            if len(combined_key) &gt; 0:
-                func = deepcopy(modules[mod_k])
-                if lazy:
-                    # return a promise
-                    out_dict[combined_key] = VfuncPromise(func, *data_dict[data_k])
-                else:
-                    data_list = list(data_dict[data_k])
-                    for i, data in enumerate(data_list):
-                        if isinstance(data, VfuncPromise):
-                            data_list[i] = data()
-                        if isinstance(func, RayRemoteFun):
-                            if not isinstance(data_list[i], RayObjRef):
-                                # send data to Ray&#39;s remote object store
-                                data_list[i] = ray.put(data_list[i])
-                        elif isinstance(data_list[i], RayObjRef):
-                            # this is not a remote function so get the data
-                            data_list[i] = ray.get(data_list[i])
-                    out_dict[combined_key] = func(*data_list)
+            if not len(combined_key) &gt; 0:
+                continue
+
+            func = deepcopy(modules[mod_k])
+            if lazy:
+                # return a promise
+                out_dict[combined_key] = VfuncPromise(func, *data_dict[data_k])
+            else:
+                data_list = list(data_dict[data_k])
+                for i, data in enumerate(data_list):
+                    if isinstance(data, VfuncPromise):
+                        data_list[i] = data()
+                    if isinstance(func, RayRemoteFun) and not isinstance(data_list[i], ray.ObjectRef):
+                        # send data to Ray&#39;s remote object store
+                        data_list[i] = ray.put(data_list[i])
+                    elif isinstance(data_list[i], ray.ObjectRef):
+                        # this is not a remote function so get the data
+                        data_list[i] = ray.get(data_list[i])
+                out_dict[combined_key] = func(*data_list)
 
     return out_dict</code></pre>
 </details>
@@ -537,13 +513,13 @@ def apply_modules(modules: dict, data_dict: dict, lazy: bool=False):
 <section>
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
-<dt id="vflow.convert.apply_modules"><code class="name flex">
+<dt id="vflow.utils.apply_modules"><code class="name flex">
 <span>def <span class="ident">apply_modules</span></span>(<span>modules: dict, data_dict: dict, lazy: bool = False)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Apply a dictionary of functions <code>modules</code> to each item of <code>data_dict</code>,
 optionally returning a dictionary of <code><a title="vflow.vfunc.VfuncPromise" href="vfunc.html#vflow.vfunc.VfuncPromise">VfuncPromise</a></code> objects if <code>lazy</code> is True</p>
-<p>Output keys are determined by applying <code><a title="vflow.convert.combine_keys" href="#vflow.convert.combine_keys">combine_keys()</a></code> to each pair of items from
+<p>Output keys are determined by applying <code><a title="vflow.utils.combine_keys" href="#vflow.utils.combine_keys">combine_keys()</a></code> to each pair of items from
 <code>modules</code> and <code>data_dict</code>. This function is used by all Vsets to apply functions.</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
@@ -580,7 +556,7 @@ objects,</dd>
     lazy: bool (option), default False
         If True, `modules` are applied lazily, returning `vflow.vfunc.VfuncPromise`
         objects,
-    
+
     Returns
     -------
     out_dict: dict
@@ -595,39 +571,55 @@ objects,</dd>
             else:
                 out_dict[mod_k] = func()
         for data_k in data_dict:
-            if mod_k == PREV_KEY or data_k == PREV_KEY:
+            if PREV_KEY in (mod_k, data_k):
                 continue
 
             combined_key = combine_keys(data_k, mod_k)
 
-            if len(combined_key) &gt; 0:
-                func = deepcopy(modules[mod_k])
-                if lazy:
-                    # return a promise
-                    out_dict[combined_key] = VfuncPromise(func, *data_dict[data_k])
-                else:
-                    data_list = list(data_dict[data_k])
-                    for i, data in enumerate(data_list):
-                        if isinstance(data, VfuncPromise):
-                            data_list[i] = data()
-                        if isinstance(func, RayRemoteFun):
-                            if not isinstance(data_list[i], RayObjRef):
-                                # send data to Ray&#39;s remote object store
-                                data_list[i] = ray.put(data_list[i])
-                        elif isinstance(data_list[i], RayObjRef):
-                            # this is not a remote function so get the data
-                            data_list[i] = ray.get(data_list[i])
-                    out_dict[combined_key] = func(*data_list)
+            if not len(combined_key) &gt; 0:
+                continue
+
+            func = deepcopy(modules[mod_k])
+            if lazy:
+                # return a promise
+                out_dict[combined_key] = VfuncPromise(func, *data_dict[data_k])
+            else:
+                data_list = list(data_dict[data_k])
+                for i, data in enumerate(data_list):
+                    if isinstance(data, VfuncPromise):
+                        data_list[i] = data()
+                    if isinstance(func, RayRemoteFun) and not isinstance(data_list[i], ray.ObjectRef):
+                        # send data to Ray&#39;s remote object store
+                        data_list[i] = ray.put(data_list[i])
+                    elif isinstance(data_list[i], ray.ObjectRef):
+                        # this is not a remote function so get the data
+                        data_list[i] = ray.get(data_list[i])
+                out_dict[combined_key] = func(*data_list)
 
     return out_dict</code></pre>
 </details>
 </dd>
-<dt id="vflow.convert.combine_dicts"><code class="name flex">
+<dt id="vflow.utils.base_dict"><code class="name flex">
+<span>def <span class="ident">base_dict</span></span>(<span>d: dict)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Remove PREV_KEY from dict d if present</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def base_dict(d: dict):
+    &#34;&#34;&#34;Remove PREV_KEY from dict d if present
+    &#34;&#34;&#34;
+    return {k:v for k,v in d.items() if k != PREV_KEY}</code></pre>
+</details>
+</dd>
+<dt id="vflow.utils.combine_dicts"><code class="name flex">
 <span>def <span class="ident">combine_dicts</span></span>(<span>*args: dict, base_case=True)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Combines any number of dictionaries into a single dictionary. Dictionaries
-are combined left to right matching all keys according to <code><a title="vflow.convert.combine_keys" href="#vflow.convert.combine_keys">combine_keys()</a></code></p>
+are combined left to right matching all keys according to <code><a title="vflow.utils.combine_keys" href="#vflow.utils.combine_keys">combine_keys()</a></code></p>
 <h2 id="parameters">Parameters</h2>
 <dl>
 <dt><strong><code>*args</code></strong> :&ensp;<code>dict</code></dt>
@@ -650,7 +642,7 @@ are combined left to right matching all keys according to <code><a title="vflow.
     ----------
     *args: dict
         Dictionaries to recursively combine left to right.
-    
+
     Returns
     -------
     combined_dict: dict
@@ -660,7 +652,7 @@ are combined left to right matching all keys according to <code><a title="vflow.
     combined_dict = {}
     if n_args == 0:
         return combined_dict
-    elif n_args == 1:
+    if n_args == 1:
         for k in args[0]:
             # wrap the dict values in tuples; this is helpful so that when we
             # pass the values to a module fun in we can just use * expansion
@@ -669,11 +661,11 @@ are combined left to right matching all keys according to <code><a title="vflow.
             else:
                 combined_dict[k] = args[0][k]
         return combined_dict
-    elif n_args == 2:
+    if n_args == 2:
         for k0 in args[0]:
             for k1 in args[1]:
 
-                if k0 == PREV_KEY or k1 == PREV_KEY:
+                if PREV_KEY in (k0, k1):
                     continue
 
                 combined_key = combine_keys(k0, k1)
@@ -685,12 +677,11 @@ are combined left to right matching all keys according to <code><a title="vflow.
                         combined_dict[combined_key] = args[0][k0] + (args[1][k1],)
 
         return combined_dict
-    else:
-        # combine the first two dicts and call recursively with remaining args
-        return combine_dicts(combine_dicts(args[0], args[1]), *args[2:], base_case=False)</code></pre>
+    # combine the first two dicts and call recursively with remaining args
+    return combine_dicts(combine_dicts(args[0], args[1]), *args[2:], base_case=False)</code></pre>
 </details>
 </dd>
-<dt id="vflow.convert.combine_keys"><code class="name flex">
+<dt id="vflow.utils.combine_keys"><code class="name flex">
 <span>def <span class="ident">combine_keys</span></span>(<span>left_key, right_key)</span>
 </code></dt>
 <dd>
@@ -726,7 +717,7 @@ which is empty according to <code><a title="vflow.subkey.Subkey.mismatches" href
         Left tuple key to combine.
     right_key: tuple
         Right tuple key to combine.
-    
+
     Returns
     -------
     combined_key: tuple
@@ -747,48 +738,49 @@ which is empty according to <code><a title="vflow.subkey.Subkey.mismatches" href
                 if subkey.matches(c_subkey):
                     matched_subkeys.append(subkey)
                     break
-                elif subkey.mismatches(c_subkey):
+                if subkey.mismatches(c_subkey):
                     # subkeys with same origin but different values are rejected
                     return ()
         if len(matched_subkeys) &gt; 0:
             # always filter on right key
-            filtered_key = tuple([subkey for subkey in right_key if subkey not in matched_subkeys])
+            filtered_key = tuple(subkey for subkey in right_key if subkey not in matched_subkeys)
             combined_key = left_key + filtered_key
             return combined_key
-        else:
-            return left_key + right_key
-    else:
-        return left_key + right_key</code></pre>
+        return left_key + right_key
+    return left_key + right_key</code></pre>
 </details>
 </dd>
-<dt id="vflow.convert.compute_interval"><code class="name flex">
-<span>def <span class="ident">compute_interval</span></span>(<span>df: pandas.core.frame.DataFrame, d_label, wrt_label, accum=None)</span>
+<dt id="vflow.utils.dict_data"><code class="name flex">
+<span>def <span class="ident">dict_data</span></span>(<span>d: dict)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Compute an interval (std. dev) of <code>d_label</code> column with
-respect to pertubations in the <code>wrt_label</code> column</p>
-<div class="admonition deprecated">
-<p class="admonition-title">Deprecated since version:&ensp;0.0.2</p>
-<p>functionality is replaced by <code><a title="vflow.convert.perturbation_stats" href="#vflow.convert.perturbation_stats">perturbation_stats()</a></code></p>
-</div></div>
+<div class="desc"><p>Returns a list containing all data in dict d</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def compute_interval(df: DataFrame, d_label, wrt_label, accum=None):
-    &#34;&#34;&#34;Compute an interval (std. dev) of `d_label` column with
-    respect to pertubations in the `wrt_label` column
-
-    .. deprecated:: 0.0.2
-        functionality is replaced by `perturbation_stats`
+<pre><code class="python">def dict_data(d: dict):
+    &#34;&#34;&#34;Returns a list containing all data in dict d
     &#34;&#34;&#34;
-    if accum is None:
-        accum = [&#39;std&#39;]
-    df = df.astype({wrt_label: str})
-    return df[[wrt_label, d_label]].groupby(wrt_label).agg(accum)</code></pre>
+    return list(base_dict(d).values())</code></pre>
 </details>
 </dd>
-<dt id="vflow.convert.dict_to_df"><code class="name flex">
+<dt id="vflow.utils.dict_keys"><code class="name flex">
+<span>def <span class="ident">dict_keys</span></span>(<span>d: dict)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Returns a list containing all keys in dict d</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def dict_keys(d: dict):
+    &#34;&#34;&#34;Returns a list containing all keys in dict d
+    &#34;&#34;&#34;
+    return list(base_dict(d).keys())</code></pre>
+</details>
+</dd>
+<dt id="vflow.utils.dict_to_df"><code class="name flex">
 <span>def <span class="ident">dict_to_df</span></span>(<span>d: dict, param_key=None)</span>
 </code></dt>
 <dd>
@@ -828,7 +820,7 @@ parameters in <code>param_key</code> if not None</p>
     df: pandas.DataFrame
         A DataFrame with `d` tuple keys seperated into columns.
     &#34;&#34;&#34;
-    d_copy = {tuple([sk.value for sk in k]): d[k] for k in d if k != PREV_KEY}
+    d_copy = {tuple(sk.value for sk in k): d[k] for k in d if k != PREV_KEY}
     df = pd.Series(d_copy).reset_index()
     if len(d_copy.keys()) &gt; 0:
         key_list = list(d.keys())
@@ -856,43 +848,7 @@ parameters in <code>param_key</code> if not None</p>
     return df</code></pre>
 </details>
 </dd>
-<dt id="vflow.convert.init_args"><code class="name flex">
-<span>def <span class="ident">init_args</span></span>(<span>args_tuple: Union[tuple, list], names=None)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Converts tuple of arguments to a list of dicts</p>
-<h2 id="parameters">Parameters</h2>
-<dl>
-<dt><strong><code>names</code></strong> :&ensp;<code>list-like (optional)</code>, default <code>None</code></dt>
-<dd>given names for each of the arguments in the tuple</dd>
-</dl></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def init_args(args_tuple: Union[tuple, list], names=None):
-    &#34;&#34;&#34;Converts tuple of arguments to a list of dicts
-    
-    Parameters
-    ----------
-    names: list-like (optional), default None
-        given names for each of the arguments in the tuple
-    &#34;&#34;&#34;
-    if names is None:
-        names = [&#39;start&#39;] * len(args_tuple)
-    else:
-        assert len(names) == len(args_tuple), &#39;names should be same length as args_tuple&#39;
-
-    output_dicts = []
-    for (i, ele) in enumerate(args_tuple):
-        output_dicts.append({
-            (Subkey(names[i], &#39;init&#39;),): args_tuple[i],
-            PREV_KEY: (&#39;init&#39;,),
-        })
-    return output_dicts</code></pre>
-</details>
-</dd>
-<dt id="vflow.convert.init_step"><code class="name flex">
+<dt id="vflow.utils.init_step"><code class="name flex">
 <span>def <span class="ident">init_step</span></span>(<span>idx, cols)</span>
 </code></dt>
 <dd>
@@ -922,10 +878,11 @@ in a column</p>
     &#34;&#34;&#34;
     for i in range(idx, len(cols)):
         if cols[i] != &#39;init&#39;:
-            return &#39;init-&#39; + cols[i]</code></pre>
+            return &#39;init-&#39; + cols[i]
+    return None</code></pre>
 </details>
 </dd>
-<dt id="vflow.convert.perturbation_stats"><code class="name flex">
+<dt id="vflow.utils.perturbation_stats"><code class="name flex">
 <span>def <span class="ident">perturbation_stats</span></span>(<span>data: Union[pandas.core.frame.DataFrame, dict], *group_by: str, wrt: str = 'out', func=None, prefix: str = None, split: bool = False)</span>
 </code></dt>
 <dd>
@@ -933,13 +890,13 @@ in a column</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
 <dt><strong><code>data</code></strong> :&ensp;<code>Union[pandas.DataFrame, dict]</code></dt>
-<dd>DataFrame, as from calling <code><a title="vflow.convert.dict_to_df" href="#vflow.convert.dict_to_df">dict_to_df()</a></code> on an output dict from a Vset,
+<dd>DataFrame, as from calling <code><a title="vflow.utils.dict_to_df" href="#vflow.utils.dict_to_df">dict_to_df()</a></code> on an output dict from a Vset,
 or the output dict itself.</dd>
 <dt><strong><code>*group_by</code></strong> :&ensp;<code>str</code></dt>
 <dd>Vset names in <code>data</code> to group on. If none provided, treats everything as one big
 group.</dd>
 <dt><strong><code>wrt</code></strong> :&ensp;<code>str (optional)</code></dt>
-<dd>Column name in <code>data</code> or <code><a title="vflow.convert.dict_to_df" href="#vflow.convert.dict_to_df">dict_to_df()</a>(data)</code> on which to compute statistics.
+<dd>Column name in <code>data</code> or <code><a title="vflow.utils.dict_to_df" href="#vflow.utils.dict_to_df">dict_to_df()</a>(data)</code> on which to compute statistics.
 Defaults to <code>'out'</code>, the values of the original Vset output dict.</dd>
 <dt><strong><code>func</code></strong> :&ensp;<code>function, str, list</code> or <code>dict (optional)</code>, default <code>None</code></dt>
 <dd>A list of functions or function names to use for computing
@@ -962,8 +919,8 @@ attempt to split the entries into multiple columns for the output.</dd>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def perturbation_stats(data: Union[DataFrame, dict], *group_by: str, wrt: str=&#39;out&#39;,
-                       func=None, prefix: str=None, split: bool=False):
+<pre><code class="python">def perturbation_stats(data: Union[pd.DataFrame, dict], *group_by: str, wrt: str = &#39;out&#39;,
+                       func=None, prefix: str = None, split: bool = False):
     &#34;&#34;&#34;Compute statistics for `wrt` in `data`, conditional on `group_by`
 
     Parameters
@@ -1007,37 +964,35 @@ attempt to split the entries into multiple columns for the output.</dd>
         gb = df.groupby(group_by)[wrt]
     else:
         gb = df.groupby(lambda x: True)[wrt]
-    mean_or_std = type(func) is list and &#39;mean&#39; in func or &#39;std&#39; in func
-    list_or_ndarray = type(df[wrt].iloc[0]) in [list, np.ndarray]
-    if mean_or_std and list_or_ndarray:
-        dfs = [gb.get_group(grp) for grp in gb.groups]
-        wrt_arrays = [np.stack(d.tolist()) for d in dfs]
+    if (isinstance(func, list) and &#39;mean&#39; in func or &#39;std&#39; in func) and \
+       (type(df[wrt].iloc[0]) in [list, np.ndarray]):
+        wrt_arrays = [np.stack(d.tolist()) for d in (gb.get_group(grp) for grp in gb.groups)]
         n_cols = wrt_arrays[0].shape[1]
         df_out = pd.DataFrame(gb.agg(&#39;count&#39;))
         df_out.columns = [f&#39;{prefix}-count&#39;]
         if &#39;mean&#39; in func:
             if split:
                 col_means = [arr.mean(axis=0) for arr in wrt_arrays]
-                col_names = [f&#39;{prefix}{i}-mean&#39; for i in range(n_cols)]
-                wrt_means = pd.DataFrame(col_means, columns=col_names,
+                wrt_means = pd.DataFrame(col_means,
+                                         columns=[f&#39;{prefix}{i}-mean&#39; for i in range(n_cols)],
                                          index=gb.groups.keys())
             else:
                 col_means = [{f&#39;{prefix}-mean&#39;: arr.mean(axis=0)} for arr in wrt_arrays]
-                wrt_means = pd.DataFrame(col_means, index = gb.groups.keys())
+                wrt_means = pd.DataFrame(col_means, index=gb.groups.keys())
             wrt_means.index.names = df_out.index.names
             df_out = df_out.join(wrt_means)
         if &#39;std&#39; in func:
             if split:
                 col_stds = [arr.std(axis=0, ddof=1) for arr in wrt_arrays]
-                col_names = [f&#39;{prefix}{i}-std&#39; for i in range(n_cols)]
-                wrt_stds = pd.DataFrame(col_stds, columns=col_names,
+                wrt_stds = pd.DataFrame(col_stds,
+                                        columns=[f&#39;{prefix}{i}-std&#39; for i in range(n_cols)],
                                         index=gb.groups.keys())
             else:
                 col_stds = [{f&#39;{prefix}-std&#39;: arr.std(axis=0, ddof=1)} for arr in wrt_arrays]
-                wrt_stds = pd.DataFrame(col_stds, index = gb.groups.keys())
+                wrt_stds = pd.DataFrame(col_stds, index=gb.groups.keys())
             wrt_stds.index.names = df_out.index.names
             df_out = df_out.join(wrt_stds)
-        if not &#39;count&#39; in func:
+        if &#39;count&#39; not in func:
             df_out = df_out.drop(f&#39;{prefix}-count&#39;)
     else:
         df_out = gb.agg(func)
@@ -1045,11 +1000,10 @@ attempt to split the entries into multiple columns for the output.</dd>
     df_out.reset_index(inplace=True)
     if len(group_by) &gt; 0:
         return df_out.sort_values(group_by[0])
-    else:
-        return df_out</code></pre>
+    return df_out</code></pre>
 </details>
 </dd>
-<dt id="vflow.convert.s"><code class="name flex">
+<dt id="vflow.utils.s"><code class="name flex">
 <span>def <span class="ident">s</span></span>(<span>x)</span>
 </code></dt>
 <dd>
@@ -1063,11 +1017,10 @@ attempt to split the entries into multiple columns for the output.</dd>
     &#34;&#34;&#34;
     if type(x) in [list, tuple]:
         return len(x)
-    else:
-        return x.shape</code></pre>
+    return x.shape</code></pre>
 </details>
 </dd>
-<dt id="vflow.convert.sep_dicts"><code class="name flex">
+<dt id="vflow.utils.sep_dicts"><code class="name flex">
 <span>def <span class="ident">sep_dicts</span></span>(<span>d: dict, n_out: int = 1, keys=None)</span>
 </code></dt>
 <dd>
@@ -1108,12 +1061,12 @@ attempt to split the entries into multiple columns for the output.</dd>
         The number of dictionaries to separate d into.
     keys: list-like, default None
         Optional list of keys to use in output dicts.
-    
+
     Returns
     -------
     sep_dicts_list: list
         List of seperated dictionaries.
-    
+
     Examples
     --------
     &gt;&gt;&gt; sep_dicts({k1: (x1, y1), k2: (x2, y2), ...,  &#39;__prev__&#39;: p})
@@ -1126,32 +1079,31 @@ attempt to split the entries into multiple columns for the output.</dd>
     # empty dict -- return empty dict
     if n_out &lt;= 1:
         return d
-    else:
-        # try separating dict into multiple dicts
-        sep_dicts_id = str(uuid4())  # w/ high prob, uuid4 is unique
-        sep_dicts_list = [dict() for _ in range(n_out)]
-        for key, value in d.items():
-            if key != PREV_KEY:
-                for i in range(n_out):
-                    # assumes the correct sub-key for item i is in the i-th position
-                    if len(keys) == 0:
-                        new_key = (key[i],) + key[n_out:]
-                    else:
-                        new_sub = Subkey(value=keys[i], origin=key[-1].origin + &#39;-&#39; + str(i))
-                        new_key = (new_sub,) + key
-                    new_key[-1]._sep_dicts_id = sep_dicts_id
-                    if isinstance(value, VfuncPromise):
-                        # return a promise to get the value at index i of the
-                        # original promise
-                        value_i = VfuncPromise(lambda v, x: v[x], value, i)
-                    else:
-                        value_i = value[i]
-                    sep_dicts_list[i][new_key] = value_i
+    # try separating dict into multiple dicts
+    sep_dicts_id = str(uuid4())  # w/ high prob, uuid4 is unique
+    sep_dicts_list = [{} for _ in range(n_out)]
+    for key, value in d.items():
+        if key != PREV_KEY:
+            for i in range(n_out):
+                # assumes the correct sub-key for item i is in the i-th position
+                if len(keys) == 0:
+                    new_key = (key[i],) + key[n_out:]
+                else:
+                    new_sub = Subkey(value=keys[i], origin=key[-1].origin + &#39;-&#39; + str(i))
+                    new_key = (new_sub,) + key
+                new_key[-1].sep_dicts_id = sep_dicts_id
+                if isinstance(value, VfuncPromise):
+                    # return a promise to get the value at index i of the
+                    # original promise
+                    value_i = VfuncPromise(lambda v, x: v[x], value, i)
+                else:
+                    value_i = value[i]
+                sep_dicts_list[i][new_key] = value_i
 
-        return sep_dicts_list</code></pre>
+    return sep_dicts_list</code></pre>
 </details>
 </dd>
-<dt id="vflow.convert.to_list"><code class="name flex">
+<dt id="vflow.utils.to_list"><code class="name flex">
 <span>def <span class="ident">to_list</span></span>(<span>tup: tuple)</span>
 </code></dt>
 <dd>
@@ -1187,7 +1139,7 @@ attempt to split the entries into multiple columns for the output.</dd>
 </summary>
 <pre><code class="python">def to_list(tup: tuple):
     &#34;&#34;&#34;Convert from tuple to packed list
-    
+
     Allows us to call function with arguments in a loop
 
     Parameters
@@ -1199,7 +1151,7 @@ attempt to split the entries into multiple columns for the output.</dd>
     ------
     ValueError
         If passed uneven number of arguments without a list. Please wrap your args in a list.
-    
+
     Examples
     --------
     &gt;&gt;&gt; to_list(([x1, x2, x3], [y1, y2, y3]))
@@ -1218,7 +1170,7 @@ attempt to split the entries into multiple columns for the output.</dd>
     n_tup = len(tup)
     if n_tup == 0:
         return []
-    elif not isinstance(tup[0], list):
+    if not isinstance(tup[0], list):
         # the first element is data
         if n_tup == 1:
             return [list(tup)]
@@ -1227,7 +1179,7 @@ attempt to split the entries into multiple columns for the output.</dd>
                              &#39;without a list. Please wrap your args in a list.&#39;)
         # assume first half of args is input and second half is outcome
         return [list(el) for el in zip(tup[:(n_tup // 2)], tup[(n_tup // 2):])]
-    elif n_tup == 1:
+    if n_tup == 1:
         return [[x] for x in tup[0]]
     n_mods = len(tup[0])
     lists_packed = [[] for _ in range(n_mods)]
@@ -1237,7 +1189,7 @@ attempt to split the entries into multiple columns for the output.</dd>
     return lists_packed</code></pre>
 </details>
 </dd>
-<dt id="vflow.convert.to_tuple"><code class="name flex">
+<dt id="vflow.utils.to_tuple"><code class="name flex">
 <span>def <span class="ident">to_tuple</span></span>(<span>lists: list)</span>
 </code></dt>
 <dd>
@@ -1253,7 +1205,7 @@ attempt to split the entries into multiple columns for the output.</dd>
 ([x1, x2, x3], [y1, y2, y3])
 &gt;&gt;&gt; to_tuple([[x1, y1]])
 ([x1], [y1])
-&gt;&gt;&gt; to_tuple([m1, m2, m3]) 
+&gt;&gt;&gt; to_tuple([m1, m2, m3])
 [m1, m2, m3]
 </code></pre></div>
 <details class="source">
@@ -1276,13 +1228,13 @@ attempt to split the entries into multiple columns for the output.</dd>
     ([x1, x2, x3], [y1, y2, y3])
     &gt;&gt;&gt; to_tuple([[x1, y1]])
     ([x1], [y1])
-    &gt;&gt;&gt; to_tuple([m1, m2, m3]) 
+    &gt;&gt;&gt; to_tuple([m1, m2, m3])
     [m1, m2, m3]
     &#34;&#34;&#34;
     n_mods = len(lists)
     if n_mods &lt;= 1:
         return lists
-    if not type(lists[0]) == list:
+    if not isinstance(lists[0], list):
         return lists
     n_tup = len(lists[0])
     tup = [[] for _ in range(n_tup)]
@@ -1310,18 +1262,19 @@ attempt to split the entries into multiple columns for the output.</dd>
 </li>
 <li><h3><a href="#header-functions">Functions</a></h3>
 <ul class="two-column">
-<li><code><a title="vflow.convert.apply_modules" href="#vflow.convert.apply_modules">apply_modules</a></code></li>
-<li><code><a title="vflow.convert.combine_dicts" href="#vflow.convert.combine_dicts">combine_dicts</a></code></li>
-<li><code><a title="vflow.convert.combine_keys" href="#vflow.convert.combine_keys">combine_keys</a></code></li>
-<li><code><a title="vflow.convert.compute_interval" href="#vflow.convert.compute_interval">compute_interval</a></code></li>
-<li><code><a title="vflow.convert.dict_to_df" href="#vflow.convert.dict_to_df">dict_to_df</a></code></li>
-<li><code><a title="vflow.convert.init_args" href="#vflow.convert.init_args">init_args</a></code></li>
-<li><code><a title="vflow.convert.init_step" href="#vflow.convert.init_step">init_step</a></code></li>
-<li><code><a title="vflow.convert.perturbation_stats" href="#vflow.convert.perturbation_stats">perturbation_stats</a></code></li>
-<li><code><a title="vflow.convert.s" href="#vflow.convert.s">s</a></code></li>
-<li><code><a title="vflow.convert.sep_dicts" href="#vflow.convert.sep_dicts">sep_dicts</a></code></li>
-<li><code><a title="vflow.convert.to_list" href="#vflow.convert.to_list">to_list</a></code></li>
-<li><code><a title="vflow.convert.to_tuple" href="#vflow.convert.to_tuple">to_tuple</a></code></li>
+<li><code><a title="vflow.utils.apply_modules" href="#vflow.utils.apply_modules">apply_modules</a></code></li>
+<li><code><a title="vflow.utils.base_dict" href="#vflow.utils.base_dict">base_dict</a></code></li>
+<li><code><a title="vflow.utils.combine_dicts" href="#vflow.utils.combine_dicts">combine_dicts</a></code></li>
+<li><code><a title="vflow.utils.combine_keys" href="#vflow.utils.combine_keys">combine_keys</a></code></li>
+<li><code><a title="vflow.utils.dict_data" href="#vflow.utils.dict_data">dict_data</a></code></li>
+<li><code><a title="vflow.utils.dict_keys" href="#vflow.utils.dict_keys">dict_keys</a></code></li>
+<li><code><a title="vflow.utils.dict_to_df" href="#vflow.utils.dict_to_df">dict_to_df</a></code></li>
+<li><code><a title="vflow.utils.init_step" href="#vflow.utils.init_step">init_step</a></code></li>
+<li><code><a title="vflow.utils.perturbation_stats" href="#vflow.utils.perturbation_stats">perturbation_stats</a></code></li>
+<li><code><a title="vflow.utils.s" href="#vflow.utils.s">s</a></code></li>
+<li><code><a title="vflow.utils.sep_dicts" href="#vflow.utils.sep_dicts">sep_dicts</a></code></li>
+<li><code><a title="vflow.utils.to_list" href="#vflow.utils.to_list">to_list</a></code></li>
+<li><code><a title="vflow.utils.to_tuple" href="#vflow.utils.to_tuple">to_tuple</a></code></li>
 </ul>
 </li>
 </ul>

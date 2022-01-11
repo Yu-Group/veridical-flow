@@ -14515,7 +14515,12 @@ a.anchor-link {
 
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<p>This notebooks shows an example of using vflow on the Fashion-MNIST dataset using deep neural networks. It requires installing pytorch and torchvision (<code>pip install torch torchvision</code>).</p>
+<h1 id="Fashion-MNIST-Classification">Fashion-MNIST Classification<a class="anchor-link" href="#Fashion-MNIST-Classification">&#182;</a></h1>
+</div>
+</div>
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<p>This notebooks shows an example of using <code>vflow</code> on the Fashion-MNIST dataset using deep neural networks. It requires installing pytorch and torchvision (<code>pip install torch torchvision</code>).</p>
 
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
@@ -14675,6 +14680,13 @@ a.anchor-link {
 
 </div>
 
+</div>
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<p><code>build_vset(name, obj, param_dict, verbose=True)</code> can be used to construct a <code>Vset</code> by currying <code>obj</code> with all possible combinations of parameters in <code>param_dict</code>.
+We can use it here to simplify hyperparameter tuning:</p>
+
+</div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
@@ -14722,6 +14734,12 @@ a.anchor-link {
 
 </div>
 
+</div>
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<p>If using <code>build_vset</code> with <code>verbose=True</code>, we can visualize parameter combinations in our dataframe by passing <code>param_key=vset_name</code> to <code>dict_to_df</code>:</p>
+
+</div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">

@@ -70,7 +70,7 @@ X_train, X_test, y_train, y_test = init_args(
 subsampling_funcs = [
     sklearn.utils.resample for _ in range(3)
 ]
-subsampling_set = Vset(name=&quot;subsampling&quot;,
+subsampling_set = Vset(name='subsampling',
                        modules=subsampling_funcs,
                        output_matching=True)
 X_trains, y_trains = subsampling_set(X_train, y_train)
@@ -80,7 +80,7 @@ models = [
     sklearn.linear_model.LogisticRegression(),
     sklearn.tree.DecisionTreeClassifier()
 ]
-modeling_set = Vset(name=&quot;modeling&quot;,
+modeling_set = Vset(name='modeling',
                     modules=models,
                     module_keys=[&quot;LR&quot;, &quot;DT&quot;])
 modeling_set.fit(X_trains, y_trains)
@@ -122,17 +122,13 @@ binary_metrics = binary_metrics_set.evaluate(preds_test, y_test)
 from .vfunc import *
 from .vset import *
 from .pipeline import *
-from .convert import init_args, dict_to_df, compute_interval, perturbation_stats
+from .utils import *
 from .helpers import *</code></pre>
 </details>
 </section>
 <section>
 <h2 class="section-title" id="header-submodules">Sub-modules</h2>
 <dl>
-<dt><code class="name"><a title="vflow.convert" href="convert.html">vflow.convert</a></code></dt>
-<dd>
-<div class="desc"><p>Useful functions for converting between different types (dicts, lists, tuples, etc.)</p></div>
-</dd>
 <dt><code class="name"><a title="vflow.helpers" href="helpers.html">vflow.helpers</a></code></dt>
 <dd>
 <div class="desc"><p>User-facing helper functions included at import vflow</p></div>
@@ -143,7 +139,11 @@ from .helpers import *</code></pre>
 </dd>
 <dt><code class="name"><a title="vflow.subkey" href="subkey.html">vflow.subkey</a></code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Defines a parameter from some origin Vset</p></div>
+</dd>
+<dt><code class="name"><a title="vflow.utils" href="utils.html">vflow.utils</a></code></dt>
+<dd>
+<div class="desc"><p>Useful functions for converting between different types (dicts, lists, tuples, etc.)</p></div>
 </dd>
 <dt><code class="name"><a title="vflow.vfunc" href="vfunc.html">vflow.vfunc</a></code></dt>
 <dd>
@@ -178,10 +178,10 @@ Function arguments are each a list</p></div>
 <ul id="index">
 <li><h3><a href="#header-submodules">Sub-modules</a></h3>
 <ul>
-<li><code><a title="vflow.convert" href="convert.html">vflow.convert</a></code></li>
 <li><code><a title="vflow.helpers" href="helpers.html">vflow.helpers</a></code></li>
 <li><code><a title="vflow.pipeline" href="pipeline.html">vflow.pipeline</a></code></li>
 <li><code><a title="vflow.subkey" href="subkey.html">vflow.subkey</a></code></li>
+<li><code><a title="vflow.utils" href="utils.html">vflow.utils</a></code></li>
 <li><code><a title="vflow.vfunc" href="vfunc.html">vflow.vfunc</a></code></li>
 <li><code><a title="vflow.vset" href="vset.html">vflow.vset</a></code></li>
 </ul>

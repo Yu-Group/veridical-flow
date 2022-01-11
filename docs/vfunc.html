@@ -50,16 +50,14 @@ class Vfunc:
         &#34;&#34;&#34;
         if hasattr(self.module, &#39;fit&#39;):
             return self.module.fit(*args, **kwargs)
-        else:
-            return self.module(*args, **kwargs)
+        return self.module(*args, **kwargs)
 
     def transform(self, *args, **kwargs):
         &#34;&#34;&#34;This function transforms its input in some way
         &#34;&#34;&#34;
         if hasattr(self.module, &#39;transform&#39;):
             return self.module.transform(*args, **kwargs)
-        else:
-            return self.module(*args, **kwargs)
+        return self.module(*args, **kwargs)
 
     def __call__(self, *args, **kwargs):
         &#34;&#34;&#34;This should decide what to call
@@ -90,22 +88,24 @@ class AsyncModule:
         &#34;&#34;&#34;
         if hasattr(self.module, &#39;fit&#39;):
             return _remote_fun.remote(self.module.fit, *args, **kwargs)
-        else:
-            return _remote_fun.remote(self.module, *args, **kwargs)
+        return _remote_fun.remote(self.module, *args, **kwargs)
 
     def transform(self, *args, **kwargs):
         &#34;&#34;&#34;This function transforms its input in some way
         &#34;&#34;&#34;
         if hasattr(self.module, &#39;transform&#39;):
             return _remote_fun.remote(self.module.transform, *args, **kwargs)
-        else:
-            return _remote_fun.remote(self.module, *args, **kwargs)
+        return _remote_fun.remote(self.module, *args, **kwargs)
 
     def __call__(self, *args, **kwargs):
+        &#34;&#34;&#34;This should decide what to call
+        &#34;&#34;&#34;
         return self.fit(*args, **kwargs)
 
 
 class VfuncPromise:
+    &#34;&#34;&#34;A Vfunc promise used for lazy evaluation.
+    &#34;&#34;&#34;
 
     def __init__(self, vfunc: callable, *args):
         self.vfunc = vfunc
@@ -114,6 +114,8 @@ class VfuncPromise:
         self.value = None
 
     def __call__(self):
+        &#34;&#34;&#34;This should decide what to call
+        &#34;&#34;&#34;
         if self.called:
             return self.value
         tmp_args = []
@@ -127,20 +129,30 @@ class VfuncPromise:
         self.called = True
         return self.value
 
+    def _get_value(self):
+        if isinstance(self(), ray.ObjectRef):
+            self.value = ray.get(self.value)
+        return self.value
+
     def transform(self, *args):
-        return self().transform(*args)
+        &#34;&#34;&#34;This function transforms its input in some way
+        &#34;&#34;&#34;
+        return self._get_value().transform(*args)
 
     def predict(self, *args):
-        return self().predict(*args)
+        &#34;&#34;&#34;This function calls predict on its inputs
+        &#34;&#34;&#34;
+        return self._get_value().predict(*args)
 
     def predict_proba(self, *args):
-        return self().predict_proba(*args)
+        &#34;&#34;&#34;This function calls predict_proba on its inputs
+        &#34;&#34;&#34;
+        return self._get_value().predict_proba(*args)
 
     def __repr__(self):
         if self.called:
             return f&#39;Fulfilled VfuncPromise({self.value})&#39;
-        else:
-            return f&#39;Unfulfilled VfuncPromise(func={self.vfunc}, args={self.args})&#39;</code></pre>
+        return f&#39;Unfulfilled VfuncPromise(func={self.vfunc}, args={self.args})&#39;</code></pre>
 </details>
 </section>
 <section>
@@ -180,18 +192,18 @@ class VfuncPromise:
         &#34;&#34;&#34;
         if hasattr(self.module, &#39;fit&#39;):
             return _remote_fun.remote(self.module.fit, *args, **kwargs)
-        else:
-            return _remote_fun.remote(self.module, *args, **kwargs)
+        return _remote_fun.remote(self.module, *args, **kwargs)
 
     def transform(self, *args, **kwargs):
         &#34;&#34;&#34;This function transforms its input in some way
         &#34;&#34;&#34;
         if hasattr(self.module, &#39;transform&#39;):
             return _remote_fun.remote(self.module.transform, *args, **kwargs)
-        else:
-            return _remote_fun.remote(self.module, *args, **kwargs)
+        return _remote_fun.remote(self.module, *args, **kwargs)
 
     def __call__(self, *args, **kwargs):
+        &#34;&#34;&#34;This should decide what to call
+        &#34;&#34;&#34;
         return self.fit(*args, **kwargs)</code></pre>
 </details>
 <h3>Methods</h3>
@@ -210,8 +222,7 @@ class VfuncPromise:
     &#34;&#34;&#34;
     if hasattr(self.module, &#39;fit&#39;):
         return _remote_fun.remote(self.module.fit, *args, **kwargs)
-    else:
-        return _remote_fun.remote(self.module, *args, **kwargs)</code></pre>
+    return _remote_fun.remote(self.module, *args, **kwargs)</code></pre>
 </details>
 </dd>
 <dt id="vflow.vfunc.AsyncModule.transform"><code class="name flex">
@@ -228,8 +239,7 @@ class VfuncPromise:
     &#34;&#34;&#34;
     if hasattr(self.module, &#39;transform&#39;):
         return _remote_fun.remote(self.module.transform, *args, **kwargs)
-    else:
-        return _remote_fun.remote(self.module, *args, **kwargs)</code></pre>
+    return _remote_fun.remote(self.module, *args, **kwargs)</code></pre>
 </details>
 </dd>
 </dl>
@@ -263,16 +273,14 @@ If none of these is supported, it need only be a function</p></div>
         &#34;&#34;&#34;
         if hasattr(self.module, &#39;fit&#39;):
             return self.module.fit(*args, **kwargs)
-        else:
-            return self.module(*args, **kwargs)
+        return self.module(*args, **kwargs)
 
     def transform(self, *args, **kwargs):
         &#34;&#34;&#34;This function transforms its input in some way
         &#34;&#34;&#34;
         if hasattr(self.module, &#39;transform&#39;):
             return self.module.transform(*args, **kwargs)
-        else:
-            return self.module(*args, **kwargs)
+        return self.module(*args, **kwargs)
 
     def __call__(self, *args, **kwargs):
         &#34;&#34;&#34;This should decide what to call
@@ -295,8 +303,7 @@ If none of these is supported, it need only be a function</p></div>
     &#34;&#34;&#34;
     if hasattr(self.module, &#39;fit&#39;):
         return self.module.fit(*args, **kwargs)
-    else:
-        return self.module(*args, **kwargs)</code></pre>
+    return self.module(*args, **kwargs)</code></pre>
 </details>
 </dd>
 <dt id="vflow.vfunc.Vfunc.transform"><code class="name flex">
@@ -313,8 +320,7 @@ If none of these is supported, it need only be a function</p></div>
     &#34;&#34;&#34;
     if hasattr(self.module, &#39;transform&#39;):
         return self.module.transform(*args, **kwargs)
-    else:
-        return self.module(*args, **kwargs)</code></pre>
+    return self.module(*args, **kwargs)</code></pre>
 </details>
 </dd>
 </dl>
@@ -324,12 +330,14 @@ If none of these is supported, it need only be a function</p></div>
 <span>(</span><span>vfunc: <built-in function callable>, *args)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>A Vfunc promise used for lazy evaluation.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class VfuncPromise:
+    &#34;&#34;&#34;A Vfunc promise used for lazy evaluation.
+    &#34;&#34;&#34;
 
     def __init__(self, vfunc: callable, *args):
         self.vfunc = vfunc
@@ -338,6 +346,8 @@ If none of these is supported, it need only be a function</p></div>
         self.value = None
 
     def __call__(self):
+        &#34;&#34;&#34;This should decide what to call
+        &#34;&#34;&#34;
         if self.called:
             return self.value
         tmp_args = []
@@ -351,20 +361,30 @@ If none of these is supported, it need only be a function</p></div>
         self.called = True
         return self.value
 
+    def _get_value(self):
+        if isinstance(self(), ray.ObjectRef):
+            self.value = ray.get(self.value)
+        return self.value
+
     def transform(self, *args):
-        return self().transform(*args)
+        &#34;&#34;&#34;This function transforms its input in some way
+        &#34;&#34;&#34;
+        return self._get_value().transform(*args)
 
     def predict(self, *args):
-        return self().predict(*args)
+        &#34;&#34;&#34;This function calls predict on its inputs
+        &#34;&#34;&#34;
+        return self._get_value().predict(*args)
 
     def predict_proba(self, *args):
-        return self().predict_proba(*args)
+        &#34;&#34;&#34;This function calls predict_proba on its inputs
+        &#34;&#34;&#34;
+        return self._get_value().predict_proba(*args)
 
     def __repr__(self):
         if self.called:
             return f&#39;Fulfilled VfuncPromise({self.value})&#39;
-        else:
-            return f&#39;Unfulfilled VfuncPromise(func={self.vfunc}, args={self.args})&#39;</code></pre>
+        return f&#39;Unfulfilled VfuncPromise(func={self.vfunc}, args={self.args})&#39;</code></pre>
 </details>
 <h3>Methods</h3>
 <dl>
@@ -372,39 +392,45 @@ If none of these is supported, it need only be a function</p></div>
 <span>def <span class="ident">predict</span></span>(<span>self, *args)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>This function calls predict on its inputs</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def predict(self, *args):
-    return self().predict(*args)</code></pre>
+    &#34;&#34;&#34;This function calls predict on its inputs
+    &#34;&#34;&#34;
+    return self._get_value().predict(*args)</code></pre>
 </details>
 </dd>
 <dt id="vflow.vfunc.VfuncPromise.predict_proba"><code class="name flex">
 <span>def <span class="ident">predict_proba</span></span>(<span>self, *args)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>This function calls predict_proba on its inputs</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def predict_proba(self, *args):
-    return self().predict_proba(*args)</code></pre>
+    &#34;&#34;&#34;This function calls predict_proba on its inputs
+    &#34;&#34;&#34;
+    return self._get_value().predict_proba(*args)</code></pre>
 </details>
 </dd>
 <dt id="vflow.vfunc.VfuncPromise.transform"><code class="name flex">
 <span>def <span class="ident">transform</span></span>(<span>self, *args)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>This function transforms its input in some way</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def transform(self, *args):
-    return self().transform(*args)</code></pre>
+    &#34;&#34;&#34;This function transforms its input in some way
+    &#34;&#34;&#34;
+    return self._get_value().transform(*args)</code></pre>
 </details>
 </dd>
 </dl>

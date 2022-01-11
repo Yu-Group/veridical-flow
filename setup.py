@@ -8,7 +8,7 @@ with open(path.join(path_to_repo, 'readme.md'), encoding='utf-8') as f:
 
 setuptools.setup(
     name="vflow",
-    version="0.0.2",
+    version="0.1.0",
     author="Yu Group",
     author_email="chandan_singh@berkeley.edu",
     description="A framework for doing stability analysis with PCS.",
@@ -30,6 +30,7 @@ setuptools.setup(
     extras_require={
         'dev': [
             'pytest',
+            'pylint==2.12.2',
             'tqdm',
             'scikit-learn >=0.23.0',  # 0.23+ only works on py3.6+)
         ],

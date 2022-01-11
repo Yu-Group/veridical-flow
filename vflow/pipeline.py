@@ -3,7 +3,6 @@
 import itertools
 
 import joblib
-import matplotlib.pyplot as plt
 import networkx as nx
 import pandas as pd
 
@@ -12,18 +11,14 @@ from vflow.vset import PREV_KEY
 
 class PCSPipeline:
     def __init__(self, steps=None, cache_dir=None):
-        """Helper function that just calls build_graph_recur with an empty graph
-        Params
-        ------
+        """
+        Parameters
+        ----------
         steps: list
             a list of Vset instances
         cache_dir: str, default=None
-            The directory to use as data store by joblib. If None, won't do
+            The directory to use as data store by `joblib`. If None, won't do
             caching.
-
-        Returns
-        -------
-        G: nx.Digraph()
         """
         if steps is None:
             steps = []
@@ -41,7 +36,7 @@ class PCSPipeline:
             except AttributeError:
                 step_name = f'Step {i}'
             print(step_name)
-            outputs, fitted_step = run_step_cached(step, *args, **kwargs)
+            _, fitted_step = run_step_cached(step, *args, **kwargs)
             self.steps[i] = fitted_step
 
     def __getitem__(self, i):
@@ -60,17 +55,17 @@ class PCSPipeline:
                                    for i, mod in enumerate(step)])
             indexes = list(itertools.product(*name_lists))
             return pd.DataFrame(indexes, columns=[step.name for step in self.steps])
-        else:
-            for step in self.steps:
-                name_lists.append([f'{step.name}_{i}_{str(mod)[:8]}'
-                                   for i, mod in enumerate(step)])
-            return list(itertools.product(*name_lists))
+        for step in self.steps:
+            name_lists.append([f'{step.name}_{i}_{str(mod)[:8]}'
+                               for i, mod in enumerate(step)])
+        return list(itertools.product(*name_lists))
 
 
 def build_graph(node, draw=True):
     """Helper function that just calls build_graph_recur with an empty graph
-    Params
-    ------
+
+    Parameters
+    ----------
     node: dict or Vset
 
     Returns
@@ -80,8 +75,9 @@ def build_graph(node, draw=True):
 
     def unnest_node(node):
         """Unnest a node, if necessary (i.e., when node is a tuple)
-        Params
-        ------
+
+        Parameters
+        ----------
         node: str, dict, Vset, or tuple
 
         Returns
@@ -97,8 +93,9 @@ def build_graph(node, draw=True):
 
     def build_graph_recur(node, G):
         """Builds a graph up using __prev__ and PREV_KEY pointers
-        Params
-        ------
+
+        Parameters
+        ----------
         node: str, dict, Vset, or tuple
         G: nx.Digraph()
 
@@ -107,11 +104,11 @@ def build_graph(node, draw=True):
         G: nx.Digraph()
         """
         # base case: reached starting node
-        if type(node) is str:
+        if isinstance(node, str):
             return G
 
         # initial case: starting at dict
-        elif type(node) is dict:
+        if isinstance(node, dict):
             s_node = 'End'
             nodes_prev = node[PREV_KEY]
             G.add_edge(nodes_prev[0], s_node)
@@ -121,7 +118,7 @@ def build_graph(node, draw=True):
             return G
 
         # main case: at a moduleset
-        elif 'Vset' in str(type(node)):
+        if 'Vset' in str(type(node)):
             if hasattr(node, PREV_KEY):
                 nodes_prev = getattr(node, PREV_KEY)
                 for node_prev in nodes_prev:
@@ -130,13 +127,15 @@ def build_graph(node, draw=True):
             return G
 
         # nested prev key case
-        elif type(node) is tuple:
+        if isinstance(node, tuple):
             func_node = unnest_node(node[0])
             G = build_graph_recur(func_node, G)
             for arg_node in node[1:]:
                 G.add_edge(unnest_node(arg_node), func_node)
                 G = build_graph_recur(arg_node, G)
             return G
+
+        return G
 
     G = nx.DiGraph()
     G = build_graph_recur(node, G)

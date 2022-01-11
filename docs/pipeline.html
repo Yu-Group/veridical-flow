@@ -32,7 +32,6 @@
 import itertools
 
 import joblib
-import matplotlib.pyplot as plt
 import networkx as nx
 import pandas as pd
 
@@ -41,18 +40,14 @@ from vflow.vset import PREV_KEY
 
 class PCSPipeline:
     def __init__(self, steps=None, cache_dir=None):
-        &#34;&#34;&#34;Helper function that just calls build_graph_recur with an empty graph
-        Params
-        ------
+        &#34;&#34;&#34;
+        Parameters
+        ----------
         steps: list
             a list of Vset instances
         cache_dir: str, default=None
-            The directory to use as data store by joblib. If None, won&#39;t do
+            The directory to use as data store by `joblib`. If None, won&#39;t do
             caching.
-
-        Returns
-        -------
-        G: nx.Digraph()
         &#34;&#34;&#34;
         if steps is None:
             steps = []
@@ -70,7 +65,7 @@ class PCSPipeline:
             except AttributeError:
                 step_name = f&#39;Step {i}&#39;
             print(step_name)
-            outputs, fitted_step = run_step_cached(step, *args, **kwargs)
+            _, fitted_step = run_step_cached(step, *args, **kwargs)
             self.steps[i] = fitted_step
 
     def __getitem__(self, i):
@@ -89,17 +84,17 @@ class PCSPipeline:
                                    for i, mod in enumerate(step)])
             indexes = list(itertools.product(*name_lists))
             return pd.DataFrame(indexes, columns=[step.name for step in self.steps])
-        else:
-            for step in self.steps:
-                name_lists.append([f&#39;{step.name}_{i}_{str(mod)[:8]}&#39;
-                                   for i, mod in enumerate(step)])
-            return list(itertools.product(*name_lists))
+        for step in self.steps:
+            name_lists.append([f&#39;{step.name}_{i}_{str(mod)[:8]}&#39;
+                               for i, mod in enumerate(step)])
+        return list(itertools.product(*name_lists))
 
 
 def build_graph(node, draw=True):
     &#34;&#34;&#34;Helper function that just calls build_graph_recur with an empty graph
-    Params
-    ------
+
+    Parameters
+    ----------
     node: dict or Vset
 
     Returns
@@ -109,8 +104,9 @@ def build_graph(node, draw=True):
 
     def unnest_node(node):
         &#34;&#34;&#34;Unnest a node, if necessary (i.e., when node is a tuple)
-        Params
-        ------
+
+        Parameters
+        ----------
         node: str, dict, Vset, or tuple
 
         Returns
@@ -126,8 +122,9 @@ def build_graph(node, draw=True):
 
     def build_graph_recur(node, G):
         &#34;&#34;&#34;Builds a graph up using __prev__ and PREV_KEY pointers
-        Params
-        ------
+
+        Parameters
+        ----------
         node: str, dict, Vset, or tuple
         G: nx.Digraph()
 
@@ -136,11 +133,11 @@ def build_graph(node, draw=True):
         G: nx.Digraph()
         &#34;&#34;&#34;
         # base case: reached starting node
-        if type(node) is str:
+        if isinstance(node, str):
             return G
 
         # initial case: starting at dict
-        elif type(node) is dict:
+        if isinstance(node, dict):
             s_node = &#39;End&#39;
             nodes_prev = node[PREV_KEY]
             G.add_edge(nodes_prev[0], s_node)
@@ -150,7 +147,7 @@ def build_graph(node, draw=True):
             return G
 
         # main case: at a moduleset
-        elif &#39;Vset&#39; in str(type(node)):
+        if &#39;Vset&#39; in str(type(node)):
             if hasattr(node, PREV_KEY):
                 nodes_prev = getattr(node, PREV_KEY)
                 for node_prev in nodes_prev:
@@ -159,13 +156,15 @@ def build_graph(node, draw=True):
             return G
 
         # nested prev key case
-        elif type(node) is tuple:
+        if isinstance(node, tuple):
             func_node = unnest_node(node[0])
             G = build_graph_recur(func_node, G)
             for arg_node in node[1:]:
                 G.add_edge(unnest_node(arg_node), func_node)
                 G = build_graph_recur(arg_node, G)
             return G
+
+        return G
 
     G = nx.DiGraph()
     G = build_graph_recur(node, G)
@@ -192,10 +191,12 @@ def _run_step(step, *args, **kwargs):
 <span>def <span class="ident">build_graph</span></span>(<span>node, draw=True)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Helper function that just calls build_graph_recur with an empty graph
-Params</p>
-<hr>
-<p>node: dict or Vset</p>
+<div class="desc"><p>Helper function that just calls build_graph_recur with an empty graph</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>node</code></strong> :&ensp;<code>dict</code> or <code>Vset</code></dt>
+<dd>&nbsp;</dd>
+</dl>
 <h2 id="returns">Returns</h2>
 <dl>
 <dt><strong><code>G</code></strong> :&ensp;<code>nx.Digraph()</code></dt>
@@ -207,8 +208,9 @@ Params</p>
 </summary>
 <pre><code class="python">def build_graph(node, draw=True):
     &#34;&#34;&#34;Helper function that just calls build_graph_recur with an empty graph
-    Params
-    ------
+
+    Parameters
+    ----------
     node: dict or Vset
 
     Returns
@@ -218,8 +220,9 @@ Params</p>
 
     def unnest_node(node):
         &#34;&#34;&#34;Unnest a node, if necessary (i.e., when node is a tuple)
-        Params
-        ------
+
+        Parameters
+        ----------
         node: str, dict, Vset, or tuple
 
         Returns
@@ -235,8 +238,9 @@ Params</p>
 
     def build_graph_recur(node, G):
         &#34;&#34;&#34;Builds a graph up using __prev__ and PREV_KEY pointers
-        Params
-        ------
+
+        Parameters
+        ----------
         node: str, dict, Vset, or tuple
         G: nx.Digraph()
 
@@ -245,11 +249,11 @@ Params</p>
         G: nx.Digraph()
         &#34;&#34;&#34;
         # base case: reached starting node
-        if type(node) is str:
+        if isinstance(node, str):
             return G
 
         # initial case: starting at dict
-        elif type(node) is dict:
+        if isinstance(node, dict):
             s_node = &#39;End&#39;
             nodes_prev = node[PREV_KEY]
             G.add_edge(nodes_prev[0], s_node)
@@ -259,7 +263,7 @@ Params</p>
             return G
 
         # main case: at a moduleset
-        elif &#39;Vset&#39; in str(type(node)):
+        if &#39;Vset&#39; in str(type(node)):
             if hasattr(node, PREV_KEY):
                 nodes_prev = getattr(node, PREV_KEY)
                 for node_prev in nodes_prev:
@@ -268,13 +272,15 @@ Params</p>
             return G
 
         # nested prev key case
-        elif type(node) is tuple:
+        if isinstance(node, tuple):
             func_node = unnest_node(node[0])
             G = build_graph_recur(func_node, G)
             for arg_node in node[1:]:
                 G.add_edge(unnest_node(arg_node), func_node)
                 G = build_graph_recur(arg_node, G)
             return G
+
+        return G
 
     G = nx.DiGraph()
     G = build_graph_recur(node, G)
@@ -293,18 +299,13 @@ Params</p>
 <span>(</span><span>steps=None, cache_dir=None)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Helper function that just calls build_graph_recur with an empty graph
-Params</p>
-<hr>
-<p>steps: list
-a list of Vset instances
-cache_dir: str, default=None
-The directory to use as data store by joblib. If None, won't do
-caching.</p>
-<h2 id="returns">Returns</h2>
+<div class="desc"><h2 id="parameters">Parameters</h2>
 <dl>
-<dt><strong><code>G</code></strong> :&ensp;<code>nx.Digraph()</code></dt>
-<dd>&nbsp;</dd>
+<dt><strong><code>steps</code></strong> :&ensp;<code>list</code></dt>
+<dd>a list of Vset instances</dd>
+<dt><strong><code>cache_dir</code></strong> :&ensp;<code>str</code>, default=<code>None</code></dt>
+<dd>The directory to use as data store by <code>joblib</code>. If None, won't do
+caching.</dd>
 </dl></div>
 <details class="source">
 <summary>
@@ -312,18 +313,14 @@ caching.</p>
 </summary>
 <pre><code class="python">class PCSPipeline:
     def __init__(self, steps=None, cache_dir=None):
-        &#34;&#34;&#34;Helper function that just calls build_graph_recur with an empty graph
-        Params
-        ------
+        &#34;&#34;&#34;
+        Parameters
+        ----------
         steps: list
             a list of Vset instances
         cache_dir: str, default=None
-            The directory to use as data store by joblib. If None, won&#39;t do
+            The directory to use as data store by `joblib`. If None, won&#39;t do
             caching.
-
-        Returns
-        -------
-        G: nx.Digraph()
         &#34;&#34;&#34;
         if steps is None:
             steps = []
@@ -341,7 +338,7 @@ caching.</p>
             except AttributeError:
                 step_name = f&#39;Step {i}&#39;
             print(step_name)
-            outputs, fitted_step = run_step_cached(step, *args, **kwargs)
+            _, fitted_step = run_step_cached(step, *args, **kwargs)
             self.steps[i] = fitted_step
 
     def __getitem__(self, i):
@@ -360,11 +357,10 @@ caching.</p>
                                    for i, mod in enumerate(step)])
             indexes = list(itertools.product(*name_lists))
             return pd.DataFrame(indexes, columns=[step.name for step in self.steps])
-        else:
-            for step in self.steps:
-                name_lists.append([f&#39;{step.name}_{i}_{str(mod)[:8]}&#39;
-                                   for i, mod in enumerate(step)])
-            return list(itertools.product(*name_lists))</code></pre>
+        for step in self.steps:
+            name_lists.append([f&#39;{step.name}_{i}_{str(mod)[:8]}&#39;
+                               for i, mod in enumerate(step)])
+        return list(itertools.product(*name_lists))</code></pre>
 </details>
 <h3>Methods</h3>
 <dl>
@@ -385,11 +381,10 @@ caching.</p>
                                for i, mod in enumerate(step)])
         indexes = list(itertools.product(*name_lists))
         return pd.DataFrame(indexes, columns=[step.name for step in self.steps])
-    else:
-        for step in self.steps:
-            name_lists.append([f&#39;{step.name}_{i}_{str(mod)[:8]}&#39;
-                               for i, mod in enumerate(step)])
-        return list(itertools.product(*name_lists))</code></pre>
+    for step in self.steps:
+        name_lists.append([f&#39;{step.name}_{i}_{str(mod)[:8]}&#39;
+                           for i, mod in enumerate(step)])
+    return list(itertools.product(*name_lists))</code></pre>
 </details>
 </dd>
 <dt id="vflow.pipeline.PCSPipeline.run"><code class="name flex">
@@ -411,7 +406,7 @@ caching.</p>
         except AttributeError:
             step_name = f&#39;Step {i}&#39;
         print(step_name)
-        outputs, fitted_step = run_step_cached(step, *args, **kwargs)
+        _, fitted_step = run_step_cached(step, *args, **kwargs)
         self.steps[i] = fitted_step</code></pre>
 </details>
 </dd>

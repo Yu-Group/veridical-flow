@@ -4,19 +4,43 @@ from functools import partial
 from itertools import product
 from typing import Union
 
-from vflow.convert import dict_to_df
+import mlflow
+import numpy as np
+
+from vflow.utils import dict_to_df, dict_keys, dict_data
 from vflow.vfunc import Vfunc
-from vflow.vset import Vset, PREV_KEY, FILTER_PREV_KEY
+from vflow.vset import Vset, Subkey, PREV_KEY, FILTER_PREV_KEY
 
 
-def build_vset(name: str, obj, param_dict=None, *args, reps: int = 1,
+def init_args(args_tuple: Union[tuple, list], names=None):
+    """Converts tuple of arguments to a list of dicts
+
+    Parameters
+    ----------
+    names: list-like (optional), default None
+        given names for each of the arguments in the tuple
+    """
+    if names is None:
+        names = ['start'] * len(args_tuple)
+    else:
+        assert len(names) == len(args_tuple), 'names should be same length as args_tuple'
+    output_dicts = []
+    for i, _ in enumerate(args_tuple):
+        output_dicts.append({
+            (Subkey(names[i], 'init'),): args_tuple[i],
+            PREV_KEY: ('init',),
+        })
+    return output_dicts
+
+
+def build_vset(name: str, obj, *args, param_dict=None, reps: int = 1,
                is_async: bool = False, output_matching: bool = False,
                lazy: bool = False, cache_dir: str = None, verbose: bool = True,
                tracking_dir: str = None, **kwargs) -> Vset:
     """Builds a Vset by currying callable obj with all combinations of parameters in param_dict.
 
-    Params
-    -------
+    Parameters
+    ----------
     name: str
         a name for the output Vset
     obj: callable
@@ -55,17 +79,11 @@ def build_vset(name: str, obj, param_dict=None, *args, reps: int = 1,
     vfuncs = []
     vkeys = []
 
-    # TODO: better way to check this?
-    # check if obj is a class
-    instantiate = isinstance(obj, type)
-
-    param_names = list(param_dict.keys())
-    param_lists = list(param_dict.values())
-    kwargs_tuples = product(*param_lists)
+    kwargs_tuples = product(*list(param_dict.values()))
     for tup in kwargs_tuples:
         kwargs_dict = {}
         vkey_tup = ()
-        for param_name, param_val in zip(param_names, tup):
+        for param_name, param_val in zip(list(param_dict.keys()), tup):
             kwargs_dict[param_name] = param_val
             vkey_tup += (f'{param_name}={param_val}', )
         # add additional fixed kwargs to kwargs_dict
@@ -77,7 +95,8 @@ def build_vset(name: str, obj, param_dict=None, *args, reps: int = 1,
                 vkeys.append((f'rep={i}', ) + vkey_tup)
             else:
                 vkeys.append(vkey_tup)
-            if instantiate:
+            # check if obj is a class
+            if isinstance(obj, type):
                 # instantiate obj
                 vfuncs.append(Vfunc(module=obj(*args, **kwargs_dict), name=str(vkey_tup)))
             else:
@@ -93,43 +112,43 @@ def build_vset(name: str, obj, param_dict=None, *args, reps: int = 1,
 def filter_vset_by_metric(metric_dict: dict, vset: Vset, *vsets: Vset, n_keep: int = 1,
                           bigger_is_better: bool = True, filter_on=None,
                           group: bool = False) -> Union[Vset, list]:
-    """Returns a new Vset by filtering vset.modules based on values in filter_dict.
+    """Returns a new Vset by filtering `vset.modules` based on values in filter_dict.
 
-    Params
-    -------
+    Parameters
+    ----------
     metric_dict: dict
         output from a Vset, typically with metrics or other numeric values to use when
-        filtering vset.modules
+        filtering `vset.modules`
     vset: Vset
         a Vsets
     *vsets: Vset
         zero or more additional Vsets
     n_keep: int (optional)
-        number of entries to keep from vset.modules
+        number of entries to keep from `vset.modules`
     bigger_is_better: bool (optional)
-        if True, then the top n_keep largest values are retained
+        if True, then the top `n_keep` largest values are retained
     filter_on: list[str] (optional)
-        if there are multiple metrics in metric_dict, you can specify a subset
+        if there are multiple metrics in `metric_dict`, you can specify a subset
         to consider
     group: bool (optional)
-        if True, average metrics after grouping values in metric_dict by the
+        if True, average metrics after grouping values in `metric_dict` by the
         input Vset names
 
     Returns
     -------
     *new_vset : Vset
         Copies of the input Vsets but with Vfuncs filtered based on metrics
-
     """
     if filter_on is None:
         filter_on = []
     df = dict_to_df(metric_dict)
     vsets = [vset, *vsets]
     vset_names = []
-    for vset in vsets:
-        if vset.name not in df.columns:
-            raise ValueError(f'{vset.name} should be one of the columns of dict_to_df(metric_dict)')
-        vset_names.append(vset.name)
+    for vset_i in vsets:
+        if vset_i.name not in df.columns:
+            raise ValueError((f'{vset_i.name} should be one '
+                              'of the columns of dict_to_df(metric_dict)'))
+        vset_names.append(vset_i.name)
     if len(filter_on) > 0:
         filter_col = list(metric_dict.keys())[0][-1].origin
         df = df[df[filter_col].isin(filter_on)]
@@ -140,17 +159,50 @@ def filter_vset_by_metric(metric_dict: dict, vset: Vset, *vsets: Vset, n_keep: i
     else:
         df = df.sort_values(by='out')
     df = df.iloc[0:n_keep]
-    for i, vset in enumerate(vsets):
-        vfuncs = vset.modules
-        vfunc_filter = [str(name) for name in df[vset.name].to_numpy()]
+    for i, vset_i in enumerate(vsets):
+        vfuncs = vset_i.modules
+        vfunc_filter = [str(name) for name in df[vset_i.name].to_numpy()]
         new_vfuncs = {k: v for k, v in vfuncs.items() if str(v.name) in vfunc_filter}
-        new_vset = Vset('filtered_' + vset.name, new_vfuncs, is_async=vset._async,
-                        output_matching=vset._output_matching, lazy=vset._lazy,
-                        cache_dir=vset._cache_dir, tracking_dir=vset._tracking_dir)
-        setattr(new_vset, FILTER_PREV_KEY, (metric_dict[PREV_KEY], vset,))
+        tracking_dir = None if vset_i._mlflow is None else mlflow.get_tracking_uri()
+        new_vset = Vset('filtered_' + vset_i.name, new_vfuncs, is_async=vset_i._async,
+                        output_matching=vset_i._output_matching, lazy=vset_i._lazy,
+                        cache_dir=vset_i._cache_dir, tracking_dir=tracking_dir)
+        setattr(new_vset, FILTER_PREV_KEY, (metric_dict[PREV_KEY], vset_i,))
         setattr(new_vset, PREV_KEY, getattr(new_vset, FILTER_PREV_KEY))
         vsets[i] = new_vset
     if len(vsets) == 1:
         return vsets[0]
-    else:
-        return vsets
+    return vsets
+
+
+def cum_acc_by_uncertainty(mean_preds, std_preds, true_labels):
+    """Returns uncertainty and cumulative accuracy for grouped class predictions,
+    sorted in increasing order of uncertainty
+
+    Params
+    ------
+    mean_preds: dict
+        mean predictions, output from Vset.predict_with_uncertainties
+    std_preds: dict
+        std predictions, output from Vset.predict_with_uncertainties
+    true_labels: dict or list-like
+
+    TODO: generalize to multi-class classification
+    """
+    assert dict_keys(mean_preds) == dict_keys(std_preds), \
+        "mean_preds and std_preds must share the same keys"
+    # match predictions on keys
+    paired_preds = [[d[k] for d in (mean_preds, std_preds)] for k in dict_keys(mean_preds)]
+    mean_preds, std_preds = (np.array(p)[:,:,1] for p in zip(*paired_preds))
+    if isinstance(true_labels, dict):
+        true_labels = dict_data(true_labels)
+        assert len(true_labels) == 1, 'true_labels should have a single 1D vector entry'
+        true_labels = true_labels[0]
+    n_obs = len(mean_preds[0])
+    assert len(true_labels) == n_obs, \
+        f'true_labels has {len(true_labels)} obs. but should have same as predictions ({n_obs})'
+    sorted_idx = np.argsort(std_preds, axis=1)
+    correct_labels = np.take_along_axis(np.around(mean_preds) - true_labels == 0, sorted_idx, 1)
+    uncertainty = np.take_along_axis(std_preds, sorted_idx, 1)
+    cum_acc = np.cumsum(correct_labels, axis=1) / range(1, n_obs+1)
+    return uncertainty, cum_acc, sorted_idx
