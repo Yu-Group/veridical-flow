@@ -1,6 +1,7 @@
+from numpy.testing import assert_equal
+
 from vflow.helpers import *
 from vflow.subkey import Subkey as sm
-from numpy.testing import assert_equal
 
 class TestHelpers:
 

@@ -4,7 +4,6 @@ from numpy.testing import assert_equal
 
 from vflow.utils import *
 from vflow.subkey import Subkey as sm
-import pandas as pd
 
 
 @pytest.mark.parametrize(
@@ -1008,15 +1007,3 @@ class TestApplyModules:
     def test_apply_modules(self, in_dicts, out_dict):
         result_dict = apply_modules(*in_dicts)
         assert_equal(result_dict, out_dict)
-
-class TestUtils:
-
-    def test_to_list(self):
-        assert to_list((['x1', 'x2', 'x3'], ['y1', 'y2', 'y3'])) == [['x1', 'y1'], ['x2', 'y2'], ['x3', 'y3']]
-        assert to_list((['x1'], ['y1'])) == [['x1', 'y1']]
-        assert to_list((['x1', 'x2', 'x3'],)) == [['x1'], ['x2'], ['x3']]
-        assert to_list(('x1', )) == [['x1']]
-        assert to_list(('x1', 'y1')) == [['x1', 'y1']]
-        assert to_list(('x1', 'x2', 'x3', 'y1', 'y2', 'y3')) == [['x1', 'y1'], ['x2', 'y2'], ['x3', 'y3']]
-        with pytest.raises(ValueError):
-            to_list(('x1', 'x2', 'x3', 'y1', 'y2'))
