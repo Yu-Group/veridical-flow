@@ -518,23 +518,24 @@ def apply_modules(modules: dict, data_dict: dict, lazy: bool=False):
 
             combined_key = combine_keys(data_k, mod_k)
 
-            if len(combined_key) > 0:
-                func = deepcopy(modules[mod_k])
-                if lazy:
-                    # return a promise
-                    out_dict[combined_key] = VfuncPromise(func, *data_dict[data_k])
-                else:
-                    data_list = list(data_dict[data_k])
-                    for i, data in enumerate(data_list):
-                        if isinstance(data, VfuncPromise):
-                            data_list[i] = data()
-                        if isinstance(func, RayRemoteFun):
-                            if not isinstance(data_list[i], ray.ObjectRef):
-                                # send data to Ray's remote object store
-                                data_list[i] = ray.put(data_list[i])
-                        elif isinstance(data_list[i], ray.ObjectRef):
-                            # this is not a remote function so get the data
-                            data_list[i] = ray.get(data_list[i])
-                    out_dict[combined_key] = func(*data_list)
+            if not len(combined_key) > 0:
+                continue
+
+            func = deepcopy(modules[mod_k])
+            if lazy:
+                # return a promise
+                out_dict[combined_key] = VfuncPromise(func, *data_dict[data_k])
+            else:
+                data_list = list(data_dict[data_k])
+                for i, data in enumerate(data_list):
+                    if isinstance(data, VfuncPromise):
+                        data_list[i] = data()
+                    if isinstance(func, RayRemoteFun) and not isinstance(data_list[i], ray.ObjectRef):
+                        # send data to Ray's remote object store
+                        data_list[i] = ray.put(data_list[i])
+                    elif isinstance(data_list[i], ray.ObjectRef):
+                        # this is not a remote function so get the data
+                        data_list[i] = ray.get(data_list[i])
+                out_dict[combined_key] = func(*data_list)
 
     return out_dict
