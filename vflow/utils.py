@@ -214,7 +214,7 @@ def dict_to_df(d: dict, param_key=None):
     df: pandas.DataFrame
         A DataFrame with `d` tuple keys seperated into columns.
     """
-    d_copy = {tuple([sk.value for sk in k]): d[k] for k in d if k != PREV_KEY}
+    d_copy = {tuple(sk.value for sk in k): d[k] for k in d if k != PREV_KEY}
     df = pd.Series(d_copy).reset_index()
     if len(d_copy.keys()) > 0:
         key_list = list(d.keys())
@@ -242,7 +242,7 @@ def dict_to_df(d: dict, param_key=None):
     return df
 
 
-def perturbation_stats(data: Union[DataFrame, dict], *group_by: str, wrt: str = 'out',
+def perturbation_stats(data: Union[pd.DataFrame, dict], *group_by: str, wrt: str = 'out',
                        func=None, prefix: str = None, split: bool = False):
     """Compute statistics for `wrt` in `data`, conditional on `group_by`
 

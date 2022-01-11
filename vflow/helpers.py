@@ -1,12 +1,10 @@
 """User-facing helper functions included at import vflow
 """
-import mlflow
-
 from functools import partial
 from itertools import product
 from typing import Union
 
-import pandas as pd
+import mlflow
 import numpy as np
 
 from vflow.utils import dict_to_df, dict_keys, dict_data
@@ -27,7 +25,7 @@ def init_args(args_tuple: Union[tuple, list], names=None):
     else:
         assert len(names) == len(args_tuple), 'names should be same length as args_tuple'
     output_dicts = []
-    for (i, ele) in enumerate(args_tuple):
+    for i, _ in enumerate(args_tuple):
         output_dicts.append({
             (Subkey(names[i], 'init'),): args_tuple[i],
             PREV_KEY: ('init',),
