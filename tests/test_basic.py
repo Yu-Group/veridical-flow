@@ -1,5 +1,7 @@
+import pytest
+
 import vflow
-from vflow.convert import to_tuple, to_list
+from vflow.utils import to_tuple, to_list
 
 
 class TestBasic:
@@ -30,3 +32,13 @@ class TestBasic:
         X, y = to_tuple(start)
         packed = to_list((X, y))
         assert start == packed, 'unpacking/packing works'
+    
+    def test_to_list(self):
+        assert to_list((['x1', 'x2', 'x3'], ['y1', 'y2', 'y3'])) == [['x1', 'y1'], ['x2', 'y2'], ['x3', 'y3']]
+        assert to_list((['x1'], ['y1'])) == [['x1', 'y1']]
+        assert to_list((['x1', 'x2', 'x3'],)) == [['x1'], ['x2'], ['x3']]
+        assert to_list(('x1', )) == [['x1']]
+        assert to_list(('x1', 'y1')) == [['x1', 'y1']]
+        assert to_list(('x1', 'x2', 'x3', 'y1', 'y2', 'y3')) == [['x1', 'y1'], ['x2', 'y2'], ['x3', 'y3']]
+        with pytest.raises(ValueError):
+            to_list(('x1', 'x2', 'x3', 'y1', 'y2'))

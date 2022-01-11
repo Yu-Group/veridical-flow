@@ -10,9 +10,10 @@ import ray
 from mlflow.tracking import MlflowClient
 
 from vflow.subkey import Subkey
-from vflow.convert import apply_modules, combine_dicts, dict_to_df, perturbation_stats, sep_dicts, \
+from vflow.utils import apply_modules, combine_dicts, dict_to_df, perturbation_stats, sep_dicts, \
     PREV_KEY
 from vflow.vfunc import Vfunc, AsyncModule
+
 
 FILTER_PREV_KEY = '__filter_prev__'
 
@@ -309,6 +310,7 @@ def _apply_func_cached(out_dict: dict, is_async: bool, lazy: bool, *args):
         out_dict = dict(zip(out_keys, out_vals))
 
     return out_dict
+
 
 def prediction_uncertainty(preds, group_by: list=None):
     """Returns the mean and std predictions conditional on group_by

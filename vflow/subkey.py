@@ -1,3 +1,5 @@
+"""Defines a parameter from some origin Vset
+"""
 class Subkey:
 
     def __init__(self, value, origin: str, output_matching: bool = False):

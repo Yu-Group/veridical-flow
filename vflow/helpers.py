@@ -6,9 +6,33 @@ from functools import partial
 from itertools import product
 from typing import Union
 
-from vflow.convert import dict_to_df, PREV_KEY
+import pandas as pd
+import numpy as np
+
+from vflow.utils import dict_to_df, dict_keys, dict_data
 from vflow.vfunc import Vfunc
-from vflow.vset import Vset, FILTER_PREV_KEY
+from vflow.vset import Vset, Subkey, PREV_KEY, FILTER_PREV_KEY
+
+
+def init_args(args_tuple: Union[tuple, list], names=None):
+    """Converts tuple of arguments to a list of dicts
+
+    Parameters
+    ----------
+    names: list-like (optional), default None
+        given names for each of the arguments in the tuple
+    """
+    if names is None:
+        names = ['start'] * len(args_tuple)
+    else:
+        assert len(names) == len(args_tuple), 'names should be same length as args_tuple'
+    output_dicts = []
+    for (i, ele) in enumerate(args_tuple):
+        output_dicts.append({
+            (Subkey(names[i], 'init'),): args_tuple[i],
+            PREV_KEY: ('init',),
+        })
+    return output_dicts
 
 
 def build_vset(name: str, obj, *args, param_dict=None, reps: int = 1,
@@ -151,3 +175,36 @@ def filter_vset_by_metric(metric_dict: dict, vset: Vset, *vsets: Vset, n_keep: i
     if len(vsets) == 1:
         return vsets[0]
     return vsets
+
+
+def cum_acc_by_uncertainty(mean_preds, std_preds, true_labels):
+    """Returns uncertainty and cumulative accuracy for grouped class predictions,
+    sorted in increasing order of uncertainty
+
+    Params
+    ------
+    mean_preds: dict
+        mean predictions, output from Vset.predict_with_uncertainties
+    std_preds: dict
+        std predictions, output from Vset.predict_with_uncertainties
+    true_labels: dict or list-like
+
+    TODO: generalize to multi-class classification
+    """
+    assert dict_keys(mean_preds) == dict_keys(std_preds), \
+        "mean_preds and std_preds must share the same keys"
+    # match predictions on keys
+    paired_preds = [[d[k] for d in (mean_preds, std_preds)] for k in dict_keys(mean_preds)]
+    mean_preds, std_preds = (np.array(p)[:,:,1] for p in zip(*paired_preds))
+    if isinstance(true_labels, dict):
+        true_labels = dict_data(true_labels)
+        assert len(true_labels) == 1, 'true_labels should have a single 1D vector entry'
+        true_labels = true_labels[0]
+    n_obs = len(mean_preds[0])
+    assert len(true_labels) == n_obs, \
+        f'true_labels has {len(true_labels)} obs. but should have same as predictions ({n_obs})'
+    sorted_idx = np.argsort(std_preds, axis=1)
+    correct_labels = np.take_along_axis(np.around(mean_preds) - true_labels == 0, sorted_idx, 1)
+    uncertainty = np.take_along_axis(std_preds, sorted_idx, 1)
+    cum_acc = np.cumsum(correct_labels, axis=1) / range(1, n_obs+1)
+    return uncertainty, cum_acc, sorted_idx
