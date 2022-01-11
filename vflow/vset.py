@@ -23,29 +23,29 @@ class Vset:
                  lazy: bool = False, cache_dir: str = None,
                  tracking_dir: str = None):
         """
-        todo: include prev and next and change functions to include that.
-        Params
-        -------
+        Parameters
+        ----------
         name: str
-            name of this moduleset
+            Name of this Vset.
         modules: list or dict
-            dictionary of functions that we want to associate with
+            Dictionary of functions that we want to associate with
         module_keys: list (optional)
-            list of names corresponding to each module
+            List of names corresponding to each module
         is_async: bool (optional)
-            if True, modules are computed asynchronously
+            If True, `modules` are computed asynchronously
         output_matching: bool (optional)
-            if True, then output keys from this Vset will be matched when used
+            If True, then output keys from this Vset will be matched when used
             in other Vsets
         lazy: bool (optional)
-            if True, then modules are evaluated lazily, i.e. outputs contain a
-            promise
+            If True, then modules are evaluated lazily, i.e. outputs are `vset.vfunc.VfuncPromise`
         cache_dir: str (optional)
-            if provided, do caching and use cache_dir as the data store for
-            joblib.Memory
+            If provided, do caching and use `cache_dir` as the data store for
+            `joblib.Memory`.
         tracking_dir: str (optional)
-            if provided, use the mlflow.tracking api to log outputs as metrics
-            with params determined by input keys
+            If provided, use the `mlflow.tracking` api to log outputs as metrics
+            with params determined by input keys.
+        
+        .. todo:: include prev and next and change functions to include that.
         """
         self.name = name
         self._fitted = False
@@ -90,6 +90,30 @@ class Vset:
                 self.modules[k] = Vfunc(k[0], v)
 
     def _apply_func(self, out_dict: dict = None, *args):
+        """Apply functions in out_dict to combined args dict
+
+        Optionally logs output Subkeys and values as params and metrics using
+        `mlflow.tracking` if this Vset has a `_tracking_dir`.
+
+        Parameters
+        ----------
+        *args: dict
+            Takes multiple dicts and combines them into one.
+            Then runs modules on each item in combined dict.
+        out_dict: dict (optional), default None
+            The dictionary to pass to the matching function. If None, defaults to self.modules.
+
+        Returns
+        -------
+        out_dict: dict
+            Dictionary with items being determined by functions in module set.
+            Functions and input dictionaries are currently matched using a cartesian matching format.
+        
+        Examples
+        --------
+        >>> modules, data = {LR : logistic}, {train_1 : [X1,y1], train2 : [X2,y2]}
+        {(train_1, LR) : fitted logistic, (train_2, LR) :  fitted logistic}
+        """
         if out_dict is None:
             out_dict = deepcopy(self.modules)
 
@@ -135,7 +159,7 @@ class Vset:
         return out_dict
 
     def fit(self, *args):
-        """
+        """Fits to args using `_apply_func`
         """
         out_dict = {}
         for k, v in self.modules.items():
@@ -154,7 +178,7 @@ class Vset:
         return self.fit(*args).transform(args[0])
 
     def transform(self, *args):
-        """
+        """Transforms args using `_apply_func`
         """
         if not self._fitted:
             raise AttributeError('Please fit the Vset object before calling the transform method.')
@@ -164,31 +188,42 @@ class Vset:
                 out_dict[k] = v.transform
         return self._apply_func(out_dict, *args)
 
-    def predict(self, *args):
+    def predict(self, *args, with_uncertainty: bool=False, group_by: list=None):
+        """Predicts args using `_apply_func`
+        """
         if not self._fitted:
-            raise AttributeError('Please fit the Vset object before calling the predict method.')
+            raise AttributeError('Please fit the Vset object before calling predict.')
         pred_dict = {}
         for k, v in self.out.items():
             if hasattr(v, 'predict'):
                 pred_dict[k] = v.predict
-        return self._apply_func(pred_dict, *args)
+        preds = self._apply_func(pred_dict, *args)
+        if with_uncertainty:
+            return prediction_uncertainty(preds, group_by)
+        return preds
 
-    def predict_proba(self, *args):
+    def predict_proba(self, *args, with_uncertainty: bool=False, group_by: list=None):
+        """Calls predict_proba on args using `_apply_func`
+        """
         if not self._fitted:
-            raise AttributeError('Please fit the Vset object before calling the predict_proba method.')
+            raise AttributeError('Please fit the Vset object before calling predict_proba.')
         pred_dict = {}
         for k, v in self.out.items():
             if hasattr(v, 'predict_proba'):
                 pred_dict[k] = v.predict_proba
+        preds = self._apply_func(pred_dict, *args)
+        if with_uncertainty:
+            return prediction_uncertainty(preds, group_by)
         return self._apply_func(pred_dict, *args)
 
     def evaluate(self, *args):
-        """Combines dicts before calling _apply_func
+        """Combines dicts before calling `_apply_func`
         """
         return self._apply_func(None, *args)
 
     def __call__(self, *args, n_out: int = None, keys=None, **kwargs):
-        """
+        """Call args using `_apply_func`, optionally seperating
+        output dictionary into `n_out` dictionaries with `keys`
         """
         if keys is None:
             keys = []
@@ -220,6 +255,8 @@ class Vset:
         return False
 
     def keys(self):
+        """Returns Vset module keys
+        """
         if isinstance(self.modules, dict):
             return self.modules.keys()
         return {}.keys()
@@ -231,6 +268,9 @@ class Vset:
         return 'Vset(' + self.name + ')'
 
     def __create_subkey(self, value):
+        """Helper function to construct `Subkey` with
+        this Vset determining origin and output_matching
+        """
         return Subkey(value, self.name, self._output_matching)
 
 
@@ -238,18 +278,21 @@ def _apply_func_cached(out_dict: dict, is_async: bool, lazy: bool, *args):
     """
     Params
     ------
-    *args: List[Dict]: takes multiple dicts and combines them into one.
-            Then runs modules on each item in combined dict.
-    out_dict: the dictionary to pass to the matching function. If None, defaults to self.modules.
+    *args: dict
+        Takes multiple dicts and combines them into one.
+        Then runs modules on each item in combined dict.
+    out_dict: dict
+        The dictionary to pass to the matching function.
+    is_async: bool
+        If True, outputs are computed asynchronously.
+    lazy: bool
+        If True, outputs are evaluated lazily, i.e. outputs are `VfuncPromise`.
 
     Returns
     -------
-    results: dict
-        with items being determined by functions in module set.
-        Functions and input dictionaries are currently matched using  matching = 'cartesian' format.
-            e.g. inputs:    module = {LR : logistic}, data = {train_1 : [X1,y1], train2 : [X2,y2]}
-                 out:    out_dict = {(train_1, LR)  : fitted logistic, (train_2, LR) :  fitted logistic}.
-        Currently matching = 'subset' is not used...
+    out_dict: dict
+        Dictionary with items being determined by functions in module set.
+        Functions and input dictionaries are currently matched using cartesian matching format.
     """
     for in_dict in args:
         if not isinstance(in_dict, dict):
@@ -264,3 +307,35 @@ def _apply_func_cached(out_dict: dict, is_async: bool, lazy: bool, *args):
         out_dict = dict(zip(out_keys, out_vals))
 
     return out_dict
+
+def prediction_uncertainty(preds, group_by: list=None):
+    """Returns the mean and std predictions conditional on group_by
+
+    Params
+    ------
+    preds
+        predictions as returned by Vset.predict or Vset.predict_proba
+    group_by: list (optional), default None
+        list of groups to compute statistics upon
+
+    TODO: Wrap output dicts in dict wrapper::XXX
+          Wrap subkeys in Subkey
+          Fix default group_by when averaging over all predictions
+    """
+    preds_df = dict_to_df(preds)
+    if group_by is None:
+        # just average over all predictions
+        preds_stats = perturbation_stats(preds_df)
+        group_by = ['index']
+    else:
+        preds_stats = perturbation_stats(preds_df, *group_by)
+    origins = preds_stats[group_by].columns
+    keys = preds_stats[group_by].to_numpy()
+    # wrap subkey values in Subkey
+    keys = [tuple(Subkey(sk, origins[idx]) for idx, sk in enumerate(x)) for x in keys]
+    mean_dict = dict(zip(keys, preds_stats['out-mean']))
+    std_dict = dict(zip(keys, preds_stats['out-std']))
+    # add PREV_KEY to out dicts
+    mean_dict[PREV_KEY] = preds[PREV_KEY]
+    std_dict[PREV_KEY] = preds[PREV_KEY]
+    return mean_dict, std_dict, preds_stats

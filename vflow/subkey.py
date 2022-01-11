@@ -2,13 +2,14 @@ class Subkey:
 
     def __init__(self, value, origin: str, output_matching: bool = False):
         """
-        Params
-        -------
-        value:
+        Parameters
+        ----------
+        value: Any
             subkey value corresponding to a Vset module
         origin: str
             name of the origin Vset of this Subkey
-        output_matching: inherited from the Vset where the Subkey is created
+        output_matching: bool (optional), default False
+            inherited from the Vset where the Subkey is created
         """
         self.value = value
         self.origin = origin
@@ -18,9 +19,13 @@ class Subkey:
         self.sep_dicts_id = None
 
     def is_matching(self):
+        """Checks if subkey should be matched in other Vsets
+        """
         return self.output_matching or self.sep_dicts_id is not None
 
     def matches_sep_dict_id(self, other: object):
+        """Helper to match Subkey by _sep_dict_id
+        """
         if isinstance(other, self.__class__):
             return self.sep_dicts_id is not None \
                    and self.sep_dicts_id == other.sep_dicts_id
@@ -29,8 +34,7 @@ class Subkey:
     def matches(self, other: object):
         """When Subkey matching is required, determines if this Subkey is compatible
         with another, meaning that the origins and values match, and either the
-        _sep_dicts_ids match or both Subkeys have output_matching True.
-
+        _sep_dicts_id matches or both Subkeys have _output_matching True.
         """
         if isinstance(other, self.__class__):
             # they're both matching
@@ -50,7 +54,6 @@ class Subkey:
         1. output_matching is True, origin is same, value is different
         2. output_matching is False, sep_dicts_id is same and not None, origin
            is same, value is different
-
         """
         if isinstance(other, self.__class__):
             # one of the two keys is output_matching
@@ -63,19 +66,17 @@ class Subkey:
         return True
 
     def __eq__(self, other: object):
-        """
-        Mainly used for testing purposes.
+        """Mainly used for testing purposes.
         """
         if isinstance(other, self.__class__):
             # value and origins match
             return self.value == other.value and self.origin == other.origin
         return False
 
-    def __repr__(self) -> str:
+    def __repr__(self):
         return str(self.value)
 
     def __hash__(self):
-        """
-        Mainly used for testing purposes.
+        """Mainly used for testing purposes.
         """
         return hash(self.value) ^ hash(self.origin) ^ hash(self.output_matching)
