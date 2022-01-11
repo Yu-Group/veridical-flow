@@ -206,7 +206,7 @@ class TestPipelines:
         assert_equal(f_res.keys(), f_lazy_res.keys())
 
         def g(tup, arg_name: str = '', i: int = 0):
-            return *tup, arg_name, f'g_iter={i}'
+            return tup, arg_name, f'g_iter={i}'
 
         g_modules = [partial(g, i=i) for i in range(2)]
         g_arg = init_args(('g_arg',), names=['g_init'])[0]
@@ -220,7 +220,7 @@ class TestPipelines:
         assert_equal(g_res.keys(), g_lazy_res.keys())
 
         def h(tup, arg_name: str = '', i: int = 0):
-            return *tup, arg_name, f'h_iter={i}'
+            return tup, arg_name, f'h_iter={i}'
 
         h_modules = [partial(h, i=i) for i in range(2)]
         h_arg = init_args(('h_arg',), names=['h_init'])[0]
