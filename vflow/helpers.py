@@ -1,5 +1,7 @@
 """User-facing helper functions included at import vflow
 """
+import mlflow
+
 from functools import partial
 from itertools import product
 from typing import Union
@@ -139,9 +141,10 @@ def filter_vset_by_metric(metric_dict: dict, vset: Vset, *vsets: Vset, n_keep: i
         vfuncs = vset_i.modules
         vfunc_filter = [str(name) for name in df[vset_i.name].to_numpy()]
         new_vfuncs = {k: v for k, v in vfuncs.items() if str(v.name) in vfunc_filter}
+        tracking_dir = None if vset_i._mlflow is None else mlflow.get_tracking_uri()
         new_vset = Vset('filtered_' + vset_i.name, new_vfuncs, is_async=vset_i._async,
                         output_matching=vset_i._output_matching, lazy=vset_i._lazy,
-                        cache_dir=vset_i._cache_dir, tracking_dir=vset_i._tracking_dir)
+                        cache_dir=vset_i._cache_dir, tracking_dir=tracking_dir)
         setattr(new_vset, FILTER_PREV_KEY, (metric_dict[PREV_KEY], vset_i,))
         setattr(new_vset, PREV_KEY, getattr(new_vset, FILTER_PREV_KEY))
         vsets[i] = new_vset
