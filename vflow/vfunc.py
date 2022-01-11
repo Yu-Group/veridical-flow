@@ -73,10 +73,14 @@ class AsyncModule:
             return _remote_fun.remote(self.module, *args, **kwargs)
 
     def __call__(self, *args, **kwargs):
+        """This should decide what to call
+        """
         return self.fit(*args, **kwargs)
 
 
 class VfuncPromise:
+    """A Vfunc promise used for lazy evaluation.
+    """
 
     def __init__(self, vfunc: callable, *args):
         self.vfunc = vfunc
@@ -85,6 +89,8 @@ class VfuncPromise:
         self.value = None
 
     def __call__(self):
+        """This should decide what to call
+        """
         if self.called:
             return self.value
         tmp_args = []
@@ -99,12 +105,18 @@ class VfuncPromise:
         return self.value
 
     def transform(self, *args):
+        """This function transforms its input in some way
+        """
         return self().transform(*args)
 
     def predict(self, *args):
+        """This function calls predict on its inputs
+        """
         return self().predict(*args)
 
     def predict_proba(self, *args):
+        """This function calls predict_proba on its inputs
+        """
         return self().predict_proba(*args)
 
     def __repr__(self):

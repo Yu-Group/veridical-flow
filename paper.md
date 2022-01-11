@@ -1,5 +1,5 @@
 ---
-title: 'VeridicalFlow: a Python package for building trustworthy data-science pipelines with PCS'
+title: 'VeridicalFlow: a Python package for building trustworthy data science pipelines with PCS'
 tags:
   - python
   - stability
@@ -32,18 +32,18 @@ bibliography: references.bib
 
 # Summary
 
-`VeridicalFlow` is a Python package for simplifying building reproducible and trustworthy data-science pipelines using the PCS framework [@yu2020veridical].
-It provides users with a simple interface for stability analysis, i.e. checking the robustness of results from a data-science pipeline to various judgement calls made during modeling.
+`VeridicalFlow` is a Python package that simplifies building reproducible and trustworthy data science pipelines using the PCS (predictability-computability-stability) framework [@yu2020veridical].
+It provides users with a simple interface for stability analysis, i.e. checking the robustness of results from a data science pipeline to various judgement calls made during modeling.
 This ensures that arbitrary judgement calls made by data practitioners (e.g. specifying a default imputation strategy) do not dramatically alter the final conclusions made in a modeling pipeline.
 In addition to wrappers facilitating stability analysis, `VeridicalFlow` also automates many cumbersome coding aspects of Python pipelines, including experiment tracking and saving, parallelization, and caching, all through integrations with existing Python packages.
-Overall, the package helps to code using the PCS (predictability-computability-stability) framework, by screening models for predictive performance, helping automate computation, and facilitating stability analysis.
+Overall, the package helps to code using the PCS framework, by screening models for predictive performance, helping automate computation, and facilitating stability analysis.
 
 # Statement of need
 
 Predictability, computability, and stability are central concerns in modern statistical/machine learning practice, as they are required to help vet that findings reflect reality, can be reasonably computed, and are robust as the many judgment calls during the data science life cycle which often go unchecked [@yu2020veridical]. 
 
 The package focuses on stability but also provides wrappers to help support and improve predictability and computability.
-Stability is a common-sense principle related to notions of scientific reproducibility [@fisher1937design,@ivie2018reproducibility], sample variability, robust statistics, sensitivity analysis [@saltelli2002sensitivity], and stability in numerical analysis and control theory.
+Stability is a common-sense principle related to notions of scientific reproducibility [@ivie2018reproducibility], sample variability, robust statistics, sensitivity analysis [@saltelli2002sensitivity], and stability in numerical analysis and control theory.
 Moreover, stability serves as a prerequisite for understanding which parts of a model will generalize and can be interpreted [@murdoch2019definitions].
 
 Importantly, current software packages offer very little support to facilitate stability analyses.
@@ -189,7 +189,7 @@ importances_df = dict_to_df(importances, param_key='out')
 
 # get count, mean, and std of the permutation importances
 perturbation_stats(importances_df, 'preproc', 'RF',
-                   wrt_col='out-importances_mean',
+                   wrt='out-importances_mean',
                    prefix='X', split=True)
 ```
 

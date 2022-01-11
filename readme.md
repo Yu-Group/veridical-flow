@@ -71,13 +71,13 @@ See the [docs](https://yu-group.github.io/veridical-flow/) for reference on the 
 
 > **Notebook examples** (Note that some of these require more dependencies than just those required for vflow - to install all, use the `notebooks` dependencies in the `setup.py` file)
 >
-> [Synthetic classification](https://github.com/Yu-Group/veridical-flow/blob/master/notebooks/00_synthetic_classification.ipynb)
+> [Synthetic classification](https://yu-group.github.io/veridical-flow/notebooks/00_synthetic_classification.html)
 >
-> [Enhancer genomics](https://github.com/Yu-Group/veridical-flow/blob/master/notebooks/01_enhancer.ipynb)
+> [Enhancer genomics](https://yu-group.github.io/veridical-flow/notebooks/01_enhancer.html)
 >
-> [fMRI voxel prediction](https://github.com/Yu-Group/veridical-flow/blob/master/notebooks/02_fmri.ipynb)
+> [fMRI voxel prediction](https://yu-group.github.io/veridical-flow/notebooks/02_fmri.html)
 > 
-> [Fashion mnist classification](https://github.com/Yu-Group/veridical-flow/blob/master/notebooks/03_computer_vision_dnn.ipynb)
+> [Fashion mnist classification](https://yu-group.github.io/veridical-flow/notebooks/03_computer_vision_dnn.html)
 > 
 > [Clinical decision rule vetting](https://github.com/Yu-Group/rule-vetting)
 

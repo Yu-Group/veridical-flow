@@ -30,13 +30,14 @@
 
     def __init__(self, value, origin: str, output_matching: bool = False):
         &#34;&#34;&#34;
-        Params
-        -------
-        value:
+        Parameters
+        ----------
+        value: Any
             subkey value corresponding to a Vset module
         origin: str
             name of the origin Vset of this Subkey
-        output_matching: inherited from the Vset where the Subkey is created
+        output_matching: bool (optional), default False
+            inherited from the Vset where the Subkey is created
         &#34;&#34;&#34;
         self.value = value
         self.origin = origin
@@ -46,9 +47,13 @@
         self._sep_dicts_id = None
 
     def is_matching(self):
+        &#34;&#34;&#34;Checks if subkey should be matched in other Vsets
+        &#34;&#34;&#34;
         return self._output_matching or self._sep_dicts_id is not None
 
     def matches_sep_dict_id(self, o: object):
+        &#34;&#34;&#34;Helper to match Subkey by _sep_dict_id
+        &#34;&#34;&#34;
         if isinstance(o, self.__class__):
             return self._sep_dicts_id is not None \
                    and self._sep_dicts_id == o._sep_dicts_id
@@ -57,8 +62,7 @@
     def matches(self, o: object):
         &#34;&#34;&#34;When Subkey matching is required, determines if this Subkey is compatible
         with another, meaning that the origins and values match, and either the
-        _sep_dicts_ids match or both Subkeys have _output_matching True.
-
+        _sep_dicts_id matches or both Subkeys have _output_matching True.
         &#34;&#34;&#34;
         if isinstance(o, self.__class__):
             # they&#39;re both matching
@@ -77,7 +81,6 @@
         1. output_matching is True, origin is same, value is different
         2. output_matching is False, _sep_dicts_id is same and not None, origin
            is same, value is different
-
         &#34;&#34;&#34;
         if isinstance(o, self.__class__):
             # one of the two keys is output_matching
@@ -90,20 +93,18 @@
         return True
 
     def __eq__(self, o: object):
-        &#34;&#34;&#34;
-        Mainly used for testing purposes.
+        &#34;&#34;&#34;Mainly used for testing purposes.
         &#34;&#34;&#34;
         if isinstance(o, self.__class__):
             # value and origins match
             return self.value == o.value and self.origin == o.origin
         return False
 
-    def __repr__(self) -&gt; str:
+    def __repr__(self):
         return str(self.value)
 
     def __hash__(self):
-        &#34;&#34;&#34;
-        Mainly used for testing purposes.
+        &#34;&#34;&#34;Mainly used for testing purposes.
         &#34;&#34;&#34;
         return hash(self.value) ^ hash(self.origin) ^ hash(self._output_matching)</code></pre>
 </details>
@@ -122,12 +123,15 @@
 <span>(</span><span>value, origin: str, output_matching: bool = False)</span>
 </code></dt>
 <dd>
-<div class="desc"><h2 id="params">Params</h2>
-<p>value:
-subkey value corresponding to a Vset module
-origin: str
-name of the origin Vset of this Subkey
-output_matching: inherited from the Vset where the Subkey is created</p></div>
+<div class="desc"><h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>value</code></strong> :&ensp;<code>Any</code></dt>
+<dd>subkey value corresponding to a Vset module</dd>
+<dt><strong><code>origin</code></strong> :&ensp;<code>str</code></dt>
+<dd>name of the origin Vset of this Subkey</dd>
+<dt><strong><code>output_matching</code></strong> :&ensp;<code>bool (optional)</code>, default <code>False</code></dt>
+<dd>inherited from the Vset where the Subkey is created</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -136,13 +140,14 @@ output_matching: inherited from the Vset where the Subkey is created</p></div>
 
     def __init__(self, value, origin: str, output_matching: bool = False):
         &#34;&#34;&#34;
-        Params
-        -------
-        value:
+        Parameters
+        ----------
+        value: Any
             subkey value corresponding to a Vset module
         origin: str
             name of the origin Vset of this Subkey
-        output_matching: inherited from the Vset where the Subkey is created
+        output_matching: bool (optional), default False
+            inherited from the Vset where the Subkey is created
         &#34;&#34;&#34;
         self.value = value
         self.origin = origin
@@ -152,9 +157,13 @@ output_matching: inherited from the Vset where the Subkey is created</p></div>
         self._sep_dicts_id = None
 
     def is_matching(self):
+        &#34;&#34;&#34;Checks if subkey should be matched in other Vsets
+        &#34;&#34;&#34;
         return self._output_matching or self._sep_dicts_id is not None
 
     def matches_sep_dict_id(self, o: object):
+        &#34;&#34;&#34;Helper to match Subkey by _sep_dict_id
+        &#34;&#34;&#34;
         if isinstance(o, self.__class__):
             return self._sep_dicts_id is not None \
                    and self._sep_dicts_id == o._sep_dicts_id
@@ -163,8 +172,7 @@ output_matching: inherited from the Vset where the Subkey is created</p></div>
     def matches(self, o: object):
         &#34;&#34;&#34;When Subkey matching is required, determines if this Subkey is compatible
         with another, meaning that the origins and values match, and either the
-        _sep_dicts_ids match or both Subkeys have _output_matching True.
-
+        _sep_dicts_id matches or both Subkeys have _output_matching True.
         &#34;&#34;&#34;
         if isinstance(o, self.__class__):
             # they&#39;re both matching
@@ -183,7 +191,6 @@ output_matching: inherited from the Vset where the Subkey is created</p></div>
         1. output_matching is True, origin is same, value is different
         2. output_matching is False, _sep_dicts_id is same and not None, origin
            is same, value is different
-
         &#34;&#34;&#34;
         if isinstance(o, self.__class__):
             # one of the two keys is output_matching
@@ -196,20 +203,18 @@ output_matching: inherited from the Vset where the Subkey is created</p></div>
         return True
 
     def __eq__(self, o: object):
-        &#34;&#34;&#34;
-        Mainly used for testing purposes.
+        &#34;&#34;&#34;Mainly used for testing purposes.
         &#34;&#34;&#34;
         if isinstance(o, self.__class__):
             # value and origins match
             return self.value == o.value and self.origin == o.origin
         return False
 
-    def __repr__(self) -&gt; str:
+    def __repr__(self):
         return str(self.value)
 
     def __hash__(self):
-        &#34;&#34;&#34;
-        Mainly used for testing purposes.
+        &#34;&#34;&#34;Mainly used for testing purposes.
         &#34;&#34;&#34;
         return hash(self.value) ^ hash(self.origin) ^ hash(self._output_matching)</code></pre>
 </details>
@@ -219,12 +224,14 @@ output_matching: inherited from the Vset where the Subkey is created</p></div>
 <span>def <span class="ident">is_matching</span></span>(<span>self)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Checks if subkey should be matched in other Vsets</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def is_matching(self):
+    &#34;&#34;&#34;Checks if subkey should be matched in other Vsets
+    &#34;&#34;&#34;
     return self._output_matching or self._sep_dicts_id is not None</code></pre>
 </details>
 </dd>
@@ -234,7 +241,7 @@ output_matching: inherited from the Vset where the Subkey is created</p></div>
 <dd>
 <div class="desc"><p>When Subkey matching is required, determines if this Subkey is compatible
 with another, meaning that the origins and values match, and either the
-_sep_dicts_ids match or both Subkeys have _output_matching True.</p></div>
+_sep_dicts_id matches or both Subkeys have _output_matching True.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -242,8 +249,7 @@ _sep_dicts_ids match or both Subkeys have _output_matching True.</p></div>
 <pre><code class="python">def matches(self, o: object):
     &#34;&#34;&#34;When Subkey matching is required, determines if this Subkey is compatible
     with another, meaning that the origins and values match, and either the
-    _sep_dicts_ids match or both Subkeys have _output_matching True.
-
+    _sep_dicts_id matches or both Subkeys have _output_matching True.
     &#34;&#34;&#34;
     if isinstance(o, self.__class__):
         # they&#39;re both matching
@@ -260,12 +266,14 @@ _sep_dicts_ids match or both Subkeys have _output_matching True.</p></div>
 <span>def <span class="ident">matches_sep_dict_id</span></span>(<span>self, o: object)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Helper to match Subkey by _sep_dict_id</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def matches_sep_dict_id(self, o: object):
+    &#34;&#34;&#34;Helper to match Subkey by _sep_dict_id
+    &#34;&#34;&#34;
     if isinstance(o, self.__class__):
         return self._sep_dicts_id is not None \
                and self._sep_dicts_id == o._sep_dicts_id
@@ -294,7 +302,6 @@ is same, value is different</li>
     1. output_matching is True, origin is same, value is different
     2. output_matching is False, _sep_dicts_id is same and not None, origin
        is same, value is different
-
     &#34;&#34;&#34;
     if isinstance(o, self.__class__):
         # one of the two keys is output_matching
