@@ -6,7 +6,6 @@ from uuid import uuid4
 
 import numpy as np
 import pandas as pd
-import numpy as np
 from pandas import DataFrame
 
 import ray
@@ -125,7 +124,7 @@ def cum_acc_by_uncertainty(mean_preds, std_preds, true_labels):
     assert dict_keys(mean_preds) == dict_keys(std_preds), \
         "mean_preds and std_preds must share the same keys"
     # match predictions on keys
-    paired_preds = [[d[k] for d in [mean_preds, std_preds]] for k in dict_keys(mean_preds)]
+    paired_preds = [[d[k] for d in (mean_preds, std_preds)] for k in dict_keys(mean_preds)]
     mean_preds, std_preds = (np.array(p)[:,:,1] for p in zip(*paired_preds))
     if isinstance(true_labels, dict):
         true_labels = dict_data(true_labels)

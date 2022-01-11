@@ -10,7 +10,8 @@ import ray
 from mlflow.tracking import MlflowClient
 
 from vflow.subkey import Subkey
-from vflow.convert import apply_modules, combine_dicts, sep_dicts, PREV_KEY
+from vflow.convert import apply_modules, combine_dicts, dict_to_df, perturbation_stats, sep_dicts, \
+    PREV_KEY
 from vflow.vfunc import Vfunc, AsyncModule
 
 FILTER_PREV_KEY = '__filter_prev__'
@@ -44,7 +45,7 @@ class Vset:
         tracking_dir: str (optional)
             If provided, use the `mlflow.tracking` api to log outputs as metrics
             with params determined by input keys.
-        
+
         .. todo:: include prev and next and change functions to include that.
         """
         self.name = name
@@ -89,7 +90,7 @@ class Vset:
             elif not isinstance(v, Vfunc):
                 self.modules[k] = Vfunc(k[0], v)
 
-    def _apply_func(self, out_dict: dict = None, *args):
+    def _apply_func(self, *args, out_dict: dict = None):
         """Apply functions in out_dict to combined args dict
 
         Optionally logs output Subkeys and values as params and metrics using
@@ -108,7 +109,7 @@ class Vset:
         out_dict: dict
             Dictionary with items being determined by functions in module set.
             Functions and input dictionaries are currently matched using a cartesian matching format.
-        
+
         Examples
         --------
         >>> modules, data = {LR : logistic}, {train_1 : [X1,y1], train2 : [X2,y2]}
@@ -164,7 +165,7 @@ class Vset:
         out_dict = {}
         for k, v in self.modules.items():
             out_dict[k] = v.fit
-        self.out = self._apply_func(out_dict, *args)
+        self.out = self._apply_func(*args, out_dict=out_dict)
         prev = self.out[PREV_KEY][1:]
         if hasattr(self, FILTER_PREV_KEY):
             prev = getattr(self, FILTER_PREV_KEY) + prev
@@ -186,7 +187,7 @@ class Vset:
         for k, v in self.out.items():
             if hasattr(v, 'transform'):
                 out_dict[k] = v.transform
-        return self._apply_func(out_dict, *args)
+        return self._apply_func(*args, out_dict=out_dict)
 
     def predict(self, *args, with_uncertainty: bool=False, group_by: list=None):
         """Predicts args using `_apply_func`
@@ -197,7 +198,7 @@ class Vset:
         for k, v in self.out.items():
             if hasattr(v, 'predict'):
                 pred_dict[k] = v.predict
-        preds = self._apply_func(pred_dict, *args)
+        preds = self._apply_func(*args, out_dict=pred_dict)
         if with_uncertainty:
             return prediction_uncertainty(preds, group_by)
         return preds
@@ -211,15 +212,15 @@ class Vset:
         for k, v in self.out.items():
             if hasattr(v, 'predict_proba'):
                 pred_dict[k] = v.predict_proba
-        preds = self._apply_func(pred_dict, *args)
+        preds = self._apply_func(*args, out_dict=pred_dict)
         if with_uncertainty:
             return prediction_uncertainty(preds, group_by)
-        return self._apply_func(pred_dict, *args)
+        return preds
 
     def evaluate(self, *args):
         """Combines dicts before calling `_apply_func`
         """
-        return self._apply_func(None, *args)
+        return self._apply_func(*args)
 
     def __call__(self, *args, n_out: int = None, keys=None, **kwargs):
         """Call args using `_apply_func`, optionally seperating
@@ -229,7 +230,7 @@ class Vset:
             keys = []
         if n_out is None:
             n_out = len(args)
-        out_dict = self._apply_func(None, *args)
+        out_dict = self._apply_func(*args)
         if n_out == 1:
             return out_dict
         out_dicts = sep_dicts(out_dict, n_out=n_out, keys=keys)
