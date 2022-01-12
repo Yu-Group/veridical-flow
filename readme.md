@@ -11,6 +11,7 @@
   <img src="https://img.shields.io/badge/python-3.6+-blue" alt="python3.6+">
   <a href="https://github.com/Yu-group/pcs-pipeline/actions"><img src="https://github.com/Yu-group/pcs-pipeline/workflows/tests/badge.svg" alt="tests"></a>
   <img src="https://img.shields.io/github/checks-status/Yu-group/pcs-pipeline/master" alt="checks">
+  <a href="https://joss.theoj.org/papers/10.21105/joss.03895"><img src="https://joss.theoj.org/papers/10.21105/joss.03895/status.svg" alt="joss"></a>
   <img src="https://img.shields.io/pypi/v/vflow?color=orange" alt="downloads">
 </p> 
 

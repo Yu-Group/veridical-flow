@@ -18,14 +18,16 @@ authors:
     orcid: 0000-0003-0318-2340
     affiliation: 2
   - name: Bin Yu
-    affiliation: "1, 2"
+    affiliation: "1, 2, 4"
 affiliations:
- - name: Statistics Department, University of California, Berkeley
-   index: 1
- - name: EECS Department, University of California, Berkeley
-   index: 2
- - name: Physics Department, University of California, Berkeley
-   index: 3
+  - name: Graduate Group in Biostatistics, University of California, Berkeley
+    index: 1
+  - name: EECS Department, University of California, Berkeley
+    index: 2
+  - name: Physics Department, University of California, Berkeley
+    index: 3
+  - name: Statistics Department, University of California, Berkeley
+    index: 4
 date: 21 October 2021
 bibliography: references.bib
 ---
