@@ -33,14 +33,14 @@ bibliography: references.bib
 # Summary
 
 `VeridicalFlow` is a Python package that simplifies building reproducible and trustworthy data science pipelines using the PCS (predictability-computability-stability) framework [@yu2020veridical].
-It provides users with a simple interface for stability analysis, i.e. checking the robustness of results from a data science pipeline to various judgement calls made during modeling.
-This ensures that arbitrary judgement calls made by data practitioners (e.g. specifying a default imputation strategy) do not dramatically alter the final conclusions made in a modeling pipeline.
+It provides users with a simple interface for stability analysis, i.e., checking the robustness of results from a data science pipeline to various judgement calls made during modeling.
+This ensures that arbitrary judgement calls made by data practitioners (e.g., specifying a default imputation strategy) do not dramatically alter the final conclusions made in a modeling pipeline.
 In addition to wrappers facilitating stability analysis, `VeridicalFlow` also automates many cumbersome coding aspects of Python pipelines, including experiment tracking and saving, parallelization, and caching, all through integrations with existing Python packages.
-Overall, the package helps to code using the PCS framework, by screening models for predictive performance, helping automate computation, and facilitating stability analysis.
+Overall, the package helps to code using the PCS framework by screening models for predictive performance, helping automate computation, and facilitating stability analysis.
 
 # Statement of need
 
-Predictability, computability, and stability are central concerns in modern statistical/machine learning practice, as they are required to help vet that findings reflect reality, can be reasonably computed, and are robust as the many judgment calls during the data science life cycle which often go unchecked [@yu2020veridical]. 
+Predictability, computability, and stability are central concerns in modern statistical/machine learning practice, as they are required to help vet that findings reflect reality, can be reasonably computed, and are robust to the many judgment calls during the data science life cycle that often go unchecked [@yu2020veridical]. 
 
 The package focuses on stability but also provides wrappers to help support and improve predictability and computability.
 Stability is a common-sense principle related to notions of scientific reproducibility [@ivie2018reproducibility], sample variability, robust statistics, sensitivity analysis [@saltelli2002sensitivity], and stability in numerical analysis and control theory.
@@ -57,7 +57,7 @@ data science and makes writing powerful pipelines straightforward (see **Table 1
 
 | Stability                                                    | Computability                                                | Reproducibility                          |
 | ------------------------------------------------------------ | ------------------------------------------------------------ | ---------------------------------------- |
-| Replace a single function (e.g. preprocessing) with a set of functions representing different judgment calls and easily assess the stability of downstream results  | Automatic parallelization and caching throughout the pipeline | Automatic experiment tracking and saving |
+| Replace a single function (e.g., preprocessing) with a set of functions representing different judgment calls and easily assess the stability of downstream results  | Automatic parallelization and caching throughout the pipeline | Automatic experiment tracking and saving |
 
 Table: Features overview
 
@@ -78,7 +78,7 @@ checks to filter unstable pipeline paths from further analysis.
 In the example below, we will probe the stability of the permutation feature
 importance metric for random forest relative to data resampling, data
 preprocessing, and model hyperparameter perturbations. Below, we create a `Vset`
-which applies three custom data preprocessing functions and another that
+that applies three custom data preprocessing functions and another that
 calculates the permutation importance metric via the function
 `sklearn.inspection.permutation_importance`.
 
@@ -227,7 +227,7 @@ pandas [@mckinney2011pandas], NumPy [@van2011numpy], and scikit-learn
 
 The functionality provided by `VeridicalFlow` is related to the
 `sklearn.pipeline.Pipeline` class but allows for more general pipeline steps
-(e.g. steps need not use the `fit` or `transform` methods) and for reuse of
+(e.g., steps need not use the `fit` or `transform` methods) and for reuse of
 those steps in the same or other pipelines. Moreover, pipeline graphs in
 `VeridicalFlow` are generated dynamically by interactions between `Vsets`. This
 added flexibility of pipelines in `VeridicalFlow` is akin to the dynamic
