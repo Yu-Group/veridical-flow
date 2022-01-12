@@ -195,7 +195,7 @@ perturbation_stats(importances_df, 'preproc', 'RF',
 
 ![Perturbation statistics of permutation feature importances.\label{fig:perturb}](docs/perturb_stats.png)
 
-From here, we can filter over the data preprocessing and modeling perturbations
+As seen in \autoref{fig:perturb}, we can filter over the data preprocessing and modeling perturbations
 via the helper `filter_vset_by_metric` to select the top combinations in terms
 of stability (or another metric of interest) and continue our analysis on a
 held-out test set.
