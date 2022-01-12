@@ -53,12 +53,9 @@ This enables a practitioner to represent a pipeline with many different perturba
 # Features
 
 Using `VeridicalFlows`'s simple wrappers easily enables many best practices for
-data science and makes writing powerful pipelines straightforward.
+data science and makes writing powerful pipelines straightforward (see \autoref{tab:ovw}).
 
-| Stability                                                    | Computability                                                | Reproducibility                          |
-| ------------------------------------------------------------ | ------------------------------------------------------------ | ---------------------------------------- |
-| Replace a single function (e.g. preprocessing) with a set of functions representing different judgment calls and easily assess the stability of downstream results  | Automatic parallelization and caching throughout the pipeline | Automatic experiment tracking and saving |
-
+![Perturbation statistics of permutation feature importances.\label{tab:ovw}](docs/tab_ovw.png)
 
 The main features of `VeridicalFlow` center around stability analysis, a method
 for evaluating the constancy of some target quantity relative to a set of
