@@ -92,3 +92,14 @@ Install with `pip install vflow` (see [here](https://github.com/Yu-Group/pcs-pip
 - computation: integration with [ray](https://www.ray.io/) and caching with [joblib](https://joblib.readthedocs.io/en/latest/)
 - tracking: [mlflow](https://mlflow.org/)
 - pull requests very welcome! (see [contributing.md](https://github.com/Yu-Group/pcs-pipeline/blob/master/docs/contributing.md))
+
+```r
+@software{duncan2020vflow,
+   author = {Duncan, James and Kapoor, Rush and Agarwal, Abhineet and Singh, Chandan and Yu, Bin},
+   doi = {10.21105/joss.03895},
+   month = {1},
+   title = {{VeridicalFlow: a Python package for building trustworthy data science pipelines with PCS}},
+   url = {https://doi.org/10.21105/joss.03895},
+   year = {2022}
+}
+```
