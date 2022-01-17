@@ -327,10 +327,12 @@ def perturbation_stats(data: Union[pd.DataFrame, dict], *group_by: str, wrt: str
 
 
 def combine_keys(left_key, right_key):
-    """Combines `left_key` and `right_key`, attempting to match on any `vflow.subkey.Subkey.is_matching`
+    """Combines `left_key` and `right_key`, attempting to match on any `Subkey` where
+    `vflow.subkey.Subkey.is_matching` is `True`.
 
-    Returns an empty key on failed matches (`Subkey` with same origin but different values).
-    Always filters on `right_key` and returns `combined_key` with `left_key` prefix.
+    Returns an empty key on failed matches when
+    `vflow.subkey.Subkey.mismatches` is `True`. Always filters on `right_key`
+    and returns `combined_key` with `left_key` prefix.
 
     Parameters
     ----------
@@ -344,6 +346,7 @@ def combine_keys(left_key, right_key):
     combined_key: tuple
         Combined tuple key filtered according to `vflow.subkey.Subkey.matches` rules,
         which is empty according to `vflow.subkey.Subkey.mismatches` rule.
+
     """
     if len(left_key) < len(right_key):
         match_key = left_key
