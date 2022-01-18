@@ -55,3 +55,13 @@ same origin, but the value is different.
 2. If both have `output_matching` False, and `sep_dicts_id` is the same (not
 None), then they mismatch if they share the same origin, but the value is
 different.
+
+## Vfunc
+
+When a `Vset` is initialized, its modules are wrapped in `Vfunc` objects, which
+are named functions that can optionally support a `fit` or `transform` method.
+If a `Vset` is initialized with `is_async=True`, then modules are wrapped in
+`AsyncModule` objects, which compute asynchronously using `ray`. If a `Vset` is
+initialized with `lazy=True`, modules are wrapped in `VfuncPromise` objects,
+which are lazily evaluated. Internally, `VfuncPromise` objects are only resolved
+if used in a `Vset` with `lazy=False` downstream.
