@@ -1,7 +1,7 @@
 # How VeridicalFlow works
 
-VeridicalFlow provides two main abstractions: `vflow.vset.Vset`,
-`vflow.vfunc.Vfunc`, `vflow.subkey.Subkey`. `Vfunc`s run arbitrary computations
+VeridicalFlow provides three main abstractions: `vflow.vset.Vset`,
+`vflow.vfunc.Vfunc`, and `vflow.subkey.Subkey`. `Vfunc`s run arbitrary computations
 on inputs. `Vset`s collect related `Vfunc`s and determine which `Vfunc`s to
 apply to which inputs and how to do so. `Subkey`s help associate outputs with
 the `Vfunc` that produced them and the `Vset` in which the `Vfunc` was
