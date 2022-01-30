@@ -9,8 +9,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/license-mit-blue.svg" alt="mit license">
   <img src="https://img.shields.io/badge/python-3.6+-blue" alt="python3.6+">
-  <a href="https://github.com/Yu-group/pcs-pipeline/actions"><img src="https://github.com/Yu-group/pcs-pipeline/workflows/tests/badge.svg" alt="tests"></a>
-  <img src="https://img.shields.io/github/checks-status/Yu-group/pcs-pipeline/master" alt="checks">
+  <a href="https://github.com/Yu-Group/veridical-flow/actions"><img src="https://github.com/Yu-Group/veridical-flow/workflows/tests/badge.svg" alt="tests"></a>
   <a href="https://joss.theoj.org/papers/10.21105/joss.03895"><img src="https://joss.theoj.org/papers/10.21105/joss.03895/status.svg" alt="joss"></a>
   <img src="https://img.shields.io/pypi/v/vflow?color=orange" alt="downloads">
 </p> 
@@ -84,11 +83,22 @@ See the [docs](https://yu-group.github.io/veridical-flow/) for reference on the 
 
 ## Installation
 
-Install with `pip install vflow` (see [here](https://github.com/Yu-Group/pcs-pipeline/blob/master/docs/troubleshooting.md) for help). For dev version (unstable), clone the repo and run `python setup.py develop` from the repo directory.
+Install with `pip install vflow` (see [here](https://github.com/Yu-Group/veridical-flow/blob/master/docs/troubleshooting.md) for help). For dev version (unstable), clone the repo and run `python setup.py develop` from the repo directory.
 
 # References
 
 - interface: easily build on [scikit-learn](https://scikit-learn.org/stable/index.html) and [dvc](https://dvc.org/) (data version control)
 - computation: integration with [ray](https://www.ray.io/) and caching with [joblib](https://joblib.readthedocs.io/en/latest/)
 - tracking: [mlflow](https://mlflow.org/)
-- pull requests very welcome! (see [contributing.md](https://github.com/Yu-Group/pcs-pipeline/blob/master/docs/contributing.md))
+- pull requests very welcome! (see [contributing.md](https://github.com/Yu-Group/veridical-flow/blob/master/docs/contributing.md))
+
+```r
+@software{duncan2020vflow,
+   author = {Duncan, James and Kapoor, Rush and Agarwal, Abhineet and Singh, Chandan and Yu, Bin},
+   doi = {10.21105/joss.03895},
+   month = {1},
+   title = {{VeridicalFlow: a Python package for building trustworthy data science pipelines with PCS}},
+   url = {https://doi.org/10.21105/joss.03895},
+   year = {2022}
+}
+```
