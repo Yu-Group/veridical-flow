@@ -66,6 +66,11 @@ class Subkey:
             cond2 = self.origin == other.origin and self.value != other.value
             return (cond0 or cond1) and cond2
         return True
+    
+    def __copy__(self):
+        """Return a copy of this Subkey
+        """
+        pass
 
     def __eq__(self, other: object):
         """Mainly used for testing purposes.
