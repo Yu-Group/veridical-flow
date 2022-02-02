@@ -146,6 +146,6 @@ def build_graph(node, draw=True):
 
 def _run_step(step, *args, **kwargs):
     if step._fitted:
-        return step.modules, step
+        return step.vfuncs, step
     outputs = step(*args, **kwargs)
     return outputs, step

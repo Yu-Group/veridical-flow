@@ -103,7 +103,7 @@ class TestPipelines:
                             module_keys=["DT", "RF"])
 
         # how can we properly pass a y here so that it will fit properly?
-        # this runs, but modeling_set.out is empty
+        # this runs, but modeling_set.fitted_vfuncs is empty
         _ = modeling_set.fit(X_feats_train, y_train)
 
         # #get predictions
@@ -153,7 +153,7 @@ class TestPipelines:
         # get metrics
         feature_importance_set = Vset(name='feature_importance', modules=[permutation_importance],
                                       module_keys=["permutation_importance"])
-        importances = feature_importance_set.evaluate(modeling_set.out, X_test, y_test)
+        importances = feature_importance_set.evaluate(modeling_set.fitted_vfuncs, X_test, y_test)
 
         # asserts
         k1 = (sm('X_train', 'init'), sm('subsampling_0', 'subsampling'),
@@ -187,7 +187,7 @@ class TestPipelines:
 
         # subsampling in (X_trains, y_trains), should not match subsampling in
         # X_tests because they are unrelated
-        assert len(modeling_set.out.keys()) == 7
+        assert len(modeling_set.fitted_vfuncs.keys()) == 7
         assert len(preds_test.keys()) == 19
 
     def test_lazy_eval(self):
@@ -263,14 +263,14 @@ class TestPipelines:
             cached_set.fit(X)
             assert time.time() - begin >= 1
 
-            assert_equal(uncached_set.out.keys(), cached_set.out.keys())
+            assert_equal(uncached_set.fitted_vfuncs.keys(), cached_set.fitted_vfuncs.keys())
 
             # this should be very fast because it's using the already cached results
             cached_set2 = Vset(name='subsampling', modules=subsampling_funcs, cache_dir='./')
             begin = time.time()
             cached_set2.fit(X)
             assert time.time() - begin < 1
-            assert_equal(uncached_set.out.keys(), cached_set2.out.keys())
+            assert_equal(uncached_set.fitted_vfuncs.keys(), cached_set2.fitted_vfuncs.keys())
 
         finally:
             # clean up
@@ -321,7 +321,7 @@ class TestPipelines:
         data_param_dict = {'n': [1, 2, 3]}
         data_vset = build_vset('data', gen_data, param_dict=data_param_dict, reps=5, lazy=True)
 
-        assert len(data_vset.modules) == 15
+        assert len(data_vset.vfuncs) == 15
 
         fun_param_dict = {'b': [1, 2, 3]}
         fun1_vset = build_vset('fun1', fun1, param_dict=fun_param_dict, lazy=True)

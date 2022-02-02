@@ -12,7 +12,7 @@ class TestBasic:
 
     def test_class_initializations(self):
         assert self.pipeline.steps is not None
-        assert self.module_set.modules is not None
+        assert self.module_set.vfuncs is not None
         assert self.module is not None
 
     def test_iteration(self):

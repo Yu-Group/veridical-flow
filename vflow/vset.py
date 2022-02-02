@@ -1,4 +1,4 @@
-"""Set of modules to be parallelized over in a pipeline.
+"""Set of vfuncs to be parallelized over in a pipeline.
 Function arguments are each a list
 """
 from copy import deepcopy
@@ -51,7 +51,7 @@ class Vset:
         """
         self.name = name
         self._fitted = False
-        self.out = None  # outputs
+        self.fitted_vfuncs = None  # outputs
         self._async = is_async
         self._output_matching = output_matching
         self._lazy = lazy
@@ -71,7 +71,7 @@ class Vset:
         if not self._async and np.any([isinstance(mod, AsyncModule) for mod in modules]):
             self._async = True
         if isinstance(modules, dict):
-            self.modules = modules
+            self.vfuncs = modules
         elif isinstance(modules, list):
             if module_keys is not None:
                 assert isinstance(module_keys, list), 'modules passed as list but module_names is not a list'
@@ -82,14 +82,14 @@ class Vset:
             else:
                 module_keys = [(self.__create_subkey(f'{name}_{i}'),) for i in range(len(modules))]
             # convert module keys to singleton tuples
-            self.modules = dict(zip(module_keys, modules))
+            self.vfuncs = dict(zip(module_keys, modules))
         # if needed, wrap the modules in the Vfunc or AsyncModule class
-        for k, v in self.modules.items():
+        for k, v in self.vfuncs.items():
             if self._async:
                 if not isinstance(v, AsyncModule):
-                    self.modules[k] = AsyncModule(k[0], v)
+                    self.vfuncs[k] = AsyncModule(k[0], v)
             elif not isinstance(v, Vfunc):
-                self.modules[k] = Vfunc(k[0], v)
+                self.vfuncs[k] = Vfunc(k[0], v)
 
     def _apply_func(self, *args, out_dict: dict = None):
         """Apply functions in out_dict to combined args dict
@@ -101,9 +101,9 @@ class Vset:
         ----------
         *args: dict
             Takes multiple dicts and combines them into one.
-            Then runs modules on each item in combined dict.
+            Then runs vfuncs on each item in combined dict.
         out_dict: dict (optional), default None
-            The dictionary to pass to the matching function. If None, defaults to self.modules.
+            The dictionary to pass to the matching function. If None, defaults to self.vfuncs.
 
         Returns
         -------
@@ -113,11 +113,11 @@ class Vset:
 
         Examples
         --------
-        >>> modules, data = {LR : logistic}, {train_1 : [X1,y1], train2 : [X2,y2]}
+        >>> vfuncs, data = {LR : logistic}, {train_1 : [X1,y1], train2 : [X2,y2]}
         {(train_1, LR) : fitted logistic, (train_2, LR) :  fitted logistic}
         """
         if out_dict is None:
-            out_dict = deepcopy(self.modules)
+            out_dict = deepcopy(self.vfuncs)
 
         apply_func_cached = self._memory.cache(_apply_func_cached)
         out_dict = apply_func_cached(out_dict, self._async, self._lazy, *args)
@@ -165,10 +165,10 @@ class Vset:
         """Fits to args using `_apply_func`
         """
         out_dict = {}
-        for k, v in self.modules.items():
+        for k, v in self.vfuncs.items():
             out_dict[k] = v.fit
-        self.out = self._apply_func(*args, out_dict=out_dict)
-        prev = self.out[PREV_KEY][1:]
+        self.fitted_vfuncs = self._apply_func(*args, out_dict=out_dict)
+        prev = self.fitted_vfuncs[PREV_KEY][1:]
         if hasattr(self, FILTER_PREV_KEY):
             prev = getattr(self, FILTER_PREV_KEY) + prev
         setattr(self, PREV_KEY, prev)
@@ -186,7 +186,7 @@ class Vset:
         if not self._fitted:
             raise AttributeError('Please fit the Vset object before calling the transform method.')
         out_dict = {}
-        for k, v in self.out.items():
+        for k, v in self.fitted_vfuncs.items():
             if hasattr(v, 'transform'):
                 out_dict[k] = v.transform
         return self._apply_func(*args, out_dict=out_dict)
@@ -197,7 +197,7 @@ class Vset:
         if not self._fitted:
             raise AttributeError('Please fit the Vset object before calling predict.')
         pred_dict = {}
-        for k, v in self.out.items():
+        for k, v in self.fitted_vfuncs.items():
             if hasattr(v, 'predict'):
                 pred_dict[k] = v.predict
         preds = self._apply_func(*args, out_dict=pred_dict)
@@ -211,7 +211,7 @@ class Vset:
         if not self._fitted:
             raise AttributeError('Please fit the Vset object before calling predict_proba.')
         pred_dict = {}
-        for k, v in self.out.items():
+        for k, v in self.fitted_vfuncs.items():
             if hasattr(v, 'predict_proba'):
                 pred_dict[k] = v.predict_proba
         preds = self._apply_func(*args, out_dict=pred_dict)
@@ -248,24 +248,24 @@ class Vset:
     def __getitem__(self, i):
         """Accesses ith item in the module set
         """
-        return self.modules[i]
+        return self.vfuncs[i]
 
     def __contains__(self, key):
-        """Returns true if modules is a dict and key is one of its keys
+        """Returns true if vfuncs is a dict and key is one of its keys
         """
-        if isinstance(self.modules, dict):
-            return key in self.modules.keys()
+        if isinstance(self.vfuncs, dict):
+            return key in self.vfuncs.keys()
         return False
 
     def keys(self):
         """Returns Vset module keys
         """
-        if isinstance(self.modules, dict):
-            return self.modules.keys()
+        if isinstance(self.vfuncs, dict):
+            return self.vfuncs.keys()
         return {}.keys()
 
     def __len__(self):
-        return len(self.modules)
+        return len(self.vfuncs)
 
     def __str__(self):
         return 'Vset(' + self.name + ')'
@@ -283,7 +283,7 @@ def _apply_func_cached(out_dict: dict, is_async: bool, lazy: bool, *args):
     ------
     *args: dict
         Takes multiple dicts and combines them into one.
-        Then runs modules on each item in combined dict.
+        Then runs vfuncs on each item in combined dict.
     out_dict: dict
         The dictionary to pass to the matching function.
     is_async: bool
