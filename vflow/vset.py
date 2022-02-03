@@ -47,7 +47,6 @@ class Vset:
             If provided, use the `mlflow.tracking` api to log outputs as metrics
             with params determined by input keys.
 
-        .. todo:: include prev and next and change functions to include that.
         """
         self.name = name
         self._fitted = False

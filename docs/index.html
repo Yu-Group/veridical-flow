@@ -32,8 +32,7 @@
 <p align="center">
 <img src="https://img.shields.io/badge/license-mit-blue.svg" alt="mit license">
 <img src="https://img.shields.io/badge/python-3.6+-blue" alt="python3.6+">
-<a href="https://github.com/Yu-group/pcs-pipeline/actions"><img src="https://github.com/Yu-group/pcs-pipeline/workflows/tests/badge.svg" alt="tests"></a>
-<img src="https://img.shields.io/github/checks-status/Yu-group/pcs-pipeline/master" alt="checks">
+<a href="https://github.com/Yu-Group/veridical-flow/actions"><img src="https://github.com/Yu-Group/veridical-flow/workflows/tests/badge.svg" alt="tests"></a>
 <a href="https://joss.theoj.org/papers/10.21105/joss.03895"><img src="https://joss.theoj.org/papers/10.21105/joss.03895/status.svg" alt="joss"></a>
 <img src="https://img.shields.io/pypi/v/vflow?color=orange" alt="downloads">
 </p>
@@ -105,14 +104,23 @@ binary_metrics = binary_metrics_set.evaluate(preds_test, y_test)
 <p><a href="https://github.com/Yu-Group/rule-vetting">Clinical decision rule vetting</a></p>
 </blockquote>
 <h2 id="installation">Installation</h2>
-<p>Install with <code>pip install <a title="vflow" href="#vflow">vflow</a></code> (see <a href="https://github.com/Yu-Group/pcs-pipeline/blob/master/docs/troubleshooting.md">here</a> for help). For dev version (unstable), clone the repo and run <code>python setup.py develop</code> from the repo directory.</p>
+<p>Install with <code>pip install <a title="vflow" href="#vflow">vflow</a></code> (see <a href="https://github.com/Yu-Group/veridical-flow/blob/master/docs/troubleshooting.md">here</a> for help). For dev version (unstable), clone the repo and run <code>python setup.py develop</code> from the repo directory.</p>
 <h1 id="references">References</h1>
 <ul>
 <li>interface: easily build on <a href="https://scikit-learn.org/stable/index.html">scikit-learn</a> and <a href="https://dvc.org/">dvc</a> (data version control)</li>
 <li>computation: integration with <a href="https://www.ray.io/">ray</a> and caching with <a href="https://joblib.readthedocs.io/en/latest/">joblib</a></li>
 <li>tracking: <a href="https://mlflow.org/">mlflow</a></li>
-<li>pull requests very welcome! (see <a href="https://github.com/Yu-Group/pcs-pipeline/blob/master/docs/contributing.md">contributing.md</a>)</li>
+<li>pull requests very welcome! (see <a href="https://github.com/Yu-Group/veridical-flow/blob/master/docs/contributing.md">contributing.md</a>)</li>
 </ul>
+<pre><code class="language-r">@software{duncan2020vflow,
+   author = {Duncan, James and Kapoor, Rush and Agarwal, Abhineet and Singh, Chandan and Yu, Bin},
+   doi = {10.21105/joss.03895},
+   month = {1},
+   title = {{VeridicalFlow: a Python package for building trustworthy data science pipelines with PCS}},
+   url = {https://doi.org/10.21105/joss.03895},
+   year = {2022}
+}
+</code></pre>
 <details class="source">
 <summary>
 <span>Expand source code</span>

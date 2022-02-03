@@ -37,11 +37,11 @@ def build_vset(name: str, func, param_dict=None, reps: int = 1,
                is_async: bool = False, output_matching: bool = False,
                lazy: bool = False, cache_dir: str = None, verbose: bool = True,
                tracking_dir: str = None, **kwargs) -> Vset:
-    """Builds a Vset by currying callable obj with all combinations of parameters in param_dict.
+    """Builds a new Vset by currying or instantiating callable `func` with all
+    combinations of parameters in `param_dict` and optional additional `**kwargs`.
 
     Parameters
     ----------
-    **kwargs : dict, optional
     name : str
         A name for the output Vset.
     func : callable
@@ -74,11 +74,7 @@ def build_vset(name: str, func, param_dict=None, reps: int = 1,
 
     Returns
     -------
-    new_vset : Vset
-
-    See Also
-    --------
-    vset.Vset
+    new_vset : vflow.vset.Vset
 
     """
     if param_dict is None:
