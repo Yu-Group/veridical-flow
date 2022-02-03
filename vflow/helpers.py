@@ -33,48 +33,53 @@ def init_args(args_tuple: Union[tuple, list], names=None):
     return output_dicts
 
 
-def build_vset(name: str, obj, *args, param_dict=None, reps: int = 1,
+def build_vset(name: str, func, param_dict=None, reps: int = 1,
                is_async: bool = False, output_matching: bool = False,
                lazy: bool = False, cache_dir: str = None, verbose: bool = True,
                tracking_dir: str = None, **kwargs) -> Vset:
-    """Builds a Vset by currying callable obj with all combinations of parameters in param_dict.
+    """Builds a new Vset by currying or instantiating callable `func` with all
+    combinations of parameters in `param_dict` and optional additional `**kwargs`.
 
     Parameters
     ----------
-    name: str
-        a name for the output Vset
-    obj: callable
-        a callable to use as the base for Vfuncs in the output Vset
-    param_dict: dict[str, list]
-        keys are obj kwarg names and values in the dict are lists of params to try
-    *args
-        additional fixed arguments to pass to obj
-    reps: int (optional)
-        the number of times to repeat the obj in the output Vset's modules for
-        each combination of params in param_dict
-    is_async: bool (optional)
-        if True, modules are computed asynchronously
-    output_matching: bool (optional)
-        if True, then output keys from Vset will be matched when used
-        in other Vsets
-    cache_dir: str (optional)
-        if provided, do caching and use cache_dir as the data store for
-        joblib.Memory
-    verbose : bool (optional)
-        if True, modules are named with param_dict items as tuples of str("param_name=param_val")
-    tracking_dir: str (optional)
-        if provided, use the mlflow.tracking api to log outputs as metrics
-        with params determined by input keys
+    name : str
+        A name for the output Vset.
+    func : callable
+        A callable to use as the base for Vfuncs in the output Vset. Can also be
+        a class object, in which case the class is immediately instantiated with
+        the parameter combinations from `param_dict`.
+    param_dict : dict[str, list], optional
+        A dict with string keys corresponding to argument names of `func` and
+        entries which are lists of values to pass to `func` at run time (or when
+        instantiating `func` if it's a class object).
+    reps : int, optional
+        The number of times to repeat `func` in the output Vset's modules for
+        each combination of the parameters in `param_dict`.
+    is_async : bool, optional
+        If True, modules are computed asynchronously.
+    output_matching : bool, optional
+        If True, then output keys from Vset will be matched when used in other
+        Vsets.
+    cache_dir : str, optional
+        If provided, do caching and use `cache_dir` as the data store for
+        joblib.Memory.
+    verbose : bool, optional
+        If True, modules are named with `param_dict` items as tuples of
+        str("param_name=param_val").
+    tracking_dir : str, optional
+        If provided, use the mlflow.tracking API to log outputs as metrics with
+        parameters determined by input keys.
     **kwargs
-        additional fixed keyword arguments to pass to obj
+        Additional fixed keyword arguments to pass to `func`.
 
     Returns
     -------
-    new_vset : Vset
+    new_vset : vflow.vset.Vset
+
     """
     if param_dict is None:
         param_dict = {}
-    assert callable(obj), 'obj must be callable'
+    assert callable(func), 'func must be callable'
 
     vfuncs = []
     vkeys = []
@@ -95,13 +100,13 @@ def build_vset(name: str, obj, *args, param_dict=None, reps: int = 1,
                 vkeys.append((f'rep={i}', ) + vkey_tup)
             else:
                 vkeys.append(vkey_tup)
-            # check if obj is a class
-            if isinstance(obj, type):
-                # instantiate obj
-                vfuncs.append(Vfunc(module=obj(*args, **kwargs_dict), name=str(vkey_tup)))
+            # check if func is a class
+            if isinstance(func, type):
+                # instantiate func
+                vfuncs.append(Vfunc(module=func(**kwargs_dict), name=str(vkey_tup)))
             else:
-                # use partial to wrap obj
-                vfuncs.append(Vfunc(module=partial(obj, *args, **kwargs_dict), name=str(vkey_tup)))
+                # use partial to wrap func
+                vfuncs.append(Vfunc(module=partial(func, **kwargs_dict), name=str(vkey_tup)))
     if not verbose or (len(param_dict) == 0 and reps == 1):
         vkeys = None
     return Vset(name, vfuncs, is_async=is_async, module_keys=vkeys,
