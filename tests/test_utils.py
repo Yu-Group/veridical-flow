@@ -1001,10 +1001,10 @@ class TestCombineDicts:
         ),
     ]
 )
-class TestApplyModules:
+class TestApplyVfuncs:
 
-    def test_apply_modules(self, in_dicts, out_dict):
-        result_dict = apply_modules(*in_dicts)
+    def test_apply_vfuncs(self, in_dicts, out_dict):
+        result_dict = apply_vfuncs(*in_dicts)
         assert_equal(result_dict, out_dict)
 
 class TestUtils:

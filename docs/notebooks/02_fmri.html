@@ -14454,25 +14454,79 @@ all of MD as it is not optimized for dense, information rich UIs.
 </style>
 
 <style type="text/css">
+/* Misc */
 a.anchor-link {
-   display: none;
+  display: none;
 }
+
 .highlight  {
-    margin: 0.4em;
+  margin: 0.4em;
 }
 
 /* Input area styling */
 .jp-InputArea {
-    overflow: hidden;
+  overflow: hidden;
 }
 
 .jp-InputArea-editor {
-    overflow: hidden;
+  overflow: hidden;
+}
+
+.CodeMirror pre {
+  margin: 0;
+  padding: 0;
+}
+
+/* Using table instead of flexbox so that we can use break-inside property */
+/* CSS rules under this comment should not be required anymore after we move to the JupyterLab 4.0 CSS */
+
+
+.jp-CodeCell.jp-mod-outputsScrolled .jp-OutputArea-prompt {
+  min-width: calc(
+    var(--jp-cell-prompt-width) - var(--jp-private-cell-scrolling-output-offset)
+  );
+}
+
+.jp-OutputArea-child {
+  display: table;
+  width: 100%;
+}
+
+.jp-OutputPrompt {
+  display: table-cell;
+  vertical-align: top;
+  min-width: var(--jp-cell-prompt-width);
+}
+
+body[data-format='mobile'] .jp-OutputPrompt {
+  display: table-row;
+}
+
+.jp-OutputArea-output {
+  display: table-cell;
+  width: 100%;
+}
+
+body[data-format='mobile'] .jp-OutputArea-child .jp-OutputArea-output {
+  display: table-row;
+}
+
+.jp-OutputArea-output.jp-OutputArea-executeResult {
+  width: 100%;
 }
 
 @media print {
-  body {
-    margin: 0;
+  .jp-Collapser {
+    display: none;
+  }
+
+  .jp-Cell-inputWrapper,
+  .jp-Cell-outputWrapper {
+    display: block;
+  }
+
+  .jp-OutputArea-child {
+    break-inside: avoid-page;
   }
 }
 </style>
@@ -14514,6 +14568,8 @@ a.anchor-link {
 <body class="jp-Notebook" data-jp-theme-light="true" data-jp-theme-name="JupyterLab Light">
 <div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
 <div class="jp-InputArea jp-Cell-inputArea">
 <div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[1]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
@@ -14535,18 +14591,32 @@ a.anchor-link {
 </div>
 
 </div>
-<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
 <h1 id="fMRI-Voxel-Prediction">fMRI Voxel Prediction<a class="anchor-link" href="#fMRI-Voxel-Prediction">&#182;</a></h1>
 </div>
 </div>
-<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
 <p>This <code>vflow</code> pipeline predicts using fMRI voxels.</p>
 
 </div>
+</div>
+</div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
 <div class="jp-InputArea jp-Cell-inputArea">
 <div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[2]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
@@ -14571,6 +14641,8 @@ a.anchor-link {
 
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
 <div class="jp-InputArea jp-Cell-inputArea">
 <div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[3]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
@@ -14586,8 +14658,10 @@ a.anchor-link {
 </div>
 </div>
 
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
 <div class="jp-InputArea jp-Cell-inputArea">
 <div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[4]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
@@ -14599,7 +14673,7 @@ a.anchor-link {
 
 <span class="c1"># split y_train by voxel and extract top 500 correlated features per voxel</span>
 <span class="n">voxel_extract_funcs</span> <span class="o">=</span> <span class="p">[</span><span class="n">partial</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">i</span><span class="p">:</span> <span class="p">(</span><span class="n">top_n_features</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="n">i</span><span class="p">),</span> <span class="n">y</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]),</span> <span class="n">i</span><span class="o">=</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">20</span><span class="p">)]</span>
-<span class="n">voxel_extract_set</span> <span class="o">=</span> <span class="n">Vset</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;voxel_extract&#39;</span><span class="p">,</span> <span class="n">modules</span><span class="o">=</span><span class="n">voxel_extract_funcs</span><span class="p">,</span> <span class="n">output_matching</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">voxel_extract_set</span> <span class="o">=</span> <span class="n">Vset</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;voxel_extract&#39;</span><span class="p">,</span> <span class="n">vfuncs</span><span class="o">=</span><span class="n">voxel_extract_funcs</span><span class="p">,</span> <span class="n">output_matching</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="n">X_trains</span><span class="p">,</span> <span class="n">y_trains</span> <span class="o">=</span> <span class="n">voxel_extract_set</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
 <span class="n">X_tests</span><span class="p">,</span> <span class="n">y_tests</span> <span class="o">=</span> <span class="n">voxel_extract_set</span><span class="p">(</span><span class="n">X_test</span><span class="p">,</span> <span class="n">y_test</span><span class="p">)</span>
 </pre></div>
@@ -14609,38 +14683,16 @@ a.anchor-link {
 </div>
 </div>
 
-<div class="jp-Cell-outputWrapper">
-
-
-<div class="jp-OutputArea jp-Cell-outputArea">
-
-<div class="jp-OutputArea-child">
-
-    
-    <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-
-
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr">
-<pre>/Users/rush/anaconda3/envs/vflow/lib/python3.6/site-packages/numpy/lib/function_base.py:2534: RuntimeWarning: invalid value encountered in true_divide
-  c /= stddev[:, None]
-/Users/rush/anaconda3/envs/vflow/lib/python3.6/site-packages/numpy/lib/function_base.py:2535: RuntimeWarning: invalid value encountered in true_divide
-  c /= stddev[None, :]
-</pre>
-</div>
-</div>
-
-</div>
-
-</div>
-
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
 <div class="jp-InputArea jp-Cell-inputArea">
 <div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[5]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># modeling</span>
-<span class="n">modeling_set</span> <span class="o">=</span> <span class="n">Vset</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;modeling&#39;</span><span class="p">,</span> <span class="n">modules</span><span class="o">=</span><span class="p">[</span><span class="n">LassoCV</span><span class="p">()],</span> <span class="n">module_keys</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Lasso&quot;</span><span class="p">])</span>
+<span class="n">modeling_set</span> <span class="o">=</span> <span class="n">Vset</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;modeling&#39;</span><span class="p">,</span> <span class="n">vfuncs</span><span class="o">=</span><span class="p">[</span><span class="n">LassoCV</span><span class="p">()],</span> <span class="n">vfunc_keys</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Lasso&quot;</span><span class="p">])</span>
 <span class="n">modeling_set</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_trains</span><span class="p">,</span> <span class="n">y_trains</span><span class="p">)</span>
 </pre></div>
 
@@ -14650,6 +14702,8 @@ a.anchor-link {
 </div>
 
 <div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
 
 
 <div class="jp-OutputArea jp-Cell-outputArea">
@@ -14663,7 +14717,7 @@ a.anchor-link {
 
 
 <div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain">
-<pre>&lt;vflow.vset.Vset at 0x7fae6fe43898&gt;</pre>
+<pre>&lt;vflow.vset.Vset at 0x7fe628bc9b50&gt;</pre>
 </div>
 
 </div>
@@ -14674,14 +14728,16 @@ a.anchor-link {
 
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
 <div class="jp-InputArea jp-Cell-inputArea">
 <div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[6]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">preds</span> <span class="o">=</span> <span class="n">modeling_set</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_trains</span><span class="p">)</span>
 
-<span class="n">hard_metrics_set</span> <span class="o">=</span> <span class="n">Vset</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;hard_metrics&#39;</span><span class="p">,</span> <span class="n">modules</span><span class="o">=</span><span class="p">[</span><span class="n">r2_score</span><span class="p">,</span> <span class="n">explained_variance_score</span><span class="p">],</span>
-                             <span class="n">module_keys</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;R2&quot;</span><span class="p">,</span> <span class="s2">&quot;EV&quot;</span><span class="p">])</span>
+<span class="n">hard_metrics_set</span> <span class="o">=</span> <span class="n">Vset</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;hard_metrics&#39;</span><span class="p">,</span> <span class="n">vfuncs</span><span class="o">=</span><span class="p">[</span><span class="n">r2_score</span><span class="p">,</span> <span class="n">explained_variance_score</span><span class="p">],</span>
+                             <span class="n">vfunc_keys</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;R2&quot;</span><span class="p">,</span> <span class="s2">&quot;EV&quot;</span><span class="p">])</span>
 <span class="n">hard_metrics</span> <span class="o">=</span> <span class="n">hard_metrics_set</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">y_trains</span><span class="p">,</span> <span class="n">preds</span><span class="p">)</span>
 
 <span class="n">df</span> <span class="o">=</span> <span class="n">dict_to_df</span><span class="p">(</span><span class="n">hard_metrics</span><span class="p">)</span>
@@ -14694,6 +14750,8 @@ a.anchor-link {
 </div>
 
 <div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
 
 
 <div class="jp-OutputArea jp-Cell-outputArea">
@@ -15188,8 +15246,10 @@ a.anchor-link {
 
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[25]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[7]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">metrics_stats</span> <span class="o">=</span> <span class="n">perturbation_stats</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="s1">&#39;voxel_extract&#39;</span><span class="p">)</span>
@@ -15202,6 +15262,8 @@ a.anchor-link {
 </div>
 
 <div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
 
 
 <div class="jp-OutputArea jp-Cell-outputArea">
@@ -15209,7 +15271,7 @@ a.anchor-link {
 <div class="jp-OutputArea-child">
 
     
-    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[25]:</div>
+    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[7]:</div>
 
 
 
@@ -15244,7 +15306,7 @@ a.anchor-link {
       <td>voxel_extract_0</td>
       <td>2</td>
       <td>0.203121</td>
-      <td>7.850462e-17</td>
+      <td>0.000000e+00</td>
     </tr>
     <tr>
       <th>1</th>
@@ -15286,7 +15348,7 @@ a.anchor-link {
       <td>voxel_extract_14</td>
       <td>2</td>
       <td>0.188789</td>
-      <td>0.000000e+00</td>
+      <td>7.850462e-17</td>
     </tr>
     <tr>
       <th>7</th>
@@ -15307,7 +15369,7 @@ a.anchor-link {
       <td>voxel_extract_17</td>
       <td>2</td>
       <td>0.181334</td>
-      <td>0.000000e+00</td>
+      <td>7.850462e-17</td>
     </tr>
     <tr>
       <th>10</th>

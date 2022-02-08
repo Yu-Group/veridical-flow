@@ -10,25 +10,25 @@ class Vfunc:
     If none of these is supported, it need only be a function
     """
 
-    def __init__(self, name: str = '', module=lambda x: x):
-        assert hasattr(module, 'fit') or callable(module), \
-            'module must be an object with a fit method or a callable'
+    def __init__(self, name: str = '', vfunc=lambda x: x):
+        assert hasattr(vfunc, 'fit') or callable(vfunc), \
+            'vfunc must be an object with a fit method or a callable'
         self.name = name
-        self.module = module
+        self.vfunc = vfunc
 
     def fit(self, *args, **kwargs):
-        """This function fits params for this module
+        """This function fits params for this vfunc
         """
-        if hasattr(self.module, 'fit'):
-            return self.module.fit(*args, **kwargs)
-        return self.module(*args, **kwargs)
+        if hasattr(self.vfunc, 'fit'):
+            return self.vfunc.fit(*args, **kwargs)
+        return self.vfunc(*args, **kwargs)
 
     def transform(self, *args, **kwargs):
         """This function transforms its input in some way
         """
-        if hasattr(self.module, 'transform'):
-            return self.module.transform(*args, **kwargs)
-        return self.module(*args, **kwargs)
+        if hasattr(self.vfunc, 'transform'):
+            return self.vfunc.transform(*args, **kwargs)
+        return self.vfunc(*args, **kwargs)
 
     def __call__(self, *args, **kwargs):
         """This should decide what to call
@@ -37,36 +37,36 @@ class Vfunc:
 
 
 @ray.remote
-def _remote_fun(module, *args, **kwargs):
-    return module(*args, **kwargs)
+def _remote_fun(vfunc, *args, **kwargs):
+    return vfunc(*args, **kwargs)
 
 
-class AsyncModule:
+class AsyncVfunc:
     """An asynchronous version of the Vfunc class.
     """
 
-    def __init__(self, name: str = '', module=lambda x: x):
+    def __init__(self, name: str = '', vfunc=lambda x: x):
         self.name = name
-        if isinstance(module, Vfunc):
-            self.module = module.module
+        if isinstance(vfunc, Vfunc):
+            self.vfunc = vfunc.vfunc
         else:
-            assert hasattr(module, 'fit') or callable(module), \
-                'module must be an object with a fit method or a callable'
-            self.module = module
+            assert hasattr(vfunc, 'fit') or callable(vfunc), \
+                'vfunc must be an object with a fit method or a callable'
+            self.vfunc = vfunc
 
     def fit(self, *args, **kwargs):
-        """This function fits params for this module
+        """This function fits params for this vfunc
         """
-        if hasattr(self.module, 'fit'):
-            return _remote_fun.remote(self.module.fit, *args, **kwargs)
-        return _remote_fun.remote(self.module, *args, **kwargs)
+        if hasattr(self.vfunc, 'fit'):
+            return _remote_fun.remote(self.vfunc.fit, *args, **kwargs)
+        return _remote_fun.remote(self.vfunc, *args, **kwargs)
 
     def transform(self, *args, **kwargs):
         """This function transforms its input in some way
         """
-        if hasattr(self.module, 'transform'):
-            return _remote_fun.remote(self.module.transform, *args, **kwargs)
-        return _remote_fun.remote(self.module, *args, **kwargs)
+        if hasattr(self.vfunc, 'transform'):
+            return _remote_fun.remote(self.vfunc.transform, *args, **kwargs)
+        return _remote_fun.remote(self.vfunc, *args, **kwargs)
 
     def __call__(self, *args, **kwargs):
         """This should decide what to call

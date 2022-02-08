@@ -53,10 +53,10 @@ def build_vset(name: str, func, param_dict=None, reps: int = 1,
         entries which are lists of values to pass to `func` at run time (or when
         instantiating `func` if it's a class object).
     reps : int, optional
-        The number of times to repeat `func` in the output Vset's modules for
+        The number of times to repeat `func` in the output Vset's vfuncs for
         each combination of the parameters in `param_dict`.
     is_async : bool, optional
-        If True, modules are computed asynchronously.
+        If True, vfuncs are computed asynchronously.
     output_matching : bool, optional
         If True, then output keys from Vset will be matched when used in other
         Vsets.
@@ -64,7 +64,7 @@ def build_vset(name: str, func, param_dict=None, reps: int = 1,
         If provided, do caching and use `cache_dir` as the data store for
         joblib.Memory.
     verbose : bool, optional
-        If True, modules are named with `param_dict` items as tuples of
+        If True, vfuncs are named with `param_dict` items as tuples of
         str("param_name=param_val").
     tracking_dir : str, optional
         If provided, use the mlflow.tracking API to log outputs as metrics with
@@ -95,7 +95,7 @@ def build_vset(name: str, func, param_dict=None, reps: int = 1,
         for k, v in kwargs.items():
             kwargs_dict[k] = v
         for i in range(reps):
-            # add module key to vkeys
+            # add vfunc key to vkeys
             if reps > 1:
                 vkeys.append((f'rep={i}', ) + vkey_tup)
             else:
@@ -103,13 +103,13 @@ def build_vset(name: str, func, param_dict=None, reps: int = 1,
             # check if func is a class
             if isinstance(func, type):
                 # instantiate func
-                vfuncs.append(Vfunc(module=func(**kwargs_dict), name=str(vkey_tup)))
+                vfuncs.append(Vfunc(vfunc=func(**kwargs_dict), name=str(vkey_tup)))
             else:
                 # use partial to wrap func
-                vfuncs.append(Vfunc(module=partial(func, **kwargs_dict), name=str(vkey_tup)))
+                vfuncs.append(Vfunc(vfunc=partial(func, **kwargs_dict), name=str(vkey_tup)))
     if not verbose or (len(param_dict) == 0 and reps == 1):
         vkeys = None
-    return Vset(name, vfuncs, is_async=is_async, module_keys=vkeys,
+    return Vset(name, vfuncs, is_async=is_async, vfunc_keys=vkeys,
                 output_matching=output_matching, lazy=lazy,
                 cache_dir=cache_dir, tracking_dir=tracking_dir)
 
@@ -117,19 +117,19 @@ def build_vset(name: str, func, param_dict=None, reps: int = 1,
 def filter_vset_by_metric(metric_dict: dict, vset: Vset, *vsets: Vset, n_keep: int = 1,
                           bigger_is_better: bool = True, filter_on=None,
                           group: bool = False) -> Union[Vset, list]:
-    """Returns a new Vset by filtering `vset.modules` based on values in filter_dict.
+    """Returns a new Vset by filtering `vset.vfuncs` based on values in filter_dict.
 
     Parameters
     ----------
     metric_dict: dict
         output from a Vset, typically with metrics or other numeric values to use when
-        filtering `vset.modules`
+        filtering `vset.vfuncs`
     vset: Vset
         a Vsets
     *vsets: Vset
         zero or more additional Vsets
     n_keep: int (optional)
-        number of entries to keep from `vset.modules`
+        number of entries to keep from `vset.vfuncs`
     bigger_is_better: bool (optional)
         if True, then the top `n_keep` largest values are retained
     filter_on: list[str] (optional)
@@ -165,7 +165,7 @@ def filter_vset_by_metric(metric_dict: dict, vset: Vset, *vsets: Vset, n_keep: i
         df = df.sort_values(by='out')
     df = df.iloc[0:n_keep]
     for i, vset_i in enumerate(vsets):
-        vfuncs = vset_i.modules
+        vfuncs = vset_i.vfuncs
         vfunc_filter = [str(name) for name in df[vset_i.name].to_numpy()]
         new_vfuncs = {k: v for k, v in vfuncs.items() if str(v.name) in vfunc_filter}
         tracking_dir = None if vset_i._mlflow is None else mlflow.get_tracking_uri()

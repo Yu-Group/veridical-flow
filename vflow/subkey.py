@@ -7,7 +7,7 @@ class Subkey:
         Parameters
         ----------
         value: Any
-            subkey value corresponding to a Vset module
+            subkey value corresponding to a Vset vfunc
         origin: str
             name of the origin Vset of this Subkey
         output_matching: bool (optional), default False

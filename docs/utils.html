@@ -249,7 +249,7 @@ def dict_to_df(d: dict, param_key=None):
         key_list = list(d.keys())
         subkey_list = key_list[0] if key_list[0] != PREV_KEY else key_list[1]
         cols = [sk.origin for sk in subkey_list] + [&#39;out&#39;]
-        # set each init col to init-{next_module_set}
+        # set each init col to init-{next_vfunc_set}
         cols = [c if c != &#39;init&#39; else init_step(idx, cols) for idx, c in enumerate(cols)]
         df.set_axis(cols, axis=1, inplace=True)
         if param_key:
@@ -421,7 +421,7 @@ def combine_dicts(*args: dict, base_case=True):
     if n_args == 1:
         for k in args[0]:
             # wrap the dict values in tuples; this is helpful so that when we
-            # pass the values to a module fun in we can just use * expansion
+            # pass the values to a vfunc fun in we can just use * expansion
             if k != PREV_KEY:
                 combined_dict[k] = (args[0][k],)
             else:
@@ -447,46 +447,46 @@ def combine_dicts(*args: dict, base_case=True):
     return combine_dicts(combine_dicts(args[0], args[1]), *args[2:], base_case=False)
 
 
-def apply_modules(modules: dict, data_dict: dict, lazy: bool=False):
-    &#34;&#34;&#34;Apply a dictionary of functions `modules` to each item of `data_dict`,
+def apply_vfuncs(vfuncs: dict, data_dict: dict, lazy: bool=False):
+    &#34;&#34;&#34;Apply a dictionary of functions `vfuncs` to each item of `data_dict`,
     optionally returning a dictionary of `vflow.vfunc.VfuncPromise` objects if `lazy` is True
 
     Output keys are determined by applying `combine_keys` to each pair of items from
-    `modules` and `data_dict`. This function is used by all Vsets to apply functions.
+    `vfuncs` and `data_dict`. This function is used by all Vsets to apply functions.
 
     Parameters
     ----------
-    modules: dict
+    vfuncs: dict
         Dictionary of functions to apply to `data_dict`.
     data_dict: dict
-        Dictionary of parameters to call each function in `modules`.
+        Dictionary of parameters to call each function in `vfuncs`.
     lazy: bool (option), default False
-        If True, `modules` are applied lazily, returning `vflow.vfunc.VfuncPromise`
+        If True, `vfuncs` are applied lazily, returning `vflow.vfunc.VfuncPromise`
         objects,
 
     Returns
     -------
     out_dict: dict
-        Output dictionary of applying `modules` to `data_dict`.
+        Output dictionary of applying `vfuncs` to `data_dict`.
     &#34;&#34;&#34;
     out_dict = {}
-    for mod_k in modules:
+    for vf_k in vfuncs:
         if len(data_dict) == 0:
-            func = deepcopy(modules[mod_k])
+            func = deepcopy(vfuncs[vf_k])
             if lazy:
-                out_dict[mod_k] = VfuncPromise(func)
+                out_dict[vf_k] = VfuncPromise(func)
             else:
-                out_dict[mod_k] = func()
+                out_dict[vf_k] = func()
         for data_k in data_dict:
-            if PREV_KEY in (mod_k, data_k):
+            if PREV_KEY in (vf_k, data_k):
                 continue
 
-            combined_key = combine_keys(data_k, mod_k)
+            combined_key = combine_keys(data_k, vf_k)
 
             if not len(combined_key) &gt; 0:
                 continue
 
-            func = deepcopy(modules[mod_k])
+            func = deepcopy(vfuncs[vf_k])
             if lazy:
                 # return a promise
                 out_dict[combined_key] = VfuncPromise(func, *data_dict[data_k])
@@ -513,73 +513,73 @@ def apply_modules(modules: dict, data_dict: dict, lazy: bool=False):
 <section>
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
-<dt id="vflow.utils.apply_modules"><code class="name flex">
-<span>def <span class="ident">apply_modules</span></span>(<span>modules: dict, data_dict: dict, lazy: bool = False)</span>
+<dt id="vflow.utils.apply_vfuncs"><code class="name flex">
+<span>def <span class="ident">apply_vfuncs</span></span>(<span>vfuncs: dict, data_dict: dict, lazy: bool = False)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Apply a dictionary of functions <code>modules</code> to each item of <code>data_dict</code>,
+<div class="desc"><p>Apply a dictionary of functions <code>vfuncs</code> to each item of <code>data_dict</code>,
 optionally returning a dictionary of <code><a title="vflow.vfunc.VfuncPromise" href="vfunc.html#vflow.vfunc.VfuncPromise">VfuncPromise</a></code> objects if <code>lazy</code> is True</p>
 <p>Output keys are determined by applying <code><a title="vflow.utils.combine_keys" href="#vflow.utils.combine_keys">combine_keys()</a></code> to each pair of items from
-<code>modules</code> and <code>data_dict</code>. This function is used by all Vsets to apply functions.</p>
+<code>vfuncs</code> and <code>data_dict</code>. This function is used by all Vsets to apply functions.</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
-<dt><strong><code>modules</code></strong> :&ensp;<code>dict</code></dt>
+<dt><strong><code>vfuncs</code></strong> :&ensp;<code>dict</code></dt>
 <dd>Dictionary of functions to apply to <code>data_dict</code>.</dd>
 <dt><strong><code>data_dict</code></strong> :&ensp;<code>dict</code></dt>
-<dd>Dictionary of parameters to call each function in <code>modules</code>.</dd>
+<dd>Dictionary of parameters to call each function in <code>vfuncs</code>.</dd>
 <dt><strong><code>lazy</code></strong> :&ensp;<code>bool (option)</code>, default <code>False</code></dt>
-<dd>If True, <code>modules</code> are applied lazily, returning <code><a title="vflow.vfunc.VfuncPromise" href="vfunc.html#vflow.vfunc.VfuncPromise">VfuncPromise</a></code>
+<dd>If True, <code>vfuncs</code> are applied lazily, returning <code><a title="vflow.vfunc.VfuncPromise" href="vfunc.html#vflow.vfunc.VfuncPromise">VfuncPromise</a></code>
 objects,</dd>
 </dl>
 <h2 id="returns">Returns</h2>
 <dl>
 <dt><strong><code>out_dict</code></strong> :&ensp;<code>dict</code></dt>
-<dd>Output dictionary of applying <code>modules</code> to <code>data_dict</code>.</dd>
+<dd>Output dictionary of applying <code>vfuncs</code> to <code>data_dict</code>.</dd>
 </dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def apply_modules(modules: dict, data_dict: dict, lazy: bool=False):
-    &#34;&#34;&#34;Apply a dictionary of functions `modules` to each item of `data_dict`,
+<pre><code class="python">def apply_vfuncs(vfuncs: dict, data_dict: dict, lazy: bool=False):
+    &#34;&#34;&#34;Apply a dictionary of functions `vfuncs` to each item of `data_dict`,
     optionally returning a dictionary of `vflow.vfunc.VfuncPromise` objects if `lazy` is True
 
     Output keys are determined by applying `combine_keys` to each pair of items from
-    `modules` and `data_dict`. This function is used by all Vsets to apply functions.
+    `vfuncs` and `data_dict`. This function is used by all Vsets to apply functions.
 
     Parameters
     ----------
-    modules: dict
+    vfuncs: dict
         Dictionary of functions to apply to `data_dict`.
     data_dict: dict
-        Dictionary of parameters to call each function in `modules`.
+        Dictionary of parameters to call each function in `vfuncs`.
     lazy: bool (option), default False
-        If True, `modules` are applied lazily, returning `vflow.vfunc.VfuncPromise`
+        If True, `vfuncs` are applied lazily, returning `vflow.vfunc.VfuncPromise`
         objects,
 
     Returns
     -------
     out_dict: dict
-        Output dictionary of applying `modules` to `data_dict`.
+        Output dictionary of applying `vfuncs` to `data_dict`.
     &#34;&#34;&#34;
     out_dict = {}
-    for mod_k in modules:
+    for vf_k in vfuncs:
         if len(data_dict) == 0:
-            func = deepcopy(modules[mod_k])
+            func = deepcopy(vfuncs[vf_k])
             if lazy:
-                out_dict[mod_k] = VfuncPromise(func)
+                out_dict[vf_k] = VfuncPromise(func)
             else:
-                out_dict[mod_k] = func()
+                out_dict[vf_k] = func()
         for data_k in data_dict:
-            if PREV_KEY in (mod_k, data_k):
+            if PREV_KEY in (vf_k, data_k):
                 continue
 
-            combined_key = combine_keys(data_k, mod_k)
+            combined_key = combine_keys(data_k, vf_k)
 
             if not len(combined_key) &gt; 0:
                 continue
 
-            func = deepcopy(modules[mod_k])
+            func = deepcopy(vfuncs[vf_k])
             if lazy:
                 # return a promise
                 out_dict[combined_key] = VfuncPromise(func, *data_dict[data_k])
@@ -655,7 +655,7 @@ are combined left to right matching all keys according to <code><a title="vflow.
     if n_args == 1:
         for k in args[0]:
             # wrap the dict values in tuples; this is helpful so that when we
-            # pass the values to a module fun in we can just use * expansion
+            # pass the values to a vfunc fun in we can just use * expansion
             if k != PREV_KEY:
                 combined_dict[k] = (args[0][k],)
             else:
@@ -826,7 +826,7 @@ parameters in <code>param_key</code> if not None</p>
         key_list = list(d.keys())
         subkey_list = key_list[0] if key_list[0] != PREV_KEY else key_list[1]
         cols = [sk.origin for sk in subkey_list] + [&#39;out&#39;]
-        # set each init col to init-{next_module_set}
+        # set each init col to init-{next_vfunc_set}
         cols = [c if c != &#39;init&#39; else init_step(idx, cols) for idx, c in enumerate(cols)]
         df.set_axis(cols, axis=1, inplace=True)
         if param_key:
@@ -1262,7 +1262,7 @@ attempt to split the entries into multiple columns for the output.</dd>
 </li>
 <li><h3><a href="#header-functions">Functions</a></h3>
 <ul class="two-column">
-<li><code><a title="vflow.utils.apply_modules" href="#vflow.utils.apply_modules">apply_modules</a></code></li>
+<li><code><a title="vflow.utils.apply_vfuncs" href="#vflow.utils.apply_vfuncs">apply_vfuncs</a></code></li>
 <li><code><a title="vflow.utils.base_dict" href="#vflow.utils.base_dict">base_dict</a></code></li>
 <li><code><a title="vflow.utils.combine_dicts" href="#vflow.utils.combine_dicts">combine_dicts</a></code></li>
 <li><code><a title="vflow.utils.combine_keys" href="#vflow.utils.combine_keys">combine_keys</a></code></li>

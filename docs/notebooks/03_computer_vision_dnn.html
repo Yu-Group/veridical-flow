@@ -14454,25 +14454,79 @@ all of MD as it is not optimized for dense, information rich UIs.
 </style>
 
 <style type="text/css">
+/* Misc */
 a.anchor-link {
-   display: none;
+  display: none;
 }
+
 .highlight  {
-    margin: 0.4em;
+  margin: 0.4em;
 }
 
 /* Input area styling */
 .jp-InputArea {
-    overflow: hidden;
+  overflow: hidden;
 }
 
 .jp-InputArea-editor {
-    overflow: hidden;
+  overflow: hidden;
+}
+
+.CodeMirror pre {
+  margin: 0;
+  padding: 0;
+}
+
+/* Using table instead of flexbox so that we can use break-inside property */
+/* CSS rules under this comment should not be required anymore after we move to the JupyterLab 4.0 CSS */
+
+
+.jp-CodeCell.jp-mod-outputsScrolled .jp-OutputArea-prompt {
+  min-width: calc(
+    var(--jp-cell-prompt-width) - var(--jp-private-cell-scrolling-output-offset)
+  );
+}
+
+.jp-OutputArea-child {
+  display: table;
+  width: 100%;
+}
+
+.jp-OutputPrompt {
+  display: table-cell;
+  vertical-align: top;
+  min-width: var(--jp-cell-prompt-width);
+}
+
+body[data-format='mobile'] .jp-OutputPrompt {
+  display: table-row;
+}
+
+.jp-OutputArea-output {
+  display: table-cell;
+  width: 100%;
+}
+
+body[data-format='mobile'] .jp-OutputArea-child .jp-OutputArea-output {
+  display: table-row;
+}
+
+.jp-OutputArea-output.jp-OutputArea-executeResult {
+  width: 100%;
 }
 
 @media print {
-  body {
-    margin: 0;
+  .jp-Collapser {
+    display: none;
+  }
+
+  .jp-Cell-inputWrapper,
+  .jp-Cell-outputWrapper {
+    display: block;
+  }
+
+  .jp-OutputArea-child {
+    break-inside: avoid-page;
   }
 }
 </style>
@@ -14513,18 +14567,32 @@ a.anchor-link {
     <!-- End of mathjax configuration --></head>
 <body class="jp-Notebook" data-jp-theme-light="true" data-jp-theme-name="JupyterLab Light">
 
-<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
 <h1 id="Fashion-MNIST-Classification">Fashion-MNIST Classification<a class="anchor-link" href="#Fashion-MNIST-Classification">&#182;</a></h1>
 </div>
 </div>
-<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
 <p>This notebooks shows an example of using <code>vflow</code> on the Fashion-MNIST dataset using deep neural networks. It requires installing pytorch and torchvision (<code>pip install torch torchvision</code>).</p>
 
 </div>
+</div>
+</div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
 <div class="jp-InputArea jp-Cell-inputArea">
 <div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[1]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
@@ -14547,6 +14615,8 @@ a.anchor-link {
 
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
 <div class="jp-InputArea jp-Cell-inputArea">
 <div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[2]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
@@ -14573,6 +14643,8 @@ a.anchor-link {
 
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
 <div class="jp-InputArea jp-Cell-inputArea">
 <div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[3]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
@@ -14604,6 +14676,8 @@ a.anchor-link {
 
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
 <div class="jp-InputArea jp-Cell-inputArea">
 <div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[4]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
@@ -14612,7 +14686,7 @@ a.anchor-link {
 <span class="n">device</span> <span class="o">=</span> <span class="s2">&quot;cuda&quot;</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s2">&quot;cpu&quot;</span>
 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Using </span><span class="si">{}</span><span class="s2"> device&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">device</span><span class="p">))</span>
 
-<span class="k">def</span> <span class="nf">train</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">dataloader</span><span class="p">,</span> <span class="n">loss_fn</span><span class="p">,</span> <span class="n">epochs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">train</span><span class="p">(</span><span class="n">dataloader</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">loss_fn</span><span class="p">,</span> <span class="n">epochs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="c1"># initialize model with **kwargs</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="nb">type</span><span class="p">):</span>
         <span class="n">model</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
@@ -14660,6 +14734,8 @@ a.anchor-link {
 </div>
 
 <div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
 
 
 <div class="jp-OutputArea jp-Cell-outputArea">
@@ -14681,14 +14757,22 @@ a.anchor-link {
 </div>
 
 </div>
-<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
 <p><code>build_vset(name, obj, param_dict, verbose=True)</code> can be used to construct a <code>Vset</code> by currying <code>obj</code> with all possible combinations of parameters in <code>param_dict</code>.
 We can use it here to simplify hyperparameter tuning:</p>
 
 </div>
+</div>
+</div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
 <div class="jp-InputArea jp-Cell-inputArea">
 <div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[5]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
@@ -14702,7 +14786,7 @@ We can use it here to simplify hyperparameter tuning:</p>
 <span class="n">train_data</span><span class="p">,</span> <span class="n">test_data</span> <span class="o">=</span> <span class="n">init_args</span><span class="p">((</span><span class="n">train_dataloader</span><span class="p">,</span> <span class="n">test_dataloader</span><span class="p">),</span> <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;train_data&#39;</span><span class="p">,</span> <span class="s1">&#39;test_data&#39;</span><span class="p">])</span>
 
 <span class="c1"># fit neural network</span>
-<span class="n">modeling_set</span> <span class="o">=</span> <span class="n">build_vset</span><span class="p">(</span><span class="s1">&#39;modeling&#39;</span><span class="p">,</span> <span class="n">train</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;fc1&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">256</span><span class="p">,</span> <span class="mi">512</span><span class="p">],</span> <span class="s1">&#39;fc2&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">256</span><span class="p">,</span> <span class="mi">512</span><span class="p">]},</span> <span class="n">NeuralNetwork</span><span class="p">,</span> <span class="n">loss_fn</span><span class="o">=</span><span class="n">loss_fn</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+<span class="n">modeling_set</span> <span class="o">=</span> <span class="n">build_vset</span><span class="p">(</span><span class="s1">&#39;modeling&#39;</span><span class="p">,</span> <span class="n">train</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;fc1&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">256</span><span class="p">,</span> <span class="mi">512</span><span class="p">],</span> <span class="s1">&#39;fc2&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">256</span><span class="p">,</span> <span class="mi">512</span><span class="p">]},</span> <span class="n">model</span><span class="o">=</span><span class="n">NeuralNetwork</span><span class="p">,</span> <span class="n">loss_fn</span><span class="o">=</span><span class="n">loss_fn</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
 <span class="n">modeling_set</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">train_data</span><span class="p">)</span>
 </pre></div>
 
@@ -14712,6 +14796,8 @@ We can use it here to simplify hyperparameter tuning:</p>
 </div>
 
 <div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
 
 
 <div class="jp-OutputArea jp-Cell-outputArea">
@@ -14725,7 +14811,7 @@ We can use it here to simplify hyperparameter tuning:</p>
 
 
 <div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain">
-<pre>&lt;vflow.vset.Vset at 0x7f8c26ab00f0&gt;</pre>
+<pre>&lt;vflow.vset.Vset at 0x7f5bf83c00a0&gt;</pre>
 </div>
 
 </div>
@@ -14735,20 +14821,28 @@ We can use it here to simplify hyperparameter tuning:</p>
 </div>
 
 </div>
-<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
 <p>If using <code>build_vset</code> with <code>verbose=True</code>, we can visualize parameter combinations in our dataframe by passing <code>param_key=vset_name</code> to <code>dict_to_df</code>:</p>
 
 </div>
+</div>
+</div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
 <div class="jp-InputArea jp-Cell-inputArea">
 <div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[6]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">test_nn</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">test</span><span class="p">,</span> <span class="n">loss_fn</span><span class="o">=</span><span class="n">loss_fn</span><span class="p">)</span>
-<span class="n">hard_metrics_set</span> <span class="o">=</span> <span class="n">Vset</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;hard_metrics&#39;</span><span class="p">,</span> <span class="n">modules</span><span class="o">=</span><span class="p">[</span><span class="n">test_nn</span><span class="p">],</span> <span class="n">module_keys</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;acc&quot;</span><span class="p">])</span>
-<span class="n">hard_metrics</span> <span class="o">=</span> <span class="n">hard_metrics_set</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">test_data</span><span class="p">,</span> <span class="n">modeling_set</span><span class="o">.</span><span class="n">out</span><span class="p">)</span>
+<span class="n">hard_metrics_set</span> <span class="o">=</span> <span class="n">Vset</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;hard_metrics&#39;</span><span class="p">,</span> <span class="n">vfuncs</span><span class="o">=</span><span class="p">[</span><span class="n">test_nn</span><span class="p">],</span> <span class="n">vfunc_keys</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;acc&quot;</span><span class="p">])</span>
+<span class="n">hard_metrics</span> <span class="o">=</span> <span class="n">hard_metrics_set</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">test_data</span><span class="p">,</span> <span class="n">modeling_set</span><span class="o">.</span><span class="n">fitted_vfuncs</span><span class="p">)</span>
 
 <span class="n">df</span> <span class="o">=</span> <span class="n">dict_to_df</span><span class="p">(</span><span class="n">hard_metrics</span><span class="p">,</span> <span class="n">param_key</span><span class="o">=</span><span class="s1">&#39;modeling&#39;</span><span class="p">)</span>
 <span class="n">df</span>
@@ -14760,6 +14854,8 @@ We can use it here to simplify hyperparameter tuning:</p>
 </div>
 
 <div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
 
 
 <div class="jp-OutputArea jp-Cell-outputArea">
@@ -14806,7 +14902,7 @@ We can use it here to simplify hyperparameter tuning:</p>
       <td>256</td>
       <td>256</td>
       <td>acc</td>
-      <td>0.5108</td>
+      <td>0.6059</td>
     </tr>
     <tr>
       <th>1</th>
@@ -14815,7 +14911,7 @@ We can use it here to simplify hyperparameter tuning:</p>
       <td>256</td>
       <td>512</td>
       <td>acc</td>
-      <td>0.5581</td>
+      <td>0.5512</td>
     </tr>
     <tr>
       <th>2</th>
@@ -14824,7 +14920,7 @@ We can use it here to simplify hyperparameter tuning:</p>
       <td>512</td>
       <td>256</td>
       <td>acc</td>
-      <td>0.5523</td>
+      <td>0.5808</td>
     </tr>
     <tr>
       <th>3</th>
@@ -14833,7 +14929,7 @@ We can use it here to simplify hyperparameter tuning:</p>
       <td>512</td>
       <td>512</td>
       <td>acc</td>
-      <td>0.5708</td>
+      <td>0.4907</td>
     </tr>
   </tbody>
 </table>

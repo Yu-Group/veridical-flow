@@ -117,7 +117,7 @@ def build_graph(node, draw=True):
                 G = build_graph_recur(node_prev, G)
             return G
 
-        # main case: at a moduleset
+        # main case: at a vfuncset
         if 'Vset' in str(type(node)):
             if hasattr(node, PREV_KEY):
                 nodes_prev = getattr(node, PREV_KEY)
@@ -146,6 +146,6 @@ def build_graph(node, draw=True):
 
 def _run_step(step, *args, **kwargs):
     if step._fitted:
-        return step.modules, step
+        return step.vfuncs, step
     outputs = step(*args, **kwargs)
     return outputs, step
