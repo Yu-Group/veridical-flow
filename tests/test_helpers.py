@@ -16,10 +16,10 @@ class TestHelpers:
         vset = build_vset("vset", my_func, param1='hello', param2='world', param3='b')
         assert len(vset) == 1, \
             'build_vset with my_func fails'
-        d_key = [key[0] for key in list(vset.modules.keys())][0]
+        d_key = [key[0] for key in list(vset.vfuncs.keys())][0]
         assert d_key.value == 'vset_0', \
             'build_vset with my_func fails'
-        d_keyword = [val.module.keywords for val in list(vset.modules.values())][0]
+        d_keyword = [val.vfunc.keywords for val in list(vset.vfuncs.values())][0]
         assert d_keyword == {'param1': 'hello', 'param2': 'world', 'param3': 'b'}, \
             'build_vset with my_func fails'
 
@@ -27,12 +27,12 @@ class TestHelpers:
         vset = build_vset("vset", my_func, reps=2, param1='hello', param2='world', param3='b')
         assert len(vset) == 2, \
             'build_vset with my_func + reps fails'
-        d_keys = [key[0].value[0] for key in list(vset.modules.keys())]
+        d_keys = [key[0].value[0] for key in list(vset.vfuncs.keys())]
         assert d_keys[0] == 'rep=0', \
             'build_vset with my_func + reps fails'
         assert d_keys[1] == 'rep=1', \
             'build_vset with my_func + reps fails'
-        d_keywords = [val.module.keywords for val in list(vset.modules.values())]
+        d_keywords = [val.vfunc.keywords for val in list(vset.vfuncs.values())]
         assert d_keywords[0] == {'param1': 'hello', 'param2': 'world', 'param3': 'b'}, \
             'build_vset with my_func + reps fails'
         assert d_keywords[1] == {'param1': 'hello', 'param2': 'world', 'param3': 'b'}, \
@@ -42,7 +42,7 @@ class TestHelpers:
         vset = build_vset("vset", my_func, param_dict1, param3='b')
         assert len(vset) == 4, \
             'build_vset with my_func + param_dict1 fails'
-        d_keys = [key[0] for key in list(vset.modules.keys())]
+        d_keys = [key[0] for key in list(vset.vfuncs.keys())]
         assert d_keys[0].value == ('param1=hello', 'param2=world'), \
             'build_vset with my_func + param_dict1 fails'
         assert d_keys[1].value == ('param1=hello', 'param2=bar'), \
@@ -51,7 +51,7 @@ class TestHelpers:
             'build_vset with my_func + param_dict1 fails'
         assert d_keys[3].value == ('param1=foo', 'param2=bar'), \
             'build_vset with my_func + param_dict1 fails'
-        d_keywords = [val.module.keywords for val in list(vset.modules.values())]
+        d_keywords = [val.vfunc.keywords for val in list(vset.vfuncs.values())]
         assert d_keywords[0] == {'param1': 'hello', 'param2': 'world', 'param3': 'b'}, \
             'build_vset with my_func + param_dict1 fails'
         assert d_keywords[1] == {'param1': 'hello', 'param2': 'bar', 'param3': 'b'}, \
@@ -67,7 +67,7 @@ class TestHelpers:
             'build_vset with my_func + param_dict2 + reps fails'
         assert len(vset) == 4, \
             'build_vset with my_func + param_dict2 + reps fails'
-        d_keys = [key[0] for key in list(vset.modules.keys())]
+        d_keys = [key[0] for key in list(vset.vfuncs.keys())]
         assert d_keys[0].value == ('rep=0', 'param1=hello', 'param2=world'), \
             'build_vset with my_func + param_dict2 + reps fails'
         assert d_keys[1].value == ('rep=1', 'param1=hello', 'param2=world'), \
@@ -76,7 +76,7 @@ class TestHelpers:
             'build_vset with my_func + param_dict2 + reps fails'
         assert d_keys[3].value == ('rep=1', 'param1=hello', 'param2=there'), \
             'build_vset with my_func + param_dict2 + reps fails'
-        d_keywords = [val.module.keywords for val in list(vset.modules.values())]
+        d_keywords = [val.vfunc.keywords for val in list(vset.vfuncs.values())]
         assert d_keywords[0] == {'param1': 'hello', 'param2': 'world', 'param3': 'b'}, \
             'build_vset with my_func + param_dict2 fails'
         assert d_keywords[1] == {'param1': 'hello', 'param2': 'world', 'param3': 'b'}, \
@@ -99,10 +99,10 @@ class TestHelpers:
         vset = build_vset("vset", my_class, param1='hello', param2='world', param3='b')
         assert len(vset) == 1, \
             'build_vset with my_class fails'
-        d_key = [key[0] for key in list(vset.modules.keys())][0]
+        d_key = [key[0] for key in list(vset.vfuncs.keys())][0]
         assert d_key.value == 'vset_0', \
             'build_vset with my_class fails'
-        d_val = [val.module for val in list(vset.modules.values())][0]
+        d_val = [val.vfunc for val in list(vset.vfuncs.values())][0]
         assert isinstance(d_val, my_class), \
             'build_vset with my_class fails'
         assert (d_val.param1, d_val.param2, d_val.param3) == ('hello', 'world', 'b'), \
@@ -112,12 +112,12 @@ class TestHelpers:
         vset = build_vset("vset", my_class, reps=2, param1='hello', param2='world', param3='b')
         assert len(vset) == 2, \
             'build_vset with my_class + reps fails'
-        d_keys = [key[0].value[0] for key in list(vset.modules.keys())]
+        d_keys = [key[0].value[0] for key in list(vset.vfuncs.keys())]
         assert d_keys[0] == 'rep=0', \
             'build_vset with my_class + reps fails'
         assert d_keys[1] == 'rep=1', \
             'build_vset with my_class + reps fails'
-        d_vals = [val.module for val in list(vset.modules.values())]
+        d_vals = [val.vfunc for val in list(vset.vfuncs.values())]
         assert isinstance(d_vals[0], my_class), \
             'build_vset with my_class + reps fails'
         assert isinstance(d_vals[1], my_class), \
@@ -131,7 +131,7 @@ class TestHelpers:
         vset = build_vset("vset", my_class, param_dict1, param3='b')
         assert len(vset) == 4, \
             'build_vset with my_class + param_dict1 fails'
-        d_keys = [key[0] for key in list(vset.modules.keys())]
+        d_keys = [key[0] for key in list(vset.vfuncs.keys())]
         assert d_keys[0].value == ('param1=hello', 'param2=world'), \
             'build_vset with my_class + param_dict1 fails'
         assert d_keys[1].value == ('param1=hello', 'param2=bar'), \
@@ -140,7 +140,7 @@ class TestHelpers:
             'build_vset with my_class + param_dict1 fails'
         assert d_keys[3].value == ('param1=foo', 'param2=bar'), \
             'build_vset with my_class + param_dict1 fails'
-        d_vals = [val.module for val in list(vset.modules.values())]
+        d_vals = [val.vfunc for val in list(vset.vfuncs.values())]
         assert isinstance(d_vals[0], my_class), \
             'build_vset with my_class + param_dict1 fails'
         assert isinstance(d_vals[1], my_class), \
@@ -164,7 +164,7 @@ class TestHelpers:
             'build_vset with my_class + param_dict2 + reps fails'
         assert len(vset) == 4, \
             'build_vset with my_class + param_dict2 + reps fails'
-        d_keys = [key[0] for key in list(vset.modules.keys())]
+        d_keys = [key[0] for key in list(vset.vfuncs.keys())]
         assert d_keys[0].value == ('rep=0', 'param1=hello', 'param2=world'), \
             'build_vset with my_class + param_dict2 + reps fails'
         assert d_keys[1].value == ('rep=1', 'param1=hello', 'param2=world'), \
@@ -173,7 +173,7 @@ class TestHelpers:
             'build_vset with my_class + param_dict2 + reps fails'
         assert d_keys[3].value == ('rep=1', 'param1=hello', 'param2=there'), \
             'build_vset with my_class + param_dict2 + reps fails'
-        d_vals = [val.module for val in list(vset.modules.values())]
+        d_vals = [val.vfunc for val in list(vset.vfuncs.values())]
         assert isinstance(d_vals[0], my_class), \
             'build_vset with my_class + param_dict2 + reps fails'
         assert isinstance(d_vals[1], my_class), \
