@@ -14686,7 +14686,7 @@ body[data-format='mobile'] .jp-OutputArea-child .jp-OutputArea-output {
 <span class="n">device</span> <span class="o">=</span> <span class="s2">&quot;cuda&quot;</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s2">&quot;cpu&quot;</span>
 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Using </span><span class="si">{}</span><span class="s2"> device&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">device</span><span class="p">))</span>
 
-<span class="k">def</span> <span class="nf">train</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">dataloader</span><span class="p">,</span> <span class="n">loss_fn</span><span class="p">,</span> <span class="n">epochs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">train</span><span class="p">(</span><span class="n">dataloader</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">loss_fn</span><span class="p">,</span> <span class="n">epochs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="c1"># initialize model with **kwargs</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="nb">type</span><span class="p">):</span>
         <span class="n">model</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
@@ -14774,7 +14774,7 @@ We can use it here to simplify hyperparameter tuning:</p>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[9]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[5]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">batch_size</span> <span class="o">=</span> <span class="mi">64</span>
@@ -14786,7 +14786,7 @@ We can use it here to simplify hyperparameter tuning:</p>
 <span class="n">train_data</span><span class="p">,</span> <span class="n">test_data</span> <span class="o">=</span> <span class="n">init_args</span><span class="p">((</span><span class="n">train_dataloader</span><span class="p">,</span> <span class="n">test_dataloader</span><span class="p">),</span> <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;train_data&#39;</span><span class="p">,</span> <span class="s1">&#39;test_data&#39;</span><span class="p">])</span>
 
 <span class="c1"># fit neural network</span>
-<span class="n">modeling_set</span> <span class="o">=</span> <span class="n">build_vset</span><span class="p">(</span><span class="s1">&#39;modeling&#39;</span><span class="p">,</span> <span class="n">train</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;fc1&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">256</span><span class="p">,</span> <span class="mi">512</span><span class="p">],</span> <span class="s1">&#39;fc2&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">256</span><span class="p">,</span> <span class="mi">512</span><span class="p">]},</span> <span class="n">NeuralNetwork</span><span class="p">,</span> <span class="n">loss_fn</span><span class="o">=</span><span class="n">loss_fn</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+<span class="n">modeling_set</span> <span class="o">=</span> <span class="n">build_vset</span><span class="p">(</span><span class="s1">&#39;modeling&#39;</span><span class="p">,</span> <span class="n">train</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;fc1&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">256</span><span class="p">,</span> <span class="mi">512</span><span class="p">],</span> <span class="s1">&#39;fc2&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">256</span><span class="p">,</span> <span class="mi">512</span><span class="p">]},</span> <span class="n">model</span><span class="o">=</span><span class="n">NeuralNetwork</span><span class="p">,</span> <span class="n">loss_fn</span><span class="o">=</span><span class="n">loss_fn</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
 <span class="n">modeling_set</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">train_data</span><span class="p">)</span>
 </pre></div>
 
@@ -14805,29 +14805,15 @@ We can use it here to simplify hyperparameter tuning:</p>
 <div class="jp-OutputArea-child">
 
     
-    <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[5]:</div>
 
 
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr">
-<pre>
-<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
-<span class="ansi-red-fg">TypeError</span>                                 Traceback (most recent call last)
-Input <span class="ansi-green-fg">In [9]</span>, in <span class="ansi-cyan-fg">&lt;module&gt;</span>
-<span class="ansi-green-intense-fg ansi-bold">      7</span> train_data, test_data <span style="color: rgb(98,98,98)">=</span> init_args((train_dataloader, test_dataloader), names<span style="color: rgb(98,98,98)">=</span>[<span style="color: rgb(175,0,0)">&#39;</span><span style="color: rgb(175,0,0)">train_data</span><span style="color: rgb(175,0,0)">&#39;</span>, <span style="color: rgb(175,0,0)">&#39;</span><span style="color: rgb(175,0,0)">test_data</span><span style="color: rgb(175,0,0)">&#39;</span>])
-<span class="ansi-green-intense-fg ansi-bold">      9</span> <span style="color: rgb(95,135,135)"># fit neural network</span>
-<span class="ansi-green-fg">---&gt; 10</span> modeling_set <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg">build_vset</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">&#39;</span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">modeling</span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">&#39;</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">train</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">{</span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">&#39;</span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">fc1</span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">&#39;</span><span class="ansi-yellow-bg">:</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">[</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">256</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">512</span><span class="ansi-yellow-bg">]</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">&#39;</span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">fc2</span><span class="ansi-yellow-bg" style="color: rgb(175,0,0)">&#39;</span><span class="ansi-yellow-bg">:</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">[</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">256</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">512</span><span class="ansi-yellow-bg">]</span><span class="ansi-yellow-bg">}</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">NeuralNetwork</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">loss_fn</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">loss_fn</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">epochs</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">5</span><span class="ansi-yellow-bg">)</span>
-<span class="ansi-green-intense-fg ansi-bold">     11</span> modeling_set<span style="color: rgb(98,98,98)">.</span>fit(train_data)
 
-File <span class="ansi-green-fg">~/yugroup/veridical-flow/vflow/helpers.py:97</span>, in <span class="ansi-cyan-fg">build_vset</span><span class="ansi-blue-fg">(name, func, param_dict, reps, is_async, output_matching, lazy, cache_dir, verbose, tracking_dir, **kwargs)</span>
-<span class="ansi-green-intense-fg ansi-bold">     95</span> <span class="ansi-bold" style="color: rgb(0,135,0)">for</span> k, v <span class="ansi-bold" style="color: rgb(175,0,255)">in</span> kwargs<span style="color: rgb(98,98,98)">.</span>items():
-<span class="ansi-green-intense-fg ansi-bold">     96</span>     kwargs_dict[k] <span style="color: rgb(98,98,98)">=</span> v
-<span class="ansi-green-fg">---&gt; 97</span> <span class="ansi-bold" style="color: rgb(0,135,0)">for</span> i <span class="ansi-bold" style="color: rgb(175,0,255)">in</span> <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">range</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">reps</span><span class="ansi-yellow-bg">)</span>:
-<span class="ansi-green-intense-fg ansi-bold">     98</span>     <span style="color: rgb(95,135,135)"># add vfunc key to vkeys</span>
-<span class="ansi-green-intense-fg ansi-bold">     99</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> reps <span style="color: rgb(98,98,98)">&gt;</span> <span style="color: rgb(98,98,98)">1</span>:
-<span class="ansi-green-intense-fg ansi-bold">    100</span>         vkeys<span style="color: rgb(98,98,98)">.</span>append((<span style="color: rgb(175,0,0)">f</span><span style="color: rgb(175,0,0)">&#39;</span><span style="color: rgb(175,0,0)">rep=</span><span class="ansi-bold" style="color: rgb(175,95,135)">{</span>i<span class="ansi-bold" style="color: rgb(175,95,135)">}</span><span style="color: rgb(175,0,0)">&#39;</span>, ) <span style="color: rgb(98,98,98)">+</span> vkey_tup)
 
-<span class="ansi-red-fg">TypeError</span>: &#39;type&#39; object cannot be interpreted as an integer</pre>
+<div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain">
+<pre>&lt;vflow.vset.Vset at 0x7f5bf83c00a0&gt;</pre>
 </div>
+
 </div>
 
 </div>
@@ -14877,22 +14863,79 @@ File <span class="ansi-green-fg">~/yugroup/veridical-flow/vflow/helpers.py:97</s
 <div class="jp-OutputArea-child">
 
     
-    <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[6]:</div>
 
 
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr">
-<pre>
-<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
-<span class="ansi-red-fg">NameError</span>                                 Traceback (most recent call last)
-Input <span class="ansi-green-fg">In [6]</span>, in <span class="ansi-cyan-fg">&lt;module&gt;</span>
-<span class="ansi-green-intense-fg ansi-bold">      1</span> test_nn <span style="color: rgb(98,98,98)">=</span> partial(test, loss_fn<span style="color: rgb(98,98,98)">=</span>loss_fn)
-<span class="ansi-green-intense-fg ansi-bold">      2</span> hard_metrics_set <span style="color: rgb(98,98,98)">=</span> Vset(name<span style="color: rgb(98,98,98)">=</span><span style="color: rgb(175,0,0)">&#39;</span><span style="color: rgb(175,0,0)">hard_metrics</span><span style="color: rgb(175,0,0)">&#39;</span>, vfuncs<span style="color: rgb(98,98,98)">=</span>[test_nn], vfunc_keys<span style="color: rgb(98,98,98)">=</span>[<span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">acc</span><span style="color: rgb(175,0,0)">&#34;</span>])
-<span class="ansi-green-fg">----&gt; 3</span> hard_metrics <span style="color: rgb(98,98,98)">=</span> hard_metrics_set<span style="color: rgb(98,98,98)">.</span>evaluate(test_data, <span class="ansi-yellow-bg">modeling_set</span><span style="color: rgb(98,98,98)">.</span>out)
-<span class="ansi-green-intense-fg ansi-bold">      5</span> df <span style="color: rgb(98,98,98)">=</span> dict_to_df(hard_metrics, param_key<span style="color: rgb(98,98,98)">=</span><span style="color: rgb(175,0,0)">&#39;</span><span style="color: rgb(175,0,0)">modeling</span><span style="color: rgb(175,0,0)">&#39;</span>)
-<span class="ansi-green-intense-fg ansi-bold">      6</span> df
 
-<span class="ansi-red-fg">NameError</span>: name &#39;modeling_set&#39; is not defined</pre>
+<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>init-modeling</th>
+      <th>init-modeling</th>
+      <th>fc1-modeling</th>
+      <th>fc2-modeling</th>
+      <th>hard_metrics</th>
+      <th>out</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>test_data</td>
+      <td>train_data</td>
+      <td>256</td>
+      <td>256</td>
+      <td>acc</td>
+      <td>0.6059</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>test_data</td>
+      <td>train_data</td>
+      <td>256</td>
+      <td>512</td>
+      <td>acc</td>
+      <td>0.5512</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>test_data</td>
+      <td>train_data</td>
+      <td>512</td>
+      <td>256</td>
+      <td>acc</td>
+      <td>0.5808</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>test_data</td>
+      <td>train_data</td>
+      <td>512</td>
+      <td>512</td>
+      <td>acc</td>
+      <td>0.4907</td>
+    </tr>
+  </tbody>
+</table>
 </div>
+</div>
+
 </div>
 
 </div>
