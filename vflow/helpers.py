@@ -87,7 +87,7 @@ def build_vset(name: str, func, param_dict=None, reps: int = 1,
     """
     f_list = [func]
     pd_list = [param_dict]
-    if isinstance(func, list)
+    if isinstance(func, list):
         if isinstance(param_dict, list):
             assert len(param_dict) == len(func), \
                 'param_dict must be same length as list of funcs'
