@@ -39,6 +39,10 @@ def build_vset(name: str, func, param_dict=None, reps: int = 1,
                tracking_dir: str = None, **kwargs) -> Vset:
     """Builds new Vset(s) by currying or instantiating callable `func` with all
     combinations of parameters in `param_dict` and optional additional `**kwargs`.
+    If `func` and `param_dict` are lists, then the ith entry of `func` will be 
+    curried with ith entry of `param_dict`. If only one of `func` or `param_dict` 
+    is a list, the same `func`/`param_dict` will be curried for all entries in the
+    list.
 
     Parameters
     ----------
@@ -48,12 +52,14 @@ def build_vset(name: str, func, param_dict=None, reps: int = 1,
         A callable to use as the base for Vfuncs in the output Vset. Can also be
         a class object, in which case the class is immediately instantiated with
         the parameter combinations from `param_dict`. Can also be a list of
-        callables, where each entry corresponds to a new Vset.
+        callables, where the ith entry corresponds to `param_dict` or the ith 
+        entry of `param_dict` (if `param_dict` is a list).
     param_dict : dict[str, list] or list[dict[str, list]], optional
         A dict with string keys corresponding to argument names of `func` and
         entries which are lists of values to pass to `func` at run time (or when
         instantiating `func` if it's a class object). Can also be a list of
-        dicts, where each dict entry corresponds to a new Vset.
+        dicts, where the ith dict entry corresponds to `func` or the ith entry
+        of `func` (if `func` is a list).
     reps : int, optional
         The number of times to repeat `func` in the output Vset's vfuncs for
         each combination of the parameters in `param_dict`.
@@ -79,25 +85,25 @@ def build_vset(name: str, func, param_dict=None, reps: int = 1,
     new_vset : vflow.vset.Vset or list[vflow.vset.Vset]
 
     """
-    if isinstance(func, list):
-        assert isinstance(param_dict, list) and len(param_dict) == len(func), \
-            'param_dict must correspond to list of funcs'
+    f_list = [func]
+    pd_list = [param_dict]
+    if isinstance(func, list)
+        if isinstance(param_dict, list):
+            assert len(param_dict) == len(func), \
+                'param_dict must be same length as list of funcs'
+        else:
+            pd_list = [param_dict] * len(func)
     elif isinstance(param_dict, list):
-        assert isinstance(func, list), 'func must correspond to list of param_dicts'
-    else:
-        func = [func]
-        param_dict = [param_dict]
+        f_list = [func] * len(param_dict)
+    
+    vfuncs = []
+    vkeys = []
 
-    new_vsets = []
-    for index, f in enumerate(func):
-        pd = param_dict[index]
+    for f, pd in zip(f_list, pd_list):
         if pd is None:
             pd = {}
         assert callable(f), 'func must be callable'
-
-        vfuncs = []
-        vkeys = []
-
+        
         kwargs_tuples = product(*list(pd.values()))
         for tup in kwargs_tuples:
             kwargs_dict = {}
@@ -123,13 +129,10 @@ def build_vset(name: str, func, param_dict=None, reps: int = 1,
                     vfuncs.append(Vfunc(vfunc=partial(f, **kwargs_dict), name=str(vkey_tup)))
         if not verbose or (len(pd) == 0 and reps == 1):
             vkeys = None
-        new_vsets.append(Vset(name, vfuncs, is_async=is_async, vfunc_keys=vkeys,
-                        output_matching=output_matching, lazy=lazy,
-                        cache_dir=cache_dir, tracking_dir=tracking_dir))
-
-    if len(new_vsets) == 1:
-        return new_vsets[0]
-    return new_vsets
+    
+    return Vset(name, vfuncs, is_async=is_async, vfunc_keys=vkeys,
+                output_matching=output_matching, lazy=lazy,
+                cache_dir=cache_dir, tracking_dir=tracking_dir)
 
 
 def filter_vset_by_metric(metric_dict: dict, vset: Vset, *vsets: Vset, n_keep: int = 1,
