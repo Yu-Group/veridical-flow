@@ -80,7 +80,7 @@ def build_vset(name: str, func, param_dict=None, reps: int = 1,
 
     """
     if isinstance(func, list):
-        assert isinstance(param_dict, list) and len(param_dict) == len(func),
+        assert isinstance(param_dict, list) and len(param_dict) == len(func), \
             'param_dict must correspond to list of funcs'
     elif isinstance(param_dict, list):
         assert isinstance(func, list), 'func must correspond to list of param_dicts'
