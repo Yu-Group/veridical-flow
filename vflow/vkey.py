@@ -2,6 +2,8 @@
 """
 from typing import Tuple, Union
 
+from vflow.utils import combine_keys
+
 class Vkey:
 
     def __init__(self, subkeys, origin: str, method: str):
@@ -9,19 +11,19 @@ class Vkey:
         Parameters
         ----------
         subkeys: tuple
-            tuple of subkeys to associate with this Vkey
+            Tuple of Subkey objects to associate with this Vkey.
         origin: str
-            string attribute that identifies the Vset that created this Vkey
+            String attribute that identifies the Vset that created this Vkey.
         method: str
             String attribute that identifies the Vset method that was called to create
-            this Vkey
+            this Vkey.
         """
         self._subkeys = subkeys
         self.origin = origin
         self.method = method
 
     def subkeys(self):
-        """Return a tuple of the Subkeys in this Vkey.
+        """Return a tuple of the Subkey objects in this Vkey.
         """
         return self._subkeys
     
@@ -44,23 +46,30 @@ class Vkey:
             `preproc_0` in vkey => bool
             (`model`, `RF`) in vkey => bool
         """
-        pass
+        _values = self.get_values()
+        _sktuples = zip(self.get_origins(), _values)
+        for subkey in subkeys:
+            if isinstance(subkey, str) and subkey in _values:
+                return True
+            if isinstance(subkey, tuple) and subkey in _sktuples:
+                return True
+        return False
 
     def __add__(self, other: 'Vkey'):
         """Return a new Vkey by combining this Vkey with other, following Subkey
         matching rules. Returns an empty Vkey if there are any Subkey mismatches.
         """
-        pass
+        return Vkey(combine_keys(self.subkeys(), other.subkeys()), self.origin, self.method)
 
     def __copy__(self):
         """Return a copy of this Vkey (but not its Subkeys).
         """
-        pass
+        return Vkey(self.subkeys(), self.origin, self.method)
 
-    def __deepcopy__(self):
+    def __deepcopy__(self, memo):
         """Return a copy of this Vkey and its Subkeys.
         """
-        pass
+        return Vkey((sk.__copy__() for sk in self.subkeys()), self.origin, self.method)
 
     def __len__(self):
         """Return the number of Subkeys in this Vkey.

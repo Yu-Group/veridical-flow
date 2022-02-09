@@ -70,7 +70,6 @@ class Subkey:
     def __copy__(self):
         """Return a copy of this Subkey
         """
-        pass
 
     def __eq__(self, other: object):
         """Mainly used for testing purposes.

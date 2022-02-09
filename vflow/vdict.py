@@ -5,12 +5,11 @@ from typing import Tuple, Union
 class Vdict:
 
     def __init__(self):
-        pass
+        self._dict = {}
 
     def to_pandas(self, copy=False):
         """Return a pandas.DataFrame representation of the Vdict.
         """
-        pass
 
     def __getitem__(self, *subkeys: Union[str, Tuple[str, str]], copy=False):
         """Return a new Vdict with a subset of the items in self by filtering keys
@@ -22,4 +21,3 @@ class Vdict:
             `preproc_0` in preds => bool
             (`model`, `RF`) in preds => bool
         """
-        pass
