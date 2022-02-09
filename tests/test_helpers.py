@@ -86,6 +86,34 @@ class TestHelpers:
         assert d_keywords[3] == {'param1': 'hello', 'param2': 'there', 'param3': 'b'}, \
             'build_vset with my_func + param_dict2 fails'
 
+        # list of funcs [my_func, my_func] with [param_dict1, param_dict2]
+        vsets = build_vset("vset", [my_func, my_func], [param_dict1, param_dict2], param3='b')
+        assert len(vsets) == 2, 'list of funcs/param_dicts fails'
+        vset1 = vsets[0] # param_dict1
+        assert len(vset1) == 4, \
+            'build_vset with my_func + param_dict1 fails'
+        d_keys = [key[0] for key in list(vset1.vfuncs.keys())]
+        assert d_keys[0].value == ('param1=hello', 'param2=world'), \
+            'build_vset with my_func + param_dict1 fails'
+        assert d_keys[1].value == ('param1=hello', 'param2=bar'), \
+            'build_vset with my_func + param_dict1 fails'
+        assert d_keys[2].value == ('param1=foo', 'param2=world'), \
+            'build_vset with my_func + param_dict1 fails'
+        assert d_keys[3].value == ('param1=foo', 'param2=bar'), \
+            'build_vset with my_func + param_dict1 fails'
+        d_keywords = [val.vfunc.keywords for val in list(vset1.vfuncs.values())]
+        assert d_keywords[0] == {'param1': 'hello', 'param2': 'world', 'param3': 'b'}, \
+            'build_vset with my_func + param_dict1 fails'
+        assert d_keywords[1] == {'param1': 'hello', 'param2': 'bar', 'param3': 'b'}, \
+            'build_vset with my_func + param_dict1 fails'
+        assert d_keywords[2] == {'param1': 'foo', 'param2': 'world', 'param3': 'b'}, \
+            'build_vset with my_func + param_dict1 fails'
+        assert d_keywords[3] == {'param1': 'foo', 'param2': 'bar', 'param3': 'b'}, \
+            'build_vset with my_func + param_dict1 fails'
+        vset2 = vsets[1] # param_dict2
+        assert len(vset2) == 2, \
+            'build_vset with my_func + param_dict2 fails'
+
         class my_class:
             def __init__(self, param1, param2, param3: str='a'):
                 self.param1 = param1

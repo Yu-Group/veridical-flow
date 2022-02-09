@@ -37,21 +37,23 @@ def build_vset(name: str, func, param_dict=None, reps: int = 1,
                is_async: bool = False, output_matching: bool = False,
                lazy: bool = False, cache_dir: str = None, verbose: bool = True,
                tracking_dir: str = None, **kwargs) -> Vset:
-    """Builds a new Vset by currying or instantiating callable `func` with all
+    """Builds new Vset(s) by currying or instantiating callable `func` with all
     combinations of parameters in `param_dict` and optional additional `**kwargs`.
 
     Parameters
     ----------
     name : str
         A name for the output Vset.
-    func : callable
+    func : callable or list[callable]
         A callable to use as the base for Vfuncs in the output Vset. Can also be
         a class object, in which case the class is immediately instantiated with
-        the parameter combinations from `param_dict`.
-    param_dict : dict[str, list], optional
+        the parameter combinations from `param_dict`. Can also be a list of
+        callables, where each entry corresponds to a new Vset.
+    param_dict : dict[str, list] or list[dict[str, list]], optional
         A dict with string keys corresponding to argument names of `func` and
         entries which are lists of values to pass to `func` at run time (or when
-        instantiating `func` if it's a class object).
+        instantiating `func` if it's a class object). Can also be a list of
+        dicts, where each dict entry corresponds to a new Vset.
     reps : int, optional
         The number of times to repeat `func` in the output Vset's vfuncs for
         each combination of the parameters in `param_dict`.
@@ -74,44 +76,61 @@ def build_vset(name: str, func, param_dict=None, reps: int = 1,
 
     Returns
     -------
-    new_vset : vflow.vset.Vset
+    new_vset : vflow.vset.Vset or list[vflow.vset.Vset]
 
     """
-    if param_dict is None:
-        param_dict = {}
-    assert callable(func), 'func must be callable'
+    if isinstance(func, list):
+        assert isinstance(param_dict, list) and len(param_dict) == len(func),
+            'param_dict must correspond to list of funcs'
+    elif isinstance(param_dict, list):
+        assert isinstance(func, list), 'func must correspond to list of param_dicts'
+    else:
+        func = [func]
+        param_dict = [param_dict]
 
-    vfuncs = []
-    vkeys = []
+    new_vsets = []
+    for i in range(len(func)):
+        f, pd = func[i], param_dict[i]
 
-    kwargs_tuples = product(*list(param_dict.values()))
-    for tup in kwargs_tuples:
-        kwargs_dict = {}
-        vkey_tup = ()
-        for param_name, param_val in zip(list(param_dict.keys()), tup):
-            kwargs_dict[param_name] = param_val
-            vkey_tup += (f'{param_name}={param_val}', )
-        # add additional fixed kwargs to kwargs_dict
-        for k, v in kwargs.items():
-            kwargs_dict[k] = v
-        for i in range(reps):
-            # add vfunc key to vkeys
-            if reps > 1:
-                vkeys.append((f'rep={i}', ) + vkey_tup)
-            else:
-                vkeys.append(vkey_tup)
-            # check if func is a class
-            if isinstance(func, type):
-                # instantiate func
-                vfuncs.append(Vfunc(vfunc=func(**kwargs_dict), name=str(vkey_tup)))
-            else:
-                # use partial to wrap func
-                vfuncs.append(Vfunc(vfunc=partial(func, **kwargs_dict), name=str(vkey_tup)))
-    if not verbose or (len(param_dict) == 0 and reps == 1):
-        vkeys = None
-    return Vset(name, vfuncs, is_async=is_async, vfunc_keys=vkeys,
-                output_matching=output_matching, lazy=lazy,
-                cache_dir=cache_dir, tracking_dir=tracking_dir)
+        if pd is None:
+            pd = {}
+        assert callable(f), 'func must be callable'
+
+        vfuncs = []
+        vkeys = []
+
+        kwargs_tuples = product(*list(pd.values()))
+        for tup in kwargs_tuples:
+            kwargs_dict = {}
+            vkey_tup = ()
+            for param_name, param_val in zip(list(pd.keys()), tup):
+                kwargs_dict[param_name] = param_val
+                vkey_tup += (f'{param_name}={param_val}', )
+            # add additional fixed kwargs to kwargs_dict
+            for k, v in kwargs.items():
+                kwargs_dict[k] = v
+            for i in range(reps):
+                # add vfunc key to vkeys
+                if reps > 1:
+                    vkeys.append((f'rep={i}', ) + vkey_tup)
+                else:
+                    vkeys.append(vkey_tup)
+                # check if func is a class
+                if isinstance(f, type):
+                    # instantiate func
+                    vfuncs.append(Vfunc(vfunc=f(**kwargs_dict), name=str(vkey_tup)))
+                else:
+                    # use partial to wrap func
+                    vfuncs.append(Vfunc(vfunc=partial(f, **kwargs_dict), name=str(vkey_tup)))
+        if not verbose or (len(pd) == 0 and reps == 1):
+            vkeys = None
+        new_vsets.append(Vset(name, vfuncs, is_async=is_async, vfunc_keys=vkeys,
+                        output_matching=output_matching, lazy=lazy,
+                        cache_dir=cache_dir, tracking_dir=tracking_dir))
+
+    if len(new_vsets) == 1:
+        return new_vsets[0]
+    return new_vsets
 
 
 def filter_vset_by_metric(metric_dict: dict, vset: Vset, *vsets: Vset, n_keep: int = 1,
