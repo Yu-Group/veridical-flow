@@ -9,6 +9,9 @@ class TestHelpers:
         def my_func(param1: str, param2: str, param3: str='a'):
             return (param1, param2, param3)
 
+        def my_func2(param1: str, param2: str, param3: str='b'):
+            return (param1 + '1', param2 + '2', param3)
+
         param_dict1 = { 'param1': ['hello', 'foo'], 'param2': ['world', 'bar'] }
         param_dict2 = { 'param1': ['hello'], 'param2': ['world', 'there']}
 
@@ -86,8 +89,20 @@ class TestHelpers:
         assert d_keywords[3] == {'param1': 'hello', 'param2': 'there', 'param3': 'b'}, \
             'build_vset with my_func + param_dict2 fails'
 
-        # list of funcs [my_func, my_func] with [param_dict1, param_dict2]
+        # 1 func with list of param_dicts
+        vset = build_vset("vset", my_func, [param_dict1, param_dict2], param3='b')
+        assert len(vset) == 6, \
+            'build_vset with my_func + [param_dict1, param_dict2] fails'
         
+        # list of funcs with 1 param_dict
+        vset = build_vset("vset", [my_func, my_func2], param_dict1, param3='b')
+        assert len(vset) == 8, \
+            'build_vset with [my_func, my_func2] + param_dict1 fails'
+
+        # list of funcs with list of param_dicts
+        vset = build_vset("vset", [my_func, my_func2], [param_dict1, param_dict2], param3='b')
+        assert len(vset) == 6, \
+            'build_vset with [my_func, my_func2] + [param_dict1, param_dict2] fails'
 
         class my_class:
             def __init__(self, param1, param2, param3: str='a'):

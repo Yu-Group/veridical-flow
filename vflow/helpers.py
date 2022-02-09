@@ -85,16 +85,19 @@ def build_vset(name: str, func, param_dict=None, reps: int = 1,
     new_vset : vflow.vset.Vset
 
     """
-    f_list = [func]
-    pd_list = [param_dict]
+    f_list = []
+    pd_list = []
     if isinstance(func, list):
         if isinstance(param_dict, list):
             assert len(param_dict) == len(func), \
-                'param_dict must be same length as list of funcs'
+                'list of param_dicts must be same length as list of funcs'
         else:
             pd_list = [param_dict] * len(func)
     elif isinstance(param_dict, list):
         f_list = [func] * len(param_dict)
+    else:
+        f_list = [func]
+        pd_list = [param_dict]
     
     vfuncs = []
     vkeys = []
