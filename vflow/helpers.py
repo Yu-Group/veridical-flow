@@ -37,7 +37,7 @@ def build_vset(name: str, func, param_dict=None, reps: int = 1,
                is_async: bool = False, output_matching: bool = False,
                lazy: bool = False, cache_dir: str = None, verbose: bool = True,
                tracking_dir: str = None, **kwargs) -> Vset:
-    """Builds new Vset(s) by currying or instantiating callable `func` with all
+    """Builds a new Vset by currying or instantiating callable `func` with all
     combinations of parameters in `param_dict` and optional additional `**kwargs`.
     If `func` and `param_dict` are lists, then the ith entry of `func` will be 
     curried with ith entry of `param_dict`. If only one of `func` or `param_dict` 
@@ -82,7 +82,7 @@ def build_vset(name: str, func, param_dict=None, reps: int = 1,
 
     Returns
     -------
-    new_vset : vflow.vset.Vset or list[vflow.vset.Vset]
+    new_vset : vflow.vset.Vset
 
     """
     f_list = [func]
