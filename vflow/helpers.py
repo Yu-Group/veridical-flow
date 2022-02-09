@@ -89,9 +89,8 @@ def build_vset(name: str, func, param_dict=None, reps: int = 1,
         param_dict = [param_dict]
 
     new_vsets = []
-    for i in range(len(func)):
-        f, pd = func[i], param_dict[i]
-
+    for index, f in enumerate(func):
+        pd = param_dict[index]
         if pd is None:
             pd = {}
         assert callable(f), 'func must be callable'
