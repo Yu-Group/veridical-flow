@@ -29,3 +29,8 @@ jobs:
       - name: Lint with pylint
         run: |
           pylint vflow *.py --rcfile=.pylintrc
+      - name: codecov
+        run: |
+          curl -Os https://uploader.codecov.io/latest/linux/codecov
+          chmod +x codecov
+          ./codecov
