@@ -1,9 +1,7 @@
+<header>
 <p align="center">
 	<img src="https://yu-group.github.io/veridical-flow/logo_vflow_straight.png" width="70%" alt="vflow logo"> 
 </p>
-
-
-
 <p align="center"> A library for making stability analysis simple, following the <a href="https://www.pnas.org/content/117/8/3920">veridical data-science</a> framework.
 </p>
 <p align="center">
@@ -13,6 +11,7 @@
   <img src="https://img.shields.io/github/checks-status/Yu-group/pcs-pipeline/master" alt="checks">
   <img src="https://img.shields.io/pypi/v/vflow?color=orange" alt="downloads">
 </p> 
+</header>
 
 # Why use `vflow`?
 
