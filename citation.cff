@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Duncan"
+  given-names: "James"
+- family-names: "Kapoor"
+  given-names: "Rush"
+- family-names: "Agarwal"
+  given-names: "Abhineet"
+- family-names: "Singh"
+  given-names: "Chandan"
+- family-names: "Yu"
+  given-names: "Bin"
+title: "VeridicalFlow: a Python package for building trustworthy data science pipelines with PCS"
+journal: "Journal of Open Source Software"
+doi: 10.21105/joss.03895
+date-released: 2022-01-12
+url: "https://doi.org/10.21105/joss.03895"

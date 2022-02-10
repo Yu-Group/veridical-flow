@@ -7,13 +7,13 @@ from vflow.utils import to_tuple, to_list
 class TestBasic:
     def setup(self):
         self.pipeline = vflow.PCSPipeline()
-        self.module_set = vflow.Vset(name='s', modules={})
-        self.module = vflow.Vfunc()
+        self.vfunc_set = vflow.Vset(name='s', vfuncs={})
+        self.vfunc = vflow.Vfunc()
 
     def test_class_initializations(self):
         assert self.pipeline.steps is not None
-        assert self.module_set.modules is not None
-        assert self.module is not None
+        assert self.vfunc_set.vfuncs is not None
+        assert self.vfunc is not None
 
     def test_iteration(self):
         """Tests that iterating over pipeline is same as iterating over its steps

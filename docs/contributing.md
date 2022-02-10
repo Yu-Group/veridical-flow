@@ -17,9 +17,9 @@ After forking the [repository](https://github.com/Yu-Group/veridical-flow), be s
 
 Before submitting your changes for review, please make sure to check that your changes do not break any tests. 
 - [Tests](tests) are written with [pytest](https://docs.pytest.org/en/stable/), and can be run by running `pytest` in the repo root directory. 
-- [Docs](https://csinva.io/imodels/docs/) are built using [pdoc](https://pdoc3.github.io/pdoc/), and can be built by navigating to the `docs` directory and running `./build_docs.sh`.
+- [Docs](https://csinva.io/imodels/docs/) are built using [pdoc3](https://pdoc3.github.io/pdoc/) (install with `pip install pdoc3`, and can be built by navigating to the `docs` directory and running `./build_docs.sh`. Note that we follow the [numpy docstrings](https://numpydoc.readthedocs.io/en/latest/format.html) convention.
 
-Once your changes are ready to be submitted, make sure to push your change to GitHub before creating a pull request. See [here](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request-from-a-fork) for instruction on how to create a pull request from a fork. We will review your changes, and you may be asked to make additional changes before it is finally ready to merge. Once it is ready, we will merge your pull request, and you have will successfully contributed to the codebase!
+Once your changes are ready to be submitted, make sure to push your change to GitHub before creating a pull request. See [here](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request-from-a-fork) for instruction on how to create a pull request from a fork. We will review your changes, and you may be asked to make additional changes before it is finally ready to merge. Once it is ready, we will merge your pull request, and you have will successfully contributed to the codebase 🎉!
 
 
 

@@ -45,9 +45,9 @@ class TestPipelines:
 
         # fit models
         modeling_set = Vset(name='modeling',
-                            modules=[LogisticRegression(max_iter=1000, tol=0.1),
+                            vfuncs=[LogisticRegression(max_iter=1000, tol=0.1),
                                      DecisionTreeClassifier()],
-                            module_keys=["LR", "DT"])
+                            vfunc_keys=["LR", "DT"])
 
         modeling_set.fit(X_trains, y_trains)
 
@@ -55,8 +55,8 @@ class TestPipelines:
 
         # get metrics
         hard_metrics_set = Vset(name='hard_metrics',
-                                modules=[accuracy_score, balanced_accuracy_score],
-                                module_keys=["Acc", "Bal_Acc"])
+                                vfuncs=[accuracy_score, balanced_accuracy_score],
+                                vfunc_keys=["Acc", "Bal_Acc"])
 
         hard_metrics = hard_metrics_set.evaluate(preds_test, y_test)
 
@@ -93,17 +93,17 @@ class TestPipelines:
                                  partial(extract_feats, feat_names=['CRIM', 'ZN', 'INDUS', 'CHAS', 'NOX', 'RM', 'AGE']),
                                  ]
         feat_extraction = Vset(name='feat_extraction',
-                               modules=feat_extraction_funcs,
+                               vfuncs=feat_extraction_funcs,
                                output_matching=True)
 
         X_feats_train = feat_extraction(X_train)
 
         modeling_set = Vset(name='modeling',
-                            modules=[DecisionTreeRegressor(), RandomForestRegressor()],
-                            module_keys=["DT", "RF"])
+                            vfuncs=[DecisionTreeRegressor(), RandomForestRegressor()],
+                            vfunc_keys=["DT", "RF"])
 
         # how can we properly pass a y here so that it will fit properly?
-        # this runs, but modeling_set.out is empty
+        # this runs, but modeling_set.fitted_vfuncs is empty
         _ = modeling_set.fit(X_feats_train, y_train)
 
         # #get predictions
@@ -111,8 +111,8 @@ class TestPipelines:
 
         # get metrics
         hard_metrics_set = Vset(name='hard_metrics',
-                                modules=[r2_score],
-                                module_keys=["r2"])
+                                vfuncs=[r2_score],
+                                vfunc_keys=["r2"])
         hard_metrics = hard_metrics_set.evaluate(preds_all, y_train)
 
         # asserts
@@ -143,17 +143,17 @@ class TestPipelines:
 
         # fit models
         modeling_set = Vset(name='modeling',
-                            modules=[LogisticRegression(max_iter=1000, tol=0.1),
+                            vfuncs=[LogisticRegression(max_iter=1000, tol=0.1),
                                      DecisionTreeClassifier()],
-                            module_keys=["LR", "DT"])
+                            vfunc_keys=["LR", "DT"])
 
         modeling_set.fit(X_trains, y_trains)
         preds_test = modeling_set.predict(X_test)
 
         # get metrics
-        feature_importance_set = Vset(name='feature_importance', modules=[permutation_importance],
-                                      module_keys=["permutation_importance"])
-        importances = feature_importance_set.evaluate(modeling_set.out, X_test, y_test)
+        feature_importance_set = Vset(name='feature_importance', vfuncs=[permutation_importance],
+                                      vfunc_keys=["permutation_importance"])
+        importances = feature_importance_set.evaluate(modeling_set.fitted_vfuncs, X_test, y_test)
 
         # asserts
         k1 = (sm('X_train', 'init'), sm('subsampling_0', 'subsampling'),
@@ -178,27 +178,27 @@ class TestPipelines:
         X_tests, y_tests = subsampling_set(X_test, y_test)
 
         modeling_set = Vset(name='modeling',
-                            modules=[LogisticRegression(max_iter=1000, tol=0.1),
+                            vfuncs=[LogisticRegression(max_iter=1000, tol=0.1),
                                      DecisionTreeClassifier()],
-                            module_keys=["LR", "DT"])
+                            vfunc_keys=["LR", "DT"])
 
         modeling_set.fit(X_trains, y_trains)
         preds_test = modeling_set.predict(X_tests)
 
         # subsampling in (X_trains, y_trains), should not match subsampling in
         # X_tests because they are unrelated
-        assert len(modeling_set.out.keys()) == 7
+        assert len(modeling_set.fitted_vfuncs.keys()) == 7
         assert len(preds_test.keys()) == 19
 
     def test_lazy_eval(self):
         def f(arg_name: str = '', i: int = 0):
             return arg_name, f'f_iter={i}'
 
-        f_modules = [partial(f, i=i) for i in range(3)]
+        f_vfuncs = [partial(f, i=i) for i in range(3)]
         f_arg = init_args(('f_arg',), names=['f_init'])[0]
 
-        f_set = Vset('f', modules=f_modules)
-        f_lazy_set = Vset('f', modules=f_modules, lazy=True)
+        f_set = Vset('f', vfuncs=f_vfuncs)
+        f_lazy_set = Vset('f', vfuncs=f_vfuncs, lazy=True)
 
         f_res = f_set(f_arg)
         f_lazy_res = f_lazy_set(f_arg)
@@ -208,11 +208,11 @@ class TestPipelines:
         def g(tup, arg_name: str = '', i: int = 0):
             return tup, arg_name, f'g_iter={i}'
 
-        g_modules = [partial(g, i=i) for i in range(2)]
+        g_vfuncs = [partial(g, i=i) for i in range(2)]
         g_arg = init_args(('g_arg',), names=['g_init'])[0]
 
-        g_set = Vset('g', modules=g_modules)
-        g_lazy_set = Vset('g', modules=g_modules, lazy=True)
+        g_set = Vset('g', vfuncs=g_vfuncs)
+        g_lazy_set = Vset('g', vfuncs=g_vfuncs, lazy=True)
 
         g_res = g_set(f_res, g_arg, n_out=1)
         g_lazy_res = g_lazy_set(f_lazy_res, g_arg, n_out=1)
@@ -222,10 +222,10 @@ class TestPipelines:
         def h(tup, arg_name: str = '', i: int = 0):
             return tup, arg_name, f'h_iter={i}'
 
-        h_modules = [partial(h, i=i) for i in range(2)]
+        h_vfuncs = [partial(h, i=i) for i in range(2)]
         h_arg = init_args(('h_arg',), names=['h_init'])[0]
 
-        h_set = Vset('h', modules=h_modules)
+        h_set = Vset('h', vfuncs=h_vfuncs)
 
         h_res = h_set(g_res, h_arg, n_out=1)
         h_lazy_res = h_set(g_lazy_res, h_arg, n_out=1)
@@ -250,8 +250,8 @@ class TestPipelines:
 
             subsampling_funcs = [partial(costly_compute, row_index=np.arange(25))]
 
-            uncached_set = Vset(name='subsampling', modules=subsampling_funcs)
-            cached_set = Vset(name='subsampling', modules=subsampling_funcs, cache_dir='./')
+            uncached_set = Vset(name='subsampling', vfuncs=subsampling_funcs)
+            cached_set = Vset(name='subsampling', vfuncs=subsampling_funcs, cache_dir='./')
 
             # this always takes about 1 seconds
             begin = time.time()
@@ -263,14 +263,14 @@ class TestPipelines:
             cached_set.fit(X)
             assert time.time() - begin >= 1
 
-            assert_equal(uncached_set.out.keys(), cached_set.out.keys())
+            assert_equal(uncached_set.fitted_vfuncs.keys(), cached_set.fitted_vfuncs.keys())
 
             # this should be very fast because it's using the already cached results
-            cached_set2 = Vset(name='subsampling', modules=subsampling_funcs, cache_dir='./')
+            cached_set2 = Vset(name='subsampling', vfuncs=subsampling_funcs, cache_dir='./')
             begin = time.time()
             cached_set2.fit(X)
             assert time.time() - begin < 1
-            assert_equal(uncached_set.out.keys(), cached_set2.out.keys())
+            assert_equal(uncached_set.fitted_vfuncs.keys(), cached_set2.fitted_vfuncs.keys())
 
         finally:
             # clean up
@@ -285,14 +285,14 @@ class TestPipelines:
                                                          names=['X_train', 'X_test', 'y_train', 'y_test'])
             # fit models
             modeling_set = Vset(name='modeling',
-                                modules=[LogisticRegression(C=1, max_iter=1000, tol=0.1)],
-                                module_keys=["LR"])
+                                vfuncs=[LogisticRegression(C=1, max_iter=1000, tol=0.1)],
+                                vfunc_keys=["LR"])
 
             _ = modeling_set.fit(X_train, y_train)
             preds_test = modeling_set.predict(X_test)
             hard_metrics_set = Vset(name='hard_metrics',
-                                    modules=[accuracy_score, balanced_accuracy_score],
-                                    module_keys=["Acc", "Bal_Acc"],
+                                    vfuncs=[accuracy_score, balanced_accuracy_score],
+                                    vfunc_keys=["Acc", "Bal_Acc"],
                                     tracking_dir=runs_path)
             hard_metrics = hard_metrics_set.evaluate(y_test, preds_test)
             runs_path = os.path.join(runs_path, '1')
@@ -321,7 +321,7 @@ class TestPipelines:
         data_param_dict = {'n': [1, 2, 3]}
         data_vset = build_vset('data', gen_data, param_dict=data_param_dict, reps=5, lazy=True)
 
-        assert len(data_vset.modules) == 15
+        assert len(data_vset.vfuncs) == 15
 
         fun_param_dict = {'b': [1, 2, 3]}
         fun1_vset = build_vset('fun1', fun1, param_dict=fun_param_dict, lazy=True)
