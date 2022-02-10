@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.10.0" />
+<title>vflow API documentation</title>
+<meta name="description" content="&lt;p align=&#34;center&#34;&gt; &lt;img src=&#34;https://yu-group.github.io/veridical-flow/logo_vflow_straight.png&#34; width=&#34;70%&#34; alt=&#34;vflow logo&#34;&gt; &lt;/p&gt; …" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<p align="center">
+<img src="https://yu-group.github.io/veridical-flow/logo_vflow_straight.png" width="70%" alt="vflow logo">
+</p>
+<p align="center"> A library for making stability analysis simple, following the <a href="https://www.pnas.org/content/117/8/3920">veridical data-science</a> framework.
+</p>
+<p align="center">
+<img src="https://img.shields.io/badge/license-mit-blue.svg" alt="mit license">
+<img src="https://img.shields.io/badge/python-3.6+-blue" alt="python3.6+">
+<a href="https://github.com/Yu-group/pcs-pipeline/actions"><img src="https://github.com/Yu-group/pcs-pipeline/workflows/tests/badge.svg" alt="tests"></a>
+<img src="https://img.shields.io/github/checks-status/Yu-group/pcs-pipeline/master" alt="checks">
+<img src="https://img.shields.io/pypi/v/vflow?color=orange" alt="downloads">
+</p>
+</header>
+
+<h1 id="how-vflow-works">How <code>vflow</code> works</h1>
+
+<p>
+    VeridicalFlow provides three main abstractions: <a href="#vset" title="Vset"><code>Vset</code></a>, <a href="#vfunc" title="Vfunc"><code>Vfunc</code></a>, and <a href="#subkey" title="Subkey"><code>Subkey</code></a>. <code>Vfunc</code>s run arbitrary computations on inputs. <code>Vset</code>s collect related <code>Vfunc</code>s and determine which <code>Vfunc</code>s to apply to which inputs and how to do so. <code>Subkey</code>s help associate outputs with the <code>Vfunc</code> that produced them and the <code>Vset</code> in which the <code>Vfunc</code> was collected. Below we describe these three abstractions in more detail.
+</p>
+
+<h2 id="vset"><a href="vset.html" title="Vset"><code>Vset</code></a></h2>
+
+<p>
+Fundamentally, all <code>Vset</code> objects generate permutations by applying their modules to the Cartesian product of input parameters. Internally, <code>Vset</code> modules and parameters are wrapped in dictionaries with tuple keys. These tuples contain <code>Subkey</code> objects, which identify the <code>Vfunc</code> or parameter name (the <code>Subkey</code> "value"), as well as its originating <code>Vset</code> (the <code>Subkey</code> "origin"). Since inputs must be dictionaries with a certain format, all raw inputs must be initialized using <code>vflow.helpers.init_args</code>.
+</p>
+<p>
+When a <code>Vset</code> method such as <code>fit</code> or <code>predict</code> is called with multiple input arguments, the inputs are first combined left to right by Cartesian product; the right <code>Subkey</code> tuple is always filtered on any matching <code>Subkeys</code> in the left <code>Subkey</code> tuple, and the two keys' remaining <code>Subkeys</code> are concatenated. The values of the resulting combined dictionary are tuples containing the values of the inputs concatenated in the order in which they were passed in. (See [below](##Subkey) for more info on <code>Subkey</code> matching.) Next, the <code>Vset</code> computes the Cartesian product of the combined input dictionary with <code>Vset.modules</code> or <code>Vset.out</code> (depending on the <code>Vset</code> method that was called), combining <code>Subkey</code> tuples in a similar process to determine which <code>Vfuncs</code> to apply to which inputs.
+</p>
+<p>
+    If a <code>Vset</code> is initialized with <code>output_matching=True</code>, then outputs from this <code>Vset</code> will be matched when used in other <code>Vsets</code>. Internally, this means the new <code>Subkey</code> added to the output dictionary by the <code>Vset</code> will have an <code>output_matching</code> attribute with value <code>True</code>, which is used to reject Cartesian product combinations when <code>Subkey</code> origins do not match or match but their values differ. A <code>Vset</code> should be initialized with <code>output_matching=True</code> when it is used multiple times and outputs from that <code>Vset</code> need to be combined regardless of when it was called, as with a data cleaning <code>Vset</code> that is used first on a training dataset before model fitting and later on a test dataset for model evaluation; this ensures that the data cleaning procedure used in training the model matches the data cleaning procedure used when evaluating the model. (In contrast, note that in this example we wouldn't need to initialize the modeling <code>Vset</code> with <code>output_matching=True</code>.) On the other hand, if separate calls to the <code>Vset</code> result in entirely independent outputs, such as is usually the case for a <code>Vset</code> that does subsampling, then the <code>Vset</code> should be initialized with <code>output_matching=False</code> (the default) to prevent bad matches (e.g., unnecessary matching on subsamples of two different datasets).
+</p>
+
+<h2 id="vfunc"><a href="vfunc.html" title="Vfunc"><code>Vfunc</code></a></h2>
+
+<p>
+    When a <code>Vset</code> is initialized, the items in the <code>modules</code> arg are wrapped in <code>Vfunc</code> objects, which are like named functions that can optionally support a <code>fit</code> or <code>transform</code> method. If a <code>Vset</code> is initialized with <code>is_async=True</code>, then modules are wrapped in <code>AsyncModule</code> objects, which compute asynchronously using <code>ray</code>. If a <code>Vset</code> is initialized with <code>lazy=True</code>, <code>Vset</code> output dictionary values are wrapped in <code>VfuncPromise</code> objects, which are lazily evaluated. At the moment, <code>VfuncPromise</code> objects are only resolved if passed to a <code>Vset</code> with <code>lazy=False</code> downstream or if called manually by the user.
+</p>
+
+<h2 id="subkey"><a href="subkey.html" title="Subkey"><code>Subkey</code></a></h2>
+
+<p>
+By default, <code>Subkey</code> objects are non-matching, meaning that <code>vflow</code> won't bother to look for a matching <code>Subkey</code> when combining data or deciding which <code>Vfunc</code> to apply to which inputs. As described above, <code>Vset</code> inputs are combined from left to right two-at-a-time, and if every <code>Subkey</code> in the keys of both input dictionaries is non-matching, then the result is the full Cartesian product of the two dictionaries. (Note, however, that later inputs where matching is required may invalidate some entries in that Cartesian product.) There is one main way for a <code>Subkey</code> to be matching: it was created by a <code>Vset</code> that was initialized with <code>output_matching=True</code>.
+</p>
+<p>
+When <code>vflow</code> combines two dictionaries it previously created, if one of the entries in a given <code>Subkey</code> tuple key is matching then <code>vflow</code> tries to find a match in the tuple keys of the other dictionary. If the other dictionary's <code>Subkey</code>s are non-matching, or if there is a matching <code>Subkey</code> with the same origin and same value, then the keys are combined and their values are either combined (when combining inputs) or a <code>Vfunc</code> is applied to matching input (when using previously combined inputs). For example, say we have a data cleaning <code>Vset</code> named "cleaning" that was initialized with <code>output_matching=True</code> and has a <code>Vfunc</code> named "median impute" and another named "mean impute", and say this <code>Vset</code> was applied to a training set and later to a test set. When the <code>Vset</code> is applied to the training data, the output dictionary of cleaned datasets has some tuple keys containing a <code>Subkey</code> with origin "cleaning" and value "median impute", and that <code>Subkey</code> is carried through when the cleaned data is passed to a modeling <code>Vset</code>. When we want to produce test predictions from the modeling <code>Vset</code>, <code>vflow</code> decides which trained models to apply to which version of the cleaned test data based on the <code>Subkey</code>s created by the data cleaning <code>Vset</code>. We have a positive match if the tuple keys each have a <code>Subkey</code> with origin "cleaning" and value "median impute". On the other hand, if one of the <code>Subkey</code>s instead had value "mean impute", then the two keys mismatch and we proceed to check the next dictionary key without applying the trained model to the test data.
+</p>
+</article>
+<nav id="sidebar">
+<h1>Index 🔍</h1>
+<div class="toc">
+<ul>
+<li><a href="index.html#why-use-vflow">Why use vflow?</a></li>
+<li><a title="How vflow works" href="how-vflow-works.html">How vflow works</a></li>
+<li>
+<a href="index.html#documentation">Documentation</a>
+<ul>
+<li><a href="index.html#installation">Installation</a></li>
+</ul>
+</li>
+<li><a href="index.html#references">References</a></li>
+</ul>
+</div>
+<ul id="index">
+<li><h3><a href="#header-submodules">Sub-modules</a></h3>
+<ul>
+<li><code><a title="vflow.helpers" href="helpers.html">vflow.helpers</a></code></li>
+<li><code><a title="vflow.pipeline" href="pipeline.html">vflow.pipeline</a></code></li>
+<li><code><a title="vflow.subkey" href="subkey.html">vflow.subkey</a></code></li>
+<li><code><a title="vflow.utils" href="utils.html">vflow.utils</a></code></li>
+<li><code><a title="vflow.vfunc" href="vfunc.html">vflow.vfunc</a></code></li>
+<li><code><a title="vflow.vset" href="vset.html">vflow.vset</a></code></li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.10.0</a>.</p>
+</footer>
+</body>
+</html>
+<a href="https://github.com/Yu-Group/veridical-flow" class="github-corner" aria-label="View source on GitHub"><svg width="120" height="120" viewBox="0 0 250 250" style="fill:#70B7FD; color:#fff; position: absolute; top: 0; border: 0; right: 0;" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="m128.3,109.0 c113.8,99.7 119.0,89.6 119.0,89.6 c122.0,82.7 120.5,78.6 120.5,78.6 c119.2,72.0 123.4,76.3 123.4,76.3 c127.3,80.9 125.5,87.3 125.5,87.3 c122.9,97.6 130.6,101.9 134.4,103.2" fill="currentcolor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a><style>.github-corner:hover .octo-arm{animation:octocat-wave 560ms ease-in-out}@keyframes octocat-wave{0%,100%{transform:rotate(0)}20%,60%{transform:rotate(-25deg)}40%,80%{transform:rotate(10deg)}}@media (max-width:500px){.github-corner:hover .octo-arm{animation:none}.github-corner .octo-arm{animation:octocat-wave 560ms ease-in-out}}</style>
+
+<link rel="stylesheet" href="github.css">
