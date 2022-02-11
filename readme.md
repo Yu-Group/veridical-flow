@@ -77,6 +77,8 @@ See the [docs](https://yu-group.github.io/veridical-flow/) for reference on the 
 > [fMRI voxel prediction](https://yu-group.github.io/veridical-flow/notebooks/02_fmri.html)
 > 
 > [Fashion mnist classification](https://yu-group.github.io/veridical-flow/notebooks/03_computer_vision_dnn.html)
+>
+> [Feature importance stability](https://yu-group.github.io/veridical-flow/notebooks/04_feat_importance_stability.html)
 > 
 > [Clinical decision rule vetting](https://github.com/Yu-Group/rule-vetting)
 
