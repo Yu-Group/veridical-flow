@@ -25,7 +25,11 @@ jobs:
           pip install .[dev] --no-cache-dir
       - name: Test with pytest
         run: |
-          pytest
+          pytest --cov=./ --cov-report=xml
       - name: Lint with pylint
         run: |
           pylint vflow *.py --rcfile=.pylintrc
+      - name: "Upload coverage to Codecov"
+        uses: codecov/codecov-action@v2
+        with:
+          fail_ci_if_error: true

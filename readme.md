@@ -2,16 +2,21 @@
 <p align="center">
 	<img src="https://yu-group.github.io/veridical-flow/logo_vflow_straight.png" width="70%" alt="vflow logo"> 
 </p>
+
+  
 <p align="center"> A library for making stability analysis simple, following the <a href="https://www.pnas.org/content/117/8/3920">veridical data-science</a> framework.
 </p>
 <p align="center">
   <img src="https://img.shields.io/badge/license-mit-blue.svg" alt="mit license">
   <img src="https://img.shields.io/badge/python-3.6+-blue" alt="python3.6+">
   <a href="https://github.com/Yu-Group/veridical-flow/actions"><img src="https://github.com/Yu-Group/veridical-flow/workflows/tests/badge.svg" alt="tests"></a>
+  <a href="https://app.codecov.io/gh/Yu-Group/veridical-flow/commits?page=1"><img src="https://codecov.io/gh/Yu-Group/veridical-flow/branch/master/graph/badge.svg?token=YUAKU54XS4" alt="tests"></a>
   <a href="https://joss.theoj.org/papers/10.21105/joss.03895"><img src="https://joss.theoj.org/papers/10.21105/joss.03895/status.svg" alt="joss"></a>
   <img src="https://img.shields.io/pypi/v/vflow?color=orange" alt="downloads">
 </p> 
 </header>
+
+
 
 # Why use `vflow`?
 
