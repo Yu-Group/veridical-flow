@@ -2,8 +2,8 @@
 with open('index.html', 'r') as f:
     data = f.read()
 
-with open('how-vflow-works.html', 'r') as f:
-    how_vflow_works = f.read()
+with open('vflow-internals.html', 'r') as f:
+    vflow_internals = f.read()
 
 # Fix a url
 # data = data.replace('&lt;https://github.com/csinva/imodels</code>&gt;',
@@ -27,20 +27,20 @@ header_end = data.find('</header>')
 header = data[header_start:header_end]
 
 # replace possibly out-of-date how-vflow-works header with index's
-header_start = how_vflow_works.find('<header>')
-header_end = how_vflow_works.find('</header>')
-old_header = how_vflow_works[header_start:header_end]
-how_vflow_works = how_vflow_works.replace(old_header, header)
+header_start = vflow_internals.find('<header>')
+header_end = vflow_internals.find('</header>')
+old_header = vflow_internals[header_start:header_end]
+vflow_internals = vflow_internals.replace(old_header, header)
 
 sidebar_start = data.find('<nav id="sidebar">')
 sidebar_end = data.find('</nav>')
 sidebar = data[sidebar_start:sidebar_end]
 
 # replace possibly out-of-date how-vflow-works sidebar with index's
-sidebar_start = how_vflow_works.find('<nav id="sidebar">')
-sidebar_end = how_vflow_works.find('</nav>')
-old_sidebar = how_vflow_works[sidebar_start:sidebar_end]
-how_vflow_works = how_vflow_works.replace(old_sidebar, sidebar)
+sidebar_start = vflow_internals.find('<nav id="sidebar">')
+sidebar_end = vflow_internals.find('</nav>')
+old_sidebar = vflow_internals[sidebar_start:sidebar_end]
+vflow_internals = vflow_internals.replace(old_sidebar, sidebar)
 
 # data = data.replace('<head>', "<head>\n<link rel='icon' href='https://csinva.io/imodels/docs/favicon.ico' type='image/x-icon'/ >\n")
 
@@ -49,4 +49,4 @@ with open('index.html', 'w') as f:
     f.write(data)
 
 with open('how-vflow-works.html', 'w') as f:
-    f.write(how_vflow_works)
+    f.write(vflow_internals)

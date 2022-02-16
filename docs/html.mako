@@ -294,7 +294,7 @@
          </ul>
     </li>
     <li><a href="index.html#references">References</a></li>
-    <li><a title="How vflow works" href="how-vflow-works.html#">How vflow works</a></li>
+    <li><a title="How vflow works internally" href="vflow-internals.html#">How vflow works internally</a></li>
     </ul>
     </div>
     <ul id="index">
