@@ -59,7 +59,8 @@ def build_vset(name: str, func, param_dict=None, reps: int = 1,
         entries which are lists of values to pass to `func` at run time (or when
         instantiating `func` if it's a class object). Can also be a list of
         dicts, where the ith dict entry corresponds to `func` or the ith entry
-        of `func` (if `func` is a list).
+        of `func` (if `func` is a list). If no parameters are required for the
+        ith function, the ith entry of `param_dict` can be `None`.
     reps : int, optional
         The number of times to repeat `func` in the output Vset's vfuncs for
         each combination of the parameters in `param_dict`.
@@ -91,13 +92,17 @@ def build_vset(name: str, func, param_dict=None, reps: int = 1,
         if isinstance(param_dict, list):
             assert len(param_dict) == len(func), \
                 'list of param_dicts must be same length as list of funcs'
+            f_list.extend(func)
+            pd_list.extend(param_dict)
         else:
-            pd_list = [param_dict] * len(func)
+            pd_list.extend([param_dict] * len(func))
+            f_list.extend(func)
     elif isinstance(param_dict, list):
-        f_list = [func] * len(param_dict)
+        f_list.extend([func] * len(param_dict))
+        pd_list.extend(param_dict)
     else:
-        f_list = [func]
-        pd_list = [param_dict]
+        f_list.append(func)
+        pd_list.append(param_dict)
     
     vfuncs = []
     vkeys = []
@@ -132,6 +137,10 @@ def build_vset(name: str, func, param_dict=None, reps: int = 1,
                     vfuncs.append(Vfunc(vfunc=partial(f, **kwargs_dict), name=str(vkey_tup)))
         if not verbose or (len(pd) == 0 and reps == 1):
             vkeys = None
+
+    # TODO: fix this condition
+    # if not verbose or (all(True for pd in pd_list if pd is None) and reps == 1):
+    #     vkeys = None
     
     return Vset(name, vfuncs, is_async=is_async, vfunc_keys=vkeys,
                 output_matching=output_matching, lazy=lazy,
