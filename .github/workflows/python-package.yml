@@ -25,12 +25,11 @@ jobs:
           pip install .[dev] --no-cache-dir
       - name: Test with pytest
         run: |
-          pytest
+          pytest --cov=./ --cov-report=xml
       - name: Lint with pylint
         run: |
           pylint vflow *.py --rcfile=.pylintrc
-      - name: codecov
-        run: |
-          curl -Os https://uploader.codecov.io/latest/linux/codecov
-          chmod +x codecov
-          ./codecov
+      - name: "Upload coverage to Codecov"
+        uses: codecov/codecov-action@v2
+        with:
+          fail_ci_if_error: true

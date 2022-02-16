@@ -46,3 +46,5 @@ notebooks/data/*
 
 
 .hypothesis
+**coverage*
+codecov
