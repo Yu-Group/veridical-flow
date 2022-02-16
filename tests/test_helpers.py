@@ -91,17 +91,57 @@ class TestHelpers:
 
         # 1 func with list of param_dicts
         vset = build_vset("vset", my_func, [param_dict1, param_dict2], param3='b')
-        assert len(vset) == 6, \
+        assert len(vset) == 5, \
             'build_vset with my_func + [param_dict1, param_dict2] fails'
-        
-        # list of funcs with 1 param_dict
+        d_keys = [key[0].value for key in list(vset.vfuncs.keys())]
+        assert ('param1=hello', 'param2=world') in d_keys, \
+            'build_vset with my_func + [param_dict1, param_dict2] fails'
+        assert ('param1=hello', 'param2=bar') in d_keys, \
+            'build_vset with my_func + [param_dict1, param_dict2] fails'
+        assert ('param1=foo', 'param2=world') in d_keys, \
+            'build_vset with my_func + [param_dict1, param_dict2] fails'
+        assert ('param1=foo', 'param2=bar') in d_keys, \
+            'build_vset with my_func + [param_dict1, param_dict2] fails'
+        assert ('param1=hello', 'param2=there') in d_keys, \
+            'build_vset with my_func + [param_dict1, param_dict2] fails'
+        d_keywords = [val.vfunc.keywords for val in list(vset.vfuncs.values())]
+        assert {'param1': 'hello', 'param2': 'world', 'param3': 'b'} in d_keywords, \
+            'build_vset with my_func + [param_dict1, param_dict2] fails'
+        assert {'param1': 'hello', 'param2': 'bar', 'param3': 'b'} in d_keywords, \
+            'build_vset with my_func + [param_dict1, param_dict2] fails'
+        assert {'param1': 'foo', 'param2': 'world', 'param3': 'b'} in d_keywords, \
+            'build_vset with my_func + [param_dict1, param_dict2] fails'
+        assert {'param1': 'foo', 'param2': 'bar', 'param3': 'b'} in d_keywords, \
+            'build_vset with my_func + [param_dict1, param_dict2] fails'
+        assert {'param1': 'hello', 'param2': 'there', 'param3': 'b'} in d_keywords, \
+            'build_vset with my_func + [param_dict1, param_dict2] fails'
+
+        # list of funcs (ISSUE) with 1 param_dict
         vset = build_vset("vset", [my_func, my_func2], param_dict1, param3='b')
-        assert len(vset) == 8, \
+        assert len(vset) == 4, \
+            'build_vset with [my_func, my_func2] + param_dict1 fails'
+        d_keys = [key[0] for key in list(vset.vfuncs.keys())]
+        assert d_keys[0].value == ('param1=hello', 'param2=world'), \
+            'build_vset with [my_func, my_func2] + param_dict1 fails'
+        assert d_keys[1].value == ('param1=hello', 'param2=bar'), \
+            'build_vset with [my_func, my_func2] + param_dict1 fails'
+        assert d_keys[2].value == ('param1=foo', 'param2=world'), \
+            'build_vset with [my_func, my_func2] + param_dict1 fails'
+        assert d_keys[3].value == ('param1=foo', 'param2=bar'), \
+            'build_vset with [my_func, my_func2] + param_dict1 fails'
+        d_keywords = [val.vfunc.keywords for val in list(vset.vfuncs.values())]
+        assert d_keywords[0] == {'param1': 'hello', 'param2': 'world', 'param3': 'b'}, \
+            'build_vset with [my_func, my_func2] + param_dict1 fails'
+        assert d_keywords[1] == {'param1': 'hello', 'param2': 'bar', 'param3': 'b'}, \
+            'build_vset with [my_func, my_func2] + param_dict1 fails'
+        assert d_keywords[2] == {'param1': 'foo', 'param2': 'world', 'param3': 'b'}, \
+            'build_vset with [my_func, my_func2] + param_dict1 fails'
+        assert d_keywords[3] == {'param1': 'foo', 'param2': 'bar', 'param3': 'b'}, \
             'build_vset with [my_func, my_func2] + param_dict1 fails'
 
-        # list of funcs with list of param_dicts
+        # list of funcs (ISSUE) with list of param_dicts
         vset = build_vset("vset", [my_func, my_func2], [param_dict1, param_dict2], param3='b')
-        assert len(vset) == 6, \
+        assert len(vset) == 5, \
             'build_vset with [my_func, my_func2] + [param_dict1, param_dict2] fails'
 
         class my_class:
