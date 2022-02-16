@@ -1,8 +1,9 @@
+<header>
 <p align="center">
 	<img src="https://yu-group.github.io/veridical-flow/logo_vflow_straight.png" width="70%" alt="vflow logo"> 
 </p>
 
-
+  
 <p align="center"> A library for making stability analysis simple, following the <a href="https://www.pnas.org/content/117/8/3920">veridical data-science</a> framework.
 </p>
 <p align="center">
@@ -13,6 +14,7 @@
   <a href="https://joss.theoj.org/papers/10.21105/joss.03895"><img src="https://joss.theoj.org/papers/10.21105/joss.03895/status.svg" alt="joss"></a>
   <img src="https://img.shields.io/pypi/v/vflow?color=orange" alt="downloads">
 </p> 
+</header>
 
 
 
@@ -80,6 +82,8 @@ See the [docs](https://yu-group.github.io/veridical-flow/) for reference on the 
 > [fMRI voxel prediction](https://yu-group.github.io/veridical-flow/notebooks/02_fmri.html)
 > 
 > [Fashion mnist classification](https://yu-group.github.io/veridical-flow/notebooks/03_computer_vision_dnn.html)
+>
+> [Feature importance stability](https://yu-group.github.io/veridical-flow/notebooks/04_feat_importance_stability.html)
 > 
 > [Clinical decision rule vetting](https://github.com/Yu-Group/rule-vetting)
 
