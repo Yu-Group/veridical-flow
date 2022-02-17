@@ -48,5 +48,5 @@ vflow_internals = vflow_internals.replace(old_sidebar, sidebar)
 with open('index.html', 'w') as f:
     f.write(data)
 
-with open('how-vflow-works.html', 'w') as f:
+with open('vflow-internals.html', 'w') as f:
     f.write(vflow_internals)
