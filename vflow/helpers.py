@@ -42,8 +42,12 @@ def build_vset(name: str, func, param_dict=None, reps: int = 1,
     If `func` and `param_dict` are lists, then the ith entry of `func` will be 
     curried with ith entry of `param_dict`. If only one of `func` or `param_dict` 
     is a list, the same `func`/`param_dict` will be curried for all entries in the
+<<<<<<< HEAD
     list. Vfuncs are named with `param_dict` items as tuples of 
     str("param_name=param_val").
+=======
+    list.
+>>>>>>> 5fd022b76f1f1020a9f5dbba2ff8ecade3ccea27
 
     Parameters
     ----------
