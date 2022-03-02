@@ -35,14 +35,15 @@ def init_args(args_tuple: Union[tuple, list], names=None):
 
 def build_vset(name: str, func, param_dict=None, reps: int = 1,
                is_async: bool = False, output_matching: bool = False,
-               lazy: bool = False, cache_dir: str = None, verbose: bool = True,
+               lazy: bool = False, cache_dir: str = None,
                tracking_dir: str = None, **kwargs) -> Vset:
     """Builds a new Vset by currying or instantiating callable `func` with all
     combinations of parameters in `param_dict` and optional additional `**kwargs`.
     If `func` and `param_dict` are lists, then the ith entry of `func` will be 
     curried with ith entry of `param_dict`. If only one of `func` or `param_dict` 
     is a list, the same `func`/`param_dict` will be curried for all entries in the
-    list.
+    list. Vfuncs are named with `param_dict` items as tuples of 
+    str("param_name=param_val").
 
     Parameters
     ----------
@@ -72,9 +73,6 @@ def build_vset(name: str, func, param_dict=None, reps: int = 1,
     cache_dir : str, optional
         If provided, do caching and use `cache_dir` as the data store for
         joblib.Memory.
-    verbose : bool, optional
-        If True, vfuncs are named with `param_dict` items as tuples of
-        str("param_name=param_val").
     tracking_dir : str, optional
         If provided, use the mlflow.tracking API to log outputs as metrics with
         parameters determined by input keys.
@@ -115,7 +113,7 @@ def build_vset(name: str, func, param_dict=None, reps: int = 1,
         kwargs_tuples = product(*list(pd.values()))
         for tup in kwargs_tuples:
             kwargs_dict = {}
-            vkey_tup = ()
+            vkey_tup = (f'func={f.__name__}', )
             for param_name, param_val in zip(list(pd.keys()), tup):
                 kwargs_dict[param_name] = param_val
                 vkey_tup += (f'{param_name}={param_val}', )
@@ -135,12 +133,11 @@ def build_vset(name: str, func, param_dict=None, reps: int = 1,
                 else:
                     # use partial to wrap func
                     vfuncs.append(Vfunc(vfunc=partial(f, **kwargs_dict), name=str(vkey_tup)))
-        if not verbose or (len(pd) == 0 and reps == 1):
+        if (len(pd) == 0 and reps == 1):
             vkeys = None
 
-    # TODO: fix this condition
-    # if not verbose or (all(True for pd in pd_list if pd is None) and reps == 1):
-    #     vkeys = None
+    if all(pd is None for pd in pd_list) and reps == 1:
+        vkeys = None
     
     return Vset(name, vfuncs, is_async=is_async, vfunc_keys=vkeys,
                 output_matching=output_matching, lazy=lazy,
