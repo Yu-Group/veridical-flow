@@ -138,8 +138,6 @@ class TestHelpers:
         assert ('func=my_func2', 'param1=foo', 'param2=bar') in d_keys, \
             'build_vset with my_func + [param_dict1, param_dict2] fails'
         d_keywords = [val.vfunc.keywords for val in list(vset.vfuncs.values())]
-        assert len(d_keywords) == 8, \
-            'build_vset with [my_func, my_func2] + param_dict1 fails'
         assert d_keywords.count({'param1': 'hello', 'param2': 'world', 'param3': 'b'}) == 2, \
             'build_vset with my_func + [param_dict1, param_dict2] fails'
         assert d_keywords.count({'param1': 'hello', 'param2': 'bar', 'param3': 'b'}) == 2, \
@@ -149,8 +147,8 @@ class TestHelpers:
         assert d_keywords.count({'param1': 'foo', 'param2': 'bar', 'param3': 'b'}) == 2, \
             'build_vset with my_func + [param_dict1, param_dict2] fails'
 
-        # list of funcs with list of param_dicts
-        vset = build_vset("vset", [my_func, my_func2], [param_dict1, param_dict2], param3='b')
+        # list of funcs with list of param_dicts 
+        vset = build_vset("vset", [my_func, my_func2], [param_dict1, param_dict2])
         assert len(vset) == 6, \
             'build_vset with [my_func, my_func2] + [param_dict1, param_dict2] fails'
         d_keys = [key[0].value for key in list(vset.vfuncs.keys())]
@@ -162,16 +160,8 @@ class TestHelpers:
             'build_vset with my_func + [param_dict1, param_dict2] fails'
         assert ('func=my_func', 'param1=foo', 'param2=bar') in d_keys, \
             'build_vset with my_func + [param_dict1, param_dict2] fails'
-        # assert ('func=my_func', 'param1=hello', 'param2=there') in d_keys, \
-        #     'build_vset with my_func + [param_dict1, param_dict2] fails'
         assert ('func=my_func2', 'param1=hello', 'param2=world') in d_keys, \
             'build_vset with my_func + [param_dict1, param_dict2] fails'
-        # assert ('func=my_func2', 'param1=hello', 'param2=bar') in d_keys, \
-        #     'build_vset with my_func + [param_dict1, param_dict2] fails'
-        # assert ('func=my_func2', 'param1=foo', 'param2=world') in d_keys, \
-        #     'build_vset with my_func + [param_dict1, param_dict2] fails'
-        # assert ('func=my_func2', 'param1=foo', 'param2=bar') in d_keys, \
-        #     'build_vset with my_func + [param_dict1, param_dict2] fails'
         assert ('func=my_func2', 'param1=hello', 'param2=there') in d_keys, \
             'build_vset with my_func + [param_dict1, param_dict2] fails'
 
