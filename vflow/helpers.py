@@ -35,23 +35,33 @@ def init_args(args_tuple: Union[tuple, list], names=None):
 
 def build_vset(name: str, func, param_dict=None, reps: int = 1,
                is_async: bool = False, output_matching: bool = False,
-               lazy: bool = False, cache_dir: str = None, verbose: bool = True,
+               lazy: bool = False, cache_dir: str = None,
                tracking_dir: str = None, **kwargs) -> Vset:
     """Builds a new Vset by currying or instantiating callable `func` with all
     combinations of parameters in `param_dict` and optional additional `**kwargs`.
+    If `func` and `param_dict` are lists, then the ith entry of `func` will be 
+    curried with ith entry of `param_dict`. If only one of `func` or `param_dict` 
+    is a list, the same `func`/`param_dict` will be curried for all entries in the
+    list. Vfuncs are named with `param_dict` items as tuples of 
+    str("param_name=param_val").
 
     Parameters
     ----------
     name : str
         A name for the output Vset.
-    func : callable
+    func : callable or list[callable]
         A callable to use as the base for Vfuncs in the output Vset. Can also be
         a class object, in which case the class is immediately instantiated with
-        the parameter combinations from `param_dict`.
-    param_dict : dict[str, list], optional
+        the parameter combinations from `param_dict`. Can also be a list of
+        callables, where the ith entry corresponds to `param_dict` or the ith 
+        entry of `param_dict` (if `param_dict` is a list).
+    param_dict : dict[str, list] or list[dict[str, list]], optional
         A dict with string keys corresponding to argument names of `func` and
         entries which are lists of values to pass to `func` at run time (or when
-        instantiating `func` if it's a class object).
+        instantiating `func` if it's a class object). Can also be a list of
+        dicts, where the ith dict entry corresponds to `func` or the ith entry
+        of `func` (if `func` is a list). If no parameters are required for the
+        ith function, the ith entry of `param_dict` can be `None`.
     reps : int, optional
         The number of times to repeat `func` in the output Vset's vfuncs for
         each combination of the parameters in `param_dict`.
@@ -63,9 +73,6 @@ def build_vset(name: str, func, param_dict=None, reps: int = 1,
     cache_dir : str, optional
         If provided, do caching and use `cache_dir` as the data store for
         joblib.Memory.
-    verbose : bool, optional
-        If True, vfuncs are named with `param_dict` items as tuples of
-        str("param_name=param_val").
     tracking_dir : str, optional
         If provided, use the mlflow.tracking API to log outputs as metrics with
         parameters determined by input keys.
@@ -77,38 +84,58 @@ def build_vset(name: str, func, param_dict=None, reps: int = 1,
     new_vset : vflow.vset.Vset
 
     """
-    if param_dict is None:
-        param_dict = {}
-    assert callable(func), 'func must be callable'
-
+    f_list = []
+    pd_list = []
+    if isinstance(func, list):
+        if isinstance(param_dict, list):
+            assert len(param_dict) == len(func), \
+                'list of param_dicts must be same length as list of funcs'
+            f_list.extend(func)
+            pd_list.extend(param_dict)
+        else:
+            pd_list.extend([param_dict] * len(func))
+            f_list.extend(func)
+    elif isinstance(param_dict, list):
+        f_list.extend([func] * len(param_dict))
+        pd_list.extend(param_dict)
+    else:
+        f_list.append(func)
+        pd_list.append(param_dict)
+    
     vfuncs = []
     vkeys = []
 
-    kwargs_tuples = product(*list(param_dict.values()))
-    for tup in kwargs_tuples:
-        kwargs_dict = {}
-        vkey_tup = ()
-        for param_name, param_val in zip(list(param_dict.keys()), tup):
-            kwargs_dict[param_name] = param_val
-            vkey_tup += (f'{param_name}={param_val}', )
-        # add additional fixed kwargs to kwargs_dict
-        for k, v in kwargs.items():
-            kwargs_dict[k] = v
-        for i in range(reps):
-            # add vfunc key to vkeys
-            if reps > 1:
-                vkeys.append((f'rep={i}', ) + vkey_tup)
-            else:
-                vkeys.append(vkey_tup)
-            # check if func is a class
-            if isinstance(func, type):
-                # instantiate func
-                vfuncs.append(Vfunc(vfunc=func(**kwargs_dict), name=str(vkey_tup)))
-            else:
-                # use partial to wrap func
-                vfuncs.append(Vfunc(vfunc=partial(func, **kwargs_dict), name=str(vkey_tup)))
-    if not verbose or (len(param_dict) == 0 and reps == 1):
+    for f, pd in zip(f_list, pd_list):
+        if pd is None:
+            pd = {}
+        assert callable(f), 'func must be callable'
+        
+        kwargs_tuples = product(*list(pd.values()))
+        for tup in kwargs_tuples:
+            kwargs_dict = {}
+            vkey_tup = (f'func={f.__name__}', )
+            for param_name, param_val in zip(list(pd.keys()), tup):
+                kwargs_dict[param_name] = param_val
+                vkey_tup += (f'{param_name}={param_val}', )
+            # add additional fixed kwargs to kwargs_dict
+            for k, v in kwargs.items():
+                kwargs_dict[k] = v
+            for i in range(reps):
+                # add vfunc key to vkeys
+                if reps > 1:
+                    vkeys.append((f'rep={i}', ) + vkey_tup)
+                else:
+                    vkeys.append(vkey_tup)
+                # check if func is a class
+                if isinstance(f, type):
+                    # instantiate func
+                    vfuncs.append(Vfunc(vfunc=f(**kwargs_dict), name=str(vkey_tup)))
+                else:
+                    # use partial to wrap func
+                    vfuncs.append(Vfunc(vfunc=partial(f, **kwargs_dict), name=str(vkey_tup)))
+    if all(pd is None for pd in pd_list) and reps == 1:
         vkeys = None
+    
     return Vset(name, vfuncs, is_async=is_async, vfunc_keys=vkeys,
                 output_matching=output_matching, lazy=lazy,
                 cache_dir=cache_dir, tracking_dir=tracking_dir)
