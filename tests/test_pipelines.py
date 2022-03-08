@@ -40,7 +40,7 @@ class TestPipelines:
         # subsample data
         subsampling_set = build_vset('subsampling', sklearn.utils.resample,
                                      param_dict={'random_state': list(range(3))},
-                                     n_samples=20, verbose=False)
+                                     n_samples=20)
         X_trains, y_trains = subsampling_set(X_train, y_train)
 
         # fit models
@@ -61,8 +61,10 @@ class TestPipelines:
         hard_metrics = hard_metrics_set.evaluate(preds_test, y_test)
 
         # asserts
-        k1 = (sm('X_test', 'init'), sm('X_train', 'init'), sm('subsampling_0', 'subsampling'),
-              sm('y_train', 'init'), sm('LR', 'modeling'), sm('y_test', 'init'), sm('Acc', 'hard_metrics'))
+        k1 = (sm('X_test', 'init'), sm('X_train', 'init'), 
+              sm(('func=resample', 'random_state=0'), 'subsampling'),
+              sm('y_train', 'init'), sm('LR', 'modeling'), 
+              sm('y_test', 'init'), sm('Acc', 'hard_metrics'))
 
         assert k1 in hard_metrics, 'hard metrics should have ' + str(k1) + ' as key'
         assert hard_metrics[k1] > 0.9  # 0.9090909090909091
@@ -138,7 +140,7 @@ class TestPipelines:
         # subsample data
         subsampling_set = build_vset('subsampling', sklearn.utils.resample,
                                      param_dict={'random_state': list(range(3))},
-                                     n_samples=20, verbose=False)
+                                     n_samples=20)
         X_trains, y_trains = subsampling_set(X_train, y_train)
 
         # fit models
@@ -156,7 +158,7 @@ class TestPipelines:
         importances = feature_importance_set.evaluate(modeling_set.fitted_vfuncs, X_test, y_test)
 
         # asserts
-        k1 = (sm('X_train', 'init'), sm('subsampling_0', 'subsampling'),
+        k1 = (sm('X_train', 'init'), sm(('func=resample', 'random_state=0'), 'subsampling'),
               sm('y_train', 'init'), sm('LR', 'modeling'), sm('X_test', 'init'),
               sm('y_test', 'init'), sm('permutation_importance', 'feature_importance'))
         assert k1 in importances, 'hard metrics should have ' + str(k1) + ' as key'
