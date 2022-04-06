@@ -4,7 +4,7 @@
 </p>
 
   
-<p align="center"> A library for making stability analysis simple, following the <a href="https://www.pnas.org/content/117/8/3920">veridical data-science</a> framework.
+<p align="center"> A library for making stability analysis simple. Easily evaluate the effect of judgement calls to your data-science pipeline (e.g. choice of imputation strategy)!
 </p>
 <p align="center">
   <img src="https://img.shields.io/badge/license-mit-blue.svg" alt="mit license">
@@ -20,7 +20,7 @@
 
 # Why use `vflow`?
 
-Using `vflow`'s simple wrappers easily enables many best practices for data science, and makes writing pipelines easy.
+Using `vflow`'s simple wrappers easily enables many best practices for data science, and makes writing pipelines easy (following the [veridical data-science](https://www.pnas.org/content/117/8/3920) framework.
 
 | Stability                                                    | Computation                                                  | Reproducibility                          |
 | ------------------------------------------------------------ | ------------------------------------------------------------ | ---------------------------------------- |
