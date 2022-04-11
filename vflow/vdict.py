@@ -4,8 +4,8 @@ from typing import Tuple, Union
 
 class Vdict:
 
-    def __init__(self):
-        self._dict = {}
+    def __init__(self, _dict: dict = {}):
+        self._dict = _dict
 
     def to_pandas(self, copy=False):
         """Return a pandas.DataFrame representation of the Vdict.
@@ -21,3 +21,11 @@ class Vdict:
             `preproc_0` in preds => bool
             (`model`, `RF`) in preds => bool
         """
+        out = Vdict()
+        for vkey, value in self._dict.items():
+            if subkeys in vkey:
+                if copy:
+                    out[vkey.__deepcopy__()] = value
+                else:
+                    out[vkey] = value
+        return out

@@ -13,6 +13,12 @@ class Subkey:
         output_matching: bool (optional), default False
             inherited from the Vset where the Subkey is created
         """
+        self.meta = {}
+        self.meta['value'] = value
+        self.meta['origin'] = origin
+        self.meta['inputs'] = None
+        self.meta['params'] = None
+        self.meta['vfunc'] = None
         self.value = value
         self.origin = origin
         self.output_matching = output_matching
