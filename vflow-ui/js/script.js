@@ -5,6 +5,8 @@ var fs = require('fs');
 
 function getTrainingParams () {
     var trainDataPath = document.getElementById('train_data_path').files[0].path;
+    var testDataPath = document.getElementById('test_data_path').files[0].path;
+
     var testSize = document.getElementById('test_size').value;
     var shuffle = document.getElementById('shuffle').checked;
     var missingValueOption = document.getElementById('missing-values').value;
