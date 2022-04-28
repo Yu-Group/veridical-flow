@@ -39,85 +39,138 @@
     <br>
     <div class="container">
         <div class="row">
-            <div class="col">Enter your training dataset:</div>
-            <div class="col"><input id="train_data_path" type="file"></div>
+            <div class="col">Enter your X dataset (.csv):</div>
+            <div class="col"><input id="X_data_path" type="file"></div>
         </div>
 
         <div class="row">
-            <div class="col">Enter your testing dataset:</div>
-            <div class="col"><input id="test_data_path" type="file"></div>
+            <div class="col">Enter your y dataset (.csv):</div>
+            <div class="col"><input id="y_data_path" type="file"></div>
         </div>
-    </div>
-
-    <div class="row">
-        <div class="col">Subsample?</div>
-        <div class="col">
-        <div class="form-check form-check-inline">
-            <input class="form-check-input" type="radio" name="inlineRadioOptions" id="subsample" value="option1">
-            <label class="form-check-label" for="subsample">Yes</label>
-        </div>
-        <div class="form-check form-check-inline">
-            <input class="form-check-input" type="radio" name="inlineRadioOptions" id="subsample-false" value="option2">
-            <label class="form-check-label" for="subsample-false">No</label>
-        </div>
-    </div>
-    </div>
-
-    <div class="row">
-        <div class="col">Replace missing values with: </div>
-        <div class="col">
-        <select id="missing-values" name="missing-values">
-            <option value="mean">mean</option>
-            <option value="median">median</option>
-            <option value="drop">drop</option>
-            <option value="most frequent">most frequent</option>
-            <option value="constant">constant</option>
-        </select>
-    </div>
-    </div>
-
-    <!--
-    <div class="row">
-        <div class="col">Encoding: </div>
-        <div class="col">
-        <select id="encoding" name="encoding">
-            <option value=""></option>
-            <option value="OneHotEncoding">one hot encoding</option>
-            <option value="LabelEncoding">label encoding</option>
-        </select>
-    </div>
-    </div>
-    -->
-
-        <!-- <br>
-      <label>Use hyperparameter search: </label>
-
-      <div class="form-check form-check-inline">
-          <input class="form-check-input" onclick="displayHyperparamOptions()" type="radio" name="inlineRadioOptions" id="hyper-yes" value="yes">
-          <label class="form-check-label" for="hyper-yes">Yes</label>
-        </div>
-        <div class="form-check form-check-inline">
-          <input class="form-check-input" onclick="displayHyperparamOptions()" type="radio" name="inlineRadioOptions" id="hyper-no" value="no">
-          <label class="form-check-label" for="hyper-no">No</label>
-        </div>
+        
         <br>
-    <div id="hyperparam-search" style="display: none;">
-        <label>Method: </label>
-      <select id="method" name="method">
-        <option value="grid_search">grid search</option>
-        <option value="random_search">random search</option>
 
-        <label>Number of Kfold: </label>
-      <select id="kfold" name="kfold">
-        <option value="NeuralNetwork">neural networks</option>
-        <option value="LinearRegression">linear regression</option>
-    </div> -->
+        <div class = "card">
+            <div class="card-header">
+                Add a Vset
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label for="exampleFormControlInput1">Vset Name</label>
+                    <input type="text" class="form-control" id="vset-command0">
+                  </div>
+          
+                  <div class="form-group">
+                      <label for="exampleFormControlInput1">Scikit Learn Function</label>
+                      <select class="form-control" id="vset-funcs0" name="funcs">
+                          <option value="sklearn.utils.resample">Preprocessing - subsample</option>
+                          <option value="sklearn.linear_model.LogisticRegression">Modeling - logistic regression</option>
+                          <option value="sklearn.tree.DecisionTreeClassifier">Modeling - decision tree</option>
+                      </select>
+                  </div>
+                  <div class="form-group">
+                      <label for="exampleFormControlInput1">Number of repetitions</label>
+                      <input type="text" class="form-control" id="vset-reps0">
+                    </div>
+                  <div class="form-group">
+                      <label for="exampleFormControlInput1">Parameter Dictionary</label>
+                      <div id = "param_dict0"> 
+                      <div class = "row" id = "param_kv0">
+                      <div class = "col"><input type="text" class="form-control" id="k0"></div>
+                      :
+                      <div class = "col"><input type="text" class="form-control" id="v0"></div>
+                      </div> 
+                      </div>
+                  </div>
+            </div>
+        </div>
+        
+        <br>
+
+        <div class = "card">
+            <div class="card-header">
+                Add a Vset
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label for="exampleFormControlInput1">Vset Name</label>
+                    <input type="text" class="form-control" id="vset-command1">
+                  </div>
+          
+                  <div class="form-group">
+                      <label for="exampleFormControlInput1">Scikit Learn Function</label>
+                      <select class="form-control" id="vset-funcs1" name="funcs">
+                          <option value="sklearn.utils.resample">Preprocessing - subsample</option>
+                          <option value="sklearn.linear_model.LogisticRegression">Modeling - logistic regression</option>
+                          <option value="sklearn.tree.DecisionTreeClassifier">Modeling - decision tree</option>
+                          <option value="sklearn.metrics.accuracy_score">Metrics - accuracy score</option>
+                          <option value="sklearn.metrics.balanced_accuracy_score">Metrics - balanced accuracy score</option>
+                      </select>
+                  </div>
+                  <div class="form-group">
+                      <label for="exampleFormControlInput1">Number of repetitions</label>
+                      <input type="text" class="form-control" id="vset-reps1">
+                    </div>
+                  <div class="form-group">
+                      <label for="exampleFormControlInput1">Parameter Dictionary</label>
+                      <div id = "param_dict1"> 
+                      <div class = "row" id = "param_kv1">
+                      <div class = "col"><input type="text" class="form-control" id="k1"></div>
+                      :
+                      <div class = "col"><input type="text" class="form-control" id="v1"></div>
+                      </div> 
+                      </div>
+                  </div>
+            </div>
+        </div>
+
+        <br>
+
+        <div class = "card">
+            <div class="card-header">
+                Add a Vset
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label for="exampleFormControlInput1">Vset Name</label>
+                    <input type="text" class="form-control" id="vset-command2">
+                  </div>
+          
+                  <div class="form-group">
+                      <label for="exampleFormControlInput1">Scikit Learn Function</label>
+                      <select class="form-control" id="vset-funcs2" name="funcs">
+                          <option value="sklearn.utils.resample">Preprocessing - subsample</option>
+                          <option value="sklearn.linear_model.LogisticRegression">Modeling - logistic regression</option>
+                          <option value="sklearn.tree.DecisionTreeClassifier">Modeling - decision tree</option>
+                      </select>
+                  </div>
+                  <div class="form-group">
+                      <label for="exampleFormControlInput1">Number of repetitions</label>
+                      <input type="text" class="form-control" id="vset-reps2">
+                    </div>
+                  <div class="form-group">
+                      <label for="exampleFormControlInput1">Parameter Dictionary</label>
+                      <div id = "param_dict2"> 
+                      <div class = "row" id = "param_kv2">
+                      <div class = "col"><input type="text" class="form-control" id="k2"></div>
+                      :
+                      <div class = "col"><input type="text" class="form-control" id="v2"></div>
+                      </div> 
+                      </div>
+                  </div>
+            </div>
+        </div>
+
+    
+    </div>
 </div>
 
 <br><br>
 <div style="text-align: center;">
-<button onclick="getTrainingParams()" type="button" class="btn btn-primary">Start</button>
+<button onclick="getExecutionParams()" type="button" class="btn btn-primary">Execute</button>
 </div>
+
+<br><br>
 
  <!--    <script>
         function displayHyperparamOptions() {

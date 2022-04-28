@@ -2,8 +2,7 @@
 var path = require('path');
 var fs = require('fs');
 
-
-function getTrainingParams () {
+function getExecutionParams () {
     var trainDataPath = document.getElementById('train_data_path').files[0].path;
     var testDataPath = document.getElementById('test_data_path').files[0].path;
 
