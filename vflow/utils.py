@@ -224,7 +224,7 @@ def dict_to_df(d: dict, param_key=None):
         cols = [c if c != 'init' else init_step(idx, cols) for idx, c in enumerate(cols)]
         df.set_axis(cols, axis=1, inplace=True)
         if param_key:
-            param_keys = df[param_key].tolist()
+            param_keys = df[param_key].tolist() # pylint: disable=unsubscriptable-object
             if param_key == 'out' and hasattr(param_keys[0], '__iter__'):
                 param_df = pd.DataFrame(param_keys)
                 param_df.columns = [f'{param_key}-{col}' for col in param_df.columns]

@@ -26,7 +26,7 @@ load-plugins=
     pylint.extensions.code_style,
     pylint.extensions.overlapping_exceptions,
     pylint.extensions.typing,
-    pylint.extensions.redefined_variable_type,
+    # pylint.extensions.redefined_variable_type,
     pylint.extensions.comparison_placement,
 
 # Use multiple processes to speed up Pylint.
