@@ -250,7 +250,7 @@ def dict_to_df(d: dict, param_key=None):
         cols = [c if c != &#39;init&#39; else init_step(idx, cols) for idx, c in enumerate(cols)]
         df.set_axis(cols, axis=1, inplace=True)
         if param_key:
-            param_keys = df[param_key].tolist()
+            param_keys = df[param_key].tolist() # pylint: disable=unsubscriptable-object
             if param_key == &#39;out&#39; and hasattr(param_keys[0], &#39;__iter__&#39;):
                 param_df = pd.DataFrame(param_keys)
                 param_df.columns = [f&#39;{param_key}-{col}&#39; for col in param_df.columns]
@@ -835,7 +835,7 @@ parameters in <code>param_key</code> if not None</p>
         cols = [c if c != &#39;init&#39; else init_step(idx, cols) for idx, c in enumerate(cols)]
         df.set_axis(cols, axis=1, inplace=True)
         if param_key:
-            param_keys = df[param_key].tolist()
+            param_keys = df[param_key].tolist() # pylint: disable=unsubscriptable-object
             if param_key == &#39;out&#39; and hasattr(param_keys[0], &#39;__iter__&#39;):
                 param_df = pd.DataFrame(param_keys)
                 param_df.columns = [f&#39;{param_key}-{col}&#39; for col in param_df.columns]

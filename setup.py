@@ -3,7 +3,7 @@ from os import path
 import setuptools
 
 path_to_repo = path.abspath(path.dirname(__file__))
-with open(path.join(path_to_repo, 'readme.md'), encoding='utf-8') as f:
+with open(path.join(path_to_repo, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
 setuptools.setup(
