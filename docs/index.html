@@ -26,7 +26,7 @@
 <p align="center">
 <img src="https://yu-group.github.io/veridical-flow/logo_vflow_straight.png" width="70%" alt="vflow logo">
 </p>
-<p align="center"> A library for making stability analysis simple, following the <a href="https://www.pnas.org/content/117/8/3920">veridical data-science</a> framework.
+<p align="center"> A library for making stability analysis simple. Easily evaluate the effect of judgment calls to your data-science pipeline (e.g. choice of imputation strategy)!
 </p>
 <p align="center">
 <img src="https://img.shields.io/badge/license-mit-blue.svg" alt="mit license">
@@ -38,24 +38,35 @@
 </p>
 </header>
 <h1 id="why-use-vflow">Why use <code><a title="vflow" href="#vflow">vflow</a></code>?</h1>
-<p>Using <code><a title="vflow" href="#vflow">vflow</a></code>'s simple wrappers easily enables many best practices for data science, and makes writing pipelines easy.</p>
+<p>Using <code><a title="vflow" href="#vflow">vflow</a></code>s simple wrappers facilitates many best practices for data science,
+as laid out in the predictability, computability, and stability (PCS) framework
+for <a href="https://www.pnas.org/content/117/8/3920">veridical data science</a>. The goal
+of <code><a title="vflow" href="#vflow">vflow</a></code> is to easily enable data science pipelines that follow PCS by
+providing intuitive low-code syntax, efficient and flexible computational
+backends via <a href="https://docs.ray.io/en/latest/ray-core/walkthrough.html"><code>Ray</code></a>,
+and well-documented, reproducible experimentation via
+<a href="https://mlflow.org/docs/latest/index.html"><code>MLflow</code></a>.</p>
 <table>
 <thead>
 <tr>
-<th>Stability</th>
 <th>Computation</th>
 <th>Reproducibility</th>
+<th>Prediction</th>
+<th>Stability</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Replace a single function (e.g. preprocessing) with a set of functions and easily assess the stability of downstream results</td>
 <td>Automatic parallelization and caching throughout the pipeline</td>
 <td>Automatic experiment tracking and saving</td>
+<td>Filter the pipeline by training and validation performance</td>
+<td>Replace a single function (e.g. preprocessing) with a set of functions and easily assess the stability of downstream results</td>
 </tr>
 </tbody>
 </table>
-<p>Here we show a simple example of an entire data-science pipeline with several perturbations (e.g. different data subsamples, models, and metrics) written simply using <code><a title="vflow" href="#vflow">vflow</a></code>.</p>
+<p>Here we show a simple example of an entire data-science pipeline with several
+perturbations (e.g. different data subsamples, models, and metrics) written
+simply using <code><a title="vflow" href="#vflow">vflow</a></code>.</p>
 <pre><code class="language-python">import sklearn
 from sklearn.metrics import accuracy_score, balanced_accuracy_score
 from vflow import init_args, Vset

@@ -32,6 +32,7 @@ header_end = vflow_internals.find('</header>')
 old_header = vflow_internals[header_start:header_end]
 vflow_internals = vflow_internals.replace(old_header, header)
 
+# get sidebar from index.html
 sidebar_start = data.find('<nav id="sidebar">')
 sidebar_end = data.find('</nav>')
 sidebar = data[sidebar_start:sidebar_end]
@@ -40,6 +41,7 @@ sidebar = data[sidebar_start:sidebar_end]
 sidebar_start = vflow_internals.find('<nav id="sidebar">')
 sidebar_end = vflow_internals.find('</nav>')
 old_sidebar = vflow_internals[sidebar_start:sidebar_end]
+
 vflow_internals = vflow_internals.replace(old_sidebar, sidebar)
 
 # data = data.replace('<head>', "<head>\n<link rel='icon' href='https://csinva.io/imodels/docs/favicon.ico' type='image/x-icon'/ >\n")

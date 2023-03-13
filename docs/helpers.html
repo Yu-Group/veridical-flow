@@ -274,7 +274,7 @@ def cum_acc_by_uncertainty(mean_preds, std_preds, true_labels):
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
 <dt id="vflow.helpers.build_vset"><code class="name flex">
-<span>def <span class="ident">build_vset</span></span>(<span>name: str, func, param_dict=None, reps: int = 1, is_async: bool = False, output_matching: bool = False, lazy: bool = False, cache_dir: str = None, tracking_dir: str = None, **kwargs) ‑> <a title="vflow.vset.Vset" href="vset.html#vflow.vset.Vset">Vset</a></span>
+<span>def <span class="ident">build_vset</span></span>(<span>name: str, func, param_dict=None, reps: int = 1, is_async: bool = False, output_matching: bool = False, lazy: bool = False, cache_dir: str = None, tracking_dir: str = None, **kwargs) ‑> <a title="vflow.vset.Vset" href="vset.html#vflow.vset.Vset">Vset</a></span>
 </code></dt>
 <dd>
 <div class="desc"><p>Builds a new Vset by currying or instantiating callable <code>func</code> with all
@@ -486,7 +486,7 @@ true_labels: dict or list-like</p>
 </details>
 </dd>
 <dt id="vflow.helpers.filter_vset_by_metric"><code class="name flex">
-<span>def <span class="ident">filter_vset_by_metric</span></span>(<span>metric_dict: dict, vset: <a title="vflow.vset.Vset" href="vset.html#vflow.vset.Vset">Vset</a>, *vsets: <a title="vflow.vset.Vset" href="vset.html#vflow.vset.Vset">Vset</a>, n_keep: int = 1, bigger_is_better: bool = True, filter_on=None, group: bool = False) ‑> Union[<a title="vflow.vset.Vset" href="vset.html#vflow.vset.Vset">Vset</a>, list]</span>
+<span>def <span class="ident">filter_vset_by_metric</span></span>(<span>metric_dict: dict, vset: <a title="vflow.vset.Vset" href="vset.html#vflow.vset.Vset">Vset</a>, *vsets: <a title="vflow.vset.Vset" href="vset.html#vflow.vset.Vset">Vset</a>, n_keep: int = 1, bigger_is_better: bool = True, filter_on=None, group: bool = False) ‑> Union[<a title="vflow.vset.Vset" href="vset.html#vflow.vset.Vset">Vset</a>, list]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Returns a new Vset by filtering <code>vset.vfuncs</code> based on values in filter_dict.</p>
@@ -586,7 +586,7 @@ input Vset names</dd>
 </details>
 </dd>
 <dt id="vflow.helpers.init_args"><code class="name flex">
-<span>def <span class="ident">init_args</span></span>(<span>args_tuple: Union[tuple, list], names=None)</span>
+<span>def <span class="ident">init_args</span></span>(<span>args_tuple: Union[tuple, list], names=None)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Converts tuple of arguments to a list of dicts</p>

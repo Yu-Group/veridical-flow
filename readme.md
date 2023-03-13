@@ -4,7 +4,7 @@
 </p>
 
   
-<p align="center"> A library for making stability analysis simple. Easily evaluate the effect of judgement calls to your data-science pipeline (e.g. choice of imputation strategy)!
+<p align="center"> A library for making stability analysis simple. Easily evaluate the effect of judgment calls to your data-science pipeline (e.g. choice of imputation strategy)!
 </p>
 <p align="center">
   <img src="https://img.shields.io/badge/license-mit-blue.svg" alt="mit license">
@@ -20,13 +20,22 @@
 
 # Why use `vflow`?
 
-Using `vflow`'s simple wrappers easily enables many best practices for data science, and makes writing pipelines easy (following the [veridical data-science](https://www.pnas.org/content/117/8/3920) framework.
+Using `vflow`s simple wrappers facilitates many best practices for data science,
+as laid out in the predictability, computability, and stability (PCS) framework
+for [veridical data science](https://www.pnas.org/content/117/8/3920). The goal
+of `vflow` is to easily enable data science pipelines that follow PCS by
+providing intuitive low-code syntax, efficient and flexible computational
+backends via [`Ray`](https://docs.ray.io/en/latest/ray-core/walkthrough.html),
+and well-documented, reproducible experimentation via
+[`MLflow`](https://mlflow.org/docs/latest/index.html).
 
-| Stability                                                    | Computation                                                  | Reproducibility                          |
-| ------------------------------------------------------------ | ------------------------------------------------------------ | ---------------------------------------- |
-| Replace a single function (e.g. preprocessing) with a set of functions and easily assess the stability of downstream results | Automatic parallelization and caching throughout the pipeline | Automatic experiment tracking and saving |
+| Computation | Reproducibility | Prediction | Stability |
+| ----------- | --------------- | ---------- | --------- |
+| Automatic parallelization and caching throughout the pipeline | Automatic experiment tracking and saving | Filter the pipeline by training and validation performance | Replace a single function (e.g. preprocessing) with a set of functions and easily assess the stability of downstream results |
 
-Here we show a simple example of an entire data-science pipeline with several perturbations (e.g. different data subsamples, models, and metrics) written simply using `vflow`.
+Here we show a simple example of an entire data-science pipeline with several
+perturbations (e.g. different data subsamples, models, and metrics) written
+simply using `vflow`.
 
 ```python
 import sklearn

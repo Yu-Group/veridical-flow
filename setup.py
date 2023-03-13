@@ -38,6 +38,7 @@ setuptools.setup(
         'notebooks': [
             'tqdm',
             'jupyter',
+            'jupyterlab',
             'scikit-learn >=0.23.0',  # 0.23+ only works on py3.6+)
             'torch >= 1.0.0',
             'torchvision',
