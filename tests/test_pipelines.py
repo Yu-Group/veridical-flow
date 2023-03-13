@@ -76,7 +76,7 @@ class TestPipelines:
         """
         # get data as df
         np.random.seed(13)
-        data = sklearn.datasets.load_boston()
+        data = sklearn.datasets.fetch_california_housing()
         df = pd.DataFrame.from_dict(data['data'])
         df.columns = data['feature_names']
         y = data['target']
@@ -88,11 +88,11 @@ class TestPipelines:
             """extract specific columns from dataframe
             """
             if feat_names is None:
-                feat_names = ['CRIM', 'ZN', 'INDUS', 'CHAS']
+                feat_names = ['HouseAge', 'AveBedrms', 'Population']
             return df[feat_names]
 
-        feat_extraction_funcs = [partial(extract_feats, feat_names=['CRIM', 'ZN', 'INDUS', 'CHAS']),
-                                 partial(extract_feats, feat_names=['CRIM', 'ZN', 'INDUS', 'CHAS', 'NOX', 'RM', 'AGE']),
+        feat_extraction_funcs = [partial(extract_feats, feat_names=['HouseAge', 'AveBedrms', 'Population']),
+                                 partial(extract_feats, feat_names=['HouseAge', 'AveBedrms', 'Population', 'MedInc', 'AveOccup']),
                                  ]
         feat_extraction = Vset(name='feat_extraction',
                                vfuncs=feat_extraction_funcs,
@@ -122,7 +122,7 @@ class TestPipelines:
               sm('y_train', 'init'),
               sm('DT', 'modeling'), sm('y_train', 'init'), sm('r2', 'hard_metrics'))
         assert k1 in hard_metrics, 'hard metrics should have ' + str(k1) + ' as key'
-        assert hard_metrics[k1] > 0.9  # 0.9090909090909091
+        assert hard_metrics[k1] > 0.99 # 0.9997246132375425
         assert PREV_KEY in hard_metrics
         assert len(hard_metrics.keys()) == 5
 
