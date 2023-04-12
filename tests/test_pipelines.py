@@ -23,7 +23,7 @@ from vflow.vset import PREV_KEY
 
 class TestPipelines:
 
-    def setup(self):
+    def setup_method(self):
         pass
 
     def test_subsampling_fitting_metrics_pipeline(self):
@@ -382,6 +382,33 @@ class TestPipelines:
         assert_equal(list(preds.values())[0](), np.array([1.4, 2.4, 3.4])*.4)
         assert_equal(list(preds_proba.values())[0](),
                      1 / (1 + np.exp(-np.array([1.4, 2.4, 3.4])*.4)))
+
+
+    def test_lazy_async_two_step(self):
+        def add_a(arr, a=0.4):
+            return arr + a
+
+        class learner:
+            def fit(self, a):
+                self.mean = sum(a) / len(a)
+                return self
+            def predict(self, x):
+                return self.mean*x
+            def predict_proba(self, x):
+                y = np.exp(-self.mean*x)
+                return 1 / (1 + y)
+
+        add_a_vset = Vset("add_a", [add_a], lazy=True)
+        vset = Vset("learner", [learner()], is_async=True)
+        data = init_args([np.array([1, 2, 3])])[0]
+        transformed = add_a_vset(data)
+        vset.fit(data)
+        preds = vset.predict(transformed)
+        preds_proba = vset.predict_proba(transformed)
+
+        assert_equal(list(transformed.values())[0].value, [1.4, 2.4, 3.4])
+        assert_equal(list(preds.values())[0], np.array([1.4*2, 2.4*2, 3.4*2]))
+        assert_equal(list(preds_proba.values())[0], 1 / (1 + np.exp(-np.array([1.4*2, 2.4*2, 3.4*2]))))
 
 
 def costly_compute(data, row_index=0):

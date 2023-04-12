@@ -298,14 +298,16 @@ def _apply_func_cached(out_dict: dict, is_async: bool, lazy: bool, *args):
     """
     for in_dict in args:
         if not isinstance(in_dict, dict):
-            raise Exception('Need to run init_args before calling vfunc_set!')
+            raise Exception('Run init_args on data before using it when calling a Vset!')
 
     data_dict = combine_dicts(*args)
     out_dict = apply_vfuncs(out_dict, data_dict, lazy)
 
     if is_async and not lazy:
         out_keys = list(out_dict.keys())
-        out_vals = ray.get(list(out_dict.values()))
+        out_vals = list(out_dict.values())
+        if isinstance(out_vals[0], ray.ObjectRef):
+            out_vals = ray.get(out_vals)
         out_dict = dict(zip(out_keys, out_vals))
 
     return out_dict
