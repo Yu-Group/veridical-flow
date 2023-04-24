@@ -48,3 +48,6 @@ notebooks/data/*
 .hypothesis
 **coverage*
 codecov
+
+**/dist/
+**/node_modules/

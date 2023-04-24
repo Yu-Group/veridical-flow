@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Veridical Flow UI</title>
+    <img src="../assets/logo_vflow_straight.png" />
+    <!-- https://electronjs.org/docs/tutorial/security#csp-meta-tag -->
+    <!-- <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline';" />
+     -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"
+        integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj"
+        crossorigin="anonymous"></script>
+
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css"
+        integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
+
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-ho+j7jyWK8fNQe+A12Hb8AhRq26LrZ/JpcUGGOn+Y7RsweNrtN/tE3MoK7ZeZDyx"
+        crossorigin="anonymous"></script>
+
+    <div>
+
+        <a href="../index.html">
+            <svg width="2em" height="2em" viewBox="0 0 16 16" class="bi bi-arrow-left-short" fill="currentColor"
+                xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd"
+                    d="M12 8a.5.5 0 0 1-.5.5H5.707l2.147 2.146a.5.5 0 0 1-.708.708l-3-3a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L5.707 7.5H11.5a.5.5 0 0 1 .5.5z" />
+            </svg>
+        </a>
+    </div>
+</head>
+
+<body>
+
+    <h1 id="title">Veridical Flow UI</h1>
+    <br>
+    <div class="container">
+        <div class="row">
+            <div class="col">Enter your X dataset (.csv):</div>
+            <div class="col"><input id="X_data_path" type="file"></div>
+        </div>
+
+        <div class="row">
+            <div class="col">Enter your y dataset (.csv):</div>
+            <div class="col"><input id="y_data_path" type="file"></div>
+        </div>
+        
+        <br>
+
+        <div class = "card">
+            <div class="card-header">
+                Add a Vset
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label for="exampleFormControlInput1">Vset Name</label>
+                    <input type="text" class="form-control" id="vset-command0">
+                  </div>
+          
+                  <div class="form-group">
+                      <label for="exampleFormControlInput1">Scikit Learn Function</label>
+                      <select class="form-control" id="vset-funcs0" name="funcs">
+                          <option value="sklearn.utils.resample">Preprocessing - subsample</option>
+                          <option value="sklearn.linear_model.LogisticRegression">Modeling - logistic regression</option>
+                          <option value="sklearn.tree.DecisionTreeClassifier">Modeling - decision tree</option>
+                      </select>
+                  </div>
+                  <div class="form-group">
+                      <label for="exampleFormControlInput1">Number of repetitions</label>
+                      <input type="text" class="form-control" id="vset-reps0">
+                    </div>
+                  <div class="form-group">
+                      <label for="exampleFormControlInput1">Parameter Dictionary</label>
+                      <div id = "param_dict0"> 
+                      <div class = "row" id = "param_kv0">
+                      <div class = "col"><input type="text" class="form-control" id="k0"></div>
+                      :
+                      <div class = "col"><input type="text" class="form-control" id="v0"></div>
+                      </div> 
+                      </div>
+                  </div>
+            </div>
+        </div>
+        
+        <br>
+
+        <div class = "card">
+            <div class="card-header">
+                Add a Vset
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label for="exampleFormControlInput1">Vset Name</label>
+                    <input type="text" class="form-control" id="vset-command1">
+                  </div>
+          
+                  <div class="form-group">
+                      <label for="exampleFormControlInput1">Scikit Learn Function</label>
+                      <select class="form-control" id="vset-funcs1" name="funcs">
+                          <option value="sklearn.utils.resample">Preprocessing - subsample</option>
+                          <option value="sklearn.linear_model.LogisticRegression">Modeling - logistic regression</option>
+                          <option value="sklearn.tree.DecisionTreeClassifier">Modeling - decision tree</option>
+                          <option value="sklearn.metrics.accuracy_score">Metrics - accuracy score</option>
+                          <option value="sklearn.metrics.balanced_accuracy_score">Metrics - balanced accuracy score</option>
+                      </select>
+                  </div>
+                  <div class="form-group">
+                      <label for="exampleFormControlInput1">Number of repetitions</label>
+                      <input type="text" class="form-control" id="vset-reps1">
+                    </div>
+                  <div class="form-group">
+                      <label for="exampleFormControlInput1">Parameter Dictionary</label>
+                      <div id = "param_dict1"> 
+                      <div class = "row" id = "param_kv1">
+                      <div class = "col"><input type="text" class="form-control" id="k1"></div>
+                      :
+                      <div class = "col"><input type="text" class="form-control" id="v1"></div>
+                      </div> 
+                      </div>
+                  </div>
+            </div>
+        </div>
+
+        <br>
+
+        <div class = "card">
+            <div class="card-header">
+                Add a Vset
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label for="exampleFormControlInput1">Vset Name</label>
+                    <input type="text" class="form-control" id="vset-command2">
+                  </div>
+          
+                  <div class="form-group">
+                      <label for="exampleFormControlInput1">Scikit Learn Function</label>
+                      <select class="form-control" id="vset-funcs2" name="funcs">
+                          <option value="sklearn.utils.resample">Preprocessing - subsample</option>
+                          <option value="sklearn.linear_model.LogisticRegression">Modeling - logistic regression</option>
+                          <option value="sklearn.tree.DecisionTreeClassifier">Modeling - decision tree</option>
+                      </select>
+                  </div>
+                  <div class="form-group">
+                      <label for="exampleFormControlInput1">Number of repetitions</label>
+                      <input type="text" class="form-control" id="vset-reps2">
+                    </div>
+                  <div class="form-group">
+                      <label for="exampleFormControlInput1">Parameter Dictionary</label>
+                      <div id = "param_dict2"> 
+                      <div class = "row" id = "param_kv2">
+                      <div class = "col"><input type="text" class="form-control" id="k2"></div>
+                      :
+                      <div class = "col"><input type="text" class="form-control" id="v2"></div>
+                      </div> 
+                      </div>
+                  </div>
+            </div>
+        </div>
+
+    
+    </div>
+</div>
+
+<br><br>
+<div style="text-align: center;">
+<button onclick="getExecutionParams()" type="button" class="btn btn-primary">Execute</button>
+</div>
+
+<br><br>
+
+ <!--    <script>
+        function displayHyperparamOptions() {
+            let hyperparamBtn = document.getElementById('hyper-yes');
+            let hyperparamDiv = document.getElementById('hyperparam-search');
+            if (hyperparamBtn.checked) {
+                hyperparamDiv.style.display = "block";
+            }
+            else {
+                hyperparamDiv.style.display = "none";
+            }
+        }
+    </script> -->
+    <script src="../js/script.js"></script>
+</body>
+
+</html>
