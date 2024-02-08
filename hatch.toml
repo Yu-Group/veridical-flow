@@ -56,3 +56,7 @@ dependencies = [
   "coverage[toml]",
   "lxml",
 ]
+
+[envs.coverage.scripts]
+combine = "coverage combine {args}"
+report-xml = "coverage xml"
