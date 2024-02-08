@@ -5,9 +5,9 @@ on:
   push:
     branches:
       - master
-    pull_request:
-      branches:
-        - master
+  pull_request:
+    branches:
+      - master
 
 env:
   STABLE_PYTHON_VERSION: '3.11'
@@ -57,7 +57,7 @@ jobs:
     name: Report coverage
     runs-on: ubuntu-latest
     needs:
-      - run
+      - build
 
     steps:
       - uses: actions/checkout@v4
