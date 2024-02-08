@@ -35,6 +35,9 @@ jobs:
       - name: Ensure latest pip
         run: python -m pip install --upgrade pip
 
+      - name: Install Hatch
+        run: pip install hatch
+
       - name: Install vflow
         run: python -m pip install -e .
 
