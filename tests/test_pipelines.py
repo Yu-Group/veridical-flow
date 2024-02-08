@@ -192,7 +192,6 @@ class TestPipelines:
         )
 
         modeling_set.fit(X_trains, y_trains)
-        preds_test = modeling_set.predict(X_test)
 
         # get metrics
         feature_importance_set = Vset(
@@ -365,14 +364,12 @@ class TestPipelines:
             )
 
             _ = modeling_set.fit(X_train, y_train)
-            preds_test = modeling_set.predict(X_test)
             hard_metrics_set = Vset(
                 name="hard_metrics",
                 vfuncs=[accuracy_score, balanced_accuracy_score],
                 vfunc_keys=["Acc", "Bal_Acc"],
                 tracking_dir=runs_path,
             )
-            hard_metrics = hard_metrics_set.evaluate(y_test, preds_test)
             runs_path = os.path.join(runs_path, hard_metrics_set._exp_id)
             assert os.path.isdir(runs_path)
             assert len(os.listdir(runs_path)) == 2
@@ -416,7 +413,7 @@ class TestPipelines:
         )
 
         np.random.seed(13)
-        ray.init(local_mode=True)
+        ray.init()
 
         data = data_vset()
 

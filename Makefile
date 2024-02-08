@@ -10,15 +10,11 @@ build_conda_env:
 build_ipykernel: build_conda_env
 	conda run -n $(CONDA_ENV_NAME) python -m ipykernel install --user --name $(CONDA_ENV_NAME) --display-name "Python [conda:$(CONDA_ENV_NAME)]"
 
-build_hatch_env_%:
-	hatch -v env create $*
+test_%:
+	hatch -v run dev $(PYTEST_ARGS) tests/test_$*.py
 
-test_%: build_hatch_env_test
-	hatch -v run test:pytest $(PYTEST_ARGS) tests/test_$*.py
+run_tests:
+	hatch -v run cov
 
-run_tests: build_hatch_env_test
-	hatch -v run test:coverage run --source=vflow,tests -m pytest $(PYTEST_ARGS) tests
-	hatch -v run test:coverage report -m
-
-fix_styles: build_hatch_env_style
+fix_styles:
 	hatch -v run style:fmt

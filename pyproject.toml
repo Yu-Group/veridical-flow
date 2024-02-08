@@ -41,49 +41,12 @@ allow-direct-references = true
 [tool.hatch.metadata.hooks.requirements_txt]
 files = ["requirements.txt"]
 
-[tool.hatch.envs.dev]
-dependencies = [
-  "jupyterlab",
-  "pytest",
-  "pytest-cov",
-  "torch>=1.0.0",
-  "torchvision",
-  "tqdm",
-  "scikit-learn>=0.23.0",
+[tool.hatch.build.targets.sdist]
+exclude = [
+  "/.github",
+  "/notebooks",
 ]
 
-[tool.hatch.envs.dev.env-vars]
-PIP_INDEX_URL = "https://download.pytorch.org/whl/cpu"
-PIP_EXTRA_INDEX_URL = "https://pypi.org/simple/"
-
-[tool.hatch.envs.test]
-template = "dev"
-dependencies = [
-  "coverage[toml]",
-  "pytest-cov",
-  "pytest-mock",
-  "pytest-randomly",
-]
-
-[tool.hatch.envs.test.scripts]
-run = "pytest --cov-config=pyproject.toml --cov=tests"
-
-[tool.hatch.envs.style]
-detached = true
-dependencies = [
-  "ruff",
-  "black",
-  "isort",
-]
-
-[tool.hatch.envs.style.scripts]
-check = [
-  "ruff ./vflow",
-  "black --check --diff ./vflow",
-  "isort --check --diff --profile black ./vflow",
-]
-fmt = [
-  "isort --profile black ./vflow ./tests",
-  "black ./vflow ./tests",
-  "check",
-]
+[tool.coverage.run]
+branch = true
+source_pkgs = ["vflow", "tests"]

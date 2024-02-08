@@ -74,7 +74,6 @@ from vflow.utils import (
                 },
                 {
                     (sm("y_test", "init"),): "y_test_data",
-                    (sm("y_test", "init"),): "y_test_data",
                     PREV_KEY: ("prev_2",),
                 },
             ],

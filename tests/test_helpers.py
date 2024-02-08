@@ -1,7 +1,7 @@
 import numpy as np
 from numpy.testing import assert_equal
 
-from vflow.helpers import *
+from vflow.helpers import build_vset, cum_acc_by_uncertainty
 
 
 class TestHelpers:
