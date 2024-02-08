@@ -1,5 +1,5 @@
-import time
 import os
+import time
 from functools import partial
 from shutil import rmtree
 
@@ -16,93 +16,120 @@ from sklearn.metrics import accuracy_score, balanced_accuracy_score, r2_score
 from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 
-from vflow import Vset, init_args, build_vset  # must install vflow first (pip install vflow)
+from vflow import Vset, build_vset, init_args
 from vflow.subkey import Subkey as sm
 from vflow.vset import PREV_KEY
 
 
 class TestPipelines:
-
     def setup_method(self):
         pass
 
     def test_subsampling_fitting_metrics_pipeline(self):
-        """Simplest synthetic pipeline
-        """
+        """Simplest synthetic pipeline"""
         # initialize data
         np.random.seed(13)
         X, y = sklearn.datasets.make_classification(n_samples=50, n_features=5)
-        X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)  # ex. with another split?
-        X_train, X_test, y_train, y_test = init_args((X_train, X_test, y_train, y_test),
-                                                     names=['X_train', 'X_test', 'y_train',
-                                                            'y_test'])  # optionally provide names for each of these
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, random_state=42
+        )  # ex. with another split?
+        X_train, X_test, y_train, y_test = init_args(
+            (X_train, X_test, y_train, y_test),
+            names=["X_train", "X_test", "y_train", "y_test"],
+        )  # optionally provide names for each of these
 
         # subsample data
-        subsampling_set = build_vset('subsampling', sklearn.utils.resample,
-                                     param_dict={'random_state': list(range(3))},
-                                     n_samples=20)
+        subsampling_set = build_vset(
+            "subsampling",
+            sklearn.utils.resample,
+            param_dict={"random_state": list(range(3))},
+            n_samples=20,
+        )
         X_trains, y_trains = subsampling_set(X_train, y_train)
 
         # fit models
-        modeling_set = Vset(name='modeling',
-                            vfuncs=[LogisticRegression(max_iter=1000, tol=0.1),
-                                     DecisionTreeClassifier()],
-                            vfunc_keys=["LR", "DT"])
+        modeling_set = Vset(
+            name="modeling",
+            vfuncs=[
+                LogisticRegression(max_iter=1000, tol=0.1),
+                DecisionTreeClassifier(),
+            ],
+            vfunc_keys=["LR", "DT"],
+        )
 
         modeling_set.fit(X_trains, y_trains)
 
         preds_test = modeling_set.predict(X_test)
 
         # get metrics
-        hard_metrics_set = Vset(name='hard_metrics',
-                                vfuncs=[accuracy_score, balanced_accuracy_score],
-                                vfunc_keys=["Acc", "Bal_Acc"])
+        hard_metrics_set = Vset(
+            name="hard_metrics",
+            vfuncs=[accuracy_score, balanced_accuracy_score],
+            vfunc_keys=["Acc", "Bal_Acc"],
+        )
 
         hard_metrics = hard_metrics_set.evaluate(preds_test, y_test)
 
         # asserts
-        k1 = (sm('X_test', 'init'), sm('X_train', 'init'), 
-              sm(('func=resample', 'random_state=0'), 'subsampling'),
-              sm('y_train', 'init'), sm('LR', 'modeling'), 
-              sm('y_test', 'init'), sm('Acc', 'hard_metrics'))
+        k1 = (
+            sm("X_test", "init"),
+            sm("X_train", "init"),
+            sm(("func=resample", "random_state=0"), "subsampling"),
+            sm("y_train", "init"),
+            sm("LR", "modeling"),
+            sm("y_test", "init"),
+            sm("Acc", "hard_metrics"),
+        )
 
-        assert k1 in hard_metrics, 'hard metrics should have ' + str(k1) + ' as key'
+        assert k1 in hard_metrics, "hard metrics should have " + str(k1) + " as key"
         assert hard_metrics[k1] > 0.9  # 0.9090909090909091
         assert PREV_KEY in hard_metrics
         assert len(hard_metrics.keys()) == 13
 
     def test_feat_engineering(self):
-        """Feature engineering pipeline
-        """
+        """Feature engineering pipeline"""
         # get data as df
         np.random.seed(13)
         data = sklearn.datasets.fetch_california_housing()
-        df = pd.DataFrame.from_dict(data['data'])
-        df.columns = data['feature_names']
-        y = data['target']
-        X_train, X_test, y_train, y_test = init_args(train_test_split(df, y, random_state=123),
-                                                     names=['X_train', 'X_test', 'y_train', 'y_test'])
+        df = pd.DataFrame.from_dict(data["data"])
+        df.columns = data["feature_names"]
+        y = data["target"]
+        X_train, X_test, y_train, y_test = init_args(
+            train_test_split(df, y, random_state=123),
+            names=["X_train", "X_test", "y_train", "y_test"],
+        )
 
         # feature extraction - extracts two different sets of features from the same data
         def extract_feats(df: pd.DataFrame, feat_names=None):
-            """extract specific columns from dataframe
-            """
+            """extract specific columns from dataframe"""
             if feat_names is None:
-                feat_names = ['HouseAge', 'AveBedrms', 'Population']
+                feat_names = ["HouseAge", "AveBedrms", "Population"]
             return df[feat_names]
 
-        feat_extraction_funcs = [partial(extract_feats, feat_names=['HouseAge', 'AveBedrms', 'Population']),
-                                 partial(extract_feats, feat_names=['HouseAge', 'AveBedrms', 'Population', 'MedInc', 'AveOccup']),
-                                 ]
-        feat_extraction = Vset(name='feat_extraction',
-                               vfuncs=feat_extraction_funcs,
-                               output_matching=True)
+        feat_extraction_funcs = [
+            partial(extract_feats, feat_names=["HouseAge", "AveBedrms", "Population"]),
+            partial(
+                extract_feats,
+                feat_names=[
+                    "HouseAge",
+                    "AveBedrms",
+                    "Population",
+                    "MedInc",
+                    "AveOccup",
+                ],
+            ),
+        ]
+        feat_extraction = Vset(
+            name="feat_extraction", vfuncs=feat_extraction_funcs, output_matching=True
+        )
 
         X_feats_train = feat_extraction(X_train)
 
-        modeling_set = Vset(name='modeling',
-                            vfuncs=[DecisionTreeRegressor(), RandomForestRegressor()],
-                            vfunc_keys=["DT", "RF"])
+        modeling_set = Vset(
+            name="modeling",
+            vfuncs=[DecisionTreeRegressor(), RandomForestRegressor()],
+            vfunc_keys=["DT", "RF"],
+        )
 
         # how can we properly pass a y here so that it will fit properly?
         # this runs, but modeling_set.fitted_vfuncs is empty
@@ -112,56 +139,82 @@ class TestPipelines:
         preds_all = modeling_set.predict(X_feats_train)
 
         # get metrics
-        hard_metrics_set = Vset(name='hard_metrics',
-                                vfuncs=[r2_score],
-                                vfunc_keys=["r2"])
+        hard_metrics_set = Vset(
+            name="hard_metrics", vfuncs=[r2_score], vfunc_keys=["r2"]
+        )
         hard_metrics = hard_metrics_set.evaluate(preds_all, y_train)
 
         # asserts
-        k1 = (sm('X_train', 'init'), sm('feat_extraction_0', 'feat_extraction', True), sm('X_train', 'init'),
-              sm('y_train', 'init'),
-              sm('DT', 'modeling'), sm('y_train', 'init'), sm('r2', 'hard_metrics'))
-        assert k1 in hard_metrics, 'hard metrics should have ' + str(k1) + ' as key'
-        assert hard_metrics[k1] > 0.99 # 0.9997246132375425
+        k1 = (
+            sm("X_train", "init"),
+            sm("feat_extraction_0", "feat_extraction", True),
+            sm("X_train", "init"),
+            sm("y_train", "init"),
+            sm("DT", "modeling"),
+            sm("y_train", "init"),
+            sm("r2", "hard_metrics"),
+        )
+        assert k1 in hard_metrics, "hard metrics should have " + str(k1) + " as key"
+        assert hard_metrics[k1] > 0.99  # 0.9997246132375425
         assert PREV_KEY in hard_metrics
         assert len(hard_metrics.keys()) == 5
 
     def test_feature_importance(self):
-        """Simplest synthetic pipeline for feature importance
-        """
+        """Simplest synthetic pipeline for feature importance"""
         # initialize data
         np.random.seed(13)
         X, y = sklearn.datasets.make_classification(n_samples=50, n_features=5)
-        X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)  # ex. with another split?
-        X_train, X_test, y_train, y_test = init_args((X_train, X_test, y_train, y_test),
-                                                     names=['X_train', 'X_test', 'y_train',
-                                                            'y_test'])  # optionally provide names for each of these
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, random_state=42
+        )  # ex. with another split?
+        X_train, X_test, y_train, y_test = init_args(
+            (X_train, X_test, y_train, y_test),
+            names=["X_train", "X_test", "y_train", "y_test"],
+        )  # optionally provide names for each of these
 
         # subsample data
-        subsampling_set = build_vset('subsampling', sklearn.utils.resample,
-                                     param_dict={'random_state': list(range(3))},
-                                     n_samples=20)
+        subsampling_set = build_vset(
+            "subsampling",
+            sklearn.utils.resample,
+            param_dict={"random_state": list(range(3))},
+            n_samples=20,
+        )
         X_trains, y_trains = subsampling_set(X_train, y_train)
 
         # fit models
-        modeling_set = Vset(name='modeling',
-                            vfuncs=[LogisticRegression(max_iter=1000, tol=0.1),
-                                     DecisionTreeClassifier()],
-                            vfunc_keys=["LR", "DT"])
+        modeling_set = Vset(
+            name="modeling",
+            vfuncs=[
+                LogisticRegression(max_iter=1000, tol=0.1),
+                DecisionTreeClassifier(),
+            ],
+            vfunc_keys=["LR", "DT"],
+        )
 
         modeling_set.fit(X_trains, y_trains)
         preds_test = modeling_set.predict(X_test)
 
         # get metrics
-        feature_importance_set = Vset(name='feature_importance', vfuncs=[permutation_importance],
-                                      vfunc_keys=["permutation_importance"])
-        importances = feature_importance_set.evaluate(modeling_set.fitted_vfuncs, X_test, y_test)
+        feature_importance_set = Vset(
+            name="feature_importance",
+            vfuncs=[permutation_importance],
+            vfunc_keys=["permutation_importance"],
+        )
+        importances = feature_importance_set.evaluate(
+            modeling_set.fitted_vfuncs, X_test, y_test
+        )
 
         # asserts
-        k1 = (sm('X_train', 'init'), sm(('func=resample', 'random_state=0'), 'subsampling'),
-              sm('y_train', 'init'), sm('LR', 'modeling'), sm('X_test', 'init'),
-              sm('y_test', 'init'), sm('permutation_importance', 'feature_importance'))
-        assert k1 in importances, 'hard metrics should have ' + str(k1) + ' as key'
+        k1 = (
+            sm("X_train", "init"),
+            sm(("func=resample", "random_state=0"), "subsampling"),
+            sm("y_train", "init"),
+            sm("LR", "modeling"),
+            sm("X_test", "init"),
+            sm("y_test", "init"),
+            sm("permutation_importance", "feature_importance"),
+        )
+        assert k1 in importances, "hard metrics should have " + str(k1) + " as key"
         assert PREV_KEY in importances
         assert len(importances.keys()) == 7
 
@@ -169,20 +222,29 @@ class TestPipelines:
         np.random.seed(13)
         X, y = sklearn.datasets.make_classification(n_samples=50, n_features=5)
         X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
-        X_train, X_test, y_train, y_test = init_args((X_train, X_test, y_train, y_test),
-                                                     names=['X_train', 'X_test', 'y_train', 'y_test'])
+        X_train, X_test, y_train, y_test = init_args(
+            (X_train, X_test, y_train, y_test),
+            names=["X_train", "X_test", "y_train", "y_test"],
+        )
 
         # subsample data
-        subsampling_set = build_vset('subsampling', sklearn.utils.resample,
-                                     param_dict={'random_state': list(range(3))},
-                                     n_samples=20)
+        subsampling_set = build_vset(
+            "subsampling",
+            sklearn.utils.resample,
+            param_dict={"random_state": list(range(3))},
+            n_samples=20,
+        )
         X_trains, y_trains = subsampling_set(X_train, y_train)
         X_tests, y_tests = subsampling_set(X_test, y_test)
 
-        modeling_set = Vset(name='modeling',
-                            vfuncs=[LogisticRegression(max_iter=1000, tol=0.1),
-                                     DecisionTreeClassifier()],
-                            vfunc_keys=["LR", "DT"])
+        modeling_set = Vset(
+            name="modeling",
+            vfuncs=[
+                LogisticRegression(max_iter=1000, tol=0.1),
+                DecisionTreeClassifier(),
+            ],
+            vfunc_keys=["LR", "DT"],
+        )
 
         modeling_set.fit(X_trains, y_trains)
         preds_test = modeling_set.predict(X_tests)
@@ -193,41 +255,41 @@ class TestPipelines:
         assert len(preds_test.keys()) == 19
 
     def test_lazy_eval(self):
-        def f(arg_name: str = '', i: int = 0):
-            return arg_name, f'f_iter={i}'
+        def f(arg_name: str = "", i: int = 0):
+            return arg_name, f"f_iter={i}"
 
         f_vfuncs = [partial(f, i=i) for i in range(3)]
-        f_arg = init_args(('f_arg',), names=['f_init'])[0]
+        f_arg = init_args(("f_arg",), names=["f_init"])[0]
 
-        f_set = Vset('f', vfuncs=f_vfuncs)
-        f_lazy_set = Vset('f', vfuncs=f_vfuncs, lazy=True)
+        f_set = Vset("f", vfuncs=f_vfuncs)
+        f_lazy_set = Vset("f", vfuncs=f_vfuncs, lazy=True)
 
         f_res = f_set(f_arg)
         f_lazy_res = f_lazy_set(f_arg)
 
         assert_equal(f_res.keys(), f_lazy_res.keys())
 
-        def g(tup, arg_name: str = '', i: int = 0):
-            return tup, arg_name, f'g_iter={i}'
+        def g(tup, arg_name: str = "", i: int = 0):
+            return tup, arg_name, f"g_iter={i}"
 
         g_vfuncs = [partial(g, i=i) for i in range(2)]
-        g_arg = init_args(('g_arg',), names=['g_init'])[0]
+        g_arg = init_args(("g_arg",), names=["g_init"])[0]
 
-        g_set = Vset('g', vfuncs=g_vfuncs)
-        g_lazy_set = Vset('g', vfuncs=g_vfuncs, lazy=True)
+        g_set = Vset("g", vfuncs=g_vfuncs)
+        g_lazy_set = Vset("g", vfuncs=g_vfuncs, lazy=True)
 
         g_res = g_set(f_res, g_arg, n_out=1)
         g_lazy_res = g_lazy_set(f_lazy_res, g_arg, n_out=1)
 
         assert_equal(g_res.keys(), g_lazy_res.keys())
 
-        def h(tup, arg_name: str = '', i: int = 0):
-            return tup, arg_name, f'h_iter={i}'
+        def h(tup, arg_name: str = "", i: int = 0):
+            return tup, arg_name, f"h_iter={i}"
 
         h_vfuncs = [partial(h, i=i) for i in range(2)]
-        h_arg = init_args(('h_arg',), names=['h_init'])[0]
+        h_arg = init_args(("h_arg",), names=["h_init"])[0]
 
-        h_set = Vset('h', vfuncs=h_vfuncs)
+        h_set = Vset("h", vfuncs=h_vfuncs)
 
         h_res = h_set(g_res, h_arg, n_out=1)
         h_lazy_res = h_set(g_lazy_res, h_arg, n_out=1)
@@ -248,12 +310,14 @@ class TestPipelines:
         try:
             np.random.seed(13)
             X, _ = make_classification(n_samples=50, n_features=5)
-            X = init_args([X], names=['X'])[0]
+            X = init_args([X], names=["X"])[0]
 
             subsampling_funcs = [partial(costly_compute, row_index=np.arange(25))]
 
-            uncached_set = Vset(name='subsampling', vfuncs=subsampling_funcs)
-            cached_set = Vset(name='subsampling', vfuncs=subsampling_funcs, cache_dir='./')
+            uncached_set = Vset(name="subsampling", vfuncs=subsampling_funcs)
+            cached_set = Vset(
+                name="subsampling", vfuncs=subsampling_funcs, cache_dir="./"
+            )
 
             # this always takes about 1 seconds
             begin = time.time()
@@ -265,46 +329,60 @@ class TestPipelines:
             cached_set.fit(X)
             assert time.time() - begin >= 1
 
-            assert_equal(uncached_set.fitted_vfuncs.keys(), cached_set.fitted_vfuncs.keys())
+            assert_equal(
+                uncached_set.fitted_vfuncs.keys(), cached_set.fitted_vfuncs.keys()
+            )
 
             # this should be very fast because it's using the already cached results
-            cached_set2 = Vset(name='subsampling', vfuncs=subsampling_funcs, cache_dir='./')
+            cached_set2 = Vset(
+                name="subsampling", vfuncs=subsampling_funcs, cache_dir="./"
+            )
             begin = time.time()
             cached_set2.fit(X)
             assert time.time() - begin < 1
-            assert_equal(uncached_set.fitted_vfuncs.keys(), cached_set2.fitted_vfuncs.keys())
+            assert_equal(
+                uncached_set.fitted_vfuncs.keys(), cached_set2.fitted_vfuncs.keys()
+            )
 
         finally:
             # clean up
-            rmtree('./joblib')
+            rmtree("./joblib")
 
     def test_mlflow_tracking(self, tmp_path):
         try:
-            runs_path = os.path.join(tmp_path, 'mlruns')
+            runs_path = os.path.join(tmp_path, "mlruns")
             np.random.seed(13)
             X, y = make_classification(n_samples=50, n_features=5)
-            X_train, X_test, y_train, y_test = init_args(train_test_split(X, y, random_state=42),
-                                                         names=['X_train', 'X_test', 'y_train', 'y_test'])
+            X_train, X_test, y_train, y_test = init_args(
+                train_test_split(X, y, random_state=42),
+                names=["X_train", "X_test", "y_train", "y_test"],
+            )
             # fit models
-            modeling_set = Vset(name='modeling',
-                                vfuncs=[LogisticRegression(C=1, max_iter=1000, tol=0.1)],
-                                vfunc_keys=["LR"])
+            modeling_set = Vset(
+                name="modeling",
+                vfuncs=[LogisticRegression(C=1, max_iter=1000, tol=0.1)],
+                vfunc_keys=["LR"],
+            )
 
             _ = modeling_set.fit(X_train, y_train)
             preds_test = modeling_set.predict(X_test)
-            hard_metrics_set = Vset(name='hard_metrics',
-                                    vfuncs=[accuracy_score, balanced_accuracy_score],
-                                    vfunc_keys=["Acc", "Bal_Acc"],
-                                    tracking_dir=runs_path)
+            hard_metrics_set = Vset(
+                name="hard_metrics",
+                vfuncs=[accuracy_score, balanced_accuracy_score],
+                vfunc_keys=["Acc", "Bal_Acc"],
+                tracking_dir=runs_path,
+            )
             hard_metrics = hard_metrics_set.evaluate(y_test, preds_test)
             runs_path = os.path.join(runs_path, hard_metrics_set._exp_id)
             assert os.path.isdir(runs_path)
             assert len(os.listdir(runs_path)) == 2
-            runs_path = os.path.join(runs_path, [d for d in os.listdir(runs_path) if d != 'meta.yaml'][0])
-            runs_path = os.path.join(runs_path, 'metrics')
-            with open(os.path.join(runs_path, 'Acc')) as acc:
+            runs_path = os.path.join(
+                runs_path, [d for d in os.listdir(runs_path) if d != "meta.yaml"][0]
+            )
+            runs_path = os.path.join(runs_path, "metrics")
+            with open(os.path.join(runs_path, "Acc")) as acc:
                 assert len(acc.read().split(" ")) == 3
-            with open(os.path.join(runs_path, 'Bal_Acc')) as bal_acc:
+            with open(os.path.join(runs_path, "Bal_Acc")) as bal_acc:
                 assert len(bal_acc.read().split(" ")) == 3
         finally:
             # clean up
@@ -320,16 +398,22 @@ class TestPipelines:
         def fun2(a, b=1):
             return a * b
 
-        data_param_dict = {'n': [1, 2, 3]}
-        data_vset = build_vset('data', gen_data, param_dict=data_param_dict, reps=5, lazy=True)
+        data_param_dict = {"n": [1, 2, 3]}
+        data_vset = build_vset(
+            "data", gen_data, param_dict=data_param_dict, reps=5, lazy=True
+        )
 
         assert len(data_vset.vfuncs) == 15
 
-        fun_param_dict = {'b': [1, 2, 3]}
-        fun1_vset = build_vset('fun1', fun1, param_dict=fun_param_dict, lazy=True)
-        fun1_vset_async = build_vset('fun1', fun1, param_dict=fun_param_dict, lazy=True, is_async=True)
-        fun2_vset = build_vset('fun2', fun2, param_dict=fun_param_dict)
-        fun2_vset_async = build_vset('fun2', fun2, param_dict=fun_param_dict, is_async=True)
+        fun_param_dict = {"b": [1, 2, 3]}
+        fun1_vset = build_vset("fun1", fun1, param_dict=fun_param_dict, lazy=True)
+        fun1_vset_async = build_vset(
+            "fun1", fun1, param_dict=fun_param_dict, lazy=True, is_async=True
+        )
+        fun2_vset = build_vset("fun2", fun2, param_dict=fun_param_dict)
+        fun2_vset_async = build_vset(
+            "fun2", fun2, param_dict=fun_param_dict, is_async=True
+        )
 
         np.random.seed(13)
         ray.init(local_mode=True)
@@ -363,26 +447,30 @@ class TestPipelines:
             def fit(self, a):
                 self.a = a
                 return self
+
             def transform(self, b):
                 return self.a + b
+
             def predict(self, x):
-                return self.a*x
+                return self.a * x
+
             def predict_proba(self, x):
-                y = np.exp(-self.a*x)
+                y = np.exp(-self.a * x)
                 return 1 / (1 + y)
 
         vset = Vset("learner", [learner()], is_async=True, lazy=True)
-        vset.fit(*init_args([.4]))
+        vset.fit(*init_args([0.4]))
         data = init_args([np.array([1, 2, 3])])[0]
         transformed = vset.transform(data)
         preds = vset.predict(transformed)
         preds_proba = vset.predict_proba(transformed)
 
         assert_equal(list(transformed.values())[0](), [1.4, 2.4, 3.4])
-        assert_equal(list(preds.values())[0](), np.array([1.4, 2.4, 3.4])*.4)
-        assert_equal(list(preds_proba.values())[0](),
-                     1 / (1 + np.exp(-np.array([1.4, 2.4, 3.4])*.4)))
-
+        assert_equal(list(preds.values())[0](), np.array([1.4, 2.4, 3.4]) * 0.4)
+        assert_equal(
+            list(preds_proba.values())[0](),
+            1 / (1 + np.exp(-np.array([1.4, 2.4, 3.4]) * 0.4)),
+        )
 
     def test_lazy_async_two_step(self):
         def add_a(arr, a=0.4):
@@ -392,10 +480,12 @@ class TestPipelines:
             def fit(self, a):
                 self.mean = sum(a) / len(a)
                 return self
+
             def predict(self, x):
-                return self.mean*x
+                return self.mean * x
+
             def predict_proba(self, x):
-                y = np.exp(-self.mean*x)
+                y = np.exp(-self.mean * x)
                 return 1 / (1 + y)
 
         add_a_vset = Vset("add_a", [add_a], lazy=True)
@@ -407,8 +497,11 @@ class TestPipelines:
         preds_proba = vset.predict_proba(transformed)
 
         assert_equal(list(transformed.values())[0].value, [1.4, 2.4, 3.4])
-        assert_equal(list(preds.values())[0], np.array([1.4*2, 2.4*2, 3.4*2]))
-        assert_equal(list(preds_proba.values())[0], 1 / (1 + np.exp(-np.array([1.4*2, 2.4*2, 3.4*2]))))
+        assert_equal(list(preds.values())[0], np.array([1.4 * 2, 2.4 * 2, 3.4 * 2]))
+        assert_equal(
+            list(preds_proba.values())[0],
+            1 / (1 + np.exp(-np.array([1.4 * 2, 2.4 * 2, 3.4 * 2]))),
+        )
 
 
 def costly_compute(data, row_index=0):

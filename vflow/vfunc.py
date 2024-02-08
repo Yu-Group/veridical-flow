@@ -10,29 +10,27 @@ class Vfunc:
     If none of these is supported, it need only be a function
     """
 
-    def __init__(self, name: str = '', vfunc=lambda x: x):
-        assert hasattr(vfunc, 'fit') or callable(vfunc), \
-            'vfunc must be an object with a fit method or a callable'
+    def __init__(self, name: str = "", vfunc=lambda x: x):
+        assert hasattr(vfunc, "fit") or callable(
+            vfunc
+        ), "vfunc must be an object with a fit method or a callable"
         self.name = name
         self.vfunc = vfunc
 
     def fit(self, *args, **kwargs):
-        """This function fits params for this vfunc
-        """
-        if hasattr(self.vfunc, 'fit'):
+        """This function fits params for this vfunc"""
+        if hasattr(self.vfunc, "fit"):
             return self.vfunc.fit(*args, **kwargs)
         return self.vfunc(*args, **kwargs)
 
     def transform(self, *args, **kwargs):
-        """This function transforms its input in some way
-        """
-        if hasattr(self.vfunc, 'transform'):
+        """This function transforms its input in some way"""
+        if hasattr(self.vfunc, "transform"):
             return self.vfunc.transform(*args, **kwargs)
         return self.vfunc(*args, **kwargs)
 
     def __call__(self, *args, **kwargs):
-        """This should decide what to call
-        """
+        """This should decide what to call"""
         return self.fit(*args, **kwargs)
 
 
@@ -42,41 +40,37 @@ def _remote_fun(vfunc, *args, **kwargs):
 
 
 class AsyncVfunc:
-    """An asynchronous version of the Vfunc class.
-    """
+    """An asynchronous version of the Vfunc class."""
 
-    def __init__(self, name: str = '', vfunc=lambda x: x):
+    def __init__(self, name: str = "", vfunc=lambda x: x):
         self.name = name
         if isinstance(vfunc, Vfunc):
             self.vfunc = vfunc.vfunc
         else:
-            assert hasattr(vfunc, 'fit') or callable(vfunc), \
-                'vfunc must be an object with a fit method or a callable'
+            assert hasattr(vfunc, "fit") or callable(
+                vfunc
+            ), "vfunc must be an object with a fit method or a callable"
             self.vfunc = vfunc
 
     def fit(self, *args, **kwargs):
-        """This function fits params for this vfunc
-        """
-        if hasattr(self.vfunc, 'fit'):
+        """This function fits params for this vfunc"""
+        if hasattr(self.vfunc, "fit"):
             return _remote_fun.remote(self.vfunc.fit, *args, **kwargs)
         return _remote_fun.remote(self.vfunc, *args, **kwargs)
 
     def transform(self, *args, **kwargs):
-        """This function transforms its input in some way
-        """
-        if hasattr(self.vfunc, 'transform'):
+        """This function transforms its input in some way"""
+        if hasattr(self.vfunc, "transform"):
             return _remote_fun.remote(self.vfunc.transform, *args, **kwargs)
         return _remote_fun.remote(self.vfunc, *args, **kwargs)
 
     def __call__(self, *args, **kwargs):
-        """This should decide what to call
-        """
+        """This should decide what to call"""
         return self.fit(*args, **kwargs)
 
 
 class VfuncPromise:
-    """A Vfunc promise used for lazy evaluation.
-    """
+    """A Vfunc promise used for lazy evaluation."""
 
     def __init__(self, vfunc: callable, *args):
         self.vfunc = vfunc
@@ -85,8 +79,7 @@ class VfuncPromise:
         self.value = None
 
     def __call__(self):
-        """This should decide what to call
-        """
+        """This should decide what to call"""
         if self.called:
             return self.value
         tmp_args = []
@@ -106,21 +99,18 @@ class VfuncPromise:
         return self.value
 
     def transform(self, *args):
-        """This function transforms its input in some way
-        """
+        """This function transforms its input in some way"""
         return self._get_value().transform(*args)
 
     def predict(self, *args):
-        """This function calls predict on its inputs
-        """
+        """This function calls predict on its inputs"""
         return self._get_value().predict(*args)
 
     def predict_proba(self, *args):
-        """This function calls predict_proba on its inputs
-        """
+        """This function calls predict_proba on its inputs"""
         return self._get_value().predict_proba(*args)
 
     def __repr__(self):
         if self.called:
-            return f'Fulfilled VfuncPromise({self.value})'
-        return f'Unfulfilled VfuncPromise(func={self.vfunc}, args={self.args})'
+            return f"Fulfilled VfuncPromise({self.value})"
+        return f"Unfulfilled VfuncPromise(func={self.vfunc}, args={self.args})"

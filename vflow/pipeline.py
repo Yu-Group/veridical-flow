@@ -1,5 +1,6 @@
 """Class that stores the entire pipeline of steps in a data-science workflow
 """
+
 import itertools
 
 import joblib
@@ -27,21 +28,19 @@ class PCSPipeline:
         self.memory = joblib.Memory(location=cache_dir)
 
     def run(self, *args, **kwargs):
-        """Runs the pipeline
-        """
+        """Runs the pipeline"""
         run_step_cached = self.memory.cache(_run_step)
         for i, step in enumerate(self.steps):
             try:
                 step_name = step.name
             except AttributeError:
-                step_name = f'Step {i}'
+                step_name = f"Step {i}"
             print(step_name)
             _, fitted_step = run_step_cached(step, *args, **kwargs)
             self.steps[i] = fitted_step
 
     def __getitem__(self, i):
-        """Accesses ith step of pipeline
-        """
+        """Accesses ith step of pipeline"""
         return self.steps[i]
 
     def __len__(self):
@@ -51,13 +50,13 @@ class PCSPipeline:
         name_lists = []
         if as_pandas:
             for step in self.steps:
-                name_lists.append([f'{i}_{str(mod)[:8]}'
-                                   for i, mod in enumerate(step)])
+                name_lists.append([f"{i}_{str(mod)[:8]}" for i, mod in enumerate(step)])
             indexes = list(itertools.product(*name_lists))
             return pd.DataFrame(indexes, columns=[step.name for step in self.steps])
         for step in self.steps:
-            name_lists.append([f'{step.name}_{i}_{str(mod)[:8]}'
-                               for i, mod in enumerate(step)])
+            name_lists.append(
+                [f"{step.name}_{i}_{str(mod)[:8]}" for i, mod in enumerate(step)]
+            )
         return list(itertools.product(*name_lists))
 
 
@@ -85,7 +84,7 @@ def build_graph(node, draw=True):
         unnested_node: str, Vset, or None
         """
         node_type = type(node)
-        if node_type is str or 'Vset' in str(node_type):
+        if node_type is str or "Vset" in str(node_type):
             return node
         if node_type is tuple:
             return unnest_node(node[0])
@@ -109,7 +108,7 @@ def build_graph(node, draw=True):
 
         # initial case: starting at dict
         if isinstance(node, dict):
-            s_node = 'End'
+            s_node = "End"
             nodes_prev = node[PREV_KEY]
             G.add_edge(nodes_prev[0], s_node)
             for node_prev in nodes_prev[1:]:
@@ -118,7 +117,7 @@ def build_graph(node, draw=True):
             return G
 
         # main case: at a vfuncset
-        if 'Vset' in str(type(node)):
+        if "Vset" in str(type(node)):
             if hasattr(node, PREV_KEY):
                 nodes_prev = getattr(node, PREV_KEY)
                 for node_prev in nodes_prev:
@@ -140,7 +139,7 @@ def build_graph(node, draw=True):
     G = nx.DiGraph()
     G = build_graph_recur(node, G)
     if draw:
-        nx.draw(G, with_labels=True, node_color='#CCCCCC')
+        nx.draw(G, with_labels=True, node_color="#CCCCCC")
     return G
 
 
