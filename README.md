@@ -39,40 +39,40 @@ simply using `vflow`.
 
 ```python
 import sklearn
+from sklearn.datasets import make_classification
+from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, balanced_accuracy_score
-from vflow import init_args, Vset
+from sklearn.model_selection import train_test_split
+from sklearn.tree import DecisionTreeClassifier
+
+from vflow import Vset, init_args
 
 # initialize data
-X, y = sklearn.datasets.make_classification()
+X, y = make_classification()
 X_train, X_test, y_train, y_test = init_args(
-    sklearn.model_selection.train_test_split(X, y),
-    names=['X_train', 'X_test', 'y_train', 'y_test']  # optionally name the args
+    train_test_split(X, y),
+    names=["X_train", "X_test", "y_train", "y_test"],  # optionally name the args
 )
 
 # subsample data
-subsampling_funcs = [
-    sklearn.utils.resample for _ in range(3)
-]
-subsampling_set = Vset(name='subsampling',
-                       modules=subsampling_funcs,
-                       output_matching=True)
+subsampling_funcs = [sklearn.utils.resample for _ in range(3)]
+subsampling_set = Vset(
+    name="subsampling", vfuncs=subsampling_funcs, output_matching=True
+)
 X_trains, y_trains = subsampling_set(X_train, y_train)
 
 # fit models
-models = [
-    sklearn.linear_model.LogisticRegression(),
-    sklearn.tree.DecisionTreeClassifier()
-]
-modeling_set = Vset(name='modeling',
-                    modules=models,
-                    module_keys=["LR", "DT"])
+models = [LogisticRegression(), DecisionTreeClassifier()]
+modeling_set = Vset(name="modeling", vfuncs=models, vfunc_keys=["LR", "DT"])
 modeling_set.fit(X_trains, y_trains)
 preds_test = modeling_set.predict(X_test)
 
 # get metrics
-binary_metrics_set = Vset(name='binary_metrics',
-                          modules=[accuracy_score, balanced_accuracy_score],
-                          module_keys=["Acc", "Bal_Acc"])
+binary_metrics_set = Vset(
+    name="binary_metrics",
+    vfuncs=[accuracy_score, balanced_accuracy_score],
+    vfunc_keys=["Acc", "Bal_Acc"],
+)
 binary_metrics = binary_metrics_set.evaluate(preds_test, y_test)
 ```
 
