@@ -1,3 +1,89 @@
 [build-system]
-requires = ["setuptools"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling", "hatch-requirements-txt"]
+build-backend = "hatchling.build"
+
+[project]
+name = "vflow"
+version = "0.1.2"
+authors = [
+  { name="Chandan Singh", email="chandan_singh@berkeley.edu" },
+  { name="James Duncan", email="jpduncan@berkeley.edu" },
+  { name="Abhineet Agarwal", email="aa3797@berkeley.edu" },
+  { name="Rush Kapoor", email="rush.kapoor@berkeley.edu " },
+]
+maintainers = [
+  { name="James Duncan", email="jpduncan@berkeley.edu" },
+]
+description = "A framework for doing stability analysis with PCS."
+readme = "README.md"
+requires-python = ">=3.6"
+classifiers = [
+  "Intended Audience :: Science/Research",
+  "Development Status :: 3 - Alpha",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+  "Operating System :: OS Independent",
+]
+license = {text = "MIT"}
+dynamic = ["dependencies"]
+
+[project.urls]
+Homepage = "https://github.com/jpdunc23/interpretable-mjo"
+Issues = "https://github.com/jpdunc23/interpretable-mjo/issues"
+
+[project.optional-dependencies]
+gpu = ["torch"]
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.metadata.hooks.requirements_txt]
+files = ["requirements.txt"]
+
+[tool.hatch.envs.dev]
+dependencies = [
+  "jupyterlab",
+  "pytest",
+  "pytest-cov",
+  "torch>=1.0.0",
+  "torchvision",
+  "tqdm",
+  "scikit-learn>=0.23.0",
+]
+
+[tool.hatch.envs.dev.env-vars]
+PIP_INDEX_URL = "https://download.pytorch.org/whl/cpu"
+PIP_EXTRA_INDEX_URL = "https://pypi.org/simple/"
+
+[tool.hatch.envs.test]
+template = "dev"
+dependencies = [
+  "coverage[toml]",
+  "pytest-cov",
+  "pytest-mock",
+  "pytest-randomly",
+]
+
+[tool.hatch.envs.test.scripts]
+run = "pytest --cov-config=pyproject.toml --cov=tests"
+
+[tool.hatch.envs.style]
+detached = true
+dependencies = [
+  "ruff",
+  "black",
+  "isort",
+]
+
+[tool.hatch.envs.style.scripts]
+check = [
+  "ruff ./vflow",
+  "black --check --diff ./vflow",
+  "isort --check --diff --profile black ./vflow",
+]
+fmt = [
+  "isort --profile black ./vflow ./tests",
+  "black ./vflow ./tests",
+  "check",
+]
