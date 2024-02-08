@@ -218,7 +218,7 @@ def dict_to_df(d: dict, param_key=None):
         cols = [
             c if c != "init" else init_step(idx, cols) for idx, c in enumerate(cols)
         ]
-        df.set_axis(cols, axis=1, inplace=True)
+        df.set_axis(cols, axis=1, copy=False)
         if param_key:
             param_keys = df[
                 param_key
@@ -235,7 +235,7 @@ def dict_to_df(d: dict, param_key=None):
                 param_keys = [[s.split("=")[1] for s in t] for t in param_keys]
                 df = df.join(pd.DataFrame(param_keys)).drop(columns=param_key)
                 new_cols = df.columns[: len(cols) - 1].tolist() + param_key_cols
-                df.set_axis(new_cols, axis=1, inplace=True)
+                df.set_axis(new_cols, axis=1, copy=False)
                 new_idx = list(range(len(new_cols)))
                 new_idx = (
                     new_idx[:param_loc]

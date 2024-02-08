@@ -16,7 +16,7 @@ maintainers = [
 ]
 description = "A framework for doing stability analysis with PCS."
 readme = "README.md"
-requires-python = ">=3.6"
+requires-python = ">=3.9"
 classifiers = [
   "Intended Audience :: Science/Research",
   "Development Status :: 3 - Alpha",
