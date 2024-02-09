@@ -1,7 +1,8 @@
 import numpy as np
 from numpy.testing import assert_equal
-
 from vflow.helpers import build_vset, cum_acc_by_uncertainty
+from vflow.subkey import Subkey
+from vflow.vset import Vset
 
 
 class TestHelpers:
@@ -26,6 +27,7 @@ class TestHelpers:
             "param2": "world",
             "param3": "b",
         }, "build_vset with my_func fails"
+        assert next(iter(vset.vfuncs.values())).transform() == ("hello", "world", "b")
 
         # my_func without param_dict, reps
         vset = build_vset(
@@ -260,6 +262,23 @@ class TestHelpers:
             d_keywords.count({"param1": "foo", "param2": "bar", "param3": "b"}) == 2
         ), "build_vset with my_func + [param_dict1, param_dict2] fails"
 
+        for key, vfunc in vset.vfuncs.items():
+            subkey = key[0]
+            assert isinstance(subkey, Subkey)
+            assert len(subkey.value) == 3
+            assert all([isinstance(x, str) for x in subkey.value])
+            func_name = subkey.value[0][5:]
+            assert func_name in ["my_func", "my_func2"]
+            assert subkey.value[1][:6] == "param1"
+            assert subkey.value[2][:6] == "param2"
+            param1 = subkey.value[1][7:]
+            param2 = subkey.value[2][7:]
+            if func_name == "my_func":
+                expected_vfunc_output = (param1, param2, "b")
+            else:
+                expected_vfunc_output = (param1 + "1", param2 + "2", "b")
+            assert vfunc.transform() == expected_vfunc_output
+
         # list of funcs with list of param_dicts
         vset = build_vset("vset", [my_func, my_func2], [param_dict1, param_dict2])
         assert (
@@ -303,8 +322,9 @@ class TestHelpers:
                 self.param2 = param2
                 self.param3 = param3
 
-            def fit(self, arg1: str):
+            def fit(self, arg1: str = "default"):
                 self.arg1 = arg1
+                return self
 
         # my_class without param_dict
         vset = build_vset("vset", my_class, param1="hello", param2="world", param3="b")
@@ -323,6 +343,13 @@ class TestHelpers:
         vset = build_vset(
             "vset", my_class, reps=2, param1="hello", param2="world", param3="b"
         )
+        vset.fit()
+        objs = list(vset.fitted_vfuncs.values())
+        assert len(objs) == 3
+        assert all([isinstance(x, my_class) for x in objs[:-1]])
+        assert isinstance(objs[-1], tuple)
+        assert isinstance(objs[-1][0], Vset)
+
         assert len(vset) == 2, "build_vset with my_class + reps fails"
         d_keys = [key[0].value[0] for key in list(vset.vfuncs.keys())]
         assert d_keys[0] == "rep=0", "build_vset with my_class + reps fails"
