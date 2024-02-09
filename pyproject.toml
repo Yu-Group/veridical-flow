@@ -33,7 +33,14 @@ Homepage = "https://vflow.csinva.io/"
 Issues = "https://github.com/Yu-Group/veridical-flow/issues"
 
 [project.optional-dependencies]
-gpu = ["torch"]
+nb = [
+  "tqdm",
+  "jupyter",
+  "jupyterlab",
+  "scikit-learn>=0.23.0",
+  "torch>=1.0.0",
+  "torchvision",
+]
 
 [tool.hatch.metadata]
 allow-direct-references = true
