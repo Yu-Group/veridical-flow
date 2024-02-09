@@ -47,6 +47,9 @@ exclude = [
   "/notebooks",
 ]
 
+[tool.hatch.build.targets.wheel]
+packages = ["vflow"]
+
 [tool.coverage.run]
 branch = true
 source_pkgs = ["vflow", "tests"]
