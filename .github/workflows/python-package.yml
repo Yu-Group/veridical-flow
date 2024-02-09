@@ -9,6 +9,10 @@ on:
     branches:
       - master
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   STABLE_PYTHON_VERSION: '3.11'
   PYTHONUNBUFFERED: "1"
