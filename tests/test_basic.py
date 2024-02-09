@@ -48,3 +48,26 @@ class TestBasic:
         ]
         with pytest.raises(ValueError):
             to_list(("x1", "x2", "x3", "y1", "y2"))
+
+    def test_build_graph(self):
+        v0 = vflow.Vset("v0", [lambda x: x + 1], ["add1"])
+        v1 = vflow.Vset("v1", [lambda x: 2 * x], ["mult2"])
+        v2 = vflow.Vset("v2", [lambda x: x % 3], ["mod3"])
+
+        x = vflow.init_args([1.5], ["x"])[0]
+        x0 = v0.fit_transform(x)
+        x1 = v1.fit_transform(x0)
+        x2 = v2.fit_transform(x1)
+
+        graph = vflow.build_graph(x2)
+        assert graph.is_directed()
+        assert graph.size() == 4  # edges
+        assert graph.order() == 5  # nodes: init + 3 Vsets + End
+        in_degrees = dict(graph.in_degree).values()
+        assert max(in_degrees) == 1
+        assert sum(in_degrees) == 4
+        edges = list(graph.edges)
+        assert ("init", v0) in edges
+        assert (v0, v1) in edges
+        assert (v1, v2) in edges
+        assert (v2, "End") in edges
