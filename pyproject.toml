@@ -29,8 +29,8 @@ license = {text = "MIT"}
 dynamic = ["dependencies"]
 
 [project.urls]
-Homepage = "https://github.com/jpdunc23/interpretable-mjo"
-Issues = "https://github.com/jpdunc23/interpretable-mjo/issues"
+Homepage = "https://vflow.csinva.io/"
+Issues = "https://github.com/Yu-Group/veridical-flow/issues"
 
 [project.optional-dependencies]
 gpu = ["torch"]
