@@ -98,7 +98,17 @@ See the [docs](https://yu-group.github.io/veridical-flow/) for reference on the 
 
 ## Installation
 
-Install with `pip install vflow` (see [here](https://github.com/Yu-Group/veridical-flow/blob/master/docs/troubleshooting.md) for help). For dev version (unstable), clone the repo and run `python setup.py develop` from the repo directory.
+### Stable version
+
+```bash
+pip install vflow
+```
+
+### Development version (unstable)
+
+```bash
+pip install vflow@git+https://github.com/Yu-Group/veridical-flow
+```
 
 # References
 
