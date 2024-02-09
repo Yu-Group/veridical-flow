@@ -1,5 +1,6 @@
 """User-facing helper functions included at import vflow
 """
+
 from functools import partial
 from itertools import product
 from typing import Union
@@ -7,9 +8,9 @@ from typing import Union
 import mlflow
 import numpy as np
 
-from vflow.utils import dict_to_df, dict_keys, dict_data
+from vflow.utils import dict_data, dict_keys, dict_to_df
 from vflow.vfunc import Vfunc
-from vflow.vset import Vset, Subkey, PREV_KEY, FILTER_PREV_KEY
+from vflow.vset import FILTER_PREV_KEY, PREV_KEY, Subkey, Vset
 
 
 def init_args(args_tuple: Union[tuple, list], names=None):
@@ -21,28 +22,40 @@ def init_args(args_tuple: Union[tuple, list], names=None):
         given names for each of the arguments in the tuple
     """
     if names is None:
-        names = ['start'] * len(args_tuple)
+        names = ["start"] * len(args_tuple)
     else:
-        assert len(names) == len(args_tuple), 'names should be same length as args_tuple'
+        assert len(names) == len(
+            args_tuple
+        ), "names should be same length as args_tuple"
     output_dicts = []
     for i, _ in enumerate(args_tuple):
-        output_dicts.append({
-            (Subkey(names[i], 'init'),): args_tuple[i],
-            PREV_KEY: ('init',),
-        })
+        output_dicts.append(
+            {
+                (Subkey(names[i], "init"),): args_tuple[i],
+                PREV_KEY: ("init",),
+            }
+        )
     return output_dicts
 
 
-def build_vset(name: str, func, param_dict=None, reps: int = 1,
-               is_async: bool = False, output_matching: bool = False,
-               lazy: bool = False, cache_dir: str = None,
-               tracking_dir: str = None, **kwargs) -> Vset:
+def build_vset(
+    name: str,
+    func,
+    param_dict=None,
+    reps: int = 1,
+    is_async: bool = False,
+    output_matching: bool = False,
+    lazy: bool = False,
+    cache_dir: str = None,
+    tracking_dir: str = None,
+    **kwargs,
+) -> Vset:
     """Builds a new Vset by currying or instantiating callable `func` with all
     combinations of parameters in `param_dict` and optional additional `**kwargs`.
-    If `func` and `param_dict` are lists, then the ith entry of `func` will be 
-    curried with ith entry of `param_dict`. If only one of `func` or `param_dict` 
+    If `func` and `param_dict` are lists, then the ith entry of `func` will be
+    curried with ith entry of `param_dict`. If only one of `func` or `param_dict`
     is a list, the same `func`/`param_dict` will be curried for all entries in the
-    list. Vfuncs are named with `param_dict` items as tuples of 
+    list. Vfuncs are named with `param_dict` items as tuples of
     str("param_name=param_val").
 
     Parameters
@@ -53,7 +66,7 @@ def build_vset(name: str, func, param_dict=None, reps: int = 1,
         A callable to use as the base for Vfuncs in the output Vset. Can also be
         a class object, in which case the class is immediately instantiated with
         the parameter combinations from `param_dict`. Can also be a list of
-        callables, where the ith entry corresponds to `param_dict` or the ith 
+        callables, where the ith entry corresponds to `param_dict` or the ith
         entry of `param_dict` (if `param_dict` is a list).
     param_dict : dict[str, list] or list[dict[str, list]], optional
         A dict with string keys corresponding to argument names of `func` and
@@ -88,8 +101,9 @@ def build_vset(name: str, func, param_dict=None, reps: int = 1,
     pd_list = []
     if isinstance(func, list):
         if isinstance(param_dict, list):
-            assert len(param_dict) == len(func), \
-                'list of param_dicts must be same length as list of funcs'
+            assert len(param_dict) == len(
+                func
+            ), "list of param_dicts must be same length as list of funcs"
             f_list.extend(func)
             pd_list.extend(param_dict)
         else:
@@ -101,29 +115,29 @@ def build_vset(name: str, func, param_dict=None, reps: int = 1,
     else:
         f_list.append(func)
         pd_list.append(param_dict)
-    
+
     vfuncs = []
     vkeys = []
 
     for f, pd in zip(f_list, pd_list):
         if pd is None:
             pd = {}
-        assert callable(f), 'func must be callable'
-        
+        assert callable(f), "func must be callable"
+
         kwargs_tuples = product(*list(pd.values()))
         for tup in kwargs_tuples:
             kwargs_dict = {}
-            vkey_tup = (f'func={f.__name__}', )
+            vkey_tup = (f"func={f.__name__}",)
             for param_name, param_val in zip(list(pd.keys()), tup):
                 kwargs_dict[param_name] = param_val
-                vkey_tup += (f'{param_name}={param_val}', )
+                vkey_tup += (f"{param_name}={param_val}",)
             # add additional fixed kwargs to kwargs_dict
             for k, v in kwargs.items():
                 kwargs_dict[k] = v
             for i in range(reps):
                 # add vfunc key to vkeys
                 if reps > 1:
-                    vkeys.append((f'rep={i}', ) + vkey_tup)
+                    vkeys.append((f"rep={i}",) + vkey_tup)
                 else:
                     vkeys.append(vkey_tup)
                 # check if func is a class
@@ -132,18 +146,33 @@ def build_vset(name: str, func, param_dict=None, reps: int = 1,
                     vfuncs.append(Vfunc(vfunc=f(**kwargs_dict), name=str(vkey_tup)))
                 else:
                     # use partial to wrap func
-                    vfuncs.append(Vfunc(vfunc=partial(f, **kwargs_dict), name=str(vkey_tup)))
+                    vfuncs.append(
+                        Vfunc(vfunc=partial(f, **kwargs_dict), name=str(vkey_tup))
+                    )
     if all(pd is None for pd in pd_list) and reps == 1:
         vkeys = None
-    
-    return Vset(name, vfuncs, is_async=is_async, vfunc_keys=vkeys,
-                output_matching=output_matching, lazy=lazy,
-                cache_dir=cache_dir, tracking_dir=tracking_dir)
+
+    return Vset(
+        name,
+        vfuncs,
+        is_async=is_async,
+        vfunc_keys=vkeys,
+        output_matching=output_matching,
+        lazy=lazy,
+        cache_dir=cache_dir,
+        tracking_dir=tracking_dir,
+    )
 
 
-def filter_vset_by_metric(metric_dict: dict, vset: Vset, *vsets: Vset, n_keep: int = 1,
-                          bigger_is_better: bool = True, filter_on=None,
-                          group: bool = False) -> Union[Vset, list]:
+def filter_vset_by_metric(
+    metric_dict: dict,
+    vset: Vset,
+    *vsets: Vset,
+    n_keep: int = 1,
+    bigger_is_better: bool = True,
+    filter_on=None,
+    group: bool = False,
+) -> Union[Vset, list]:
     """Returns a new Vset by filtering `vset.vfuncs` based on values in filter_dict.
 
     Parameters
@@ -178,28 +207,45 @@ def filter_vset_by_metric(metric_dict: dict, vset: Vset, *vsets: Vset, n_keep: i
     vset_names = []
     for vset_i in vsets:
         if vset_i.name not in df.columns:
-            raise ValueError((f'{vset_i.name} should be one '
-                              'of the columns of dict_to_df(metric_dict)'))
+            raise ValueError(
+                (
+                    f"{vset_i.name} should be one "
+                    "of the columns of dict_to_df(metric_dict)"
+                )
+            )
         vset_names.append(vset_i.name)
     if len(filter_on) > 0:
         filter_col = list(metric_dict.keys())[0][-1].origin
         df = df[df[filter_col].isin(filter_on)]
     if group:
-        df = df.groupby(by=vset_names, as_index=False).mean()
+        df = df.groupby(by=vset_names, as_index=False).mean(numeric_only=True)
     if bigger_is_better:
-        df = df.sort_values(by='out', ascending=False)
+        df = df.sort_values(by="out", ascending=False)
     else:
-        df = df.sort_values(by='out')
+        df = df.sort_values(by="out")
     df = df.iloc[0:n_keep]
     for i, vset_i in enumerate(vsets):
         vfuncs = vset_i.vfuncs
         vfunc_filter = [str(name) for name in df[vset_i.name].to_numpy()]
         new_vfuncs = {k: v for k, v in vfuncs.items() if str(v.name) in vfunc_filter}
         tracking_dir = None if vset_i._mlflow is None else mlflow.get_tracking_uri()
-        new_vset = Vset('filtered_' + vset_i.name, new_vfuncs, is_async=vset_i._async,
-                        output_matching=vset_i._output_matching, lazy=vset_i._lazy,
-                        cache_dir=vset_i._cache_dir, tracking_dir=tracking_dir)
-        setattr(new_vset, FILTER_PREV_KEY, (metric_dict[PREV_KEY], vset_i,))
+        new_vset = Vset(
+            "filtered_" + vset_i.name,
+            new_vfuncs,
+            is_async=vset_i._async,
+            output_matching=vset_i._output_matching,
+            lazy=vset_i._lazy,
+            cache_dir=vset_i._cache_dir,
+            tracking_dir=tracking_dir,
+        )
+        setattr(
+            new_vset,
+            FILTER_PREV_KEY,
+            (
+                metric_dict[PREV_KEY],
+                vset_i,
+            ),
+        )
         setattr(new_vset, PREV_KEY, getattr(new_vset, FILTER_PREV_KEY))
         vsets[i] = new_vset
     if len(vsets) == 1:
@@ -221,20 +267,26 @@ def cum_acc_by_uncertainty(mean_preds, std_preds, true_labels):
 
     TODO: generalize to multi-class classification
     """
-    assert dict_keys(mean_preds) == dict_keys(std_preds), \
-        "mean_preds and std_preds must share the same keys"
+    assert dict_keys(mean_preds) == dict_keys(
+        std_preds
+    ), "mean_preds and std_preds must share the same keys"
     # match predictions on keys
-    paired_preds = [[d[k] for d in (mean_preds, std_preds)] for k in dict_keys(mean_preds)]
-    mean_preds, std_preds = (np.array(p)[:,:,1] for p in zip(*paired_preds))
+    paired_preds = [
+        [d[k] for d in (mean_preds, std_preds)] for k in dict_keys(mean_preds)
+    ]
+    mean_preds, std_preds = (np.array(p)[:, :, 1] for p in zip(*paired_preds))
     if isinstance(true_labels, dict):
         true_labels = dict_data(true_labels)
-        assert len(true_labels) == 1, 'true_labels should have a single 1D vector entry'
+        assert len(true_labels) == 1, "true_labels should have a single 1D vector entry"
         true_labels = true_labels[0]
     n_obs = len(mean_preds[0])
-    assert len(true_labels) == n_obs, \
-        f'true_labels has {len(true_labels)} obs. but should have same as predictions ({n_obs})'
+    assert (
+        len(true_labels) == n_obs
+    ), f"true_labels has {len(true_labels)} obs. but should have same as predictions ({n_obs})"
     sorted_idx = np.argsort(std_preds, axis=1)
-    correct_labels = np.take_along_axis(np.around(mean_preds) - true_labels == 0, sorted_idx, 1)
+    correct_labels = np.take_along_axis(
+        np.around(mean_preds) - true_labels == 0, sorted_idx, 1
+    )
     uncertainty = np.take_along_axis(std_preds, sorted_idx, 1)
-    cum_acc = np.cumsum(correct_labels, axis=1) / range(1, n_obs+1)
+    cum_acc = np.cumsum(correct_labels, axis=1) / range(1, n_obs + 1)
     return uncertainty, cum_acc, sorted_idx

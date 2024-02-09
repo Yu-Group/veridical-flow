@@ -1,3 +1,55 @@
 [build-system]
-requires = ["setuptools"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling", "hatch-requirements-txt"]
+build-backend = "hatchling.build"
+
+[project]
+name = "vflow"
+version = "0.1.2"
+authors = [
+  { name="Chandan Singh", email="chandan_singh@berkeley.edu" },
+  { name="James Duncan", email="jpduncan@berkeley.edu" },
+  { name="Abhineet Agarwal", email="aa3797@berkeley.edu" },
+  { name="Rush Kapoor", email="rush.kapoor@berkeley.edu " },
+]
+maintainers = [
+  { name="James Duncan", email="jpduncan@berkeley.edu" },
+]
+description = "A framework for doing stability analysis with PCS."
+readme = "README.md"
+requires-python = ">=3.9"
+classifiers = [
+  "Intended Audience :: Science/Research",
+  "Development Status :: 3 - Alpha",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+  "Operating System :: OS Independent",
+]
+license = {text = "MIT"}
+dynamic = ["dependencies"]
+
+[project.urls]
+Homepage = "https://vflow.csinva.io/"
+Issues = "https://github.com/Yu-Group/veridical-flow/issues"
+
+[project.optional-dependencies]
+gpu = ["torch"]
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.metadata.hooks.requirements_txt]
+files = ["requirements.txt"]
+
+[tool.hatch.build.targets.sdist]
+exclude = [
+  "/.github",
+  "/notebooks",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["vflow"]
+
+[tool.coverage.run]
+branch = true
+source_pkgs = ["vflow", "tests"]

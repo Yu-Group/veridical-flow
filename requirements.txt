@@ -1,0 +1,9 @@
+numpy
+scipy
+matplotlib
+networkx
+pandas>=2.0.0
+joblib
+pytest
+ray
+mlflow

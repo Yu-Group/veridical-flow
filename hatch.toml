@@ -1,0 +1,62 @@
+# based on https://github.com/pypa/hatch/blob/master/hatch.toml
+
+[envs.default]
+dependencies = [
+  "coverage[toml]",
+  "pytest-cov",
+  "pytest-randomly",
+  "pytest-rerunfailures",
+  "pytest-xdist",
+]
+
+[envs.default.scripts]
+# --cov must not come before an argument in order to use the sources defined by config
+_cov = "pytest --cov --cov-report=term-missing --cov-config=pyproject.toml"
+dev = "pytest -p no:randomly --no-cov {args:tests}"
+cov = "_cov -p no:randomly {args:tests}"
+full = "_cov -n auto --reruns 5 --reruns-delay 3 -r aR {args:tests}"
+
+[envs.dev]
+template = "default"
+dependencies = [
+  "jupyterlab",
+  "torch>=1.0.0",
+  "torchvision",
+  "tqdm",
+  "scikit-learn>=0.23.0",
+]
+
+[envs.dev.env-vars]
+PIP_INDEX_URL = "https://download.pytorch.org/whl/cpu"
+PIP_EXTRA_INDEX_URL = "https://pypi.org/simple/"
+
+[envs.style]
+detached = true
+dependencies = [
+  "ruff",
+  "black",
+  "isort",
+]
+
+[envs.style.scripts]
+check = [
+  "ruff vflow tests",
+  "black --check --diff vflow tests",
+  "isort --check --diff --profile black vflow tests",
+]
+fmt = [
+  "isort --profile black ./vflow ./tests",
+  "black ./vflow ./tests",
+  "check",
+]
+
+[envs.coverage]
+detached = true
+dependencies = [
+  "coverage[toml]",
+  "lxml",
+]
+
+[envs.coverage.scripts]
+combine = "coverage combine {args}"
+report-xml = "coverage xml -i"

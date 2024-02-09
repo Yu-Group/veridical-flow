@@ -1,7 +1,8 @@
 """Defines a parameter from some origin Vset
 """
-class Subkey:
 
+
+class Subkey:
     def __init__(self, value, origin: str, output_matching: bool = False):
         """
         Parameters
@@ -21,16 +22,16 @@ class Subkey:
         self.sep_dicts_id = None
 
     def is_matching(self):
-        """Checks if subkey should be matched in other Vsets
-        """
+        """Checks if subkey should be matched in other Vsets"""
         return self.output_matching or self.sep_dicts_id is not None
 
     def matches_sep_dict_id(self, other: object):
-        """Helper to match Subkey by _sep_dict_id
-        """
+        """Helper to match Subkey by _sep_dict_id"""
         if isinstance(other, self.__class__):
-            return self.sep_dicts_id is not None \
-                   and self.sep_dicts_id == other.sep_dicts_id
+            return (
+                self.sep_dicts_id is not None
+                and self.sep_dicts_id == other.sep_dicts_id
+            )
         return False
 
     def matches(self, other: object):
@@ -44,8 +45,9 @@ class Subkey:
             # value and origins match
             cond1 = self.value == other.value and self.origin == other.origin
             # sep_dicts_id matches
-            cond2 = self.sep_dicts_id == other.sep_dicts_id or \
-                    (self.output_matching and other.output_matching)
+            cond2 = self.sep_dicts_id == other.sep_dicts_id or (
+                self.output_matching and other.output_matching
+            )
             return cond0 and cond1 and cond2
         return False
 
@@ -68,8 +70,7 @@ class Subkey:
         return True
 
     def __eq__(self, other: object):
-        """Mainly used for testing purposes.
-        """
+        """Mainly used for testing purposes."""
         if isinstance(other, self.__class__):
             # value and origins match
             return self.value == other.value and self.origin == other.origin
@@ -79,6 +80,5 @@ class Subkey:
         return str(self.value)
 
     def __hash__(self):
-        """Mainly used for testing purposes.
-        """
+        """Mainly used for testing purposes."""
         return hash(self.value) ^ hash(self.origin) ^ hash(self.output_matching)
