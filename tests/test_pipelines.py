@@ -1,10 +1,12 @@
 import os
+import sys
 import time
 from functools import partial
 from shutil import rmtree
 
 import numpy as np
 import pandas as pd
+import pytest
 import ray
 from numpy.testing import assert_equal
 from sklearn.datasets import fetch_california_housing, make_classification
@@ -347,7 +349,7 @@ class TestPipelines:
             # clean up
             rmtree("./joblib")
 
-    # @pytest.mark.skip(reason="Won't fix for now")
+    @pytest.mark.skipif(sys.platform == "win32", reason="Does not work on Windows.")
     def test_mlflow_tracking(self, tmp_path):
         try:
             runs_path = os.path.join(tmp_path, "mlruns")
