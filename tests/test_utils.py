@@ -2,9 +2,16 @@ import numpy as np
 import pandas as pd
 import pytest
 from numpy.testing import assert_equal
+
 from vflow.subkey import Subkey as sm
-from vflow.utils import (PREV_KEY, apply_vfuncs, combine_dicts, dict_to_df,
-                         perturbation_stats, to_list)
+from vflow.utils import (
+    PREV_KEY,
+    apply_vfuncs,
+    combine_dicts,
+    dict_to_df,
+    perturbation_stats,
+    to_list,
+)
 
 
 @pytest.mark.parametrize(
