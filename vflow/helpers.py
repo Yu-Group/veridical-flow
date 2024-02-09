@@ -218,7 +218,7 @@ def filter_vset_by_metric(
         filter_col = list(metric_dict.keys())[0][-1].origin
         df = df[df[filter_col].isin(filter_on)]
     if group:
-        df = df.groupby(by=vset_names, as_index=False).mean()
+        df = df.groupby(by=vset_names, as_index=False).mean(numeric_only=True)
     if bigger_is_better:
         df = df.sort_values(by="out", ascending=False)
     else:

@@ -1,7 +1,14 @@
 import numpy as np
 from numpy.testing import assert_equal
-from vflow.helpers import build_vset, cum_acc_by_uncertainty
+from sklearn.datasets import make_classification
+from sklearn.metrics import accuracy_score, balanced_accuracy_score
+from sklearn.model_selection import train_test_split
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.utils import resample
+from vflow.helpers import (build_vset, cum_acc_by_uncertainty,
+                           filter_vset_by_metric, init_args)
 from vflow.subkey import Subkey
+from vflow.utils import dict_to_df
 from vflow.vset import Vset
 
 
@@ -512,3 +519,68 @@ class TestHelpers:
         assert_equal(c0[1], [0, 0, 1 / 3])
         assert_equal(idx0[0], [2, 0, 1])
         assert_equal(idx0[1], [0, 1, 2])
+
+    def test_filter_vset_by_metric(self):
+        X, y = make_classification(n_samples=100, n_features=5)
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, random_state=42
+        )  # ex. with another split?
+        X_train, X_test, y_train, y_test = init_args(
+            (X_train, X_test, y_train, y_test),
+            names=["X_train", "X_test", "y_train", "y_test"],
+        )  # optionally provide names for each of these
+
+        # subsample data
+        subsampling_set = build_vset(
+            "subsampling",
+            resample,
+            param_dict={"random_state": list(range(3))},
+            n_samples=20,
+        )
+        X_trains, y_trains = subsampling_set(X_train, y_train)
+
+        # fit models
+        dt_set = build_vset(
+            name="DT",
+            func=DecisionTreeClassifier,
+            param_dict={"criterion": ["gini", "entropy", "log_loss"]},
+        )
+        dt_set.fit(X_trains, y_trains)
+        preds_test = dt_set.predict(X_test)
+
+        # get metrics
+        hard_metrics_set = Vset(
+            name="hard_metrics",
+            vfuncs=[accuracy_score, balanced_accuracy_score],
+            vfunc_keys=["Acc", "Bal_Acc"],
+        )
+
+        hard_metrics = hard_metrics_set.evaluate(preds_test, y_test)
+        df = dict_to_df(hard_metrics)
+
+        filtered_dt_set = filter_vset_by_metric(
+            metric_dict=hard_metrics,
+            vset=dt_set,
+            n_keep=1,
+            filter_on=["Bal_Acc"],
+            group=False,
+        )
+
+        df_bal_acc = df[df["hard_metrics"] == "Bal_Acc"]
+        top_DT = df_bal_acc[df_bal_acc["out"] == df_bal_acc["out"].max()]["DT"].iloc[0]
+        subkey = next(iter(filtered_dt_set.vfuncs.keys()))[0].value
+        assert top_DT == subkey
+
+        filtered_dt_set = filter_vset_by_metric(
+            metric_dict=hard_metrics,
+            vset=dt_set,
+            n_keep=1,
+            filter_on=["Acc"],
+            group=True,
+        )
+
+        df_acc = df[df["hard_metrics"] == "Acc"]
+        df_acc_mean = df_acc.groupby("DT").mean(numeric_only=True)
+        top_DT = df_acc_mean[df_acc_mean["out"] == df_acc_mean["out"].max()].index[0]
+        subkey = next(iter(filtered_dt_set.vfuncs.keys()))[0].value
+        assert top_DT == subkey
