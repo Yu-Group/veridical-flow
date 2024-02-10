@@ -82,7 +82,10 @@ Once we've written this pipeline, we can easily measure the stability of metrics
 
 See the [docs](https://yu-group.github.io/veridical-flow/) for reference on the API
 
-> **Notebook examples** (Note that some of these require more dependencies than just those required for vflow - to install all, use the `notebooks` dependencies in the `setup.py` file)
+> **Notebook examples**
+>
+> Note that some of these require more dependencies than just those required for
+> `vflow`. To install all, run `pip install vflow[nb]`.
 >
 > [Synthetic classification](https://yu-group.github.io/veridical-flow/notebooks/00_synthetic_classification.html)
 >

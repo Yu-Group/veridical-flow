@@ -30,6 +30,23 @@ dependencies = [
 PIP_INDEX_URL = "https://download.pytorch.org/whl/cpu"
 PIP_EXTRA_INDEX_URL = "https://pypi.org/simple/"
 
+[envs.docs]
+template = "dev"
+dependencies = [
+  "pdoc3",
+  "nbconvert",
+]
+
+[envs.docs.scripts]
+build = [
+  "pdoc --html vflow --output-dir docs --template-dir docs",
+  "cp -rf docs/vflow/* docs/",
+  "rm -rf docs/vflow",
+  "cd notebooks && jupyter nbconvert --to html *.ipynb && cd ..",
+  "mv notebooks/*.html docs/notebooks/",
+  "cd docs && python style_docs.py && cd ..",
+]
+
 [envs.style]
 detached = true
 dependencies = [

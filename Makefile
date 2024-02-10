@@ -2,7 +2,7 @@ VERSION ?= $(shell git rev-parse --short HEAD)
 CONDA_ENV_NAME ?= vflow
 HATCH_ENV_NAME ?= test
 
-.PHONY: build_conda_env build_ipykernel test_% run_tests fix_styles
+.PHONY: build_conda_env build_ipykernel test_% run_tests fix_styles build_docs
 
 build_conda_env:
 	conda create -n $(CONDA_ENV_NAME) -y python==3.10 pip
@@ -20,3 +20,6 @@ run_tests:
 
 fix_styles:
 	hatch -v run style:fmt
+
+build_docs:
+	hatch -v run docs:build

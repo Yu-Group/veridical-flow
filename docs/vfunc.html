@@ -36,29 +36,27 @@ class Vfunc:
     If none of these is supported, it need only be a function
     &#34;&#34;&#34;
 
-    def __init__(self, name: str = &#39;&#39;, vfunc=lambda x: x):
-        assert hasattr(vfunc, &#39;fit&#39;) or callable(vfunc), \
-            &#39;vfunc must be an object with a fit method or a callable&#39;
+    def __init__(self, name: str = &#34;&#34;, vfunc=lambda x: x):
+        assert hasattr(vfunc, &#34;fit&#34;) or callable(
+            vfunc
+        ), &#34;vfunc must be an object with a fit method or a callable&#34;
         self.name = name
         self.vfunc = vfunc
 
     def fit(self, *args, **kwargs):
-        &#34;&#34;&#34;This function fits params for this vfunc
-        &#34;&#34;&#34;
-        if hasattr(self.vfunc, &#39;fit&#39;):
+        &#34;&#34;&#34;This function fits params for this vfunc&#34;&#34;&#34;
+        if hasattr(self.vfunc, &#34;fit&#34;):
             return self.vfunc.fit(*args, **kwargs)
         return self.vfunc(*args, **kwargs)
 
     def transform(self, *args, **kwargs):
-        &#34;&#34;&#34;This function transforms its input in some way
-        &#34;&#34;&#34;
-        if hasattr(self.vfunc, &#39;transform&#39;):
+        &#34;&#34;&#34;This function transforms its input in some way&#34;&#34;&#34;
+        if hasattr(self.vfunc, &#34;transform&#34;):
             return self.vfunc.transform(*args, **kwargs)
         return self.vfunc(*args, **kwargs)
 
     def __call__(self, *args, **kwargs):
-        &#34;&#34;&#34;This should decide what to call
-        &#34;&#34;&#34;
+        &#34;&#34;&#34;This should decide what to call&#34;&#34;&#34;
         return self.fit(*args, **kwargs)
 
 
@@ -68,41 +66,37 @@ def _remote_fun(vfunc, *args, **kwargs):
 
 
 class AsyncVfunc:
-    &#34;&#34;&#34;An asynchronous version of the Vfunc class.
-    &#34;&#34;&#34;
+    &#34;&#34;&#34;An asynchronous version of the Vfunc class.&#34;&#34;&#34;
 
-    def __init__(self, name: str = &#39;&#39;, vfunc=lambda x: x):
+    def __init__(self, name: str = &#34;&#34;, vfunc=lambda x: x):
         self.name = name
         if isinstance(vfunc, Vfunc):
             self.vfunc = vfunc.vfunc
         else:
-            assert hasattr(vfunc, &#39;fit&#39;) or callable(vfunc), \
-                &#39;vfunc must be an object with a fit method or a callable&#39;
+            assert hasattr(vfunc, &#34;fit&#34;) or callable(
+                vfunc
+            ), &#34;vfunc must be an object with a fit method or a callable&#34;
             self.vfunc = vfunc
 
     def fit(self, *args, **kwargs):
-        &#34;&#34;&#34;This function fits params for this vfunc
-        &#34;&#34;&#34;
-        if hasattr(self.vfunc, &#39;fit&#39;):
+        &#34;&#34;&#34;This function fits params for this vfunc&#34;&#34;&#34;
+        if hasattr(self.vfunc, &#34;fit&#34;):
             return _remote_fun.remote(self.vfunc.fit, *args, **kwargs)
         return _remote_fun.remote(self.vfunc, *args, **kwargs)
 
     def transform(self, *args, **kwargs):
-        &#34;&#34;&#34;This function transforms its input in some way
-        &#34;&#34;&#34;
-        if hasattr(self.vfunc, &#39;transform&#39;):
+        &#34;&#34;&#34;This function transforms its input in some way&#34;&#34;&#34;
+        if hasattr(self.vfunc, &#34;transform&#34;):
             return _remote_fun.remote(self.vfunc.transform, *args, **kwargs)
         return _remote_fun.remote(self.vfunc, *args, **kwargs)
 
     def __call__(self, *args, **kwargs):
-        &#34;&#34;&#34;This should decide what to call
-        &#34;&#34;&#34;
+        &#34;&#34;&#34;This should decide what to call&#34;&#34;&#34;
         return self.fit(*args, **kwargs)
 
 
 class VfuncPromise:
-    &#34;&#34;&#34;A Vfunc promise used for lazy evaluation.
-    &#34;&#34;&#34;
+    &#34;&#34;&#34;A Vfunc promise used for lazy evaluation.&#34;&#34;&#34;
 
     def __init__(self, vfunc: callable, *args):
         self.vfunc = vfunc
@@ -111,8 +105,7 @@ class VfuncPromise:
         self.value = None
 
     def __call__(self):
-        &#34;&#34;&#34;This should decide what to call
-        &#34;&#34;&#34;
+        &#34;&#34;&#34;This should decide what to call&#34;&#34;&#34;
         if self.called:
             return self.value
         tmp_args = []
@@ -132,24 +125,21 @@ class VfuncPromise:
         return self.value
 
     def transform(self, *args):
-        &#34;&#34;&#34;This function transforms its input in some way
-        &#34;&#34;&#34;
+        &#34;&#34;&#34;This function transforms its input in some way&#34;&#34;&#34;
         return self._get_value().transform(*args)
 
     def predict(self, *args):
-        &#34;&#34;&#34;This function calls predict on its inputs
-        &#34;&#34;&#34;
+        &#34;&#34;&#34;This function calls predict on its inputs&#34;&#34;&#34;
         return self._get_value().predict(*args)
 
     def predict_proba(self, *args):
-        &#34;&#34;&#34;This function calls predict_proba on its inputs
-        &#34;&#34;&#34;
+        &#34;&#34;&#34;This function calls predict_proba on its inputs&#34;&#34;&#34;
         return self._get_value().predict_proba(*args)
 
     def __repr__(self):
         if self.called:
-            return f&#39;Fulfilled VfuncPromise({self.value})&#39;
-        return f&#39;Unfulfilled VfuncPromise(func={self.vfunc}, args={self.args})&#39;</code></pre>
+            return f&#34;Fulfilled VfuncPromise({self.value})&#34;
+        return f&#34;Unfulfilled VfuncPromise(func={self.vfunc}, args={self.args})&#34;</code></pre>
 </details>
 </section>
 <section>
@@ -172,35 +162,32 @@ class VfuncPromise:
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class AsyncVfunc:
-    &#34;&#34;&#34;An asynchronous version of the Vfunc class.
-    &#34;&#34;&#34;
+    &#34;&#34;&#34;An asynchronous version of the Vfunc class.&#34;&#34;&#34;
 
-    def __init__(self, name: str = &#39;&#39;, vfunc=lambda x: x):
+    def __init__(self, name: str = &#34;&#34;, vfunc=lambda x: x):
         self.name = name
         if isinstance(vfunc, Vfunc):
             self.vfunc = vfunc.vfunc
         else:
-            assert hasattr(vfunc, &#39;fit&#39;) or callable(vfunc), \
-                &#39;vfunc must be an object with a fit method or a callable&#39;
+            assert hasattr(vfunc, &#34;fit&#34;) or callable(
+                vfunc
+            ), &#34;vfunc must be an object with a fit method or a callable&#34;
             self.vfunc = vfunc
 
     def fit(self, *args, **kwargs):
-        &#34;&#34;&#34;This function fits params for this vfunc
-        &#34;&#34;&#34;
-        if hasattr(self.vfunc, &#39;fit&#39;):
+        &#34;&#34;&#34;This function fits params for this vfunc&#34;&#34;&#34;
+        if hasattr(self.vfunc, &#34;fit&#34;):
             return _remote_fun.remote(self.vfunc.fit, *args, **kwargs)
         return _remote_fun.remote(self.vfunc, *args, **kwargs)
 
     def transform(self, *args, **kwargs):
-        &#34;&#34;&#34;This function transforms its input in some way
-        &#34;&#34;&#34;
-        if hasattr(self.vfunc, &#39;transform&#39;):
+        &#34;&#34;&#34;This function transforms its input in some way&#34;&#34;&#34;
+        if hasattr(self.vfunc, &#34;transform&#34;):
             return _remote_fun.remote(self.vfunc.transform, *args, **kwargs)
         return _remote_fun.remote(self.vfunc, *args, **kwargs)
 
     def __call__(self, *args, **kwargs):
-        &#34;&#34;&#34;This should decide what to call
-        &#34;&#34;&#34;
+        &#34;&#34;&#34;This should decide what to call&#34;&#34;&#34;
         return self.fit(*args, **kwargs)</code></pre>
 </details>
 <h3>Methods</h3>
@@ -215,9 +202,8 @@ class VfuncPromise:
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def fit(self, *args, **kwargs):
-    &#34;&#34;&#34;This function fits params for this vfunc
-    &#34;&#34;&#34;
-    if hasattr(self.vfunc, &#39;fit&#39;):
+    &#34;&#34;&#34;This function fits params for this vfunc&#34;&#34;&#34;
+    if hasattr(self.vfunc, &#34;fit&#34;):
         return _remote_fun.remote(self.vfunc.fit, *args, **kwargs)
     return _remote_fun.remote(self.vfunc, *args, **kwargs)</code></pre>
 </details>
@@ -232,9 +218,8 @@ class VfuncPromise:
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def transform(self, *args, **kwargs):
-    &#34;&#34;&#34;This function transforms its input in some way
-    &#34;&#34;&#34;
-    if hasattr(self.vfunc, &#39;transform&#39;):
+    &#34;&#34;&#34;This function transforms its input in some way&#34;&#34;&#34;
+    if hasattr(self.vfunc, &#34;transform&#34;):
         return _remote_fun.remote(self.vfunc.transform, *args, **kwargs)
     return _remote_fun.remote(self.vfunc, *args, **kwargs)</code></pre>
 </details>
@@ -259,29 +244,27 @@ If none of these is supported, it need only be a function</p></div>
     If none of these is supported, it need only be a function
     &#34;&#34;&#34;
 
-    def __init__(self, name: str = &#39;&#39;, vfunc=lambda x: x):
-        assert hasattr(vfunc, &#39;fit&#39;) or callable(vfunc), \
-            &#39;vfunc must be an object with a fit method or a callable&#39;
+    def __init__(self, name: str = &#34;&#34;, vfunc=lambda x: x):
+        assert hasattr(vfunc, &#34;fit&#34;) or callable(
+            vfunc
+        ), &#34;vfunc must be an object with a fit method or a callable&#34;
         self.name = name
         self.vfunc = vfunc
 
     def fit(self, *args, **kwargs):
-        &#34;&#34;&#34;This function fits params for this vfunc
-        &#34;&#34;&#34;
-        if hasattr(self.vfunc, &#39;fit&#39;):
+        &#34;&#34;&#34;This function fits params for this vfunc&#34;&#34;&#34;
+        if hasattr(self.vfunc, &#34;fit&#34;):
             return self.vfunc.fit(*args, **kwargs)
         return self.vfunc(*args, **kwargs)
 
     def transform(self, *args, **kwargs):
-        &#34;&#34;&#34;This function transforms its input in some way
-        &#34;&#34;&#34;
-        if hasattr(self.vfunc, &#39;transform&#39;):
+        &#34;&#34;&#34;This function transforms its input in some way&#34;&#34;&#34;
+        if hasattr(self.vfunc, &#34;transform&#34;):
             return self.vfunc.transform(*args, **kwargs)
         return self.vfunc(*args, **kwargs)
 
     def __call__(self, *args, **kwargs):
-        &#34;&#34;&#34;This should decide what to call
-        &#34;&#34;&#34;
+        &#34;&#34;&#34;This should decide what to call&#34;&#34;&#34;
         return self.fit(*args, **kwargs)</code></pre>
 </details>
 <h3>Methods</h3>
@@ -296,9 +279,8 @@ If none of these is supported, it need only be a function</p></div>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def fit(self, *args, **kwargs):
-    &#34;&#34;&#34;This function fits params for this vfunc
-    &#34;&#34;&#34;
-    if hasattr(self.vfunc, &#39;fit&#39;):
+    &#34;&#34;&#34;This function fits params for this vfunc&#34;&#34;&#34;
+    if hasattr(self.vfunc, &#34;fit&#34;):
         return self.vfunc.fit(*args, **kwargs)
     return self.vfunc(*args, **kwargs)</code></pre>
 </details>
@@ -313,9 +295,8 @@ If none of these is supported, it need only be a function</p></div>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def transform(self, *args, **kwargs):
-    &#34;&#34;&#34;This function transforms its input in some way
-    &#34;&#34;&#34;
-    if hasattr(self.vfunc, &#39;transform&#39;):
+    &#34;&#34;&#34;This function transforms its input in some way&#34;&#34;&#34;
+    if hasattr(self.vfunc, &#34;transform&#34;):
         return self.vfunc.transform(*args, **kwargs)
     return self.vfunc(*args, **kwargs)</code></pre>
 </details>
@@ -333,8 +314,7 @@ If none of these is supported, it need only be a function</p></div>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class VfuncPromise:
-    &#34;&#34;&#34;A Vfunc promise used for lazy evaluation.
-    &#34;&#34;&#34;
+    &#34;&#34;&#34;A Vfunc promise used for lazy evaluation.&#34;&#34;&#34;
 
     def __init__(self, vfunc: callable, *args):
         self.vfunc = vfunc
@@ -343,8 +323,7 @@ If none of these is supported, it need only be a function</p></div>
         self.value = None
 
     def __call__(self):
-        &#34;&#34;&#34;This should decide what to call
-        &#34;&#34;&#34;
+        &#34;&#34;&#34;This should decide what to call&#34;&#34;&#34;
         if self.called:
             return self.value
         tmp_args = []
@@ -364,24 +343,21 @@ If none of these is supported, it need only be a function</p></div>
         return self.value
 
     def transform(self, *args):
-        &#34;&#34;&#34;This function transforms its input in some way
-        &#34;&#34;&#34;
+        &#34;&#34;&#34;This function transforms its input in some way&#34;&#34;&#34;
         return self._get_value().transform(*args)
 
     def predict(self, *args):
-        &#34;&#34;&#34;This function calls predict on its inputs
-        &#34;&#34;&#34;
+        &#34;&#34;&#34;This function calls predict on its inputs&#34;&#34;&#34;
         return self._get_value().predict(*args)
 
     def predict_proba(self, *args):
-        &#34;&#34;&#34;This function calls predict_proba on its inputs
-        &#34;&#34;&#34;
+        &#34;&#34;&#34;This function calls predict_proba on its inputs&#34;&#34;&#34;
         return self._get_value().predict_proba(*args)
 
     def __repr__(self):
         if self.called:
-            return f&#39;Fulfilled VfuncPromise({self.value})&#39;
-        return f&#39;Unfulfilled VfuncPromise(func={self.vfunc}, args={self.args})&#39;</code></pre>
+            return f&#34;Fulfilled VfuncPromise({self.value})&#34;
+        return f&#34;Unfulfilled VfuncPromise(func={self.vfunc}, args={self.args})&#34;</code></pre>
 </details>
 <h3>Methods</h3>
 <dl>
@@ -395,8 +371,7 @@ If none of these is supported, it need only be a function</p></div>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def predict(self, *args):
-    &#34;&#34;&#34;This function calls predict on its inputs
-    &#34;&#34;&#34;
+    &#34;&#34;&#34;This function calls predict on its inputs&#34;&#34;&#34;
     return self._get_value().predict(*args)</code></pre>
 </details>
 </dd>
@@ -410,8 +385,7 @@ If none of these is supported, it need only be a function</p></div>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def predict_proba(self, *args):
-    &#34;&#34;&#34;This function calls predict_proba on its inputs
-    &#34;&#34;&#34;
+    &#34;&#34;&#34;This function calls predict_proba on its inputs&#34;&#34;&#34;
     return self._get_value().predict_proba(*args)</code></pre>
 </details>
 </dd>
@@ -425,8 +399,7 @@ If none of these is supported, it need only be a function</p></div>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def transform(self, *args):
-    &#34;&#34;&#34;This function transforms its input in some way
-    &#34;&#34;&#34;
+    &#34;&#34;&#34;This function transforms its input in some way&#34;&#34;&#34;
     return self._get_value().transform(*args)</code></pre>
 </details>
 </dd>

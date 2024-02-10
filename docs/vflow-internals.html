@@ -168,6 +168,81 @@ For more details on <code>is_async</code> and <code>lazy</code>, see <a title="S
 <li><code><a title="vflow.vset" href="vset.html">vflow.vset</a></code></li>
 </ul>
 </li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="vflow.apply_vfuncs" href="#vflow.apply_vfuncs">apply_vfuncs</a></code></li>
+<li><code><a title="vflow.base_dict" href="#vflow.base_dict">base_dict</a></code></li>
+<li><code><a title="vflow.build_graph" href="#vflow.build_graph">build_graph</a></code></li>
+<li><code><a title="vflow.build_vset" href="#vflow.build_vset">build_vset</a></code></li>
+<li><code><a title="vflow.combine_dicts" href="#vflow.combine_dicts">combine_dicts</a></code></li>
+<li><code><a title="vflow.combine_keys" href="#vflow.combine_keys">combine_keys</a></code></li>
+<li><code><a title="vflow.cum_acc_by_uncertainty" href="#vflow.cum_acc_by_uncertainty">cum_acc_by_uncertainty</a></code></li>
+<li><code><a title="vflow.dict_data" href="#vflow.dict_data">dict_data</a></code></li>
+<li><code><a title="vflow.dict_keys" href="#vflow.dict_keys">dict_keys</a></code></li>
+<li><code><a title="vflow.dict_to_df" href="#vflow.dict_to_df">dict_to_df</a></code></li>
+<li><code><a title="vflow.filter_vset_by_metric" href="#vflow.filter_vset_by_metric">filter_vset_by_metric</a></code></li>
+<li><code><a title="vflow.init_args" href="#vflow.init_args">init_args</a></code></li>
+<li><code><a title="vflow.init_step" href="#vflow.init_step">init_step</a></code></li>
+<li><code><a title="vflow.perturbation_stats" href="#vflow.perturbation_stats">perturbation_stats</a></code></li>
+<li><code><a title="vflow.sep_dicts" href="#vflow.sep_dicts">sep_dicts</a></code></li>
+<li><code><a title="vflow.to_list" href="#vflow.to_list">to_list</a></code></li>
+<li><code><a title="vflow.to_tuple" href="#vflow.to_tuple">to_tuple</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="vflow.AsyncVfunc" href="#vflow.AsyncVfunc">AsyncVfunc</a></code></h4>
+<ul class="">
+<li><code><a title="vflow.AsyncVfunc.fit" href="#vflow.AsyncVfunc.fit">fit</a></code></li>
+<li><code><a title="vflow.AsyncVfunc.transform" href="#vflow.AsyncVfunc.transform">transform</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="vflow.PCSPipeline" href="#vflow.PCSPipeline">PCSPipeline</a></code></h4>
+<ul class="">
+<li><code><a title="vflow.PCSPipeline.generate_names" href="#vflow.PCSPipeline.generate_names">generate_names</a></code></li>
+<li><code><a title="vflow.PCSPipeline.run" href="#vflow.PCSPipeline.run">run</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="vflow.Subkey" href="#vflow.Subkey">Subkey</a></code></h4>
+<ul class="">
+<li><code><a title="vflow.Subkey.is_matching" href="#vflow.Subkey.is_matching">is_matching</a></code></li>
+<li><code><a title="vflow.Subkey.matches" href="#vflow.Subkey.matches">matches</a></code></li>
+<li><code><a title="vflow.Subkey.matches_sep_dict_id" href="#vflow.Subkey.matches_sep_dict_id">matches_sep_dict_id</a></code></li>
+<li><code><a title="vflow.Subkey.mismatches" href="#vflow.Subkey.mismatches">mismatches</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="vflow.Vfunc" href="#vflow.Vfunc">Vfunc</a></code></h4>
+<ul class="">
+<li><code><a title="vflow.Vfunc.fit" href="#vflow.Vfunc.fit">fit</a></code></li>
+<li><code><a title="vflow.Vfunc.transform" href="#vflow.Vfunc.transform">transform</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="vflow.VfuncPromise" href="#vflow.VfuncPromise">VfuncPromise</a></code></h4>
+<ul class="">
+<li><code><a title="vflow.VfuncPromise.predict" href="#vflow.VfuncPromise.predict">predict</a></code></li>
+<li><code><a title="vflow.VfuncPromise.predict_proba" href="#vflow.VfuncPromise.predict_proba">predict_proba</a></code></li>
+<li><code><a title="vflow.VfuncPromise.transform" href="#vflow.VfuncPromise.transform">transform</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="vflow.Vset" href="#vflow.Vset">Vset</a></code></h4>
+<ul class="two-column">
+<li><code><a title="vflow.Vset.evaluate" href="#vflow.Vset.evaluate">evaluate</a></code></li>
+<li><code><a title="vflow.Vset.fit" href="#vflow.Vset.fit">fit</a></code></li>
+<li><code><a title="vflow.Vset.fit_transform" href="#vflow.Vset.fit_transform">fit_transform</a></code></li>
+<li><code><a title="vflow.Vset.keys" href="#vflow.Vset.keys">keys</a></code></li>
+<li><code><a title="vflow.Vset.predict" href="#vflow.Vset.predict">predict</a></code></li>
+<li><code><a title="vflow.Vset.predict_proba" href="#vflow.Vset.predict_proba">predict_proba</a></code></li>
+<li><code><a title="vflow.Vset.transform" href="#vflow.Vset.transform">transform</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 <!-- add wave animation -->
 <div class="ocean">
