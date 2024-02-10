@@ -26,8 +26,9 @@
 </summary>
 <pre><code class="python">&#34;&#34;&#34;Defines a parameter from some origin Vset
 &#34;&#34;&#34;
-class Subkey:
 
+
+class Subkey:
     def __init__(self, value, origin: str, output_matching: bool = False):
         &#34;&#34;&#34;
         Parameters
@@ -47,16 +48,16 @@ class Subkey:
         self.sep_dicts_id = None
 
     def is_matching(self):
-        &#34;&#34;&#34;Checks if subkey should be matched in other Vsets
-        &#34;&#34;&#34;
+        &#34;&#34;&#34;Checks if subkey should be matched in other Vsets&#34;&#34;&#34;
         return self.output_matching or self.sep_dicts_id is not None
 
     def matches_sep_dict_id(self, other: object):
-        &#34;&#34;&#34;Helper to match Subkey by _sep_dict_id
-        &#34;&#34;&#34;
+        &#34;&#34;&#34;Helper to match Subkey by _sep_dict_id&#34;&#34;&#34;
         if isinstance(other, self.__class__):
-            return self.sep_dicts_id is not None \
-                   and self.sep_dicts_id == other.sep_dicts_id
+            return (
+                self.sep_dicts_id is not None
+                and self.sep_dicts_id == other.sep_dicts_id
+            )
         return False
 
     def matches(self, other: object):
@@ -70,8 +71,9 @@ class Subkey:
             # value and origins match
             cond1 = self.value == other.value and self.origin == other.origin
             # sep_dicts_id matches
-            cond2 = self.sep_dicts_id == other.sep_dicts_id or \
-                    (self.output_matching and other.output_matching)
+            cond2 = self.sep_dicts_id == other.sep_dicts_id or (
+                self.output_matching and other.output_matching
+            )
             return cond0 and cond1 and cond2
         return False
 
@@ -94,8 +96,7 @@ class Subkey:
         return True
 
     def __eq__(self, other: object):
-        &#34;&#34;&#34;Mainly used for testing purposes.
-        &#34;&#34;&#34;
+        &#34;&#34;&#34;Mainly used for testing purposes.&#34;&#34;&#34;
         if isinstance(other, self.__class__):
             # value and origins match
             return self.value == other.value and self.origin == other.origin
@@ -105,8 +106,7 @@ class Subkey:
         return str(self.value)
 
     def __hash__(self):
-        &#34;&#34;&#34;Mainly used for testing purposes.
-        &#34;&#34;&#34;
+        &#34;&#34;&#34;Mainly used for testing purposes.&#34;&#34;&#34;
         return hash(self.value) ^ hash(self.origin) ^ hash(self.output_matching)</code></pre>
 </details>
 </section>
@@ -138,7 +138,6 @@ class Subkey:
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class Subkey:
-
     def __init__(self, value, origin: str, output_matching: bool = False):
         &#34;&#34;&#34;
         Parameters
@@ -158,16 +157,16 @@ class Subkey:
         self.sep_dicts_id = None
 
     def is_matching(self):
-        &#34;&#34;&#34;Checks if subkey should be matched in other Vsets
-        &#34;&#34;&#34;
+        &#34;&#34;&#34;Checks if subkey should be matched in other Vsets&#34;&#34;&#34;
         return self.output_matching or self.sep_dicts_id is not None
 
     def matches_sep_dict_id(self, other: object):
-        &#34;&#34;&#34;Helper to match Subkey by _sep_dict_id
-        &#34;&#34;&#34;
+        &#34;&#34;&#34;Helper to match Subkey by _sep_dict_id&#34;&#34;&#34;
         if isinstance(other, self.__class__):
-            return self.sep_dicts_id is not None \
-                   and self.sep_dicts_id == other.sep_dicts_id
+            return (
+                self.sep_dicts_id is not None
+                and self.sep_dicts_id == other.sep_dicts_id
+            )
         return False
 
     def matches(self, other: object):
@@ -181,8 +180,9 @@ class Subkey:
             # value and origins match
             cond1 = self.value == other.value and self.origin == other.origin
             # sep_dicts_id matches
-            cond2 = self.sep_dicts_id == other.sep_dicts_id or \
-                    (self.output_matching and other.output_matching)
+            cond2 = self.sep_dicts_id == other.sep_dicts_id or (
+                self.output_matching and other.output_matching
+            )
             return cond0 and cond1 and cond2
         return False
 
@@ -205,8 +205,7 @@ class Subkey:
         return True
 
     def __eq__(self, other: object):
-        &#34;&#34;&#34;Mainly used for testing purposes.
-        &#34;&#34;&#34;
+        &#34;&#34;&#34;Mainly used for testing purposes.&#34;&#34;&#34;
         if isinstance(other, self.__class__):
             # value and origins match
             return self.value == other.value and self.origin == other.origin
@@ -216,8 +215,7 @@ class Subkey:
         return str(self.value)
 
     def __hash__(self):
-        &#34;&#34;&#34;Mainly used for testing purposes.
-        &#34;&#34;&#34;
+        &#34;&#34;&#34;Mainly used for testing purposes.&#34;&#34;&#34;
         return hash(self.value) ^ hash(self.origin) ^ hash(self.output_matching)</code></pre>
 </details>
 <h3>Methods</h3>
@@ -232,8 +230,7 @@ class Subkey:
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def is_matching(self):
-    &#34;&#34;&#34;Checks if subkey should be matched in other Vsets
-    &#34;&#34;&#34;
+    &#34;&#34;&#34;Checks if subkey should be matched in other Vsets&#34;&#34;&#34;
     return self.output_matching or self.sep_dicts_id is not None</code></pre>
 </details>
 </dd>
@@ -259,8 +256,9 @@ _sep_dicts_id matches or both Subkeys have _output_matching True.</p></div>
         # value and origins match
         cond1 = self.value == other.value and self.origin == other.origin
         # sep_dicts_id matches
-        cond2 = self.sep_dicts_id == other.sep_dicts_id or \
-                (self.output_matching and other.output_matching)
+        cond2 = self.sep_dicts_id == other.sep_dicts_id or (
+            self.output_matching and other.output_matching
+        )
         return cond0 and cond1 and cond2
     return False</code></pre>
 </details>
@@ -275,11 +273,12 @@ _sep_dicts_id matches or both Subkeys have _output_matching True.</p></div>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def matches_sep_dict_id(self, other: object):
-    &#34;&#34;&#34;Helper to match Subkey by _sep_dict_id
-    &#34;&#34;&#34;
+    &#34;&#34;&#34;Helper to match Subkey by _sep_dict_id&#34;&#34;&#34;
     if isinstance(other, self.__class__):
-        return self.sep_dicts_id is not None \
-               and self.sep_dicts_id == other.sep_dicts_id
+        return (
+            self.sep_dicts_id is not None
+            and self.sep_dicts_id == other.sep_dicts_id
+        )
     return False</code></pre>
 </details>
 </dd>

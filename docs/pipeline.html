@@ -26,6 +26,7 @@
 </summary>
 <pre><code class="python">&#34;&#34;&#34;Class that stores the entire pipeline of steps in a data-science workflow
 &#34;&#34;&#34;
+
 import itertools
 
 import joblib
@@ -53,21 +54,19 @@ class PCSPipeline:
         self.memory = joblib.Memory(location=cache_dir)
 
     def run(self, *args, **kwargs):
-        &#34;&#34;&#34;Runs the pipeline
-        &#34;&#34;&#34;
+        &#34;&#34;&#34;Runs the pipeline&#34;&#34;&#34;
         run_step_cached = self.memory.cache(_run_step)
         for i, step in enumerate(self.steps):
             try:
                 step_name = step.name
             except AttributeError:
-                step_name = f&#39;Step {i}&#39;
+                step_name = f&#34;Step {i}&#34;
             print(step_name)
             _, fitted_step = run_step_cached(step, *args, **kwargs)
             self.steps[i] = fitted_step
 
     def __getitem__(self, i):
-        &#34;&#34;&#34;Accesses ith step of pipeline
-        &#34;&#34;&#34;
+        &#34;&#34;&#34;Accesses ith step of pipeline&#34;&#34;&#34;
         return self.steps[i]
 
     def __len__(self):
@@ -77,13 +76,13 @@ class PCSPipeline:
         name_lists = []
         if as_pandas:
             for step in self.steps:
-                name_lists.append([f&#39;{i}_{str(mod)[:8]}&#39;
-                                   for i, mod in enumerate(step)])
+                name_lists.append([f&#34;{i}_{str(mod)[:8]}&#34; for i, mod in enumerate(step)])
             indexes = list(itertools.product(*name_lists))
             return pd.DataFrame(indexes, columns=[step.name for step in self.steps])
         for step in self.steps:
-            name_lists.append([f&#39;{step.name}_{i}_{str(mod)[:8]}&#39;
-                               for i, mod in enumerate(step)])
+            name_lists.append(
+                [f&#34;{step.name}_{i}_{str(mod)[:8]}&#34; for i, mod in enumerate(step)]
+            )
         return list(itertools.product(*name_lists))
 
 
@@ -111,7 +110,7 @@ def build_graph(node, draw=True):
         unnested_node: str, Vset, or None
         &#34;&#34;&#34;
         node_type = type(node)
-        if node_type is str or &#39;Vset&#39; in str(node_type):
+        if node_type is str or &#34;Vset&#34; in str(node_type):
             return node
         if node_type is tuple:
             return unnest_node(node[0])
@@ -135,7 +134,7 @@ def build_graph(node, draw=True):
 
         # initial case: starting at dict
         if isinstance(node, dict):
-            s_node = &#39;End&#39;
+            s_node = &#34;End&#34;
             nodes_prev = node[PREV_KEY]
             G.add_edge(nodes_prev[0], s_node)
             for node_prev in nodes_prev[1:]:
@@ -144,7 +143,7 @@ def build_graph(node, draw=True):
             return G
 
         # main case: at a vfuncset
-        if &#39;Vset&#39; in str(type(node)):
+        if &#34;Vset&#34; in str(type(node)):
             if hasattr(node, PREV_KEY):
                 nodes_prev = getattr(node, PREV_KEY)
                 for node_prev in nodes_prev:
@@ -166,7 +165,7 @@ def build_graph(node, draw=True):
     G = nx.DiGraph()
     G = build_graph_recur(node, G)
     if draw:
-        nx.draw(G, with_labels=True, node_color=&#39;#CCCCCC&#39;)
+        nx.draw(G, with_labels=True, node_color=&#34;#CCCCCC&#34;)
     return G
 
 
@@ -227,7 +226,7 @@ def _run_step(step, *args, **kwargs):
         unnested_node: str, Vset, or None
         &#34;&#34;&#34;
         node_type = type(node)
-        if node_type is str or &#39;Vset&#39; in str(node_type):
+        if node_type is str or &#34;Vset&#34; in str(node_type):
             return node
         if node_type is tuple:
             return unnest_node(node[0])
@@ -251,7 +250,7 @@ def _run_step(step, *args, **kwargs):
 
         # initial case: starting at dict
         if isinstance(node, dict):
-            s_node = &#39;End&#39;
+            s_node = &#34;End&#34;
             nodes_prev = node[PREV_KEY]
             G.add_edge(nodes_prev[0], s_node)
             for node_prev in nodes_prev[1:]:
@@ -260,7 +259,7 @@ def _run_step(step, *args, **kwargs):
             return G
 
         # main case: at a vfuncset
-        if &#39;Vset&#39; in str(type(node)):
+        if &#34;Vset&#34; in str(type(node)):
             if hasattr(node, PREV_KEY):
                 nodes_prev = getattr(node, PREV_KEY)
                 for node_prev in nodes_prev:
@@ -282,7 +281,7 @@ def _run_step(step, *args, **kwargs):
     G = nx.DiGraph()
     G = build_graph_recur(node, G)
     if draw:
-        nx.draw(G, with_labels=True, node_color=&#39;#CCCCCC&#39;)
+        nx.draw(G, with_labels=True, node_color=&#34;#CCCCCC&#34;)
     return G</code></pre>
 </details>
 </dd>
@@ -326,21 +325,19 @@ caching.</dd>
         self.memory = joblib.Memory(location=cache_dir)
 
     def run(self, *args, **kwargs):
-        &#34;&#34;&#34;Runs the pipeline
-        &#34;&#34;&#34;
+        &#34;&#34;&#34;Runs the pipeline&#34;&#34;&#34;
         run_step_cached = self.memory.cache(_run_step)
         for i, step in enumerate(self.steps):
             try:
                 step_name = step.name
             except AttributeError:
-                step_name = f&#39;Step {i}&#39;
+                step_name = f&#34;Step {i}&#34;
             print(step_name)
             _, fitted_step = run_step_cached(step, *args, **kwargs)
             self.steps[i] = fitted_step
 
     def __getitem__(self, i):
-        &#34;&#34;&#34;Accesses ith step of pipeline
-        &#34;&#34;&#34;
+        &#34;&#34;&#34;Accesses ith step of pipeline&#34;&#34;&#34;
         return self.steps[i]
 
     def __len__(self):
@@ -350,13 +347,13 @@ caching.</dd>
         name_lists = []
         if as_pandas:
             for step in self.steps:
-                name_lists.append([f&#39;{i}_{str(mod)[:8]}&#39;
-                                   for i, mod in enumerate(step)])
+                name_lists.append([f&#34;{i}_{str(mod)[:8]}&#34; for i, mod in enumerate(step)])
             indexes = list(itertools.product(*name_lists))
             return pd.DataFrame(indexes, columns=[step.name for step in self.steps])
         for step in self.steps:
-            name_lists.append([f&#39;{step.name}_{i}_{str(mod)[:8]}&#39;
-                               for i, mod in enumerate(step)])
+            name_lists.append(
+                [f&#34;{step.name}_{i}_{str(mod)[:8]}&#34; for i, mod in enumerate(step)]
+            )
         return list(itertools.product(*name_lists))</code></pre>
 </details>
 <h3>Methods</h3>
@@ -374,13 +371,13 @@ caching.</dd>
     name_lists = []
     if as_pandas:
         for step in self.steps:
-            name_lists.append([f&#39;{i}_{str(mod)[:8]}&#39;
-                               for i, mod in enumerate(step)])
+            name_lists.append([f&#34;{i}_{str(mod)[:8]}&#34; for i, mod in enumerate(step)])
         indexes = list(itertools.product(*name_lists))
         return pd.DataFrame(indexes, columns=[step.name for step in self.steps])
     for step in self.steps:
-        name_lists.append([f&#39;{step.name}_{i}_{str(mod)[:8]}&#39;
-                           for i, mod in enumerate(step)])
+        name_lists.append(
+            [f&#34;{step.name}_{i}_{str(mod)[:8]}&#34; for i, mod in enumerate(step)]
+        )
     return list(itertools.product(*name_lists))</code></pre>
 </details>
 </dd>
@@ -394,14 +391,13 @@ caching.</dd>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def run(self, *args, **kwargs):
-    &#34;&#34;&#34;Runs the pipeline
-    &#34;&#34;&#34;
+    &#34;&#34;&#34;Runs the pipeline&#34;&#34;&#34;
     run_step_cached = self.memory.cache(_run_step)
     for i, step in enumerate(self.steps):
         try:
             step_name = step.name
         except AttributeError:
-            step_name = f&#39;Step {i}&#39;
+            step_name = f&#34;Step {i}&#34;
         print(step_name)
         _, fitted_step = run_step_cached(step, *args, **kwargs)
         self.steps[i] = fitted_step</code></pre>
