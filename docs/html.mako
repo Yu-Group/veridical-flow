@@ -295,6 +295,7 @@
     </li>
     <li><a href="index.html#references">References</a></li>
     <li><a title="How vflow works internally" href="vflow-internals.html#">How vflow works internally</a></li>
+    <li><a title="Contributing" href="https://github.com/Yu-Group/veridical-flow/blob/master/docs/contributing.md">Contributing</a></li>
     </ul>
     </div>
     <ul id="index">

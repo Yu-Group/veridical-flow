@@ -5,9 +5,15 @@ on:
   push:
     branches:
       - master
+    paths:
+      - vflow/**.py
+      - tests/**.py
   pull_request:
     branches:
       - master
+    paths:
+      - vflow/**.py
+      - tests/**.py
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
