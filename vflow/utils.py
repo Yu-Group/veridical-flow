@@ -293,7 +293,11 @@ def perturbation_stats(
     else:
         df = data
     group_by = list(group_by)
-    if len(group_by) > 0:
+    if len(group_by) == 1:
+        # a bare column name keeps scalar group keys (a one-item list gives
+        # tuple keys in pandas 4)
+        gb = df.groupby(group_by[0])[wrt]
+    elif len(group_by) > 1:
         gb = df.groupby(group_by)[wrt]
     else:
         gb = df.groupby(lambda x: True)[wrt]
