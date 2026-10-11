@@ -38,7 +38,7 @@ def read_answer(ws):
     f = Path(ws) / "conclusion.json"
     if not f.exists():
         return None, ""
-    text = f.read_text()
+    text = f.read_text(encoding="utf-8")
     try:
         obj = json.loads(text)
     except ValueError:  # tolerate stray text around the object
@@ -113,14 +113,14 @@ def main(argv=None):
 
     root = Path(a.runs)
     try:
-        manifest = json.loads((root / "manifest.json").read_text())
+        manifest = json.loads((root / "manifest.json").read_text(encoding="utf-8"))
     except FileNotFoundError:
         sys.exit(f"no manifest.json in {root}; run prepare.py first")
     rows = []
     for w in manifest["workspaces"]:
         ans, why = read_answer(root / w["id"])
         rows.append({**w, "answer": ans, "explanation": why})
-    with open(root / "results.csv", "w", newline="") as f:
+    with open(root / "results.csv", "w", newline="", encoding="utf-8") as f:
         cw = csv.DictWriter(
             f,
             fieldnames=[
@@ -165,7 +165,7 @@ def main(argv=None):
         "pooled": pooled,
         "by_perturbation": per,
     }
-    (root / "summary.json").write_text(json.dumps(summary, indent=2))
+    (root / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
 
     print(f"Question: {manifest['question']}")
     print(f"{'perturbation':<18}{'real':>6}{'null':>6}{'p':>8}{'overlap':>9}  verdict")

@@ -2,6 +2,7 @@
 Function arguments are each a list
 """
 
+import os
 from copy import deepcopy
 
 import joblib
@@ -68,6 +69,10 @@ class Vset:
         self._cache_dir = cache_dir
         self._memory = joblib.Memory(self._cache_dir)
         if tracking_dir is not None:
+            if "://" not in str(tracking_dir):
+                # a plain directory: MLflow 3 needs an explicit opt-in for its
+                # file-based tracking store (respects a value the user has set)
+                os.environ.setdefault("MLFLOW_ALLOW_FILE_STORE", "true")
             self._mlflow = MlflowClient(tracking_uri=tracking_dir)
             experiment = self._mlflow.get_experiment_by_name(name=self.name)
             if experiment is None:

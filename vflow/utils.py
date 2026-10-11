@@ -300,9 +300,9 @@ def perturbation_stats(
     if (isinstance(func, list) and "mean" in func or "std" in func) and (
         type(df[wrt].iloc[0]) in [list, np.ndarray]
     ):
-        wrt_arrays = [
-            np.stack(d.tolist()) for d in (gb.get_group(grp) for grp in gb.groups)
-        ]
+        # iterate the groups (same order as gb.groups); get_group with a single
+        # group key changed meaning in pandas 3
+        wrt_arrays = [np.stack(d.tolist()) for _, d in gb]
         n_cols = wrt_arrays[0].shape[1]
         df_out = pd.DataFrame(gb.agg("count"))
         df_out.columns = [f"{prefix}-count"]

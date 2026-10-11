@@ -124,14 +124,15 @@ class TestPrepare:
     def test_perturbations(self, tmp_path):
         runs = prepare(tmp_path, runs=2, extra_columns=4)
         m = json.loads((runs / "manifest.json").read_text())
-        get = (
-            lambda p, k=0: runs
-            / [
+
+        def get(p, k=0):
+            ids = [
                 w["id"]
                 for w in m["workspaces"]
                 if w["perturbation"] == p and w["condition"] == "real"
-            ][k]
-        )
+            ]
+            return runs / ids[k]
+
         assert list(pd.read_csv(get("extra_columns") / "data.csv").columns) == [
             "x",
             "z",
@@ -193,7 +194,8 @@ class TestSummarize:
         assert s["pooled"]["enough_runs"] and s["pooled"]["missing"] == 0
         assert s["by_perturbation"]["none"]["mean_real"] == 95
         assert "Verdict: stable yes" in printed
-        rows = list(csv.DictReader(open(runs / "results.csv")))
+        with open(runs / "results.csv", newline="") as f:
+            rows = list(csv.DictReader(f))
         assert len(rows) == 36 and {r["condition"] for r in rows} == {"real", "null"}
 
     def test_honest_analyst_on_noise(self, tmp_path):
@@ -219,7 +221,8 @@ class TestSummarize:
         (ws[1] / "conclusion.json").write_text('{"answer": "high"}')
         (ws[2] / "conclusion.json").write_text('{"answer": 250}')
         s, printed = summary(runs)
-        rows = {r["id"]: r for r in csv.DictReader(open(runs / "results.csv"))}
+        with open(runs / "results.csv", newline="") as f:
+            rows = {r["id"]: r for r in csv.DictReader(f)}
         assert (
             rows[ws[0].name]["answer"] == "80.0"
             and rows[ws[2].name]["answer"] == "100.0"

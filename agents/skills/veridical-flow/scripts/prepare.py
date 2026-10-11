@@ -53,7 +53,7 @@ JSON object:
 
 
 def read_table(path):
-    with open(path, newline="") as f:
+    with open(path, newline="", encoding="utf-8-sig") as f:
         rows = list(csv.reader(f))
     if len(rows) < 3:
         sys.exit(f"{path}: need a header and at least two rows")
@@ -62,7 +62,7 @@ def read_table(path):
 
 
 def write_table(path, header, cols):
-    with open(path, "w", newline="") as f:
+    with open(path, "w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
         w.writerow(header)
         w.writerows(zip(*cols))
@@ -168,12 +168,13 @@ def main(argv=None):
         (ws / "brief.md").write_text(
             BRIEF.format(
                 question=q, n_rows=len(c[0]), columns=", ".join(h), description=desc
-            )
+            ),
+            encoding="utf-8",
         )
         manifest["workspaces"].append(
             {"id": ws.name, "perturbation": name, "condition": cond, "run": r}
         )
-    (out / "manifest.json").write_text(json.dumps(manifest, indent=2))
+    (out / "manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
     print(
         f"{len(jobs)} workspaces in {out}/ ({len(perts)} perturbations x real/null x {a.runs} runs)"
     )
