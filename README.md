@@ -97,6 +97,28 @@ See the [docs](https://yu-group.github.io/veridical-flow/) for reference on the 
 > 
 > [Clinical decision rule vetting](https://github.com/Yu-Group/rule-vetting)
 
+## veridical-flow for agents
+
+`agents/` is a Claude Code plugin that brings PCS to analyses done by AI
+agents. Its `veridical-flow` skill takes a yes/no question about a dataset
+("does BMI affect diabetes progression?") and has independent analyst agents
+answer it many times: on the real data, on copies with every column shuffled
+(where the true answer is "no"), and under perturbations that should not
+change the answer (unrelated extra columns, anonymized or misleading column
+names, a question that leans toward one answer). It then reports whether the
+"yes" stands apart from the answers on shuffled data and holds across the
+perturbations. Every run is a saved folder that can be opened and rerun.
+
+```bash
+claude --plugin-dir agents
+> Use veridical-flow to check whether bmi affects target in diabetes.csv
+```
+
+The skill bundles two standard-library scripts: `prepare.py` writes the
+blinded analyst workspaces and `summarize.py` scores the answers. Each
+workspace is a full agent analysis, so start small; the skill asks before
+launching more than about 20 analyst runs.
+
 ## Installation
 
 ### Stable version
