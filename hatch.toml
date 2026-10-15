@@ -40,12 +40,14 @@ dependencies = [
 
 [envs.docs.scripts]
 build = [
-  "pdoc --html vflow --output-dir docs --template-dir docs",
+  "pdoc --html vflow --output-dir docs --template-dir docs --force",
   "cp -rf docs/vflow/* docs/",
   "rm -rf docs/vflow",
   "cd notebooks && jupyter nbconvert --to html *.ipynb && cd ..",
   "mv notebooks/*.html docs/notebooks/",
-  "cd docs && python style_docs.py && cd ..",
+  "python docs/style_docs.py",
+  # the article pages (docs/pages/*.html) take their shell from the new index.html
+  "python docs/build_pages.py",
 ]
 
 [envs.style]

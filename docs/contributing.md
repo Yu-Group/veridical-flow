@@ -41,6 +41,10 @@ document any updates to the public API.
   the documentation, run `hatch run docs:build` from the repo root directory.
   Note that we follow the [numpy
   docstrings](https://numpydoc.readthedocs.io/en/latest/format.html) convention.
+  Styling lives in `docs/style.css` and the page template in `docs/html.mako`.
+  Hand-written articles (like the agents guide) are just the article body, in
+  `docs/pages/<name>.html`; add new ones to `PAGES` in `docs/build_pages.py`
+  and to the Guides list in the sidebar of `docs/html.mako`.
 
 See the
 [Makefile](https://github.com/Yu-Group/veridical-flow/blob/master/Makefile) for

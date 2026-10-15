@@ -1,0 +1,111 @@
+<section id="section-intro">
+<div class="article">
+<h1 id="how-vflow-works">How <code>vflow</code> works internally</h1>
+
+<p>
+    VeridicalFlow provides three main abstractions: <a href="#vset" title="Vset"><code>Vset</code></a>, <a href="#vfunc" title="Vfunc"><code>Vfunc</code></a>, and <a href="#subkey" title="Subkey"><code>Subkey</code></a>. <code>Vfunc</code>s run arbitrary computations on inputs. A <code>Vset</code> collects related <code>Vfunc</code> instances (which wrap user-provided functions or classes) and determines which <code>Vfunc</code> to apply to which inputs and how to do so. <code>Vset</code> outputs are dictionaries with tuple keys composed of one or more <code>Subkey</code> instances that help associate outputs with the <code>Vfunc</code> that produced them and the <code>Vset</code> in which that <code>Vfunc</code> was collected. Below we describe these three abstractions in more detail.
+</p>
+
+<h2 id="vset"><a href="vset.html" title="Vset"><code>Vset</code></a></h2>
+
+<p>
+    Fundamentally, all <code>Vset</code> objects generate permutations by applying their functions to the Cartesian product of input parameters. Internally, <code>Vset</code> functions and inputs are wrapped in dictionaries with tuple keys. These tuples contain <code>Subkey</code> objects, which identify the functions wrapped by the <code>Vfunc</code> (the <code>Subkey</code> "value"), as well as its originating <code>Vset</code> (the <code>Subkey</code> "origin"). The following is a simple example of what a dictionary created by <code>vflow</code> might look like after fitting a random forest classifier from scikit-learn to some data:
+</p>
+<p>
+    <code>
+{ (X, y, RF): RandomForestClassifier(max_depth=5, n_estimators=50) }
+    </code>
+</p>
+<p>
+    Each of <code>X</code>, <code>y</code>, and <code>RF</code> are instances of <code>Subkey</code> where the printed representation is the <code>Subkey</code> value, with origins corresponding to the name of the <code>Vset</code> that created the <code>Subkey</code>. The values may be user-supplied at <code>Vset</code> initialization or, if not, will be generated in the format <code>{vset.name}_{index}</code>, e.g. "modeling_0", "modeling_1", etc. Since inputs must be dictionaries with a certain format, all raw inputs (e.g., numpy arrays) must be initialized using <code><a title="vflow.helpers.init_args" href="helpers.html#vflow.helpers.init_args">helpers.init_args</a></code>.
+</p>
+<p>
+    When a <code>Vset</code> method such as <code>fit</code> or <code>predict</code> is called with multiple input arguments, the inputs are first combined left to right by Cartesian product; the right <code>Subkey</code> tuple is always filtered on any matching items in the left <code>Subkey</code> tuple, and the two keys' remaining <code>Subkey</code> instances are concatenated. The values of the resulting combined dictionary are tuples containing the values of the inputs concatenated in the order in which they were passed in.
+</p>
+<p>
+    Next, the <code>Vset</code> computes the Cartesian product of the combined input dictionary with <code>Vset.vfuncs</code> or <code>Vset.fitted_vfuncs</code> (depending on the <code>Vset</code> method that was called), combining <code>Subkey</code> tuples in a similar process to determine which <code>Vfuncs</code> to apply to which inputs.
+</p>
+
+<h3 id="output-matching"><code>output_matching</code></h3>
+<p>
+</p>
+<p>
+    An important <code>Vset</code> initialization parameter is the boolean <code>output_matching</code>. By default, this parameter is <code>False</code>, but it should be set to <code>True</code> when the <code>Vset</code> is used multiple times and its outputs need to be combined regardless of when it was called, as, for example, with a data cleaning <code>Vset</code> that is used first on training data before model fitting and later on test data for model evaluation.
+</p>
+<p>
+    To demonstrate, if a data imputation <code>Vset</code> with values "mean_impute" and "med_impute" was used at an earlier step in the pipeline with <code>output_matching=False</code>, then the following bad matches may occur at the testing stage:
+</p>
+<p>
+<strong>Input dictionaries:</strong>
+<pre><code class="hljs">
+<span class="hljs-comment"># dictionary of fitted models</span>
+{ (X_train, mean_impute, y_train, RF): RF_fit_on_mean_imputed_train_data,
+  (X_train, med_impute, y_train, RF): RF_fit_on_med_imputed_train_data }
+
+<span class="hljs-comment"># dictionary of imputed testing data</span>
+{ (X_test, mean_impute, y_test): mean_imputed_test_data,
+  (X_test, med_impute, y_test): med_imputed_test_data }</code></pre>
+<strong>Output dictionary:</strong>
+<pre><code class="hljs">{ (X_train, mean_impute, y_train, X_test, mean_impute, RF): <span class="hljs-comment"># good match</span>
+    RF_fit_on_mean_imputed_train_data(mean_imputed_test_data),
+  (X_train, mean_impute, y_train, X_test, med_impute, RF): <span class="hljs-comment"># bad match!</span>
+    RF_fit_on_mean_imputed_train_data(med_imputed_test_data)
+  (X_train, med_impute, y_train, X_test, med_impute, RF): <span class="hljs-comment"># good match</span>
+    RF_fit_on_med_imputed_train_data(med_imputed_test_data),
+  (X_train, med_impute, y_train, X_test, mean_impute, RF): <span class="hljs-comment"># bad match!</span>
+    RF_fit_on_med_imputed_train_data(mean_imputed_test_data) }</code></pre>
+</p>
+<p>
+    Internally, when <code>output_matching=True</code>, new <code>Subkey</code> instances added to the output dictionary keys by the <code>Vset</code> will have an <code>output_matching</code> attribute with value <code>True</code>, which is used to reject Cartesian product combinations when the <code>Subkey</code> origins do not match or match but their values differ. See <a title="Subkey" href="#subkey">below</a> for more info on <code>Subkey</code> matching.
+</p>
+<p>
+    In contrast, use the default <code>output_matching=False</code> when:
+    <ul>
+        <li>Separate calls to the <code>Vset</code> result in entirely independent outputs, such as is usually the case for a <code>Vset</code> that does subsampling of the data. In this case, <code>output_matching=True</code> will result in bad matches, i.e., unnecessary matching on subsamples of the same or different datasets.</li>
+        <li><code>output_matching=True</code> was already used earlier in the pipeline. For example, if you use various strategies to clean your data that must be matched at training and test time, you don't need to initialize a modeling <code>Vset</code> with <code>output_matching=True</code>, but should instead use <code>output_matching=True</code> when initializing the data cleaning <code>Vset</code>.</li>
+    </ul>
+</p>
+
+<h3>Asynchronous and lazy computation</h3>
+
+<p>
+There are two important <code>Vset</code> initialization parameters that control how fuctions in the <code>Vset</code> are computed:
+<ul>
+    <li><code>is_async</code>: when <code>True</code>, all functions are computed asynchronously using <a title ="Ray" href="https://www.ray.io/"><code>Ray</code></a>. The resources used to distribute computation is deterined by the user's call to <code>ray.init()</code> before applying the <code>Vset</code> to inputs. Default is <code>False</code>.</li>
+    <li><code>lazy</code>: when <code>True</code>, functions are computed lazily, meaning that no computation occurs until their results are required downstream in the pipeline. Default is <code>False</code>.</li>
+</ul>
+For more details on <code>is_async</code> and <code>lazy</code>, see <a title="Subkey" href="#subkey">below</a>.
+</p>
+
+<h2 id="vfunc"><a href="vfunc.html" title="Vfunc"><code>Vfunc</code></a></h2>
+
+<p>
+    When a <code>Vset</code> is initialized, the items in the <code>modules</code> arg are wrapped in <code>Vfunc</code> objects, which are like named functions that can optionally support a <code>fit</code> or <code>transform</code> method. Initializing the <code>Vset</code> with <code>is_async=True</code> and <code>lazy=True</code> has the following effects:
+
+    <!-- Usually, you don't need to manually create <code>Vfunc</code> objects unless you want more flexibility in how different functions within a <code>Vset</code> are computed. In that case, you can manually initialize them using the fllowing parameters: -->
+    <ul>
+        <li><code>is_async=True</code>: wraps user functions with <code>AsyncVfunc</code> objects, which compute function outputs asynchronously using <code>ray</code>.</li>
+        <li><code>lazy=True</code>: wraps the <code>Vset</code> output dictionary values with <code>VfuncPromise</code> objects, which are lazily evaluated. At the moment, <code>VfuncPromise</code> objects are only resolved if passed to a <code>Vset</code> with <code>lazy=False</code> downstream or if called manually by the user.</li>
+    </ul>
+</p>
+
+<h2 id="subkey"><a href="subkey.html" title="Subkey"><code>Subkey</code></a></h2>
+
+<p>
+    <code>Subkey</code> instances identify the user's functions in a <code>Vset</code> and help to correctly match inputs to other inputs and functions.
+
+<h3>Behavior when <code>Subkey</code> has <code>output_matching=False</code> (default)</h4>
+<p>
+    By default, <code>Subkey</code> objects are non-matching, meaning that <code>vflow</code> won't bother to look for a matching <code>Subkey</code> when combining data or deciding which <code>Vfunc</code> to apply to which inputs. As described above, <code>Vset</code> dictionaries are combined from left to right two-at-a-time, and if every <code>Subkey</code> in the keys of both dictionaries is non-matching then the result is the full Cartesian product of the two dictionaries.
+</p>
+<h3>Behavior when <code>Subkey</code> has <code>output_matching=True</code></h4>
+<p>
+    If one of the entries in a given dictionary's <code>Subkey</code> tuple is matching then <code>vflow</code> tries to find a match in the tuple keys of the other dictionary. The first dictionary's value is combined with the other dictionary's value in two cases:
+    <ul>
+        <li>The <code>Subkey</code> instances of the other dictionary's tuple key are all non-matching.</li>
+        <li>The other dictionary's key has a <code>Subkey</code> with <code>output_matching=True</code> that has the same origin and same value as the first dictionary's <code>Subkey</code>.</li>
+    </ul>
+    There is one main way for a <code>Subkey</code> to be matching: it was created by a <code>Vset</code> that was initialized with <code>output_matching=True</code>, as described above.
+</p>
+</div>
+</section>
