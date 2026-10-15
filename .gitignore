@@ -16,6 +16,7 @@ env
 **.idea
 *.pth
 **Icon*
+!docs/favicon.png
 venv
 .vscode/**
 # Compiled python modules.
