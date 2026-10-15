@@ -293,16 +293,20 @@ def perturbation_stats(
     else:
         df = data
     group_by = list(group_by)
-    if len(group_by) > 0:
+    if len(group_by) == 1:
+        # a bare column name keeps scalar group keys (a one-item list gives
+        # tuple keys in pandas 4)
+        gb = df.groupby(group_by[0])[wrt]
+    elif len(group_by) > 1:
         gb = df.groupby(group_by)[wrt]
     else:
         gb = df.groupby(lambda x: True)[wrt]
     if (isinstance(func, list) and "mean" in func or "std" in func) and (
         type(df[wrt].iloc[0]) in [list, np.ndarray]
     ):
-        wrt_arrays = [
-            np.stack(d.tolist()) for d in (gb.get_group(grp) for grp in gb.groups)
-        ]
+        # iterate the groups (same order as gb.groups); get_group with a single
+        # group key changed meaning in pandas 3
+        wrt_arrays = [np.stack(d.tolist()) for _, d in gb]
         n_cols = wrt_arrays[0].shape[1]
         df_out = pd.DataFrame(gb.agg("count"))
         df_out.columns = [f"{prefix}-count"]

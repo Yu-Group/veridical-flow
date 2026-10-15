@@ -1,0 +1,10 @@
+{
+  "name": "veridical-flow",
+  "version": "0.1.0",
+  "description": "veridical-flow for agents: PCS stability analysis for conclusions an AI agent draws from data. Re-runs the analysis with independent analyst agents on the real data, on shuffled data and under perturbations, then reports whether the conclusion holds up.",
+  "author": { "name": "Yu Group, UC Berkeley" },
+  "homepage": "https://vflow.csinva.io/",
+  "repository": "https://github.com/Yu-Group/veridical-flow",
+  "license": "MIT",
+  "keywords": ["pcs", "veridical data science", "stability", "agents", "statistics"]
+}
