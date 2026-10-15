@@ -89,6 +89,12 @@ class VfuncPromise:
                 tmp_args[i] = tmp_args[i]()
         while isinstance(self.vfunc, VfuncPromise):
             self.vfunc = self.vfunc()
+        # an upstream lazy async Vset leaves Ray references; a remote call
+        # resolves them itself, but a plain function must get the values
+        if not isinstance(getattr(self.vfunc, "__self__", None), AsyncVfunc):
+            tmp_args = [
+                ray.get(a) if isinstance(a, ray.ObjectRef) else a for a in tmp_args
+            ]
         self.value = self.vfunc(*tmp_args)
         self.called = True
         return self.value

@@ -80,5 +80,6 @@ class Subkey:
         return str(self.value)
 
     def __hash__(self):
-        """Mainly used for testing purposes."""
-        return hash(self.value) ^ hash(self.origin) ^ hash(self.output_matching)
+        """Consistent with __eq__, which compares value and origin only: keys
+        that compare equal must hash equal or dict and set lookups miss them."""
+        return hash(self.value) ^ hash(self.origin)

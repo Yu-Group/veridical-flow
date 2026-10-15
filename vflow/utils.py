@@ -229,20 +229,26 @@ def dict_to_df(d: dict, param_key=None):
                 df = df.join(param_df)
             else:
                 param_loc = df.columns.get_loc(param_key)
-                param_key_cols = [
-                    f"{p.split('=')[0]}-{param_key}" for p in param_keys[0]
-                ]
-                param_keys = [[s.split("=")[1] for s in t] for t in param_keys]
-                df = df.join(pd.DataFrame(param_keys)).drop(columns=param_key)
-                new_cols = df.columns[: len(cols) - 1].tolist() + param_key_cols
-                df = df.set_axis(new_cols, axis=1)
-                new_idx = list(range(len(new_cols)))
-                new_idx = (
-                    new_idx[:param_loc]
-                    + new_idx[len(cols) - 1 :]
-                    + new_idx[param_loc : len(cols) - 1]
+                # parse every row on its own: vfuncs built from different funcs
+                # can have different parameter names
+                rows = []
+                for t in param_keys:
+                    if isinstance(t, str) or not all(
+                        isinstance(s, str) and "=" in s for s in t
+                    ):
+                        raise ValueError(
+                            f"param_key={param_key!r} needs keys that are tuples "
+                            "of 'name=value' strings, as build_vset(param_dict=...) "
+                            f"makes; got {t!r}"
+                        )
+                    # split on the first '=' only, so values may contain '='
+                    rows.append(dict(s.split("=", 1) for s in t))
+                param_df = pd.DataFrame(rows, index=df.index)
+                param_df.columns = [f"{c}-{param_key}" for c in param_df.columns]
+                df = pd.concat(
+                    [df.iloc[:, :param_loc], param_df, df.iloc[:, param_loc + 1 :]],
+                    axis=1,
                 )
-                df = df.iloc[:, new_idx]
     return df
 
 
@@ -286,6 +292,11 @@ def perturbation_stats(
     """
     if func is None:
         func = ["count", "mean", "std"]
+    if isinstance(func, str):
+        func = [func]
+    # for scalar outputs, columns are prefixed only when a prefix is asked for,
+    # so existing callers keep their column names
+    prefix_scalar_cols = prefix is not None
     if prefix is None:
         prefix = wrt
     if isinstance(data, dict):
@@ -301,7 +312,7 @@ def perturbation_stats(
         gb = df.groupby(group_by)[wrt]
     else:
         gb = df.groupby(lambda x: True)[wrt]
-    if (isinstance(func, list) and "mean" in func or "std" in func) and (
+    if (isinstance(func, list) and ("mean" in func or "std" in func)) and (
         type(df[wrt].iloc[0]) in [list, np.ndarray]
     ):
         # iterate the groups (same order as gb.groups); get_group with a single
@@ -339,9 +350,13 @@ def perturbation_stats(
             wrt_stds.index.names = df_out.index.names
             df_out = df_out.join(wrt_stds)
         if "count" not in func:
-            df_out = df_out.drop(f"{prefix}-count")
+            df_out = df_out.drop(columns=f"{prefix}-count")
     else:
         df_out = gb.agg(func)
+        if isinstance(df_out, pd.Series):  # a single callable gives a Series
+            df_out = df_out.to_frame(getattr(func, "__name__", wrt))
+        if prefix_scalar_cols:
+            df_out.columns = [f"{prefix}-{c}" for c in df_out.columns]
     df_out = df_out.reindex(sorted(df_out.columns), axis=1)
     df_out.reset_index(inplace=True)
     if len(group_by) > 0:

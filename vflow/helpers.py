@@ -1,6 +1,7 @@
 """User-facing helper functions included at import vflow
 """
 
+import inspect
 from functools import partial
 from itertools import product
 from typing import Union
@@ -38,11 +39,41 @@ def init_args(args_tuple: Union[tuple, list], names=None):
     return output_dicts
 
 
+def _key_origin(vset: Vset) -> str:
+    """The origin of a Vset's vfunc keys, i.e. the column its outputs get in
+    dict_to_df: the Vset's name, or the original name for a filtered Vset."""
+    for k in vset.vfuncs:
+        return k[0].origin
+    return vset.name
+
+
+def _func_name(f) -> str:
+    """A readable name for `f`: a function's __name__, the wrapped function's
+    for a functools.partial, the class name for a callable object."""
+    if isinstance(f, partial):
+        return _func_name(f.func)
+    return getattr(f, "__name__", None) or type(f).__name__
+
+
+def _accepts_random_state(f) -> bool:
+    """Whether `f` (a function, partial, class or callable object) can take a
+    `random_state` keyword argument. Returns True when it cannot be told."""
+    try:
+        sig = inspect.signature(f)
+    except (TypeError, ValueError):
+        return True
+    params = sig.parameters.values()
+    return "random_state" in sig.parameters or any(
+        p.kind is inspect.Parameter.VAR_KEYWORD for p in params
+    )
+
+
 def build_vset(
     name: str,
     func,
     param_dict=None,
     reps: int = 1,
+    seed: int = None,
     is_async: bool = False,
     output_matching: bool = False,
     lazy: bool = False,
@@ -78,6 +109,15 @@ def build_vset(
     reps : int, optional
         The number of times to repeat `func` in the output Vset's vfuncs for
         each combination of the parameters in `param_dict`.
+    seed : int, optional
+        Makes randomized vfuncs reproducible. When given, every vfunc gets its
+        own `random_state`, derived from `seed` (with numpy's SeedSequence) and
+        passed to `func` as a keyword argument. So `reps` copies of e.g.
+        `sklearn.utils.resample` draw different samples, and building the Vset
+        again with the same `seed` and arguments draws the same ones. `func`
+        must accept a `random_state` argument, and `random_state` must not also
+        be set in `param_dict` or `**kwargs`. If None (the default), nothing is
+        seeded and repetitions use whatever randomness `func` uses by default.
     is_async : bool, optional
         If True, vfuncs are computed asynchronously.
     output_matching : bool, optional
@@ -119,6 +159,28 @@ def build_vset(
     vfuncs = []
     vkeys = []
 
+    if seed is not None:
+        if "random_state" in kwargs or any(
+            pd is not None and "random_state" in pd for pd in pd_list
+        ):
+            raise ValueError(
+                "pass either `seed` or `random_state`, not both: `seed` sets a "
+                "different random_state for every vfunc"
+            )
+        for f in f_list:
+            if not _accepts_random_state(f):
+                raise ValueError(
+                    f"`seed` needs `func` to accept a `random_state` argument, "
+                    f"and {_func_name(f)} does not"
+                )
+        n_vfuncs = reps * sum(
+            int(np.prod([len(v) for v in (pd or {}).values()])) for pd in pd_list
+        )
+        # one independent, reproducible stream per vfunc
+        seeds = iter(
+            int(s) for s in np.random.SeedSequence(seed).generate_state(n_vfuncs)
+        )
+
     for f, pd in zip(f_list, pd_list):
         if pd is None:
             pd = {}
@@ -127,7 +189,7 @@ def build_vset(
         kwargs_tuples = product(*list(pd.values()))
         for tup in kwargs_tuples:
             kwargs_dict = {}
-            vkey_tup = (f"func={f.__name__}",)
+            vkey_tup = (f"func={_func_name(f)}",)
             for param_name, param_val in zip(list(pd.keys()), tup):
                 kwargs_dict[param_name] = param_val
                 vkey_tup += (f"{param_name}={param_val}",)
@@ -140,17 +202,25 @@ def build_vset(
                     vkeys.append((f"rep={i}",) + vkey_tup)
                 else:
                     vkeys.append(vkey_tup)
+                rep_kwargs = dict(kwargs_dict)
+                if seed is not None:
+                    rep_kwargs["random_state"] = next(seeds)
                 # check if func is a class
                 if isinstance(f, type):
                     # instantiate func
-                    vfuncs.append(Vfunc(vfunc=f(**kwargs_dict), name=str(vkey_tup)))
+                    vfuncs.append(Vfunc(vfunc=f(**rep_kwargs), name=str(vkey_tup)))
                 else:
                     # use partial to wrap func
                     vfuncs.append(
-                        Vfunc(vfunc=partial(f, **kwargs_dict), name=str(vkey_tup))
+                        Vfunc(vfunc=partial(f, **rep_kwargs), name=str(vkey_tup))
                     )
     if all(pd is None for pd in pd_list) and reps == 1:
         vkeys = None
+    elif len(set(vkeys)) < len(vkeys):
+        # overlapping param_dicts repeat a configuration; keep one vfunc per
+        # key (the last, as a dict would), in first-seen order
+        merged = dict(zip(vkeys, vfuncs))
+        vkeys, vfuncs = list(merged.keys()), list(merged.values())
 
     return Vset(
         name,
@@ -206,28 +276,29 @@ def filter_vset_by_metric(
     vsets = [vset, *vsets]
     vset_names = []
     for vset_i in vsets:
-        if vset_i.name not in df.columns:
+        # outputs are labelled by the origin of the vfunc keys, which stays the
+        # original Vset's name after filtering (a filtered Vset is renamed)
+        col = _key_origin(vset_i)
+        if col not in df.columns:
             raise ValueError(
-                (
-                    f"{vset_i.name} should be one "
-                    "of the columns of dict_to_df(metric_dict)"
-                )
+                f"{col} should be one of the columns of dict_to_df(metric_dict)"
             )
-        vset_names.append(vset_i.name)
+        vset_names.append(col)
     if len(filter_on) > 0:
-        filter_col = list(metric_dict.keys())[0][-1].origin
+        filter_col = [k for k in metric_dict if k != PREV_KEY][0][-1].origin
         df = df[df[filter_col].isin(filter_on)]
     if group:
         df = df.groupby(by=vset_names, as_index=False).mean(numeric_only=True)
-    if bigger_is_better:
-        df = df.sort_values(by="out", ascending=False)
-    else:
-        df = df.sort_values(by="out")
-    df = df.iloc[0:n_keep]
+    # stable sort: among tied values, the earlier row wins, every time
+    df = df.sort_values(by="out", ascending=not bigger_is_better, kind="stable")
+    # n_keep counts distinct vfunc combinations, not metric rows: one vfunc can
+    # top several rows when it was run on several upstream perturbations
+    df = df.drop_duplicates(subset=vset_names).iloc[0:n_keep]
     for i, vset_i in enumerate(vsets):
         vfuncs = vset_i.vfuncs
-        vfunc_filter = [str(name) for name in df[vset_i.name].to_numpy()]
-        new_vfuncs = {k: v for k, v in vfuncs.items() if str(v.name) in vfunc_filter}
+        keep = list(df[vset_names[i]])
+        # match on the key the outputs are labelled with, not on Vfunc.name
+        new_vfuncs = {k: v for k, v in vfuncs.items() if k[0].value in keep}
         tracking_dir = None if vset_i._mlflow is None else mlflow.get_tracking_uri()
         new_vset = Vset(
             "filtered_" + vset_i.name,
@@ -260,9 +331,10 @@ def cum_acc_by_uncertainty(mean_preds, std_preds, true_labels):
     Params
     ------
     mean_preds: dict
-        mean predictions, output from Vset.predict_with_uncertainties
+        mean class probabilities per group, from
+        Vset.predict_proba(..., with_uncertainty=True)
     std_preds: dict
-        std predictions, output from Vset.predict_with_uncertainties
+        std of class probabilities per group, from the same call
     true_labels: dict or list-like
 
     TODO: generalize to multi-class classification
@@ -274,7 +346,15 @@ def cum_acc_by_uncertainty(mean_preds, std_preds, true_labels):
     paired_preds = [
         [d[k] for d in (mean_preds, std_preds)] for k in dict_keys(mean_preds)
     ]
-    mean_preds, std_preds = (np.array(p)[:, :, 1] for p in zip(*paired_preds))
+    arrays = [np.array(p) for p in zip(*paired_preds)]
+    if arrays[0].ndim != 3:
+        raise ValueError(
+            "cum_acc_by_uncertainty needs class probabilities of shape "
+            "(n_obs, n_classes) per group, as from "
+            "Vset.predict_proba(..., with_uncertainty=True); got predictions "
+            f"of shape {arrays[0].shape[1:]}"
+        )
+    mean_preds, std_preds = (a[:, :, 1] for a in arrays)
     if isinstance(true_labels, dict):
         true_labels = dict_data(true_labels)
         assert len(true_labels) == 1, "true_labels should have a single 1D vector entry"
