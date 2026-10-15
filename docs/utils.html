@@ -283,20 +283,26 @@ def dict_to_df(d: dict, param_key=None):
                 df = df.join(param_df)
             else:
                 param_loc = df.columns.get_loc(param_key)
-                param_key_cols = [
-                    f&#34;{p.split(&#39;=&#39;)[0]}-{param_key}&#34; for p in param_keys[0]
-                ]
-                param_keys = [[s.split(&#34;=&#34;)[1] for s in t] for t in param_keys]
-                df = df.join(pd.DataFrame(param_keys)).drop(columns=param_key)
-                new_cols = df.columns[: len(cols) - 1].tolist() + param_key_cols
-                df = df.set_axis(new_cols, axis=1)
-                new_idx = list(range(len(new_cols)))
-                new_idx = (
-                    new_idx[:param_loc]
-                    + new_idx[len(cols) - 1 :]
-                    + new_idx[param_loc : len(cols) - 1]
+                # parse every row on its own: vfuncs built from different funcs
+                # can have different parameter names
+                rows = []
+                for t in param_keys:
+                    if isinstance(t, str) or not all(
+                        isinstance(s, str) and &#34;=&#34; in s for s in t
+                    ):
+                        raise ValueError(
+                            f&#34;param_key={param_key!r} needs keys that are tuples &#34;
+                            &#34;of &#39;name=value&#39; strings, as build_vset(param_dict=...) &#34;
+                            f&#34;makes; got {t!r}&#34;
+                        )
+                    # split on the first &#39;=&#39; only, so values may contain &#39;=&#39;
+                    rows.append(dict(s.split(&#34;=&#34;, 1) for s in t))
+                param_df = pd.DataFrame(rows, index=df.index)
+                param_df.columns = [f&#34;{c}-{param_key}&#34; for c in param_df.columns]
+                df = pd.concat(
+                    [df.iloc[:, :param_loc], param_df, df.iloc[:, param_loc + 1 :]],
+                    axis=1,
                 )
-                df = df.iloc[:, new_idx]
     return df
 
 
@@ -340,6 +346,11 @@ def perturbation_stats(
     &#34;&#34;&#34;
     if func is None:
         func = [&#34;count&#34;, &#34;mean&#34;, &#34;std&#34;]
+    if isinstance(func, str):
+        func = [func]
+    # for scalar outputs, columns are prefixed only when a prefix is asked for,
+    # so existing callers keep their column names
+    prefix_scalar_cols = prefix is not None
     if prefix is None:
         prefix = wrt
     if isinstance(data, dict):
@@ -355,7 +366,7 @@ def perturbation_stats(
         gb = df.groupby(group_by)[wrt]
     else:
         gb = df.groupby(lambda x: True)[wrt]
-    if (isinstance(func, list) and &#34;mean&#34; in func or &#34;std&#34; in func) and (
+    if (isinstance(func, list) and (&#34;mean&#34; in func or &#34;std&#34; in func)) and (
         type(df[wrt].iloc[0]) in [list, np.ndarray]
     ):
         # iterate the groups (same order as gb.groups); get_group with a single
@@ -393,9 +404,13 @@ def perturbation_stats(
             wrt_stds.index.names = df_out.index.names
             df_out = df_out.join(wrt_stds)
         if &#34;count&#34; not in func:
-            df_out = df_out.drop(f&#34;{prefix}-count&#34;)
+            df_out = df_out.drop(columns=f&#34;{prefix}-count&#34;)
     else:
         df_out = gb.agg(func)
+        if isinstance(df_out, pd.Series):  # a single callable gives a Series
+            df_out = df_out.to_frame(getattr(func, &#34;__name__&#34;, wrt))
+        if prefix_scalar_cols:
+            df_out.columns = [f&#34;{prefix}-{c}&#34; for c in df_out.columns]
     df_out = df_out.reindex(sorted(df_out.columns), axis=1)
     df_out.reset_index(inplace=True)
     if len(group_by) &gt; 0:
@@ -900,20 +915,26 @@ parameters in <code>param_key</code> if not None</p>
                 df = df.join(param_df)
             else:
                 param_loc = df.columns.get_loc(param_key)
-                param_key_cols = [
-                    f&#34;{p.split(&#39;=&#39;)[0]}-{param_key}&#34; for p in param_keys[0]
-                ]
-                param_keys = [[s.split(&#34;=&#34;)[1] for s in t] for t in param_keys]
-                df = df.join(pd.DataFrame(param_keys)).drop(columns=param_key)
-                new_cols = df.columns[: len(cols) - 1].tolist() + param_key_cols
-                df = df.set_axis(new_cols, axis=1)
-                new_idx = list(range(len(new_cols)))
-                new_idx = (
-                    new_idx[:param_loc]
-                    + new_idx[len(cols) - 1 :]
-                    + new_idx[param_loc : len(cols) - 1]
+                # parse every row on its own: vfuncs built from different funcs
+                # can have different parameter names
+                rows = []
+                for t in param_keys:
+                    if isinstance(t, str) or not all(
+                        isinstance(s, str) and &#34;=&#34; in s for s in t
+                    ):
+                        raise ValueError(
+                            f&#34;param_key={param_key!r} needs keys that are tuples &#34;
+                            &#34;of &#39;name=value&#39; strings, as build_vset(param_dict=...) &#34;
+                            f&#34;makes; got {t!r}&#34;
+                        )
+                    # split on the first &#39;=&#39; only, so values may contain &#39;=&#39;
+                    rows.append(dict(s.split(&#34;=&#34;, 1) for s in t))
+                param_df = pd.DataFrame(rows, index=df.index)
+                param_df.columns = [f&#34;{c}-{param_key}&#34; for c in param_df.columns]
+                df = pd.concat(
+                    [df.iloc[:, :param_loc], param_df, df.iloc[:, param_loc + 1 :]],
+                    axis=1,
                 )
-                df = df.iloc[:, new_idx]
     return df</code></pre>
 </details>
 </dd>
@@ -1028,6 +1049,11 @@ attempt to split the entries into multiple columns for the output.</dd>
     &#34;&#34;&#34;
     if func is None:
         func = [&#34;count&#34;, &#34;mean&#34;, &#34;std&#34;]
+    if isinstance(func, str):
+        func = [func]
+    # for scalar outputs, columns are prefixed only when a prefix is asked for,
+    # so existing callers keep their column names
+    prefix_scalar_cols = prefix is not None
     if prefix is None:
         prefix = wrt
     if isinstance(data, dict):
@@ -1043,7 +1069,7 @@ attempt to split the entries into multiple columns for the output.</dd>
         gb = df.groupby(group_by)[wrt]
     else:
         gb = df.groupby(lambda x: True)[wrt]
-    if (isinstance(func, list) and &#34;mean&#34; in func or &#34;std&#34; in func) and (
+    if (isinstance(func, list) and (&#34;mean&#34; in func or &#34;std&#34; in func)) and (
         type(df[wrt].iloc[0]) in [list, np.ndarray]
     ):
         # iterate the groups (same order as gb.groups); get_group with a single
@@ -1081,9 +1107,13 @@ attempt to split the entries into multiple columns for the output.</dd>
             wrt_stds.index.names = df_out.index.names
             df_out = df_out.join(wrt_stds)
         if &#34;count&#34; not in func:
-            df_out = df_out.drop(f&#34;{prefix}-count&#34;)
+            df_out = df_out.drop(columns=f&#34;{prefix}-count&#34;)
     else:
         df_out = gb.agg(func)
+        if isinstance(df_out, pd.Series):  # a single callable gives a Series
+            df_out = df_out.to_frame(getattr(func, &#34;__name__&#34;, wrt))
+        if prefix_scalar_cols:
+            df_out.columns = [f&#34;{prefix}-{c}&#34; for c in df_out.columns]
     df_out = df_out.reindex(sorted(df_out.columns), axis=1)
     df_out.reset_index(inplace=True)
     if len(group_by) &gt; 0:
@@ -1330,7 +1360,6 @@ attempt to split the entries into multiple columns for the output.</dd>
 <ul class="post-list">
 <li><a href="agents.html" title="PCS for analyses done by AI agents">vflow for agents</a><span class="post-tag" title="Claude Code plugin">new</span><span class="post-date">Oct '26</span></li>
 <li><a href="vflow-internals.html" title="Vset, Vfunc and Subkey">How vflow works internally</a><span class="post-date">'22</span></li>
-<li><a href="https://github.com/Yu-Group/veridical-flow/blob/master/docs/contributing.md" title="Contributing">Contributing</a></li>
 </ul>
 </li>
 <li><h3>Notebooks</h3>

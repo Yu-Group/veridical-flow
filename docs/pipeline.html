@@ -82,16 +82,26 @@ class PCSPipeline:
         self.memory = joblib.Memory(location=cache_dir)
 
     def run(self, *args, **kwargs):
-        &#34;&#34;&#34;Runs the pipeline&#34;&#34;&#34;
+        &#34;&#34;&#34;Runs the pipeline: each step is called on the previous step&#39;s outputs
+        (the first on `args`), and the last step&#39;s outputs are returned.
+
+        A step that returns a tuple or list (e.g. one output dict per input)
+        passes them on as separate positional arguments. `kwargs` go to every
+        step.
+        &#34;&#34;&#34;
         run_step_cached = self.memory.cache(_run_step)
+        outputs = args
         for i, step in enumerate(self.steps):
             try:
                 step_name = step.name
             except AttributeError:
                 step_name = f&#34;Step {i}&#34;
             print(step_name)
-            _, fitted_step = run_step_cached(step, *args, **kwargs)
+            outputs, fitted_step = run_step_cached(step, *outputs, **kwargs)
             self.steps[i] = fitted_step
+            if not isinstance(outputs, (tuple, list)):
+                outputs = (outputs,)
+        return outputs[0] if len(outputs) == 1 else outputs
 
     def __getitem__(self, i):
         &#34;&#34;&#34;Accesses ith step of pipeline&#34;&#34;&#34;
@@ -101,17 +111,20 @@ class PCSPipeline:
         return len(self.steps)
 
     def generate_names(self, as_pandas=True):
+        &#34;&#34;&#34;Names for every combination of vfuncs across the steps: a DataFrame
+        with one column per step, or a list of tuples.&#34;&#34;&#34;
         name_lists = []
-        if as_pandas:
-            for step in self.steps:
-                name_lists.append([f&#34;{i}_{str(mod)[:8]}&#34; for i, mod in enumerate(step)])
-            indexes = list(itertools.product(*name_lists))
-            return pd.DataFrame(indexes, columns=[step.name for step in self.steps])
         for step in self.steps:
+            # a Vset is not iterable; its vfuncs are
+            mods = list(step.vfuncs.values())
+            prefix = &#34;&#34; if as_pandas else f&#34;{step.name}_&#34;
             name_lists.append(
-                [f&#34;{step.name}_{i}_{str(mod)[:8]}&#34; for i, mod in enumerate(step)]
+                [f&#34;{prefix}{i}_{str(mod)[:8]}&#34; for i, mod in enumerate(mods)]
             )
-        return list(itertools.product(*name_lists))
+        indexes = list(itertools.product(*name_lists))
+        if as_pandas:
+            return pd.DataFrame(indexes, columns=[step.name for step in self.steps])
+        return indexes
 
 
 def build_graph(node, draw=True):
@@ -353,16 +366,26 @@ caching.</dd>
         self.memory = joblib.Memory(location=cache_dir)
 
     def run(self, *args, **kwargs):
-        &#34;&#34;&#34;Runs the pipeline&#34;&#34;&#34;
+        &#34;&#34;&#34;Runs the pipeline: each step is called on the previous step&#39;s outputs
+        (the first on `args`), and the last step&#39;s outputs are returned.
+
+        A step that returns a tuple or list (e.g. one output dict per input)
+        passes them on as separate positional arguments. `kwargs` go to every
+        step.
+        &#34;&#34;&#34;
         run_step_cached = self.memory.cache(_run_step)
+        outputs = args
         for i, step in enumerate(self.steps):
             try:
                 step_name = step.name
             except AttributeError:
                 step_name = f&#34;Step {i}&#34;
             print(step_name)
-            _, fitted_step = run_step_cached(step, *args, **kwargs)
+            outputs, fitted_step = run_step_cached(step, *outputs, **kwargs)
             self.steps[i] = fitted_step
+            if not isinstance(outputs, (tuple, list)):
+                outputs = (outputs,)
+        return outputs[0] if len(outputs) == 1 else outputs
 
     def __getitem__(self, i):
         &#34;&#34;&#34;Accesses ith step of pipeline&#34;&#34;&#34;
@@ -372,17 +395,20 @@ caching.</dd>
         return len(self.steps)
 
     def generate_names(self, as_pandas=True):
+        &#34;&#34;&#34;Names for every combination of vfuncs across the steps: a DataFrame
+        with one column per step, or a list of tuples.&#34;&#34;&#34;
         name_lists = []
-        if as_pandas:
-            for step in self.steps:
-                name_lists.append([f&#34;{i}_{str(mod)[:8]}&#34; for i, mod in enumerate(step)])
-            indexes = list(itertools.product(*name_lists))
-            return pd.DataFrame(indexes, columns=[step.name for step in self.steps])
         for step in self.steps:
+            # a Vset is not iterable; its vfuncs are
+            mods = list(step.vfuncs.values())
+            prefix = &#34;&#34; if as_pandas else f&#34;{step.name}_&#34;
             name_lists.append(
-                [f&#34;{step.name}_{i}_{str(mod)[:8]}&#34; for i, mod in enumerate(step)]
+                [f&#34;{prefix}{i}_{str(mod)[:8]}&#34; for i, mod in enumerate(mods)]
             )
-        return list(itertools.product(*name_lists))</code></pre>
+        indexes = list(itertools.product(*name_lists))
+        if as_pandas:
+            return pd.DataFrame(indexes, columns=[step.name for step in self.steps])
+        return indexes</code></pre>
 </details>
 <h3>Methods</h3>
 <dl>
@@ -390,45 +416,63 @@ caching.</dd>
 <span>def <span class="ident">generate_names</span></span>(<span>self, as_pandas=True)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Names for every combination of vfuncs across the steps: a DataFrame
+with one column per step, or a list of tuples.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def generate_names(self, as_pandas=True):
+    &#34;&#34;&#34;Names for every combination of vfuncs across the steps: a DataFrame
+    with one column per step, or a list of tuples.&#34;&#34;&#34;
     name_lists = []
-    if as_pandas:
-        for step in self.steps:
-            name_lists.append([f&#34;{i}_{str(mod)[:8]}&#34; for i, mod in enumerate(step)])
-        indexes = list(itertools.product(*name_lists))
-        return pd.DataFrame(indexes, columns=[step.name for step in self.steps])
     for step in self.steps:
+        # a Vset is not iterable; its vfuncs are
+        mods = list(step.vfuncs.values())
+        prefix = &#34;&#34; if as_pandas else f&#34;{step.name}_&#34;
         name_lists.append(
-            [f&#34;{step.name}_{i}_{str(mod)[:8]}&#34; for i, mod in enumerate(step)]
+            [f&#34;{prefix}{i}_{str(mod)[:8]}&#34; for i, mod in enumerate(mods)]
         )
-    return list(itertools.product(*name_lists))</code></pre>
+    indexes = list(itertools.product(*name_lists))
+    if as_pandas:
+        return pd.DataFrame(indexes, columns=[step.name for step in self.steps])
+    return indexes</code></pre>
 </details>
 </dd>
 <dt id="vflow.pipeline.PCSPipeline.run"><code class="name flex">
 <span>def <span class="ident">run</span></span>(<span>self, *args, **kwargs)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Runs the pipeline</p></div>
+<div class="desc"><p>Runs the pipeline: each step is called on the previous step's outputs
+(the first on <code>args</code>), and the last step's outputs are returned.</p>
+<p>A step that returns a tuple or list (e.g. one output dict per input)
+passes them on as separate positional arguments. <code>kwargs</code> go to every
+step.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def run(self, *args, **kwargs):
-    &#34;&#34;&#34;Runs the pipeline&#34;&#34;&#34;
+    &#34;&#34;&#34;Runs the pipeline: each step is called on the previous step&#39;s outputs
+    (the first on `args`), and the last step&#39;s outputs are returned.
+
+    A step that returns a tuple or list (e.g. one output dict per input)
+    passes them on as separate positional arguments. `kwargs` go to every
+    step.
+    &#34;&#34;&#34;
     run_step_cached = self.memory.cache(_run_step)
+    outputs = args
     for i, step in enumerate(self.steps):
         try:
             step_name = step.name
         except AttributeError:
             step_name = f&#34;Step {i}&#34;
         print(step_name)
-        _, fitted_step = run_step_cached(step, *args, **kwargs)
-        self.steps[i] = fitted_step</code></pre>
+        outputs, fitted_step = run_step_cached(step, *outputs, **kwargs)
+        self.steps[i] = fitted_step
+        if not isinstance(outputs, (tuple, list)):
+            outputs = (outputs,)
+    return outputs[0] if len(outputs) == 1 else outputs</code></pre>
 </details>
 </dd>
 </dl>
@@ -442,7 +486,6 @@ caching.</dd>
 <ul class="post-list">
 <li><a href="agents.html" title="PCS for analyses done by AI agents">vflow for agents</a><span class="post-tag" title="Claude Code plugin">new</span><span class="post-date">Oct '26</span></li>
 <li><a href="vflow-internals.html" title="Vset, Vfunc and Subkey">How vflow works internally</a><span class="post-date">'22</span></li>
-<li><a href="https://github.com/Yu-Group/veridical-flow/blob/master/docs/contributing.md" title="Contributing">Contributing</a></li>
 </ul>
 </li>
 <li><h3>Notebooks</h3>

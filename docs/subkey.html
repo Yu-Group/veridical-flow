@@ -134,8 +134,9 @@ class Subkey:
         return str(self.value)
 
     def __hash__(self):
-        &#34;&#34;&#34;Mainly used for testing purposes.&#34;&#34;&#34;
-        return hash(self.value) ^ hash(self.origin) ^ hash(self.output_matching)</code></pre>
+        &#34;&#34;&#34;Consistent with __eq__, which compares value and origin only: keys
+        that compare equal must hash equal or dict and set lookups miss them.&#34;&#34;&#34;
+        return hash(self.value) ^ hash(self.origin)</code></pre>
 </details>
 </section>
 <section>
@@ -243,8 +244,9 @@ class Subkey:
         return str(self.value)
 
     def __hash__(self):
-        &#34;&#34;&#34;Mainly used for testing purposes.&#34;&#34;&#34;
-        return hash(self.value) ^ hash(self.origin) ^ hash(self.output_matching)</code></pre>
+        &#34;&#34;&#34;Consistent with __eq__, which compares value and origin only: keys
+        that compare equal must hash equal or dict and set lookups miss them.&#34;&#34;&#34;
+        return hash(self.value) ^ hash(self.origin)</code></pre>
 </details>
 <h3>Methods</h3>
 <dl>
@@ -355,7 +357,6 @@ is same, value is different</li>
 <ul class="post-list">
 <li><a href="agents.html" title="PCS for analyses done by AI agents">vflow for agents</a><span class="post-tag" title="Claude Code plugin">new</span><span class="post-date">Oct '26</span></li>
 <li><a href="vflow-internals.html" title="Vset, Vfunc and Subkey">How vflow works internally</a><span class="post-date">'22</span></li>
-<li><a href="https://github.com/Yu-Group/veridical-flow/blob/master/docs/contributing.md" title="Contributing">Contributing</a></li>
 </ul>
 </li>
 <li><h3>Notebooks</h3>
