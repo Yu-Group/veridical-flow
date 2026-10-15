@@ -56,7 +56,20 @@ aria-label="View source on GitHub" title="GitHub">
 <pre><code class="python">&#34;&#34;&#34;A perturbation that can be used as a step in a pipeline
 &#34;&#34;&#34;
 
+from typing import Callable
+
 import ray
+
+
+def _check_vfunc(vfunc):
+    if not (hasattr(vfunc, &#34;fit&#34;) or callable(vfunc)):
+        raise TypeError(&#34;vfunc must be an object with a fit method or a callable&#34;)
+
+
+def _method_or_self(vfunc, method: str):
+    &#34;&#34;&#34;`vfunc.&lt;method&gt;` (e.g. an estimator&#39;s fit) if it has one, else `vfunc`
+    itself (a plain function).&#34;&#34;&#34;
+    return getattr(vfunc, method, vfunc)
 
 
 class Vfunc:
@@ -66,26 +79,20 @@ class Vfunc:
     &#34;&#34;&#34;
 
     def __init__(self, name: str = &#34;&#34;, vfunc=lambda x: x):
-        assert hasattr(vfunc, &#34;fit&#34;) or callable(
-            vfunc
-        ), &#34;vfunc must be an object with a fit method or a callable&#34;
+        _check_vfunc(vfunc)
         self.name = name
         self.vfunc = vfunc
 
     def fit(self, *args, **kwargs):
-        &#34;&#34;&#34;This function fits params for this vfunc&#34;&#34;&#34;
-        if hasattr(self.vfunc, &#34;fit&#34;):
-            return self.vfunc.fit(*args, **kwargs)
-        return self.vfunc(*args, **kwargs)
+        &#34;&#34;&#34;Calls the vfunc&#39;s fit method, or the vfunc itself if it has none&#34;&#34;&#34;
+        return _method_or_self(self.vfunc, &#34;fit&#34;)(*args, **kwargs)
 
     def transform(self, *args, **kwargs):
-        &#34;&#34;&#34;This function transforms its input in some way&#34;&#34;&#34;
-        if hasattr(self.vfunc, &#34;transform&#34;):
-            return self.vfunc.transform(*args, **kwargs)
-        return self.vfunc(*args, **kwargs)
+        &#34;&#34;&#34;Calls the vfunc&#39;s transform method, or the vfunc itself if it has none&#34;&#34;&#34;
+        return _method_or_self(self.vfunc, &#34;transform&#34;)(*args, **kwargs)
 
     def __call__(self, *args, **kwargs):
-        &#34;&#34;&#34;This should decide what to call&#34;&#34;&#34;
+        &#34;&#34;&#34;Same as fit&#34;&#34;&#34;
         return self.fit(*args, **kwargs)
 
 
@@ -100,48 +107,43 @@ class AsyncVfunc:
     def __init__(self, name: str = &#34;&#34;, vfunc=lambda x: x):
         self.name = name
         if isinstance(vfunc, Vfunc):
-            self.vfunc = vfunc.vfunc
-        else:
-            assert hasattr(vfunc, &#34;fit&#34;) or callable(
-                vfunc
-            ), &#34;vfunc must be an object with a fit method or a callable&#34;
-            self.vfunc = vfunc
+            vfunc = vfunc.vfunc
+        _check_vfunc(vfunc)
+        self.vfunc = vfunc
 
     def fit(self, *args, **kwargs):
-        &#34;&#34;&#34;This function fits params for this vfunc&#34;&#34;&#34;
-        if hasattr(self.vfunc, &#34;fit&#34;):
-            return _remote_fun.remote(self.vfunc.fit, *args, **kwargs)
-        return _remote_fun.remote(self.vfunc, *args, **kwargs)
+        &#34;&#34;&#34;Like Vfunc.fit, run as a Ray task; returns a Ray reference&#34;&#34;&#34;
+        return _remote_fun.remote(_method_or_self(self.vfunc, &#34;fit&#34;), *args, **kwargs)
 
     def transform(self, *args, **kwargs):
-        &#34;&#34;&#34;This function transforms its input in some way&#34;&#34;&#34;
-        if hasattr(self.vfunc, &#34;transform&#34;):
-            return _remote_fun.remote(self.vfunc.transform, *args, **kwargs)
-        return _remote_fun.remote(self.vfunc, *args, **kwargs)
+        &#34;&#34;&#34;Like Vfunc.transform, run as a Ray task; returns a Ray reference&#34;&#34;&#34;
+        return _remote_fun.remote(
+            _method_or_self(self.vfunc, &#34;transform&#34;), *args, **kwargs
+        )
 
     def __call__(self, *args, **kwargs):
-        &#34;&#34;&#34;This should decide what to call&#34;&#34;&#34;
+        &#34;&#34;&#34;Same as fit&#34;&#34;&#34;
         return self.fit(*args, **kwargs)
 
 
 class VfuncPromise:
     &#34;&#34;&#34;A Vfunc promise used for lazy evaluation.&#34;&#34;&#34;
 
-    def __init__(self, vfunc: callable, *args):
+    def __init__(self, vfunc: Callable, *args):
         self.vfunc = vfunc
         self.args = args
         self.called = False
         self.value = None
 
     def __call__(self):
-        &#34;&#34;&#34;This should decide what to call&#34;&#34;&#34;
+        &#34;&#34;&#34;Evaluates the promise the first time; returns the stored value after&#34;&#34;&#34;
         if self.called:
             return self.value
         tmp_args = []
-        for i, arg in enumerate(self.args):
+        for arg in self.args:
+            while isinstance(arg, VfuncPromise):
+                arg = arg()
             tmp_args.append(arg)
-            while isinstance(tmp_args[i], VfuncPromise):
-                tmp_args[i] = tmp_args[i]()
         while isinstance(self.vfunc, VfuncPromise):
             self.vfunc = self.vfunc()
         # an upstream lazy async Vset leaves Ray references; a remote call
@@ -202,27 +204,22 @@ class VfuncPromise:
     def __init__(self, name: str = &#34;&#34;, vfunc=lambda x: x):
         self.name = name
         if isinstance(vfunc, Vfunc):
-            self.vfunc = vfunc.vfunc
-        else:
-            assert hasattr(vfunc, &#34;fit&#34;) or callable(
-                vfunc
-            ), &#34;vfunc must be an object with a fit method or a callable&#34;
-            self.vfunc = vfunc
+            vfunc = vfunc.vfunc
+        _check_vfunc(vfunc)
+        self.vfunc = vfunc
 
     def fit(self, *args, **kwargs):
-        &#34;&#34;&#34;This function fits params for this vfunc&#34;&#34;&#34;
-        if hasattr(self.vfunc, &#34;fit&#34;):
-            return _remote_fun.remote(self.vfunc.fit, *args, **kwargs)
-        return _remote_fun.remote(self.vfunc, *args, **kwargs)
+        &#34;&#34;&#34;Like Vfunc.fit, run as a Ray task; returns a Ray reference&#34;&#34;&#34;
+        return _remote_fun.remote(_method_or_self(self.vfunc, &#34;fit&#34;), *args, **kwargs)
 
     def transform(self, *args, **kwargs):
-        &#34;&#34;&#34;This function transforms its input in some way&#34;&#34;&#34;
-        if hasattr(self.vfunc, &#34;transform&#34;):
-            return _remote_fun.remote(self.vfunc.transform, *args, **kwargs)
-        return _remote_fun.remote(self.vfunc, *args, **kwargs)
+        &#34;&#34;&#34;Like Vfunc.transform, run as a Ray task; returns a Ray reference&#34;&#34;&#34;
+        return _remote_fun.remote(
+            _method_or_self(self.vfunc, &#34;transform&#34;), *args, **kwargs
+        )
 
     def __call__(self, *args, **kwargs):
-        &#34;&#34;&#34;This should decide what to call&#34;&#34;&#34;
+        &#34;&#34;&#34;Same as fit&#34;&#34;&#34;
         return self.fit(*args, **kwargs)</code></pre>
 </details>
 <h3>Methods</h3>
@@ -231,32 +228,30 @@ class VfuncPromise:
 <span>def <span class="ident">fit</span></span>(<span>self, *args, **kwargs)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>This function fits params for this vfunc</p></div>
+<div class="desc"><p>Like Vfunc.fit, run as a Ray task; returns a Ray reference</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def fit(self, *args, **kwargs):
-    &#34;&#34;&#34;This function fits params for this vfunc&#34;&#34;&#34;
-    if hasattr(self.vfunc, &#34;fit&#34;):
-        return _remote_fun.remote(self.vfunc.fit, *args, **kwargs)
-    return _remote_fun.remote(self.vfunc, *args, **kwargs)</code></pre>
+    &#34;&#34;&#34;Like Vfunc.fit, run as a Ray task; returns a Ray reference&#34;&#34;&#34;
+    return _remote_fun.remote(_method_or_self(self.vfunc, &#34;fit&#34;), *args, **kwargs)</code></pre>
 </details>
 </dd>
 <dt id="vflow.vfunc.AsyncVfunc.transform"><code class="name flex">
 <span>def <span class="ident">transform</span></span>(<span>self, *args, **kwargs)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>This function transforms its input in some way</p></div>
+<div class="desc"><p>Like Vfunc.transform, run as a Ray task; returns a Ray reference</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def transform(self, *args, **kwargs):
-    &#34;&#34;&#34;This function transforms its input in some way&#34;&#34;&#34;
-    if hasattr(self.vfunc, &#34;transform&#34;):
-        return _remote_fun.remote(self.vfunc.transform, *args, **kwargs)
-    return _remote_fun.remote(self.vfunc, *args, **kwargs)</code></pre>
+    &#34;&#34;&#34;Like Vfunc.transform, run as a Ray task; returns a Ray reference&#34;&#34;&#34;
+    return _remote_fun.remote(
+        _method_or_self(self.vfunc, &#34;transform&#34;), *args, **kwargs
+    )</code></pre>
 </details>
 </dd>
 </dl>
@@ -280,26 +275,20 @@ If none of these is supported, it need only be a function</p></div>
     &#34;&#34;&#34;
 
     def __init__(self, name: str = &#34;&#34;, vfunc=lambda x: x):
-        assert hasattr(vfunc, &#34;fit&#34;) or callable(
-            vfunc
-        ), &#34;vfunc must be an object with a fit method or a callable&#34;
+        _check_vfunc(vfunc)
         self.name = name
         self.vfunc = vfunc
 
     def fit(self, *args, **kwargs):
-        &#34;&#34;&#34;This function fits params for this vfunc&#34;&#34;&#34;
-        if hasattr(self.vfunc, &#34;fit&#34;):
-            return self.vfunc.fit(*args, **kwargs)
-        return self.vfunc(*args, **kwargs)
+        &#34;&#34;&#34;Calls the vfunc&#39;s fit method, or the vfunc itself if it has none&#34;&#34;&#34;
+        return _method_or_self(self.vfunc, &#34;fit&#34;)(*args, **kwargs)
 
     def transform(self, *args, **kwargs):
-        &#34;&#34;&#34;This function transforms its input in some way&#34;&#34;&#34;
-        if hasattr(self.vfunc, &#34;transform&#34;):
-            return self.vfunc.transform(*args, **kwargs)
-        return self.vfunc(*args, **kwargs)
+        &#34;&#34;&#34;Calls the vfunc&#39;s transform method, or the vfunc itself if it has none&#34;&#34;&#34;
+        return _method_or_self(self.vfunc, &#34;transform&#34;)(*args, **kwargs)
 
     def __call__(self, *args, **kwargs):
-        &#34;&#34;&#34;This should decide what to call&#34;&#34;&#34;
+        &#34;&#34;&#34;Same as fit&#34;&#34;&#34;
         return self.fit(*args, **kwargs)</code></pre>
 </details>
 <h3>Methods</h3>
@@ -308,39 +297,35 @@ If none of these is supported, it need only be a function</p></div>
 <span>def <span class="ident">fit</span></span>(<span>self, *args, **kwargs)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>This function fits params for this vfunc</p></div>
+<div class="desc"><p>Calls the vfunc's fit method, or the vfunc itself if it has none</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def fit(self, *args, **kwargs):
-    &#34;&#34;&#34;This function fits params for this vfunc&#34;&#34;&#34;
-    if hasattr(self.vfunc, &#34;fit&#34;):
-        return self.vfunc.fit(*args, **kwargs)
-    return self.vfunc(*args, **kwargs)</code></pre>
+    &#34;&#34;&#34;Calls the vfunc&#39;s fit method, or the vfunc itself if it has none&#34;&#34;&#34;
+    return _method_or_self(self.vfunc, &#34;fit&#34;)(*args, **kwargs)</code></pre>
 </details>
 </dd>
 <dt id="vflow.vfunc.Vfunc.transform"><code class="name flex">
 <span>def <span class="ident">transform</span></span>(<span>self, *args, **kwargs)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>This function transforms its input in some way</p></div>
+<div class="desc"><p>Calls the vfunc's transform method, or the vfunc itself if it has none</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def transform(self, *args, **kwargs):
-    &#34;&#34;&#34;This function transforms its input in some way&#34;&#34;&#34;
-    if hasattr(self.vfunc, &#34;transform&#34;):
-        return self.vfunc.transform(*args, **kwargs)
-    return self.vfunc(*args, **kwargs)</code></pre>
+    &#34;&#34;&#34;Calls the vfunc&#39;s transform method, or the vfunc itself if it has none&#34;&#34;&#34;
+    return _method_or_self(self.vfunc, &#34;transform&#34;)(*args, **kwargs)</code></pre>
 </details>
 </dd>
 </dl>
 </dd>
 <dt id="vflow.vfunc.VfuncPromise"><code class="flex name class">
 <span>class <span class="ident">VfuncPromise</span></span>
-<span>(</span><span>vfunc: <built-in function callable>, *args)</span>
+<span>(</span><span>vfunc: Callable, *args)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>A Vfunc promise used for lazy evaluation.</p></div>
@@ -351,21 +336,21 @@ If none of these is supported, it need only be a function</p></div>
 <pre><code class="python">class VfuncPromise:
     &#34;&#34;&#34;A Vfunc promise used for lazy evaluation.&#34;&#34;&#34;
 
-    def __init__(self, vfunc: callable, *args):
+    def __init__(self, vfunc: Callable, *args):
         self.vfunc = vfunc
         self.args = args
         self.called = False
         self.value = None
 
     def __call__(self):
-        &#34;&#34;&#34;This should decide what to call&#34;&#34;&#34;
+        &#34;&#34;&#34;Evaluates the promise the first time; returns the stored value after&#34;&#34;&#34;
         if self.called:
             return self.value
         tmp_args = []
-        for i, arg in enumerate(self.args):
+        for arg in self.args:
+            while isinstance(arg, VfuncPromise):
+                arg = arg()
             tmp_args.append(arg)
-            while isinstance(tmp_args[i], VfuncPromise):
-                tmp_args[i] = tmp_args[i]()
         while isinstance(self.vfunc, VfuncPromise):
             self.vfunc = self.vfunc()
         # an upstream lazy async Vset leaves Ray references; a remote call

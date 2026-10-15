@@ -15,28 +15,28 @@ from vflow.vset import FILTER_PREV_KEY, PREV_KEY, Subkey, Vset
 
 
 def init_args(args_tuple: Union[tuple, list], names=None):
-    """Converts tuple of arguments to a list of dicts
+    """Wraps each argument in a dict that Vsets can take as input.
 
     Parameters
     ----------
+    args_tuple: tuple or list
+        The data, e.g. the output of `train_test_split`.
     names: list-like (optional), default None
-        given names for each of the arguments in the tuple
+        A name for each argument, used to label outputs; defaults to "start".
+
+    Returns
+    -------
+    list of dict
+        One dict per argument, `{(Subkey(name, "init"),): arg, PREV_KEY: ("init",)}`.
     """
     if names is None:
         names = ["start"] * len(args_tuple)
-    else:
-        assert len(names) == len(
-            args_tuple
-        ), "names should be same length as args_tuple"
-    output_dicts = []
-    for i, _ in enumerate(args_tuple):
-        output_dicts.append(
-            {
-                (Subkey(names[i], "init"),): args_tuple[i],
-                PREV_KEY: ("init",),
-            }
-        )
-    return output_dicts
+    elif len(names) != len(args_tuple):
+        raise ValueError("names should be same length as args_tuple")
+    return [
+        {(Subkey(name, "init"),): arg, PREV_KEY: ("init",)}
+        for name, arg in zip(names, args_tuple)
+    ]
 
 
 def _key_origin(vset: Vset) -> str:
@@ -144,6 +144,8 @@ def build_vset(
     output_matching : bool, optional
         If True, then output keys from Vset will be matched when used in other
         Vsets.
+    lazy : bool, optional
+        If True, outputs are computed only when used (they are `VfuncPromise`s).
     cache_dir : str, optional
         If provided, do caching and use `cache_dir` as the data store for
         joblib.Memory.
@@ -158,106 +160,48 @@ def build_vset(
     new_vset : vflow.vset.Vset
 
     """
-    f_list = []
-    pd_list = []
-    if isinstance(func, list):
-        if isinstance(param_dict, list):
-            assert len(param_dict) == len(
-                func
-            ), "list of param_dicts must be same length as list of funcs"
-            f_list.extend(func)
-            pd_list.extend(param_dict)
-        else:
-            pd_list.extend([param_dict] * len(func))
-            f_list.extend(func)
-    elif isinstance(param_dict, list):
-        f_list.extend([func] * len(param_dict))
-        pd_list.extend(param_dict)
-    else:
-        f_list.append(func)
-        pd_list.append(param_dict)
+    # pair each func with its param_dict; a single func or param_dict is
+    # shared by every entry of the other's list
+    n = len(func) if isinstance(func, list) else 1
+    if isinstance(param_dict, list):
+        if isinstance(func, list) and len(param_dict) != n:
+            raise ValueError("list of param_dicts must be same length as list of funcs")
+        n = len(param_dict)
+    funcs = func if isinstance(func, list) else [func] * n
+    given = param_dict if isinstance(param_dict, list) else [param_dict] * n
+    param_dicts = [p if p is not None else {} for p in given]
+    for f in funcs:
+        if not callable(f):
+            raise TypeError(f"func must be callable, got {f!r}")
 
+    seeds = _seeds(seed, funcs, param_dicts, reps, kwargs) if seed is not None else None
     vfuncs = []
     vkeys = []
     # (func, param values) behind each key, to tell a repeated configuration
     # from distinct ones that happen to print the same
     configs = []
-
-    if seed is not None:
-        if "random_state" in kwargs or any(
-            pd is not None and "random_state" in pd for pd in pd_list
-        ):
-            raise ValueError(
-                "pass either `seed` or `random_state`, not both: `seed` sets a "
-                "different random_state for every vfunc"
+    for f, params in zip(funcs, param_dicts):
+        for values in product(*params.values()):
+            f_kwargs = {**dict(zip(params, values)), **kwargs}
+            vkey = (f"func={_func_name(f)}",) + tuple(
+                f"{k}={v}" for k, v in zip(params, values)
             )
-        for f in f_list:
-            if not _accepts_random_state(f):
-                raise ValueError(
-                    f"`seed` needs `func` to accept a `random_state` argument, "
-                    f"and {_func_name(f)} does not"
-                )
-        n_vfuncs = reps * sum(
-            int(np.prod([len(v) for v in (pd or {}).values()])) for pd in pd_list
-        )
-        # one independent, reproducible stream per vfunc
-        seeds = iter(
-            int(s) for s in np.random.SeedSequence(seed).generate_state(n_vfuncs)
-        )
-
-    for f, pd in zip(f_list, pd_list):
-        if pd is None:
-            pd = {}
-        assert callable(f), "func must be callable"
-
-        kwargs_tuples = product(*list(pd.values()))
-        for tup in kwargs_tuples:
-            kwargs_dict = {}
-            vkey_tup = (f"func={_func_name(f)}",)
-            for param_name, param_val in zip(list(pd.keys()), tup):
-                kwargs_dict[param_name] = param_val
-                vkey_tup += (f"{param_name}={param_val}",)
-            # add additional fixed kwargs to kwargs_dict
-            for k, v in kwargs.items():
-                kwargs_dict[k] = v
             for i in range(reps):
-                # add vfunc key to vkeys
-                if reps > 1:
-                    vkeys.append((f"rep={i}",) + vkey_tup)
-                else:
-                    vkeys.append(vkey_tup)
-                configs.append((f, tup))
-                rep_kwargs = dict(kwargs_dict)
-                if seed is not None:
+                vkeys.append((f"rep={i}",) + vkey if reps > 1 else vkey)
+                configs.append((f, values))
+                rep_kwargs = dict(f_kwargs)
+                if seeds is not None:
                     rep_kwargs["random_state"] = next(seeds)
-                # check if func is a class
-                if isinstance(f, type):
-                    # instantiate func
-                    vfuncs.append(Vfunc(vfunc=f(**rep_kwargs), name=str(vkey_tup)))
-                else:
-                    # use partial to wrap func
-                    vfuncs.append(
-                        Vfunc(vfunc=partial(f, **rep_kwargs), name=str(vkey_tup))
-                    )
-    if all(pd is None for pd in pd_list) and reps == 1:
-        vkeys = None
-    elif len(set(vkeys)) < len(vkeys):
-        # overlapping param_dicts repeat a configuration; keep one vfunc per
-        # key (the last, as a dict would), in first-seen order. Distinct
-        # configurations with the same key (two lambdas, partials of one
-        # function, 1 and "1") would be silently dropped, so refuse those.
-        first_config = {}
-        for key, config in zip(vkeys, configs):
-            seen = first_config.setdefault(key, config)
-            if not _same_config(seen, config):
-                raise ValueError(
-                    f"build_vset({name!r}): different functions or parameter "
-                    f"values share the key {key}; give the functions distinct "
-                    "names (e.g. with def instead of lambda or partial) and use "
-                    "parameter values that print differently"
+                # a class is instantiated now; a function is called later
+                vfunc = (
+                    f(**rep_kwargs) if isinstance(f, type) else partial(f, **rep_kwargs)
                 )
-        merged = dict(zip(vkeys, vfuncs))
-        vkeys, vfuncs = list(merged.keys()), list(merged.values())
+                vfuncs.append(Vfunc(vfunc=vfunc, name=str(vkey)))
+
+    if all(p is None for p in given) and reps == 1:
+        vkeys = None  # Vset names the vfuncs {name}_0, {name}_1, ...
+    elif len(set(vkeys)) < len(vkeys):
+        vkeys, vfuncs = _merge_repeated_configs(name, vkeys, vfuncs, configs)
 
     return Vset(
         name,
@@ -271,6 +215,45 @@ def build_vset(
     )
 
 
+def _seeds(seed, funcs, param_dicts, reps, kwargs):
+    """An iterator of one independent, reproducible random_state per vfunc
+    that build_vset will make, checking `seed` can be used."""
+    if "random_state" in kwargs or any("random_state" in p for p in param_dicts):
+        raise ValueError(
+            "pass either `seed` or `random_state`, not both: `seed` sets a "
+            "different random_state for every vfunc"
+        )
+    for f in funcs:
+        if not _accepts_random_state(f):
+            raise ValueError(
+                f"`seed` needs `func` to accept a `random_state` argument, "
+                f"and {_func_name(f)} does not"
+            )
+    n_vfuncs = reps * sum(
+        int(np.prod([len(v) for v in p.values()])) for p in param_dicts
+    )
+    return iter(int(s) for s in np.random.SeedSequence(seed).generate_state(n_vfuncs))
+
+
+def _merge_repeated_configs(name, vkeys, vfuncs, configs):
+    """Overlapping param_dicts repeat a configuration; keep one vfunc per key
+    (the last, as a dict would), in first-seen order. Distinct configurations
+    with the same key (two lambdas, partials of one function, 1 and "1") would
+    be silently dropped, so refuse those."""
+    first_config = {}
+    for key, config in zip(vkeys, configs):
+        seen = first_config.setdefault(key, config)
+        if not _same_config(seen, config):
+            raise ValueError(
+                f"build_vset({name!r}): different functions or parameter "
+                f"values share the key {key}; give the functions distinct "
+                "names (e.g. with def instead of lambda or partial) and use "
+                "parameter values that print differently"
+            )
+    merged = dict(zip(vkeys, vfuncs))
+    return list(merged.keys()), list(merged.values())
+
+
 def filter_vset_by_metric(
     metric_dict: dict,
     vset: Vset,
@@ -280,7 +263,8 @@ def filter_vset_by_metric(
     filter_on=None,
     group: bool = False,
 ) -> Union[Vset, list]:
-    """Returns a new Vset by filtering `vset.vfuncs` based on values in filter_dict.
+    """Returns a new Vset by filtering `vset.vfuncs` based on values in
+    `metric_dict`.
 
     Parameters
     ----------
@@ -288,7 +272,7 @@ def filter_vset_by_metric(
         output from a Vset, typically with metrics or other numeric values to use when
         filtering `vset.vfuncs`
     vset: Vset
-        a Vsets
+        the Vset to filter
     *vsets: Vset
         zero or more additional Vsets
     n_keep: int (optional)
@@ -304,11 +288,10 @@ def filter_vset_by_metric(
 
     Returns
     -------
-    *new_vset : Vset
-        Copies of the input Vsets but with Vfuncs filtered based on metrics
+    Vset or list of Vset
+        A copy of `vset` (a list of copies, given `*vsets`) keeping only the
+        vfuncs of the best `n_keep` results
     """
-    if filter_on is None:
-        filter_on = []
     df = dict_to_df(metric_dict)
     vsets = [vset, *vsets]
     vset_names = []
@@ -321,7 +304,7 @@ def filter_vset_by_metric(
                 f"{col} should be one of the columns of dict_to_df(metric_dict)"
             )
         vset_names.append(col)
-    if len(filter_on) > 0:
+    if filter_on:
         filter_col = [k for k in metric_dict if k != PREV_KEY][0][-1].origin
         df = df[df[filter_col].isin(filter_on)]
     if group:
@@ -331,11 +314,11 @@ def filter_vset_by_metric(
     # n_keep counts distinct vfunc combinations, not metric rows: one vfunc can
     # top several rows when it was run on several upstream perturbations
     df = df.drop_duplicates(subset=vset_names).iloc[0:n_keep]
-    for i, vset_i in enumerate(vsets):
-        vfuncs = vset_i.vfuncs
-        keep = list(df[vset_names[i]])
+    new_vsets = []
+    for vset_i, col in zip(vsets, vset_names):
+        keep = list(df[col])
         # match on the key the outputs are labelled with, not on Vfunc.name
-        new_vfuncs = {k: v for k, v in vfuncs.items() if k[0].value in keep}
+        new_vfuncs = {k: v for k, v in vset_i.vfuncs.items() if k[0].value in keep}
         tracking_dir = None if vset_i._mlflow is None else mlflow.get_tracking_uri()
         new_vset = Vset(
             "filtered_" + vset_i.name,
@@ -346,27 +329,20 @@ def filter_vset_by_metric(
             cache_dir=vset_i._cache_dir,
             tracking_dir=tracking_dir,
         )
-        setattr(
-            new_vset,
-            FILTER_PREV_KEY,
-            (
-                metric_dict[PREV_KEY],
-                vset_i,
-            ),
-        )
-        setattr(new_vset, PREV_KEY, getattr(new_vset, FILTER_PREV_KEY))
-        vsets[i] = new_vset
-    if len(vsets) == 1:
-        return vsets[0]
-    return vsets
+        # lineage for build_graph: the metrics that chose it, and the original
+        prev = (metric_dict[PREV_KEY], vset_i)
+        setattr(new_vset, FILTER_PREV_KEY, prev)
+        setattr(new_vset, PREV_KEY, prev)
+        new_vsets.append(new_vset)
+    return new_vsets[0] if len(new_vsets) == 1 else new_vsets
 
 
 def cum_acc_by_uncertainty(mean_preds, std_preds, true_labels):
     """Returns uncertainty and cumulative accuracy for grouped class predictions,
     sorted in increasing order of uncertainty
 
-    Params
-    ------
+    Parameters
+    ----------
     mean_preds: dict
         mean class probabilities per group, from
         Vset.predict_proba(..., with_uncertainty=True)
@@ -374,36 +350,38 @@ def cum_acc_by_uncertainty(mean_preds, std_preds, true_labels):
         std of class probabilities per group, from the same call
     true_labels: dict or list-like
 
-    TODO: generalize to multi-class classification
+    TODO: generalize to multi-class classification (this uses the
+    probability of class 1)
     """
-    assert dict_keys(mean_preds) == dict_keys(
-        std_preds
-    ), "mean_preds and std_preds must share the same keys"
-    # match predictions on keys
-    paired_preds = [
-        [d[k] for d in (mean_preds, std_preds)] for k in dict_keys(mean_preds)
-    ]
-    arrays = [np.array(p) for p in zip(*paired_preds)]
-    if arrays[0].ndim != 3:
+    keys = dict_keys(mean_preds)
+    if keys != dict_keys(std_preds):
+        raise ValueError("mean_preds and std_preds must share the same keys")
+    # (n_groups, n_obs, n_classes), matched on keys
+    mean_arr = np.array([mean_preds[k] for k in keys])
+    std_arr = np.array([std_preds[k] for k in keys])
+    if mean_arr.ndim != 3:
         raise ValueError(
             "cum_acc_by_uncertainty needs class probabilities of shape "
             "(n_obs, n_classes) per group, as from "
             "Vset.predict_proba(..., with_uncertainty=True); got predictions "
-            f"of shape {arrays[0].shape[1:]}"
+            f"of shape {mean_arr.shape[1:]}"
         )
-    mean_preds, std_preds = (a[:, :, 1] for a in arrays)
+    mean_pos, std_pos = mean_arr[:, :, 1], std_arr[:, :, 1]
     if isinstance(true_labels, dict):
         true_labels = dict_data(true_labels)
-        assert len(true_labels) == 1, "true_labels should have a single 1D vector entry"
+        if len(true_labels) != 1:
+            raise ValueError("true_labels should have a single 1D vector entry")
         true_labels = true_labels[0]
-    n_obs = len(mean_preds[0])
-    assert (
-        len(true_labels) == n_obs
-    ), f"true_labels has {len(true_labels)} obs. but should have same as predictions ({n_obs})"
-    sorted_idx = np.argsort(std_preds, axis=1)
+    n_obs = mean_pos.shape[1]
+    if len(true_labels) != n_obs:
+        raise ValueError(
+            f"true_labels has {len(true_labels)} obs. but should have same as "
+            f"predictions ({n_obs})"
+        )
+    sorted_idx = np.argsort(std_pos, axis=1)
     correct_labels = np.take_along_axis(
-        np.around(mean_preds) - true_labels == 0, sorted_idx, 1
+        np.around(mean_pos) - true_labels == 0, sorted_idx, 1
     )
-    uncertainty = np.take_along_axis(std_preds, sorted_idx, 1)
+    uncertainty = np.take_along_axis(std_pos, sorted_idx, 1)
     cum_acc = np.cumsum(correct_labels, axis=1) / range(1, n_obs + 1)
     return uncertainty, cum_acc, sorted_idx
