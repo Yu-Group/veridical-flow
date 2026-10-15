@@ -123,7 +123,7 @@ class StabilityReport:
 
 def stability_report(
     results: Union[dict, pd.DataFrame],
-    compare: str = None,
+    compare: Optional[str] = None,
     by: Optional[str] = "auto",
     bigger_is_better: bool = True,
     wrt: str = "out",
@@ -167,8 +167,10 @@ def stability_report(
         if arg is not None and arg not in vsets:
             raise ValueError(f"{name}={arg!r} is not one of the Vsets {vsets}")
     if by == "auto":
+        # the last Vset made the outputs (e.g. the metrics): report on each
+        # of its choices separately, unless it is what is being compared
         last = vsets[-1] if vsets else None
-        by = last if last != compare and last and df[last].nunique() > 1 else None
+        by = last if last and last != compare and df[last].nunique() > 1 else None
     by_cols = [] if by is None else [by]
     factors = [c for c in vsets if c != by and df[c].nunique() > 1]
     if compare is not None and compare not in factors:
@@ -176,16 +178,13 @@ def stability_report(
 
     groups = list(df.groupby(by, sort=False)) if by else [(None, df)]
     summary = _summary(df, by_cols, wrt)
-    variance = pd.concat(
-        (
-            [_variance_shares(g, factors, wrt).assign(**{by: k}) for k, g in groups]
-            if by
-            else [_variance_shares(df, factors, wrt)]
-        ),
-        ignore_index=True,
-    )
-    if by:
-        variance = variance[[by] + [c for c in variance.columns if c != by]]
+    parts = []
+    for key, g in groups:
+        part = _variance_shares(g, factors, wrt)
+        if by:
+            part.insert(0, by, key)
+        parts.append(part)
+    variance = pd.concat(parts, ignore_index=True)
     levels = {f: _summary(df, by_cols + [f], wrt) for f in factors}
     ranking = None
     if compare is not None:
@@ -195,7 +194,9 @@ def stability_report(
     headlines = []
     for key, g in groups:
         label = f"`{by}` = {key}: " if by else ""
-        headlines += _headlines(label, g, variance, ranking, by, key, compare, wrt)
+        headlines += _headlines(
+            label, g, variance, ranking, by=by, key=key, compare=compare, wrt=wrt
+        )
     return StabilityReport(
         headlines=headlines,
         summary=summary,
@@ -238,11 +239,11 @@ def _label(v):
 
 
 def _summary(df, cols, wrt):
+    """count, mean, std, min and max of `wrt`, overall or per group of `cols`."""
     stats = ["count", "mean", "std", "min", "max"]
     if not cols:
         return df[wrt].agg(stats).to_frame().T.reset_index(drop=True)
-    out = df.groupby(cols, sort=False)[wrt].agg(stats).reset_index()
-    return out
+    return df.groupby(cols, sort=False)[wrt].agg(stats).reset_index()
 
 
 def _variance_shares(df, factors, wrt):
@@ -306,7 +307,9 @@ def _ranking(df, compare, by_cols, others, wrt, bigger_is_better):
     return out.drop(columns="_order", errors="ignore").reset_index(drop=True)
 
 
-def _headlines(label, g, variance, ranking, by, key, compare, wrt):
+def _headlines(label, g, variance, ranking, *, by, key, compare, wrt):
+    """Plain-language findings for one group `g` of results (all of them
+    when `by` is None)."""
     y = g[wrt]
     lines = [
         f"{label}{len(y)} results, mean {_fmt_float(y.mean())} "
@@ -343,18 +346,22 @@ def _headlines(label, g, variance, ranking, by, key, compare, wrt):
 
 
 def _fmt_float(v) -> str:
+    """4 significant digits; empty for missing values."""
     if v is None or (isinstance(v, float) and np.isnan(v)):
         return ""
     return f"{v:.4g}"
 
 
 def _percent(df, col):
+    """A copy of `df` with `col` shown as whole percentages."""
     out = df.copy()
     out[col] = out[col].map(lambda v: "" if pd.isna(v) else f"{v:.0%}")
     return out
 
 
 def _md_table(df) -> str:
+    """`df` as a markdown table, without its index."""
+
     def cell(v):
         if isinstance(v, (float, np.floating)):
             text = _fmt_float(float(v))

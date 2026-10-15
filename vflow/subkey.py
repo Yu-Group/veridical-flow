@@ -26,7 +26,7 @@ class Subkey:
         return self.output_matching or self.sep_dicts_id is not None
 
     def matches_sep_dict_id(self, other: object):
-        """Helper to match Subkey by _sep_dict_id"""
+        """Whether both Subkeys went through the same call to sep_dicts"""
         if isinstance(other, self.__class__):
             return (
                 self.sep_dicts_id is not None
@@ -37,7 +37,7 @@ class Subkey:
     def matches(self, other: object):
         """When Subkey matching is required, determines if this Subkey is compatible
         with another, meaning that the origins and values match, and either the
-        _sep_dicts_id matches or both Subkeys have _output_matching True.
+        sep_dicts_id matches or both Subkeys have output_matching True.
         """
         if isinstance(other, self.__class__):
             # they're both matching
@@ -60,17 +60,21 @@ class Subkey:
            is same, value is different
         """
         if isinstance(other, self.__class__):
-            # one of the two keys is output_matching
-            cond0 = self.output_matching or other.output_matching
-            # neither key is output_matching but sep_dict_ids not None and match
-            cond1 = not cond0 and self.matches_sep_dict_id(other)
-            # origins match and values mismatch
-            cond2 = self.origin == other.origin and self.value != other.value
-            return (cond0 or cond1) and cond2
+            # these keys are compared: either is output_matching, or both came
+            # from the same call to sep_dicts
+            compared = (
+                self.output_matching
+                or other.output_matching
+                or self.matches_sep_dict_id(other)
+            )
+            return (
+                compared and self.origin == other.origin and self.value != other.value
+            )
         return True
 
     def __eq__(self, other: object):
-        """Mainly used for testing purposes."""
+        """Subkeys are equal when their values and origins are; output keys
+        are looked up in dicts with this (and __hash__)."""
         if isinstance(other, self.__class__):
             # value and origins match
             return self.value == other.value and self.origin == other.origin

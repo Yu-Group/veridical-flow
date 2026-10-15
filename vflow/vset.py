@@ -1,5 +1,5 @@
-"""Set of vfuncs to be parallelized over in a pipeline.
-Function arguments are each a list
+"""A Vset: a set of alternative vfuncs for one step of a pipeline, applied
+to every input it is given.
 """
 
 import hashlib
@@ -53,7 +53,9 @@ class Vset:
         name: str
             Name of this Vset.
         vfuncs: list or dict
-            Dictionary of functions that we want to associate with
+            The alternatives for this step: functions, or objects with fit
+            (e.g. scikit-learn estimators). Dict keys name them (like
+            `vfunc_keys`).
         vfunc_keys: list (optional)
             List of names corresponding to each vfunc
         is_async: bool (optional)
@@ -62,7 +64,7 @@ class Vset:
             If True, then output keys from this Vset will be matched when used
             in other Vsets
         lazy: bool (optional)
-            If True, then vfuncs are evaluated lazily, i.e. outputs are `vset.vfunc.VfuncPromise`
+            If True, then vfuncs are evaluated lazily, i.e. outputs are `vflow.vfunc.VfuncPromise`
         cache_dir: str (optional)
             If provided, do caching and use `cache_dir` as the data store for
             `joblib.Memory`.
@@ -109,20 +111,21 @@ class Vset:
                 (
                     k
                     if isinstance(k, tuple) and all(isinstance(s, Subkey) for s in k)
-                    else (self.__create_subkey(k),)
+                    else (self._create_subkey(k),)
                 ): v
                 for k, v in vfuncs.items()
             }
         else:
             if vfunc_keys is not None:
-                assert isinstance(
-                    vfunc_keys, list
-                ), "vfuncs passed as list but vfunc_keys is not a list"
-                assert len(vfuncs) == len(
-                    vfunc_keys
-                ), "vfuncs list and vfunc_keys list do not have the same length"
-                # TODO: how best to handle tuple subkeys?
-                vfunc_keys = [(self.__create_subkey(k),) for k in vfunc_keys]
+                if not isinstance(vfunc_keys, list):
+                    raise TypeError(
+                        "vfuncs passed as list but vfunc_keys is not a list"
+                    )
+                if len(vfuncs) != len(vfunc_keys):
+                    raise ValueError(
+                        "vfuncs list and vfunc_keys list do not have the same length"
+                    )
+                vfunc_keys = [(self._create_subkey(k),) for k in vfunc_keys]
                 # compare as the dict below will (1 and 1.0 are one key)
                 if len(dict.fromkeys(vfunc_keys)) < len(vfunc_keys):
                     raise ValueError(
@@ -131,9 +134,8 @@ class Vset:
                     )
             else:
                 vfunc_keys = [
-                    (self.__create_subkey(f"{name}_{i}"),) for i in range(len(vfuncs))
+                    (self._create_subkey(f"{name}_{i}"),) for i in range(len(vfuncs))
                 ]
-            # convert vfunc keys to singleton tuples
             self.vfuncs = dict(zip(vfunc_keys, vfuncs))
         # if needed, wrap the vfuncs in the Vfunc or AsyncVfunc class
         for k, v in self.vfuncs.items():
@@ -147,7 +149,7 @@ class Vset:
         """Apply functions in out_dict to combined args dict
 
         Optionally logs output Subkeys and values as params and metrics using
-        `mlflow.tracking` if this Vset has a `_tracking_dir`.
+        `mlflow.tracking` if this Vset was given a `tracking_dir`.
 
         Parameters
         ----------
@@ -155,7 +157,8 @@ class Vset:
             Takes multiple dicts and combines them into one.
             Then runs vfuncs on each item in combined dict.
         out_dict: dict (optional), default None
-            The dictionary to pass to the matching function. If None, defaults to self.vfuncs.
+            The callables to apply, by key. If None, a copy of self.vfuncs (a
+            copy, so stateful vfuncs are not changed).
 
         Returns
         -------
@@ -168,6 +171,11 @@ class Vset:
         >>> vfuncs, data = {LR : logistic}, {train_1 : [X1,y1], train2 : [X2,y2]}
         {(train_1, LR) : fitted logistic, (train_2, LR) :  fitted logistic}
         """
+        for arg in args:
+            if not isinstance(arg, dict):
+                raise TypeError(
+                    "Run init_args on data before using it when calling a Vset!"
+                )
         if out_dict is None:
             out_dict = deepcopy(self.vfuncs)
 
@@ -193,10 +201,8 @@ class Vset:
                 cache_key, out_dict, self._async, self._lazy, args
             )
 
-        prev = tuple()
-        for arg in args:
-            if PREV_KEY in arg:
-                prev += (arg[PREV_KEY],)
+        # lineage, for build_graph: this Vset, then what each input came from
+        prev = tuple(arg[PREV_KEY] for arg in args if PREV_KEY in arg)
         out_dict[PREV_KEY] = (self,) + prev
 
         if self._mlflow is not None:
@@ -210,7 +216,7 @@ class Vset:
                         continue
                     origins = np.array([subk.origin for subk in k])
                     # ignore init origins and the last origin (this Vset)
-                    param_idx = [i for i in range(len(k[:-1])) if origins[i] != "init"]
+                    param_idx = [i for i in range(len(k) - 1) if origins[i] != "init"]
                     # get or create mlflow run
                     # Subkeys compare by value and origin, so equal values
                     # from different Vsets get their own runs
@@ -227,8 +233,8 @@ class Vset:
                             param_name = subkey.origin
                             # check if the origin occurs multiple times
                             if np.sum(origins == param_name) > 1:
-                                occurence = np.sum(origins[:idx] == param_name)
-                                param_name = param_name + str(occurence)
+                                occurrence = np.sum(origins[:idx] == param_name)
+                                param_name = param_name + str(occurrence)
                             self._mlflow.log_param(run_id, param_name, subkey.value)
                     self._mlflow.log_metric(run_id, _metric_name(k[-1].value), float(v))
             finally:
@@ -239,13 +245,11 @@ class Vset:
 
     def fit(self, *args):
         """Fits to args using `_apply_func`"""
-        out_dict = {}
-        for k, v in self.vfuncs.items():
-            out_dict[k] = v.fit
+        out_dict = {k: v.fit for k, v in self.vfuncs.items()}
         self.fitted_vfuncs = self._apply_func(*args, out_dict=out_dict)
         prev = self.fitted_vfuncs[PREV_KEY][1:]
-        if hasattr(self, FILTER_PREV_KEY):
-            prev = getattr(self, FILTER_PREV_KEY) + prev
+        # a filtered Vset also descends from the metrics that chose it
+        prev = getattr(self, FILTER_PREV_KEY, ()) + prev
         setattr(self, PREV_KEY, prev)
         self._fitted = True
         return self
@@ -256,44 +260,34 @@ class Vset:
 
     def transform(self, *args):
         """Transforms args using `_apply_func`"""
-        if not self._fitted:
-            raise AttributeError(
-                "Please fit the Vset object before calling the transform method."
-            )
-        out_dict = {}
-        for k, v in self.fitted_vfuncs.items():
-            if hasattr(v, "transform"):
-                out_dict[k] = v.transform
-        return self._apply_func(*args, out_dict=out_dict)
+        # vfuncs without transform (e.g. plain functions, whose fitted
+        # "vfuncs" are their outputs) are skipped
+        return self._apply_func(*args, out_dict=self._fitted_methods("transform"))
 
     def predict(self, *args, with_uncertainty: bool = False, group_by: list = None):
         """Predicts args using `_apply_func`"""
-        if not self._fitted:
-            raise AttributeError("Please fit the Vset object before calling predict.")
-        pred_dict = {}
-        for k, v in self.fitted_vfuncs.items():
-            if hasattr(v, "predict"):
-                pred_dict[k] = v.predict
-        self._require_method(pred_dict, "predict")
-        preds = self._apply_func(*args, out_dict=pred_dict)
-        if with_uncertainty:
-            return prediction_uncertainty(preds, group_by)
-        return preds
+        return self._predict("predict", args, with_uncertainty, group_by)
 
     def predict_proba(
         self, *args, with_uncertainty: bool = False, group_by: list = None
     ):
         """Calls predict_proba on args using `_apply_func`"""
+        return self._predict("predict_proba", args, with_uncertainty, group_by)
+
+    def _fitted_methods(self, method: str) -> dict:
+        """`method` of each fitted vfunc that has it, by key."""
         if not self._fitted:
-            raise AttributeError(
-                "Please fit the Vset object before calling predict_proba."
-            )
-        pred_dict = {}
-        for k, v in self.fitted_vfuncs.items():
-            if hasattr(v, "predict_proba"):
-                pred_dict[k] = v.predict_proba
-        self._require_method(pred_dict, "predict_proba")
-        preds = self._apply_func(*args, out_dict=pred_dict)
+            raise AttributeError(f"Please fit the Vset object before calling {method}.")
+        return {
+            k: getattr(v, method)
+            for k, v in self.fitted_vfuncs.items()
+            if hasattr(v, method)
+        }
+
+    def _predict(self, method, args, with_uncertainty, group_by):
+        methods = self._fitted_methods(method)
+        self._require_method(methods, method)
+        preds = self._apply_func(*args, out_dict=methods)
         if with_uncertainty:
             return prediction_uncertainty(preds, group_by)
         return preds
@@ -303,41 +297,34 @@ class Vset:
         return self._apply_func(*args)
 
     def __call__(self, *args, n_out: int = None, keys=None, **kwargs):
-        """Call args using `_apply_func`, optionally seperating
+        """Call args using `_apply_func`, optionally separating
         output dictionary into `n_out` dictionaries with `keys`
         """
-        if keys is None:
-            keys = []
         if n_out is None:
             n_out = len(args)
         out_dict = self._apply_func(*args)
         if n_out == 1:
             return out_dict
         out_dicts = sep_dicts(out_dict, n_out=n_out, keys=keys)
-        # add back prev
+        # add back prev: with one output per input, output i descends from
+        # this Vset and input i only
         prev = out_dict[PREV_KEY]
+        per_input = n_out == len(args)
         for i in range(n_out):
-            if n_out == len(args):
-                out_dicts[i][PREV_KEY] = (prev[0],) + (prev[i + 1],)
-            else:
-                out_dicts[i][PREV_KEY] = prev
+            out_dicts[i][PREV_KEY] = (prev[0], prev[i + 1]) if per_input else prev
         return out_dicts
 
-    def __getitem__(self, i):
-        """Accesses ith item in the vfunc set"""
-        return self.vfuncs[i]
+    def __getitem__(self, key):
+        """The vfunc with this key (a tuple of Subkeys)"""
+        return self.vfuncs[key]
 
     def __contains__(self, key):
-        """Returns true if vfuncs is a dict and key is one of its keys"""
-        if isinstance(self.vfuncs, dict):
-            return key in self.vfuncs.keys()
-        return False
+        """Whether key is one of the vfunc keys"""
+        return key in self.vfuncs
 
     def keys(self):
         """Returns Vset vfunc keys"""
-        if isinstance(self.vfuncs, dict):
-            return self.vfuncs.keys()
-        return {}.keys()
+        return self.vfuncs.keys()
 
     def __len__(self):
         return len(self.vfuncs)
@@ -354,7 +341,7 @@ class Vset:
                 f"{method!r} method."
             )
 
-    def __create_subkey(self, value):
+    def _create_subkey(self, value):
         """Helper function to construct `Subkey` with
         this Vset determining origin and output_matching
         """
@@ -388,10 +375,7 @@ def _cache_key(out_dict: dict, is_async: bool, lazy: bool, args: tuple) -> str:
     pickles lambdas and functions defined in __main__ by value; functions from
     importable modules are pickled by reference, so their source is added.
     """
-    data = tuple(
-        {k: v for k, v in a.items() if k != PREV_KEY} if isinstance(a, dict) else a
-        for a in args
-    )
+    data = tuple({k: v for k, v in a.items() if k != PREV_KEY} for a in args)
     try:
         data_hash = joblib.hash(data)
     except Exception:  # noqa: BLE001 - e.g. lazy promises holding lambdas
@@ -429,14 +413,15 @@ def _function_sources(objs) -> list:
 def _apply_func_cached(
     cache_key, out_dict: dict, is_async: bool, lazy: bool, args: tuple
 ):
-    """
-    Params
-    ------
+    """Applies the vfuncs; a module-level function so joblib can cache it.
+
+    Parameters
+    ----------
     cache_key: str or None
         Fingerprint of the vfuncs and inputs; the only argument joblib hashes
         when caching (out_dict and args are ignored by the cache).
     out_dict: dict
-        The dictionary to pass to the matching function.
+        The callables to apply, by key.
     is_async: bool
         If True, outputs are computed asynchronously.
     lazy: bool
@@ -451,21 +436,13 @@ def _apply_func_cached(
         Dictionary with items being determined by functions in vfunc set.
         Functions and input dictionaries are currently matched using cartesian matching format.
     """
-    for in_dict in args:
-        if not isinstance(in_dict, dict):
-            raise Exception(
-                "Run init_args on data before using it when calling a Vset!"
-            )
-
     data_dict = combine_dicts(*args)
     out_dict = apply_vfuncs(out_dict, data_dict, lazy)
 
     if is_async and not lazy:
-        out_keys = list(out_dict.keys())
-        out_vals = list(out_dict.values())
-        if isinstance(out_vals[0], ray.ObjectRef):
-            out_vals = ray.get(out_vals)
-        out_dict = dict(zip(out_keys, out_vals))
+        # wait for the Ray tasks and collect their values
+        if isinstance(next(iter(out_dict.values()), None), ray.ObjectRef):
+            out_dict = dict(zip(out_dict, ray.get(list(out_dict.values()))))
 
     return out_dict
 
@@ -473,16 +450,14 @@ def _apply_func_cached(
 def prediction_uncertainty(preds, group_by: list = None):
     """Returns the mean and std predictions conditional on group_by
 
-    Params
-    ------
+    Parameters
+    ----------
     preds
         predictions as returned by Vset.predict or Vset.predict_proba
     group_by: list (optional), default None
         list of groups to compute statistics upon
 
-    TODO: Wrap output dicts in dict wrapper::XXX
-          Wrap subkeys in Subkey
-          Fix default group_by when averaging over all predictions
+    TODO: without group_by, the single output key is (Subkey(True, "index"),)
     """
     preds_df = dict_to_df(preds)
     if group_by is None:

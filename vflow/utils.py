@@ -1,6 +1,7 @@
 """Useful functions for converting between different types (dicts, lists, tuples, etc.)
 """
 
+import operator
 from copy import deepcopy
 from typing import Union
 from uuid import uuid4
@@ -17,8 +18,8 @@ PREV_KEY = "__prev__"
 
 
 def init_step(idx, cols):
-    """Helper function to find init suffix
-    in a column
+    """Name for the 'init' column at `idx`: "init-" plus the first non-init
+    column after it (the Vset the data went into), or None if there is none.
 
     Parameters
     ----------
@@ -151,28 +152,24 @@ def sep_dicts(d: dict, n_out: int = 1, keys=None):
     Returns
     -------
     sep_dicts_list: list
-        List of seperated dictionaries.
+        List of separated dictionaries.
 
     Examples
     --------
     >>> sep_dicts({k1: (x1, y1), k2: (x2, y2), ...,  '__prev__': p})
     [{k1: x1, k2: x2, ..., '__prev__': p}, {k1: y1, k2: y2, ..., '__prev__': p}]
     """
-    if keys is None:
-        keys = []
-    if len(keys) > 0 and len(keys) != n_out:
+    if keys and len(keys) != n_out:
         raise ValueError(f"keys should be empty or have length n_out={n_out}")
-    # empty dict -- return empty dict
     if n_out <= 1:
-        return d
-    # try separating dict into multiple dicts
+        return d  # nothing to separate
     sep_dicts_id = str(uuid4())  # w/ high prob, uuid4 is unique
     sep_dicts_list = [{} for _ in range(n_out)]
     for key, value in d.items():
         if key != PREV_KEY:
             for i in range(n_out):
                 # assumes the correct sub-key for item i is in the i-th position
-                if len(keys) == 0:
+                if not keys:
                     new_key = (key[i],) + key[n_out:]
                 else:
                     new_sub = Subkey(
@@ -181,9 +178,8 @@ def sep_dicts(d: dict, n_out: int = 1, keys=None):
                     new_key = (new_sub,) + key
                 new_key[-1].sep_dicts_id = sep_dicts_id
                 if isinstance(value, VfuncPromise):
-                    # return a promise to get the value at index i of the
-                    # original promise
-                    value_i = VfuncPromise(lambda v, x: v[x], value, i)
+                    # a promise of item i of the original promise's value
+                    value_i = VfuncPromise(operator.getitem, value, i)
                 else:
                     value_i = value[i]
                 sep_dicts_list[i][new_key] = value_i
@@ -193,7 +189,7 @@ def sep_dicts(d: dict, n_out: int = 1, keys=None):
 
 def dict_to_df(d: dict, param_key=None):
     """Converts a dictionary with tuple keys
-    into a pandas DataFrame, optionally seperating
+    into a pandas DataFrame, optionally separating
     parameters in `param_key` if not None
 
     Parameters
@@ -201,28 +197,25 @@ def dict_to_df(d: dict, param_key=None):
     d: dict
         Output dictionary with tuple keys from a Vset.
     param_key: str (optional), default None
-        Name of parameter to seperate into multiple columns.
+        Name of parameter to separate into multiple columns.
 
     Returns
     -------
     df: pandas.DataFrame
-        A DataFrame with `d` tuple keys seperated into columns.
+        A DataFrame with `d` tuple keys separated into columns.
     """
     d_copy = {tuple(sk.value for sk in k): d[k] for k in d if k != PREV_KEY}
     df = pd.Series(d_copy).reset_index()
-    if len(d_copy.keys()) > 0:
-        key_list = list(d.keys())
-        subkey_list = key_list[0] if key_list[0] != PREV_KEY else key_list[1]
-        cols = [sk.origin for sk in subkey_list] + ["out"]
+    if d_copy:
+        first_key = next(k for k in d if k != PREV_KEY)
+        cols = [sk.origin for sk in first_key] + ["out"]
         # set each init col to init-{next_vfunc_set}
         cols = [
             c if c != "init" else init_step(idx, cols) for idx, c in enumerate(cols)
         ]
         df = df.set_axis(cols, axis=1)
         if param_key:
-            param_keys = df[
-                param_key
-            ].tolist()  # pylint: disable=unsubscriptable-object
+            param_keys = df[param_key].tolist()
             if param_key == "out" and hasattr(param_keys[0], "__iter__"):
                 param_df = pd.DataFrame(param_keys)
                 param_df.columns = [f"{param_key}-{col}" for col in param_df.columns]
@@ -305,16 +298,15 @@ def perturbation_stats(
         df = data
     group_by = list(group_by)
     if len(group_by) == 1:
-        # a bare column name keeps scalar group keys (a one-item list gives
-        # tuple keys in pandas 4)
+        # a bare column name keeps scalar group keys (iterating a one-item
+        # list groupby gives tuple keys)
         gb = df.groupby(group_by[0])[wrt]
     elif len(group_by) > 1:
         gb = df.groupby(group_by)[wrt]
     else:
         gb = df.groupby(lambda x: True)[wrt]
-    if (isinstance(func, list) and ("mean" in func or "std" in func)) and (
-        type(df[wrt].iloc[0]) in [list, np.ndarray]
-    ):
+    array_entries = type(df[wrt].iloc[0]) in (list, np.ndarray)
+    if array_entries and isinstance(func, list) and ("mean" in func or "std" in func):
         unsupported = [f for f in func if f not in ("count", "mean", "std")]
         if unsupported:
             raise ValueError(
@@ -389,32 +381,22 @@ def combine_keys(left_key, right_key):
         which is empty according to `vflow.subkey.Subkey.mismatches` rule.
 
     """
+    # look for the shorter key's matching subkeys in the longer key
     if len(left_key) < len(right_key):
-        match_key = left_key
-        compare_key = right_key
+        match_key, compare_key = left_key, right_key
     else:
-        match_key = right_key
-        compare_key = left_key
-    match_subkeys = [subkey for subkey in match_key if subkey.is_matching()]
-    if len(match_subkeys) > 0:
-        matched_subkeys = []
-        for subkey in match_subkeys:
-            for c_subkey in compare_key:
-                if subkey.matches(c_subkey):
-                    matched_subkeys.append(subkey)
-                    break
-                if subkey.mismatches(c_subkey):
-                    # subkeys with same origin but different values are rejected
-                    return ()
-        if len(matched_subkeys) > 0:
-            # always filter on right key
-            filtered_key = tuple(
-                subkey for subkey in right_key if subkey not in matched_subkeys
-            )
-            combined_key = left_key + filtered_key
-            return combined_key
-        return left_key + right_key
-    return left_key + right_key
+        match_key, compare_key = right_key, left_key
+    matched = []
+    for subkey in (s for s in match_key if s.is_matching()):
+        for c_subkey in compare_key:
+            if subkey.matches(c_subkey):
+                matched.append(subkey)
+                break
+            if subkey.mismatches(c_subkey):
+                # subkeys with same origin but different values are rejected
+                return ()
+    # a matched subkey appears once: drop it from the right key
+    return left_key + tuple(s for s in right_key if s not in matched)
 
 
 def combine_dicts(*args: dict, base_case=True):
@@ -425,25 +407,22 @@ def combine_dicts(*args: dict, base_case=True):
     ----------
     *args: dict
         Dictionaries to recursively combine left to right.
+    base_case: bool, default True
+        Internal: True when the values of `args[0]` are single values; False
+        when they are tuples already combined from earlier dicts.
 
     Returns
     -------
     combined_dict: dict
-        Combined dictionary.
+        Combined dictionary. Its values are tuples of arguments, so a vfunc
+        can be called with `vfunc(*value)`.
     """
     n_args = len(args)
     combined_dict = {}
     if n_args == 0:
         return combined_dict
     if n_args == 1:
-        for k in args[0]:
-            # wrap the dict values in tuples; this is helpful so that when we
-            # pass the values to a vfunc fun in we can just use * expansion
-            if k != PREV_KEY:
-                combined_dict[k] = (args[0][k],)
-            else:
-                combined_dict[k] = args[0][k]
-        return combined_dict
+        return {k: v if k == PREV_KEY else (v,) for k, v in args[0].items()}
     if n_args == 2:
         for k0 in args[0]:
             for k1 in args[1]:
@@ -476,30 +455,29 @@ def apply_vfuncs(vfuncs: dict, data_dict: dict, lazy: bool = False):
         Dictionary of functions to apply to `data_dict`.
     data_dict: dict
         Dictionary of parameters to call each function in `vfuncs`.
-    lazy: bool (option), default False
+    lazy: bool (optional), default False
         If True, `vfuncs` are applied lazily, returning `vflow.vfunc.VfuncPromise`
-        objects,
+        objects.
 
     Returns
     -------
     out_dict: dict
         Output dictionary of applying `vfuncs` to `data_dict`.
     """
+    if not data_dict:
+        # no inputs: call each vfunc with no arguments
+        return {
+            k: VfuncPromise(deepcopy(f)) if lazy else deepcopy(f)()
+            for k, f in vfuncs.items()
+        }
     out_dict = {}
     for vf_k in vfuncs:
-        if len(data_dict) == 0:
-            func = deepcopy(vfuncs[vf_k])
-            if lazy:
-                out_dict[vf_k] = VfuncPromise(func)
-            else:
-                out_dict[vf_k] = func()
         for data_k in data_dict:
             if PREV_KEY in (vf_k, data_k):
                 continue
 
             combined_key = combine_keys(data_k, vf_k)
-
-            if not len(combined_key) > 0:
+            if not combined_key:
                 continue
 
             func = deepcopy(vfuncs[vf_k])

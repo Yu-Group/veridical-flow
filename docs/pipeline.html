@@ -62,7 +62,7 @@ import joblib
 import networkx as nx
 import pandas as pd
 
-from vflow.vset import PREV_KEY
+from vflow.vset import PREV_KEY, Vset
 
 
 class PCSPipeline:
@@ -95,11 +95,7 @@ class PCSPipeline:
         run_step_cached = self.memory.cache(_run_step)
         outputs = args
         for i, step in enumerate(self.steps):
-            try:
-                step_name = step.name
-            except AttributeError:
-                step_name = f&#34;Step {i}&#34;
-            print(step_name)
+            print(getattr(step, &#34;name&#34;, f&#34;Step {i}&#34;))
             outputs, fitted_step = run_step_cached(step, *outputs, **kwargs)
             self.steps[i] = fitted_step
             if not isinstance(outputs, (tuple, list)):
@@ -118,11 +114,12 @@ class PCSPipeline:
         with one column per step, or a list of tuples.&#34;&#34;&#34;
         name_lists = []
         for step in self.steps:
-            # a Vset is not iterable; its vfuncs are
-            mods = list(step.vfuncs.values())
             prefix = &#34;&#34; if as_pandas else f&#34;{step.name}_&#34;
             name_lists.append(
-                [f&#34;{prefix}{i}_{str(mod)[:8]}&#34; for i, mod in enumerate(mods)]
+                [
+                    f&#34;{prefix}{i}_{str(mod)[:8]}&#34;
+                    for i, mod in enumerate(step.vfuncs.values())
+                ]
             )
         indexes = list(itertools.product(*name_lists))
         if as_pandas:
@@ -131,83 +128,55 @@ class PCSPipeline:
 
 
 def build_graph(node, draw=True):
-    &#34;&#34;&#34;Helper function that just calls build_graph_recur with an empty graph
+    &#34;&#34;&#34;Builds (and optionally draws) the graph of Vsets that led to `node`,
+    following the PREV_KEY lineage that Vsets record.
 
     Parameters
     ----------
     node: dict or Vset
+        An output dict of a Vset, or a (fitted) Vset.
+    draw: bool, default True
+        If True, draw the graph with networkx.
 
     Returns
     -------
-    G: nx.Digraph()
+    G: nx.DiGraph
     &#34;&#34;&#34;
 
     def unnest_node(node):
-        &#34;&#34;&#34;Unnest a node, if necessary (i.e., when node is a tuple)
-
-        Parameters
-        ----------
-        node: str, dict, Vset, or tuple
-
-        Returns
-        -------
-        unnested_node: str, Vset, or None
-        &#34;&#34;&#34;
-        node_type = type(node)
-        if node_type is str or &#34;Vset&#34; in str(node_type):
+        &#34;&#34;&#34;The Vset (or &#34;init&#34;) a lineage entry refers to: entries are a
+        Vset, &#34;init&#34;, or a tuple whose first item is one of those.&#34;&#34;&#34;
+        if isinstance(node, (str, Vset)):
             return node
-        if node_type is tuple:
+        if isinstance(node, tuple):
             return unnest_node(node[0])
         return None
 
-    def build_graph_recur(node, G):
-        &#34;&#34;&#34;Builds a graph up using __prev__ and PREV_KEY pointers
-
-        Parameters
-        ----------
-        node: str, dict, Vset, or tuple
-        G: nx.Digraph()
-
-        Returns
-        -------
-        G: nx.Digraph()
-        &#34;&#34;&#34;
-        # base case: reached starting node
+    def add_edges(node, G):
+        &#34;&#34;&#34;Adds the edges leading to `node` to G (in place).&#34;&#34;&#34;
         if isinstance(node, str):
-            return G
-
-        # initial case: starting at dict
+            return  # reached &#34;init&#34;
         if isinstance(node, dict):
-            s_node = &#34;End&#34;
+            # an output dict: its PREV_KEY is (the Vset that made it, *inputs)
             nodes_prev = node[PREV_KEY]
-            G.add_edge(nodes_prev[0], s_node)
+            G.add_edge(nodes_prev[0], &#34;End&#34;)
             for node_prev in nodes_prev[1:]:
                 G.add_edge(unnest_node(node_prev), nodes_prev[0])
-                G = build_graph_recur(node_prev, G)
-            return G
-
-        # main case: at a vfuncset
-        if &#34;Vset&#34; in str(type(node)):
-            if hasattr(node, PREV_KEY):
-                nodes_prev = getattr(node, PREV_KEY)
-                for node_prev in nodes_prev:
-                    G.add_edge(unnest_node(node_prev), node)
-                    G = build_graph_recur(node_prev, G)
-            return G
-
-        # nested prev key case
-        if isinstance(node, tuple):
+                add_edges(node_prev, G)
+        elif isinstance(node, Vset):
+            for node_prev in getattr(node, PREV_KEY, ()):
+                G.add_edge(unnest_node(node_prev), node)
+                add_edges(node_prev, G)
+        elif isinstance(node, tuple):
+            # (Vset, *the lineage of its inputs)
             func_node = unnest_node(node[0])
-            G = build_graph_recur(func_node, G)
+            add_edges(func_node, G)
             for arg_node in node[1:]:
                 G.add_edge(unnest_node(arg_node), func_node)
-                G = build_graph_recur(arg_node, G)
-            return G
-
-        return G
+                add_edges(arg_node, G)
 
     G = nx.DiGraph()
-    G = build_graph_recur(node, G)
+    add_edges(node, G)
     if draw:
         nx.draw(G, with_labels=True, node_color=&#34;#CCCCCC&#34;)
     return G
@@ -231,15 +200,18 @@ def _run_step(step, *args, **kwargs):
 <span>def <span class="ident">build_graph</span></span>(<span>node, draw=True)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Helper function that just calls build_graph_recur with an empty graph</p>
+<div class="desc"><p>Builds (and optionally draws) the graph of Vsets that led to <code>node</code>,
+following the PREV_KEY lineage that Vsets record.</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
 <dt><strong><code>node</code></strong> :&ensp;<code>dict</code> or <code>Vset</code></dt>
-<dd>&nbsp;</dd>
+<dd>An output dict of a Vset, or a (fitted) Vset.</dd>
+<dt><strong><code>draw</code></strong> :&ensp;<code>bool</code>, default <code>True</code></dt>
+<dd>If True, draw the graph with networkx.</dd>
 </dl>
 <h2 id="returns">Returns</h2>
 <dl>
-<dt><strong><code>G</code></strong> :&ensp;<code>nx.Digraph()</code></dt>
+<dt><strong><code>G</code></strong> :&ensp;<code>nx.DiGraph</code></dt>
 <dd>&nbsp;</dd>
 </dl></div>
 <details class="source">
@@ -247,83 +219,55 @@ def _run_step(step, *args, **kwargs):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def build_graph(node, draw=True):
-    &#34;&#34;&#34;Helper function that just calls build_graph_recur with an empty graph
+    &#34;&#34;&#34;Builds (and optionally draws) the graph of Vsets that led to `node`,
+    following the PREV_KEY lineage that Vsets record.
 
     Parameters
     ----------
     node: dict or Vset
+        An output dict of a Vset, or a (fitted) Vset.
+    draw: bool, default True
+        If True, draw the graph with networkx.
 
     Returns
     -------
-    G: nx.Digraph()
+    G: nx.DiGraph
     &#34;&#34;&#34;
 
     def unnest_node(node):
-        &#34;&#34;&#34;Unnest a node, if necessary (i.e., when node is a tuple)
-
-        Parameters
-        ----------
-        node: str, dict, Vset, or tuple
-
-        Returns
-        -------
-        unnested_node: str, Vset, or None
-        &#34;&#34;&#34;
-        node_type = type(node)
-        if node_type is str or &#34;Vset&#34; in str(node_type):
+        &#34;&#34;&#34;The Vset (or &#34;init&#34;) a lineage entry refers to: entries are a
+        Vset, &#34;init&#34;, or a tuple whose first item is one of those.&#34;&#34;&#34;
+        if isinstance(node, (str, Vset)):
             return node
-        if node_type is tuple:
+        if isinstance(node, tuple):
             return unnest_node(node[0])
         return None
 
-    def build_graph_recur(node, G):
-        &#34;&#34;&#34;Builds a graph up using __prev__ and PREV_KEY pointers
-
-        Parameters
-        ----------
-        node: str, dict, Vset, or tuple
-        G: nx.Digraph()
-
-        Returns
-        -------
-        G: nx.Digraph()
-        &#34;&#34;&#34;
-        # base case: reached starting node
+    def add_edges(node, G):
+        &#34;&#34;&#34;Adds the edges leading to `node` to G (in place).&#34;&#34;&#34;
         if isinstance(node, str):
-            return G
-
-        # initial case: starting at dict
+            return  # reached &#34;init&#34;
         if isinstance(node, dict):
-            s_node = &#34;End&#34;
+            # an output dict: its PREV_KEY is (the Vset that made it, *inputs)
             nodes_prev = node[PREV_KEY]
-            G.add_edge(nodes_prev[0], s_node)
+            G.add_edge(nodes_prev[0], &#34;End&#34;)
             for node_prev in nodes_prev[1:]:
                 G.add_edge(unnest_node(node_prev), nodes_prev[0])
-                G = build_graph_recur(node_prev, G)
-            return G
-
-        # main case: at a vfuncset
-        if &#34;Vset&#34; in str(type(node)):
-            if hasattr(node, PREV_KEY):
-                nodes_prev = getattr(node, PREV_KEY)
-                for node_prev in nodes_prev:
-                    G.add_edge(unnest_node(node_prev), node)
-                    G = build_graph_recur(node_prev, G)
-            return G
-
-        # nested prev key case
-        if isinstance(node, tuple):
+                add_edges(node_prev, G)
+        elif isinstance(node, Vset):
+            for node_prev in getattr(node, PREV_KEY, ()):
+                G.add_edge(unnest_node(node_prev), node)
+                add_edges(node_prev, G)
+        elif isinstance(node, tuple):
+            # (Vset, *the lineage of its inputs)
             func_node = unnest_node(node[0])
-            G = build_graph_recur(func_node, G)
+            add_edges(func_node, G)
             for arg_node in node[1:]:
                 G.add_edge(unnest_node(arg_node), func_node)
-                G = build_graph_recur(arg_node, G)
-            return G
-
-        return G
+                add_edges(arg_node, G)
 
     G = nx.DiGraph()
-    G = build_graph_recur(node, G)
+    add_edges(node, G)
     if draw:
         nx.draw(G, with_labels=True, node_color=&#34;#CCCCCC&#34;)
     return G</code></pre>
@@ -381,11 +325,7 @@ caching.</dd>
         run_step_cached = self.memory.cache(_run_step)
         outputs = args
         for i, step in enumerate(self.steps):
-            try:
-                step_name = step.name
-            except AttributeError:
-                step_name = f&#34;Step {i}&#34;
-            print(step_name)
+            print(getattr(step, &#34;name&#34;, f&#34;Step {i}&#34;))
             outputs, fitted_step = run_step_cached(step, *outputs, **kwargs)
             self.steps[i] = fitted_step
             if not isinstance(outputs, (tuple, list)):
@@ -404,11 +344,12 @@ caching.</dd>
         with one column per step, or a list of tuples.&#34;&#34;&#34;
         name_lists = []
         for step in self.steps:
-            # a Vset is not iterable; its vfuncs are
-            mods = list(step.vfuncs.values())
             prefix = &#34;&#34; if as_pandas else f&#34;{step.name}_&#34;
             name_lists.append(
-                [f&#34;{prefix}{i}_{str(mod)[:8]}&#34; for i, mod in enumerate(mods)]
+                [
+                    f&#34;{prefix}{i}_{str(mod)[:8]}&#34;
+                    for i, mod in enumerate(step.vfuncs.values())
+                ]
             )
         indexes = list(itertools.product(*name_lists))
         if as_pandas:
@@ -432,11 +373,12 @@ with one column per step, or a list of tuples.</p></div>
     with one column per step, or a list of tuples.&#34;&#34;&#34;
     name_lists = []
     for step in self.steps:
-        # a Vset is not iterable; its vfuncs are
-        mods = list(step.vfuncs.values())
         prefix = &#34;&#34; if as_pandas else f&#34;{step.name}_&#34;
         name_lists.append(
-            [f&#34;{prefix}{i}_{str(mod)[:8]}&#34; for i, mod in enumerate(mods)]
+            [
+                f&#34;{prefix}{i}_{str(mod)[:8]}&#34;
+                for i, mod in enumerate(step.vfuncs.values())
+            ]
         )
     indexes = list(itertools.product(*name_lists))
     if as_pandas:
@@ -472,11 +414,7 @@ its inputs into one output (e.g. a metric), pass <code>n_out=1</code>.</p></div>
     run_step_cached = self.memory.cache(_run_step)
     outputs = args
     for i, step in enumerate(self.steps):
-        try:
-            step_name = step.name
-        except AttributeError:
-            step_name = f&#34;Step {i}&#34;
-        print(step_name)
+        print(getattr(step, &#34;name&#34;, f&#34;Step {i}&#34;))
         outputs, fitted_step = run_step_cached(step, *outputs, **kwargs)
         self.steps[i] = fitted_step
         if not isinstance(outputs, (tuple, list)):

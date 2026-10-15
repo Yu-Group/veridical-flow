@@ -1,7 +1,20 @@
 """A perturbation that can be used as a step in a pipeline
 """
 
+from typing import Callable
+
 import ray
+
+
+def _check_vfunc(vfunc):
+    if not (hasattr(vfunc, "fit") or callable(vfunc)):
+        raise TypeError("vfunc must be an object with a fit method or a callable")
+
+
+def _method_or_self(vfunc, method: str):
+    """`vfunc.<method>` (e.g. an estimator's fit) if it has one, else `vfunc`
+    itself (a plain function)."""
+    return getattr(vfunc, method, vfunc)
 
 
 class Vfunc:
@@ -11,26 +24,20 @@ class Vfunc:
     """
 
     def __init__(self, name: str = "", vfunc=lambda x: x):
-        assert hasattr(vfunc, "fit") or callable(
-            vfunc
-        ), "vfunc must be an object with a fit method or a callable"
+        _check_vfunc(vfunc)
         self.name = name
         self.vfunc = vfunc
 
     def fit(self, *args, **kwargs):
-        """This function fits params for this vfunc"""
-        if hasattr(self.vfunc, "fit"):
-            return self.vfunc.fit(*args, **kwargs)
-        return self.vfunc(*args, **kwargs)
+        """Calls the vfunc's fit method, or the vfunc itself if it has none"""
+        return _method_or_self(self.vfunc, "fit")(*args, **kwargs)
 
     def transform(self, *args, **kwargs):
-        """This function transforms its input in some way"""
-        if hasattr(self.vfunc, "transform"):
-            return self.vfunc.transform(*args, **kwargs)
-        return self.vfunc(*args, **kwargs)
+        """Calls the vfunc's transform method, or the vfunc itself if it has none"""
+        return _method_or_self(self.vfunc, "transform")(*args, **kwargs)
 
     def __call__(self, *args, **kwargs):
-        """This should decide what to call"""
+        """Same as fit"""
         return self.fit(*args, **kwargs)
 
 
@@ -45,48 +52,43 @@ class AsyncVfunc:
     def __init__(self, name: str = "", vfunc=lambda x: x):
         self.name = name
         if isinstance(vfunc, Vfunc):
-            self.vfunc = vfunc.vfunc
-        else:
-            assert hasattr(vfunc, "fit") or callable(
-                vfunc
-            ), "vfunc must be an object with a fit method or a callable"
-            self.vfunc = vfunc
+            vfunc = vfunc.vfunc
+        _check_vfunc(vfunc)
+        self.vfunc = vfunc
 
     def fit(self, *args, **kwargs):
-        """This function fits params for this vfunc"""
-        if hasattr(self.vfunc, "fit"):
-            return _remote_fun.remote(self.vfunc.fit, *args, **kwargs)
-        return _remote_fun.remote(self.vfunc, *args, **kwargs)
+        """Like Vfunc.fit, run as a Ray task; returns a Ray reference"""
+        return _remote_fun.remote(_method_or_self(self.vfunc, "fit"), *args, **kwargs)
 
     def transform(self, *args, **kwargs):
-        """This function transforms its input in some way"""
-        if hasattr(self.vfunc, "transform"):
-            return _remote_fun.remote(self.vfunc.transform, *args, **kwargs)
-        return _remote_fun.remote(self.vfunc, *args, **kwargs)
+        """Like Vfunc.transform, run as a Ray task; returns a Ray reference"""
+        return _remote_fun.remote(
+            _method_or_self(self.vfunc, "transform"), *args, **kwargs
+        )
 
     def __call__(self, *args, **kwargs):
-        """This should decide what to call"""
+        """Same as fit"""
         return self.fit(*args, **kwargs)
 
 
 class VfuncPromise:
     """A Vfunc promise used for lazy evaluation."""
 
-    def __init__(self, vfunc: callable, *args):
+    def __init__(self, vfunc: Callable, *args):
         self.vfunc = vfunc
         self.args = args
         self.called = False
         self.value = None
 
     def __call__(self):
-        """This should decide what to call"""
+        """Evaluates the promise the first time; returns the stored value after"""
         if self.called:
             return self.value
         tmp_args = []
-        for i, arg in enumerate(self.args):
+        for arg in self.args:
+            while isinstance(arg, VfuncPromise):
+                arg = arg()
             tmp_args.append(arg)
-            while isinstance(tmp_args[i], VfuncPromise):
-                tmp_args[i] = tmp_args[i]()
         while isinstance(self.vfunc, VfuncPromise):
             self.vfunc = self.vfunc()
         # an upstream lazy async Vset leaves Ray references; a remote call
