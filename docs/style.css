@@ -68,7 +68,27 @@ h3 { font-size: 1.15em; margin: 1.5em 0 0.5em; }
 #site-logo { flex: 0 0 auto; line-height: 0; margin-left: auto; opacity: 0.92;
              transition: opacity 0.15s ease; }
 #site-logo:hover { opacity: 1; }
-#site-logo img { height: 24px; width: auto; display: block; }
+#site-logo img, #site-logo svg { height: 24px; width: auto; display: block; }
+/* On the home page the o of the logo, a ring of drops, makes one eased turn
+   with a gentle swell, rests, and repeats (as on the talk's title slide).
+   Turn and swell are separate properties so neither jerks at the other's
+   keyframes. */
+#site-logo .vo { transform-box: fill-box; transform-origin: center; }
+#site-logo.animate .vo {
+  animation: vo-turn 3.2s 0.4s infinite, vo-swell 3.2s 0.4s infinite;
+}
+@keyframes vo-turn {
+  0% { rotate: 0deg; animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1); }
+  75%, 100% { rotate: 360deg; }
+}
+@keyframes vo-swell {
+  0% { scale: 1; animation-timing-function: cubic-bezier(0.37, 0, 0.63, 1); }
+  37.5% { scale: 1.1; animation-timing-function: cubic-bezier(0.37, 0, 0.63, 1); }
+  75%, 100% { scale: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #site-logo.animate .vo { animation: none; }
+}
 #site-tagline { margin: 0; min-width: 0; font-size: 0.8rem; line-height: 1.35;
                 color: var(--muted); }
 #site-tagline b { color: var(--ink); font-weight: 600; }

@@ -402,7 +402,8 @@
   <style media="print">${css.print()}</style>
   <link rel="stylesheet" href="github.css">
   <link rel="stylesheet" href="style.css">
-  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="icon" type="image/png" sizes="64x64" href="favicon.png">
+  <link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
 
   % if google_analytics:
     <script>
@@ -443,7 +444,7 @@
   </a>
   <p id="site-tagline"><b>vflow</b> &middot; Stability analysis for data-science pipelines, with PCS.</p>
   <a href="index.html" id="site-logo">
-    <img src="vflow_logo.svg" alt="vflow">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 124" role="img" aria-label="vflow"><title>vflow</title><g transform="translate(14,10)"><path d="M6,40 L31,100 L56,40 M84,100 V30 Q84,4 110,4 M68,46 H104 M132,2 V82 Q132,100 150,100 M236,40 L254,100 L271,52 L288,100 L306,40" fill="none" stroke="#1F2A33" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/><g class="vo"><path d="M0,-12.540000000000001 C3.1350000000000002,-7.695000000000001 5.7,-3.9899999999999998 5.7,0 A5.7,5.7 0 1 1 -5.7,0 C-5.7,-3.9899999999999998 -3.1350000000000002,-7.695000000000001 0,-12.540000000000001 Z" fill="#2f85e7" transform="translate(190.0,40.0) rotate(-90.0)"/><path d="M0,-12.540000000000001 C3.1350000000000002,-7.695000000000001 5.7,-3.9899999999999998 5.7,0 A5.7,5.7 0 1 1 -5.7,0 C-5.7,-3.9899999999999998 -3.1350000000000002,-7.695000000000001 0,-12.540000000000001 Z" fill="#2d9cc6" transform="translate(211.2,48.8) rotate(-45.0)"/><path d="M0,-12.540000000000001 C3.1350000000000002,-7.695000000000001 5.7,-3.9899999999999998 5.7,0 A5.7,5.7 0 1 1 -5.7,0 C-5.7,-3.9899999999999998 -3.1350000000000002,-7.695000000000001 0,-12.540000000000001 Z" fill="#2bb3a6" transform="translate(220.0,70.0) rotate(0.0)"/><path d="M0,-12.540000000000001 C3.1350000000000002,-7.695000000000001 5.7,-3.9899999999999998 5.7,0 A5.7,5.7 0 1 1 -5.7,0 C-5.7,-3.9899999999999998 -3.1350000000000002,-7.695000000000001 0,-12.540000000000001 Z" fill="#2bb8a0" transform="translate(211.2,91.2) rotate(45.0)"/><path d="M0,-12.540000000000001 C3.1350000000000002,-7.695000000000001 5.7,-3.9899999999999998 5.7,0 A5.7,5.7 0 1 1 -5.7,0 C-5.7,-3.9899999999999998 -3.1350000000000002,-7.695000000000001 0,-12.540000000000001 Z" fill="#2bb3a6" transform="translate(190.0,100.0) rotate(90.0)"/><path d="M0,-12.540000000000001 C3.1350000000000002,-7.695000000000001 5.7,-3.9899999999999998 5.7,0 A5.7,5.7 0 1 1 -5.7,0 C-5.7,-3.9899999999999998 -3.1350000000000002,-7.695000000000001 0,-12.540000000000001 Z" fill="#2d9cc6" transform="translate(168.8,91.2) rotate(135.0)"/><path d="M0,-12.540000000000001 C3.1350000000000002,-7.695000000000001 5.7,-3.9899999999999998 5.7,0 A5.7,5.7 0 1 1 -5.7,0 C-5.7,-3.9899999999999998 -3.1350000000000002,-7.695000000000001 0,-12.540000000000001 Z" fill="#2f85e7" transform="translate(160.0,70.0) rotate(180.0)"/><path d="M0,-12.540000000000001 C3.1350000000000002,-7.695000000000001 5.7,-3.9899999999999998 5.7,0 A5.7,5.7 0 1 1 -5.7,0 C-5.7,-3.9899999999999998 -3.1350000000000002,-7.695000000000001 0,-12.540000000000001 Z" fill="#2f80ed" transform="translate(168.8,48.8) rotate(225.0)"/></g></g></svg>
   </a>
   <a href="https://github.com/Yu-Group/veridical-flow" class="nav-icon"
      aria-label="View source on GitHub" title="GitHub">

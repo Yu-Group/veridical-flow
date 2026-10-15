@@ -1,0 +1,887 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.11.6" />
+<title>vflow.report</title>
+<meta name="description" content="A one-call summary of how stable a pipeline&#39;s results are to its judgment calls: `stability_report`." />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/default.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:1.5em;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:2em 0 .50em 0}h3{font-size:1.4em;margin:1.6em 0 .7em 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .2s ease-in-out}a:visited{color:#503}a:hover{color:#b62}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900;font-weight:bold}pre code{font-size:.8em;line-height:1.4em;padding:1em;display:block}code{background:#f3f3f3;font-family:"DejaVu Sans Mono",monospace;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source > summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible;min-width:max-content}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em 1em;margin:1em 0}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul ul{padding-left:1em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<link rel="stylesheet" href="github.css">
+<link rel="stylesheet" href="style.css">
+<link rel="icon" type="image/png" sizes="64x64" href="favicon.png">
+<link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<header id="site-header">
+<a href="index.html" class="nav-icon" aria-label="Home" title="Home">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+<path d="M3 10.5 12 3l9 7.5"></path>
+<path d="M5 9.5V21h14V9.5"></path>
+<path d="M9.5 21v-6h5v6"></path>
+</svg>
+</a>
+<p id="site-tagline"><b>vflow</b> &middot; Stability analysis for data-science pipelines, with PCS.</p>
+<a href="index.html" id="site-logo">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 124" role="img" aria-label="vflow"><title>vflow</title><g transform="translate(14,10)"><path d="M6,40 L31,100 L56,40 M84,100 V30 Q84,4 110,4 M68,46 H104 M132,2 V82 Q132,100 150,100 M236,40 L254,100 L271,52 L288,100 L306,40" fill="none" stroke="#1F2A33" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/><g class="vo"><path d="M0,-12.540000000000001 C3.1350000000000002,-7.695000000000001 5.7,-3.9899999999999998 5.7,0 A5.7,5.7 0 1 1 -5.7,0 C-5.7,-3.9899999999999998 -3.1350000000000002,-7.695000000000001 0,-12.540000000000001 Z" fill="#2f85e7" transform="translate(190.0,40.0) rotate(-90.0)"/><path d="M0,-12.540000000000001 C3.1350000000000002,-7.695000000000001 5.7,-3.9899999999999998 5.7,0 A5.7,5.7 0 1 1 -5.7,0 C-5.7,-3.9899999999999998 -3.1350000000000002,-7.695000000000001 0,-12.540000000000001 Z" fill="#2d9cc6" transform="translate(211.2,48.8) rotate(-45.0)"/><path d="M0,-12.540000000000001 C3.1350000000000002,-7.695000000000001 5.7,-3.9899999999999998 5.7,0 A5.7,5.7 0 1 1 -5.7,0 C-5.7,-3.9899999999999998 -3.1350000000000002,-7.695000000000001 0,-12.540000000000001 Z" fill="#2bb3a6" transform="translate(220.0,70.0) rotate(0.0)"/><path d="M0,-12.540000000000001 C3.1350000000000002,-7.695000000000001 5.7,-3.9899999999999998 5.7,0 A5.7,5.7 0 1 1 -5.7,0 C-5.7,-3.9899999999999998 -3.1350000000000002,-7.695000000000001 0,-12.540000000000001 Z" fill="#2bb8a0" transform="translate(211.2,91.2) rotate(45.0)"/><path d="M0,-12.540000000000001 C3.1350000000000002,-7.695000000000001 5.7,-3.9899999999999998 5.7,0 A5.7,5.7 0 1 1 -5.7,0 C-5.7,-3.9899999999999998 -3.1350000000000002,-7.695000000000001 0,-12.540000000000001 Z" fill="#2bb3a6" transform="translate(190.0,100.0) rotate(90.0)"/><path d="M0,-12.540000000000001 C3.1350000000000002,-7.695000000000001 5.7,-3.9899999999999998 5.7,0 A5.7,5.7 0 1 1 -5.7,0 C-5.7,-3.9899999999999998 -3.1350000000000002,-7.695000000000001 0,-12.540000000000001 Z" fill="#2d9cc6" transform="translate(168.8,91.2) rotate(135.0)"/><path d="M0,-12.540000000000001 C3.1350000000000002,-7.695000000000001 5.7,-3.9899999999999998 5.7,0 A5.7,5.7 0 1 1 -5.7,0 C-5.7,-3.9899999999999998 -3.1350000000000002,-7.695000000000001 0,-12.540000000000001 Z" fill="#2f85e7" transform="translate(160.0,70.0) rotate(180.0)"/><path d="M0,-12.540000000000001 C3.1350000000000002,-7.695000000000001 5.7,-3.9899999999999998 5.7,0 A5.7,5.7 0 1 1 -5.7,0 C-5.7,-3.9899999999999998 -3.1350000000000002,-7.695000000000001 0,-12.540000000000001 Z" fill="#2f80ed" transform="translate(168.8,48.8) rotate(225.0)"/></g></g></svg>
+</a>
+<a href="https://github.com/Yu-Group/veridical-flow" class="nav-icon"
+aria-label="View source on GitHub" title="GitHub">
+<svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+<path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38
+0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01
+1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95
+0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04
+2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48
+0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"></path>
+</svg>
+</a>
+</header>
+<main>
+<article id="content">
+<section id="section-intro">
+<p>A one-call summary of how stable a pipeline's results are to its judgment
+calls: <code><a title="vflow.report.stability_report" href="#vflow.report.stability_report">stability_report()</a></code>.</p>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">&#34;&#34;&#34;A one-call summary of how stable a pipeline&#39;s results are to its judgment
+calls: `stability_report`.
+&#34;&#34;&#34;
+
+import html
+from dataclasses import dataclass
+from typing import Optional, Union
+
+import numpy as np
+import pandas as pd
+
+from vflow.utils import dict_to_df
+
+OTHER = &#34;(interactions and other)&#34;
+
+
+@dataclass(repr=False)
+class StabilityReport:
+    &#34;&#34;&#34;What `stability_report` returns. Print it, show it in a notebook, or
+    save it with `save`; the tables are DataFrames for further analysis.&#34;&#34;&#34;
+
+    headlines: list
+    &#34;&#34;&#34;Plain-language findings, one string each.&#34;&#34;&#34;
+    summary: pd.DataFrame
+    &#34;&#34;&#34;Number of results and their mean, std, min and max (per `by` group).&#34;&#34;&#34;
+    variance: pd.DataFrame
+    &#34;&#34;&#34;Share of the variance of the results explained by each Vset on its
+    own; the rest comes from interactions between Vsets.&#34;&#34;&#34;
+    levels: dict
+    &#34;&#34;&#34;For each perturbed Vset, the results summarized by its choices.&#34;&#34;&#34;
+    ranking: Optional[pd.DataFrame]
+    &#34;&#34;&#34;How often each choice of `compare` is best across the other
+    perturbations (None without `compare`).&#34;&#34;&#34;
+    results: pd.DataFrame
+    &#34;&#34;&#34;The results as a tidy table: one column per perturbed Vset.&#34;&#34;&#34;
+    wrt: str = &#34;out&#34;
+    by: Optional[str] = None
+    compare: Optional[str] = None
+
+    def to_markdown(self) -&gt; str:
+        &#34;&#34;&#34;The report as markdown.&#34;&#34;&#34;
+        lines = [&#34;# Stability report&#34;, &#34;&#34;]
+        lines += [f&#34;- {h}&#34; for h in self.headlines] + [&#34;&#34;]
+        for title, note, df in self._tables():
+            lines += [f&#34;## {title}&#34;, &#34;&#34;]
+            if note:
+                lines += [note, &#34;&#34;]
+            lines += [_md_table(df), &#34;&#34;]
+        return &#34;\n&#34;.join(lines)
+
+    def to_html(self, full_page: bool = True) -&gt; str:
+        &#34;&#34;&#34;The report as HTML: a full page, or a fragment to embed.&#34;&#34;&#34;
+        parts = [&#39;&lt;div class=&#34;vflow-report&#34;&gt;&#39;, &#34;&lt;h1&gt;Stability report&lt;/h1&gt;&#34;, &#34;&lt;ul&gt;&#34;]
+        parts += [f&#34;&lt;li&gt;{_md_code_to_html(h)}&lt;/li&gt;&#34; for h in self.headlines]
+        parts.append(&#34;&lt;/ul&gt;&#34;)
+        for title, note, df in self._tables():
+            parts.append(f&#34;&lt;h2&gt;{_md_code_to_html(title)}&lt;/h2&gt;&#34;)
+            if note:
+                parts.append(f&#34;&lt;p&gt;{_md_code_to_html(note)}&lt;/p&gt;&#34;)
+            parts.append(
+                df.to_html(
+                    index=False,
+                    na_rep=&#34;&#34;,
+                    border=0,
+                    classes=&#34;vflow-table&#34;,
+                    float_format=_fmt_float,
+                )
+            )
+        parts.append(&#34;&lt;/div&gt;&#34;)
+        body = &#34;\n&#34;.join(parts)
+        if not full_page:
+            return f&#34;&lt;style&gt;{_CSS}&lt;/style&gt;\n{body}&#34;
+        return (
+            &#39;&lt;!doctype html&gt;\n&lt;html lang=&#34;en&#34;&gt;&lt;head&gt;&lt;meta charset=&#34;utf-8&#34;&gt;&#39;
+            &#39;&lt;meta name=&#34;viewport&#34; content=&#34;width=device-width, initial-scale=1&#34;&gt;&#39;
+            f&#34;&lt;title&gt;Stability report&lt;/title&gt;&lt;style&gt;{_CSS}&lt;/style&gt;&lt;/head&gt;&#34;
+            f&#34;&lt;body&gt;\n{body}\n&lt;/body&gt;&lt;/html&gt;\n&#34;
+        )
+
+    def save(self, path: str) -&gt; str:
+        &#34;&#34;&#34;Write the report to `path`: HTML for a .html or .htm path,
+        markdown otherwise. Returns `path`.&#34;&#34;&#34;
+        is_html = str(path).lower().endswith((&#34;.html&#34;, &#34;.htm&#34;))
+        text = self.to_html() if is_html else self.to_markdown()
+        with open(path, &#34;w&#34;, encoding=&#34;utf-8&#34;) as f:
+            f.write(text)
+        return path
+
+    def _repr_html_(self):
+        return self.to_html(full_page=False)
+
+    def __str__(self):
+        return self.to_markdown()
+
+    __repr__ = __str__
+
+    def _tables(self):
+        &#34;&#34;&#34;(title, note, display DataFrame) for each section of the report.&#34;&#34;&#34;
+        tables = [(&#34;Summary&#34;, None, self.summary)]
+        if len(self.variance):
+            tables.append(
+                (
+                    &#34;Where the variation comes from&#34;,
+                    f&#34;Share of the variance of `{self.wrt}` explained by each &#34;
+                    &#34;Vset on its own.&#34;,
+                    _percent(self.variance, &#34;share&#34;),
+                )
+            )
+        if self.ranking is not None:
+            tables.append(
+                (
+                    f&#34;Ranking of `{self.compare}`&#34;,
+                    f&#34;How often each choice of `{self.compare}` is best (ties &#34;
+                    &#34;count for every tied choice) across the combinations of &#34;
+                    &#34;the other perturbations.&#34;,
+                    _percent(self.ranking, &#34;win_rate&#34;),
+                )
+            )
+        for name, df in self.levels.items():
+            tables.append((f&#34;Results by `{name}`&#34;, None, df))
+        return tables
+
+
+def stability_report(
+    results: Union[dict, pd.DataFrame],
+    compare: str = None,
+    by: Optional[str] = &#34;auto&#34;,
+    bigger_is_better: bool = True,
+    wrt: str = &#34;out&#34;,
+) -&gt; StabilityReport:
+    &#34;&#34;&#34;Summarize how stable results are to the perturbations that made them.
+
+    Parameters
+    ----------
+    results: dict or pandas.DataFrame
+        Output dict of a Vset whose outputs are numbers (typically a metrics
+        Vset at the end of a pipeline), or a DataFrame from `dict_to_df`.
+    compare: str (optional)
+        Name of a Vset whose choices are being compared, e.g. the models. The
+        report then says how often each choice is best across the other
+        perturbations.
+    by: str or None (optional), default &#34;auto&#34;
+        Name of a Vset to report on separately rather than pool, e.g. the
+        metrics (accuracy and balanced accuracy should not be averaged
+        together). &#34;auto&#34; uses the last Vset, which produced the outputs, when
+        it has more than one choice and is not `compare`; None pools all
+        results.
+    bigger_is_better: bool (optional), default True
+        Whether larger outputs are better, for ranking `compare`.
+    wrt: str (optional), default &#34;out&#34;
+        Column holding the outputs.
+
+    Returns
+    -------
+    report: StabilityReport
+        Print it, show it in a notebook, or `save` it as HTML or markdown.
+
+    Examples
+    --------
+    &gt;&gt;&gt; metrics = metrics_set.evaluate(preds_test, y_test)
+    &gt;&gt;&gt; report = stability_report(metrics, compare=&#34;modeling&#34;)
+    &gt;&gt;&gt; report.save(&#34;stability.html&#34;)
+    &#34;&#34;&#34;
+    df = _tidy(results, wrt)
+    vsets = [c for c in df.columns if c != wrt]
+    for name, arg in ((&#34;compare&#34;, compare), (&#34;by&#34;, None if by == &#34;auto&#34; else by)):
+        if arg is not None and arg not in vsets:
+            raise ValueError(f&#34;{name}={arg!r} is not one of the Vsets {vsets}&#34;)
+    if by == &#34;auto&#34;:
+        last = vsets[-1] if vsets else None
+        by = last if last != compare and last and df[last].nunique() &gt; 1 else None
+    by_cols = [] if by is None else [by]
+    factors = [c for c in vsets if c != by and df[c].nunique() &gt; 1]
+    if compare is not None and compare not in factors:
+        raise ValueError(f&#34;compare={compare!r} has only one choice; nothing to rank&#34;)
+
+    groups = list(df.groupby(by, sort=False)) if by else [(None, df)]
+    summary = _summary(df, by_cols, wrt)
+    variance = pd.concat(
+        (
+            [_variance_shares(g, factors, wrt).assign(**{by: k}) for k, g in groups]
+            if by
+            else [_variance_shares(df, factors, wrt)]
+        ),
+        ignore_index=True,
+    )
+    if by:
+        variance = variance[[by] + [c for c in variance.columns if c != by]]
+    levels = {f: _summary(df, by_cols + [f], wrt) for f in factors}
+    ranking = None
+    if compare is not None:
+        others = [f for f in factors if f != compare]
+        ranking = _ranking(df, compare, by_cols, others, wrt, bigger_is_better)
+
+    headlines = []
+    for key, g in groups:
+        label = f&#34;`{by}` = {key}: &#34; if by else &#34;&#34;
+        headlines += _headlines(label, g, variance, ranking, by, key, compare, wrt)
+    return StabilityReport(
+        headlines=headlines,
+        summary=summary,
+        variance=variance,
+        levels=levels,
+        ranking=ranking,
+        results=df,
+        wrt=wrt,
+        by=by,
+        compare=compare,
+    )
+
+
+def _tidy(results, wrt):
+    &#34;&#34;&#34;One column per Vset (constant init columns dropped), readable labels,
+    and numeric outputs.&#34;&#34;&#34;
+    df = dict_to_df(results) if isinstance(results, dict) else results.copy()
+    if wrt not in df.columns or len(df) == 0:
+        raise ValueError(f&#34;no outputs in column {wrt!r} to report on&#34;)
+    df = df.loc[:, [not str(c).startswith(&#34;init-&#34;) for c in df.columns]]
+    df = df.loc[:, ~df.columns.duplicated()]
+    try:
+        df[wrt] = pd.to_numeric(df[wrt]).astype(float)
+    except (TypeError, ValueError) as e:
+        raise ValueError(
+            &#34;stability_report needs one number per result (e.g. the output of a &#34;
+            f&#34;metrics Vset); {wrt!r} holds {type(df[wrt].iloc[0]).__name__} values&#34;
+        ) from e
+    for c in df.columns:
+        if c != wrt:
+            df[c] = df[c].map(_label)
+    return df.reset_index(drop=True)
+
+
+def _label(v):
+    &#34;&#34;&#34;(&#39;rep=0&#39;, &#39;func=resample&#39;) -&gt; &#39;rep=0, func=resample&#39;.&#34;&#34;&#34;
+    if isinstance(v, tuple):
+        return &#34;, &#34;.join(map(str, v))
+    return str(v)
+
+
+def _summary(df, cols, wrt):
+    stats = [&#34;count&#34;, &#34;mean&#34;, &#34;std&#34;, &#34;min&#34;, &#34;max&#34;]
+    if not cols:
+        return df[wrt].agg(stats).to_frame().T.reset_index(drop=True)
+    out = df.groupby(cols, sort=False)[wrt].agg(stats).reset_index()
+    return out
+
+
+def _variance_shares(df, factors, wrt):
+    &#34;&#34;&#34;Between-choice sum of squares of each Vset over the total.&#34;&#34;&#34;
+    y = df[wrt]
+    total = float(((y - y.mean()) ** 2).sum())
+    rows = []
+    for f in factors:
+        means = df.groupby(f, sort=False)[wrt].agg([&#34;mean&#34;, &#34;size&#34;])
+        between = float((means[&#34;size&#34;] * (means[&#34;mean&#34;] - y.mean()) ** 2).sum())
+        rows.append(
+            {
+                &#34;vset&#34;: f,
+                &#34;choices&#34;: len(means),
+                &#34;share&#34;: between / total if total else 0.0,
+            }
+        )
+    rows.sort(key=lambda r: -r[&#34;share&#34;])
+    if factors:
+        explained = sum(r[&#34;share&#34;] for r in rows)
+        rows.append(
+            {
+                &#34;vset&#34;: OTHER,
+                &#34;choices&#34;: np.nan,
+                &#34;share&#34;: max(0.0, 1.0 - explained) if total else 0.0,
+            }
+        )
+    return pd.DataFrame(rows, columns=[&#34;vset&#34;, &#34;choices&#34;, &#34;share&#34;])
+
+
+def _ranking(df, compare, by_cols, others, wrt, bigger_is_better):
+    &#34;&#34;&#34;Rank `compare`&#39;s choices within each combination of the others.&#34;&#34;&#34;
+    block_cols = by_cols + others
+    if block_cols:
+        ranks = df.groupby(block_cols, sort=False)[wrt].rank(
+            ascending=not bigger_is_better, method=&#34;min&#34;
+        )
+    else:
+        ranks = df[wrt].rank(ascending=not bigger_is_better, method=&#34;min&#34;)
+    d = df.assign(_rank=ranks, _win=(ranks == 1).astype(int))
+    out = (
+        d.groupby(by_cols + [compare], sort=False)
+        .agg(
+            mean=(wrt, &#34;mean&#34;),
+            std=(wrt, &#34;std&#34;),
+            mean_rank=(&#34;_rank&#34;, &#34;mean&#34;),
+            wins=(&#34;_win&#34;, &#34;sum&#34;),
+            blocks=(&#34;_win&#34;, &#34;size&#34;),
+        )
+        .reset_index()
+    )
+    out[&#34;win_rate&#34;] = out[&#34;wins&#34;] / out[&#34;blocks&#34;]
+    sort_cols = by_cols + [&#34;win_rate&#34;, &#34;mean_rank&#34;]
+    ascending = [True] * len(by_cols) + [False, True]
+    if by_cols:
+        # keep the by groups in their original order
+        order = {k: i for i, k in enumerate(df[by_cols[0]].unique())}
+        out[&#34;_order&#34;] = out[by_cols[0]].map(order)
+        sort_cols[0] = &#34;_order&#34;
+    out = out.sort_values(sort_cols, ascending=ascending, kind=&#34;stable&#34;)
+    return out.drop(columns=&#34;_order&#34;, errors=&#34;ignore&#34;).reset_index(drop=True)
+
+
+def _headlines(label, g, variance, ranking, by, key, compare, wrt):
+    y = g[wrt]
+    lines = [
+        f&#34;{label}{len(y)} results, mean {_fmt_float(y.mean())} &#34;
+        f&#34;(from {_fmt_float(y.min())} to {_fmt_float(y.max())}).&#34;
+    ]
+    var = variance if by is None else variance[variance[by] == key]
+    if len(var) and y.nunique() &gt; 1:
+        top = var.iloc[0] if var.iloc[0][&#34;vset&#34;] != OTHER else None
+        other = var[var[&#34;vset&#34;] == OTHER][&#34;share&#34;].sum()
+        if top is not None and top[&#34;share&#34;] &gt;= other:
+            lines.append(
+                f&#34;{label}most of the variation comes from `{top[&#39;vset&#39;]}` &#34;
+                f&#34;({top[&#39;share&#39;]:.0%} of the variance).&#34;
+            )
+        else:
+            lines.append(
+                f&#34;{label}no single Vset explains most of the variation; &#34;
+                f&#34;{other:.0%} comes from interactions between them.&#34;
+            )
+    elif len(var):
+        lines.append(f&#34;{label}the results do not vary across the perturbations.&#34;)
+    if ranking is not None:
+        r = ranking if by is None else ranking[ranking[by] == key]
+        best = r.iloc[0]
+        line = (
+            f&#34;{label}`{best[compare]}` is best in {int(best[&#39;wins&#39;])} of &#34;
+            f&#34;{int(best[&#39;blocks&#39;])} perturbations ({best[&#39;win_rate&#39;]:.0%})&#34;
+        )
+        if len(r) &gt; 1:
+            nxt = r.iloc[1]
+            line += f&#34;; next is `{nxt[compare]}` ({nxt[&#39;win_rate&#39;]:.0%})&#34;
+        lines.append(line + &#34;.&#34;)
+    return lines
+
+
+def _fmt_float(v) -&gt; str:
+    if v is None or (isinstance(v, float) and np.isnan(v)):
+        return &#34;&#34;
+    return f&#34;{v:.4g}&#34;
+
+
+def _percent(df, col):
+    out = df.copy()
+    out[col] = out[col].map(lambda v: &#34;&#34; if pd.isna(v) else f&#34;{v:.0%}&#34;)
+    return out
+
+
+def _md_table(df) -&gt; str:
+    def cell(v):
+        if isinstance(v, (float, np.floating)):
+            text = _fmt_float(float(v))
+        else:
+            text = str(v)
+        return text.replace(&#34;|&#34;, &#34;\\|&#34;)
+
+    cols = [str(c) for c in df.columns]
+    lines = [&#34;| &#34; + &#34; | &#34;.join(cols) + &#34; |&#34;, &#34;|&#34; + &#34;|&#34;.join(&#34;---&#34; for _ in cols) + &#34;|&#34;]
+    for row in df.itertuples(index=False):
+        lines.append(&#34;| &#34; + &#34; | &#34;.join(cell(v) for v in row) + &#34; |&#34;)
+    return &#34;\n&#34;.join(lines)
+
+
+def _md_code_to_html(text: str) -&gt; str:
+    &#34;&#34;&#34;Escape `text` and render its `code` spans.&#34;&#34;&#34;
+    parts = html.escape(text).split(&#34;`&#34;)
+    return &#34;&#34;.join(f&#34;&lt;code&gt;{p}&lt;/code&gt;&#34; if i % 2 else p for i, p in enumerate(parts))
+
+
+_CSS = &#34;&#34;&#34;
+.vflow-report { font-family: system-ui, -apple-system, &#34;Segoe UI&#34;, sans-serif;
+  color: #1f2a33; max-width: 960px; margin: 0 auto; padding: 16px; line-height: 1.5; }
+.vflow-report h1 { font-size: 1.6rem; margin: 0.4em 0; }
+.vflow-report h2 { font-size: 1.15rem; margin: 1.4em 0 0.4em; }
+.vflow-report code { background: #eef2f5; padding: 0 4px; border-radius: 4px; }
+.vflow-report table.vflow-table { border-collapse: collapse; margin: 0.4em 0 1em;
+  font-size: 0.9rem; display: block; overflow-x: auto; max-width: 100%; }
+.vflow-report .vflow-table th, .vflow-report .vflow-table td { padding: 4px 10px;
+  border-bottom: 1px solid #dde3e8; text-align: left; white-space: nowrap; }
+.vflow-report .vflow-table th { background: #f4f7f9; }
+&#34;&#34;&#34;</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="vflow.report.stability_report"><code class="name flex">
+<span>def <span class="ident">stability_report</span></span>(<span>results: pandas.DataFrame | dict, compare: str = None, by: str | None = 'auto', bigger_is_better: bool = True, wrt: str = 'out') ‑> <a title="vflow.report.StabilityReport" href="#vflow.report.StabilityReport">StabilityReport</a></span>
+</code></dt>
+<dd>
+<div class="desc"><p>Summarize how stable results are to the perturbations that made them.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>results</code></strong> :&ensp;<code>dict</code> or <code>pandas.DataFrame</code></dt>
+<dd>Output dict of a Vset whose outputs are numbers (typically a metrics
+Vset at the end of a pipeline), or a DataFrame from <code>dict_to_df</code>.</dd>
+<dt><strong><code>compare</code></strong> :&ensp;<code>str (optional)</code></dt>
+<dd>Name of a Vset whose choices are being compared, e.g. the models. The
+report then says how often each choice is best across the other
+perturbations.</dd>
+<dt><strong><code>by</code></strong> :&ensp;<code>str</code> or <code>None (optional)</code>, default <code>"auto"</code></dt>
+<dd>Name of a Vset to report on separately rather than pool, e.g. the
+metrics (accuracy and balanced accuracy should not be averaged
+together). "auto" uses the last Vset, which produced the outputs, when
+it has more than one choice and is not <code>compare</code>; None pools all
+results.</dd>
+<dt><strong><code>bigger_is_better</code></strong> :&ensp;<code>bool (optional)</code>, default <code>True</code></dt>
+<dd>Whether larger outputs are better, for ranking <code>compare</code>.</dd>
+<dt><strong><code>wrt</code></strong> :&ensp;<code>str (optional)</code>, default <code>"out"</code></dt>
+<dd>Column holding the outputs.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><strong><code>report</code></strong> :&ensp;<code><a title="vflow.report.StabilityReport" href="#vflow.report.StabilityReport">StabilityReport</a></code></dt>
+<dd>Print it, show it in a notebook, or <code>save</code> it as HTML or markdown.</dd>
+</dl>
+<h2 id="examples">Examples</h2>
+<pre><code class="language-python-repl">&gt;&gt;&gt; metrics = metrics_set.evaluate(preds_test, y_test)
+&gt;&gt;&gt; report = stability_report(metrics, compare=&quot;modeling&quot;)
+&gt;&gt;&gt; report.save(&quot;stability.html&quot;)
+</code></pre></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def stability_report(
+    results: Union[dict, pd.DataFrame],
+    compare: str = None,
+    by: Optional[str] = &#34;auto&#34;,
+    bigger_is_better: bool = True,
+    wrt: str = &#34;out&#34;,
+) -&gt; StabilityReport:
+    &#34;&#34;&#34;Summarize how stable results are to the perturbations that made them.
+
+    Parameters
+    ----------
+    results: dict or pandas.DataFrame
+        Output dict of a Vset whose outputs are numbers (typically a metrics
+        Vset at the end of a pipeline), or a DataFrame from `dict_to_df`.
+    compare: str (optional)
+        Name of a Vset whose choices are being compared, e.g. the models. The
+        report then says how often each choice is best across the other
+        perturbations.
+    by: str or None (optional), default &#34;auto&#34;
+        Name of a Vset to report on separately rather than pool, e.g. the
+        metrics (accuracy and balanced accuracy should not be averaged
+        together). &#34;auto&#34; uses the last Vset, which produced the outputs, when
+        it has more than one choice and is not `compare`; None pools all
+        results.
+    bigger_is_better: bool (optional), default True
+        Whether larger outputs are better, for ranking `compare`.
+    wrt: str (optional), default &#34;out&#34;
+        Column holding the outputs.
+
+    Returns
+    -------
+    report: StabilityReport
+        Print it, show it in a notebook, or `save` it as HTML or markdown.
+
+    Examples
+    --------
+    &gt;&gt;&gt; metrics = metrics_set.evaluate(preds_test, y_test)
+    &gt;&gt;&gt; report = stability_report(metrics, compare=&#34;modeling&#34;)
+    &gt;&gt;&gt; report.save(&#34;stability.html&#34;)
+    &#34;&#34;&#34;
+    df = _tidy(results, wrt)
+    vsets = [c for c in df.columns if c != wrt]
+    for name, arg in ((&#34;compare&#34;, compare), (&#34;by&#34;, None if by == &#34;auto&#34; else by)):
+        if arg is not None and arg not in vsets:
+            raise ValueError(f&#34;{name}={arg!r} is not one of the Vsets {vsets}&#34;)
+    if by == &#34;auto&#34;:
+        last = vsets[-1] if vsets else None
+        by = last if last != compare and last and df[last].nunique() &gt; 1 else None
+    by_cols = [] if by is None else [by]
+    factors = [c for c in vsets if c != by and df[c].nunique() &gt; 1]
+    if compare is not None and compare not in factors:
+        raise ValueError(f&#34;compare={compare!r} has only one choice; nothing to rank&#34;)
+
+    groups = list(df.groupby(by, sort=False)) if by else [(None, df)]
+    summary = _summary(df, by_cols, wrt)
+    variance = pd.concat(
+        (
+            [_variance_shares(g, factors, wrt).assign(**{by: k}) for k, g in groups]
+            if by
+            else [_variance_shares(df, factors, wrt)]
+        ),
+        ignore_index=True,
+    )
+    if by:
+        variance = variance[[by] + [c for c in variance.columns if c != by]]
+    levels = {f: _summary(df, by_cols + [f], wrt) for f in factors}
+    ranking = None
+    if compare is not None:
+        others = [f for f in factors if f != compare]
+        ranking = _ranking(df, compare, by_cols, others, wrt, bigger_is_better)
+
+    headlines = []
+    for key, g in groups:
+        label = f&#34;`{by}` = {key}: &#34; if by else &#34;&#34;
+        headlines += _headlines(label, g, variance, ranking, by, key, compare, wrt)
+    return StabilityReport(
+        headlines=headlines,
+        summary=summary,
+        variance=variance,
+        levels=levels,
+        ranking=ranking,
+        results=df,
+        wrt=wrt,
+        by=by,
+        compare=compare,
+    )</code></pre>
+</details>
+</dd>
+</dl>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="vflow.report.StabilityReport"><code class="flex name class">
+<span>class <span class="ident">StabilityReport</span></span>
+<span>(</span><span>headlines: list, summary: pandas.DataFrame, variance: pandas.DataFrame, levels: dict, ranking: pandas.DataFrame | None, results: pandas.DataFrame, wrt: str = 'out', by: str | None = None, compare: str | None = None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>What <code><a title="vflow.report.stability_report" href="#vflow.report.stability_report">stability_report()</a></code> returns. Print it, show it in a notebook, or
+save it with <code>save</code>; the tables are DataFrames for further analysis.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@dataclass(repr=False)
+class StabilityReport:
+    &#34;&#34;&#34;What `stability_report` returns. Print it, show it in a notebook, or
+    save it with `save`; the tables are DataFrames for further analysis.&#34;&#34;&#34;
+
+    headlines: list
+    &#34;&#34;&#34;Plain-language findings, one string each.&#34;&#34;&#34;
+    summary: pd.DataFrame
+    &#34;&#34;&#34;Number of results and their mean, std, min and max (per `by` group).&#34;&#34;&#34;
+    variance: pd.DataFrame
+    &#34;&#34;&#34;Share of the variance of the results explained by each Vset on its
+    own; the rest comes from interactions between Vsets.&#34;&#34;&#34;
+    levels: dict
+    &#34;&#34;&#34;For each perturbed Vset, the results summarized by its choices.&#34;&#34;&#34;
+    ranking: Optional[pd.DataFrame]
+    &#34;&#34;&#34;How often each choice of `compare` is best across the other
+    perturbations (None without `compare`).&#34;&#34;&#34;
+    results: pd.DataFrame
+    &#34;&#34;&#34;The results as a tidy table: one column per perturbed Vset.&#34;&#34;&#34;
+    wrt: str = &#34;out&#34;
+    by: Optional[str] = None
+    compare: Optional[str] = None
+
+    def to_markdown(self) -&gt; str:
+        &#34;&#34;&#34;The report as markdown.&#34;&#34;&#34;
+        lines = [&#34;# Stability report&#34;, &#34;&#34;]
+        lines += [f&#34;- {h}&#34; for h in self.headlines] + [&#34;&#34;]
+        for title, note, df in self._tables():
+            lines += [f&#34;## {title}&#34;, &#34;&#34;]
+            if note:
+                lines += [note, &#34;&#34;]
+            lines += [_md_table(df), &#34;&#34;]
+        return &#34;\n&#34;.join(lines)
+
+    def to_html(self, full_page: bool = True) -&gt; str:
+        &#34;&#34;&#34;The report as HTML: a full page, or a fragment to embed.&#34;&#34;&#34;
+        parts = [&#39;&lt;div class=&#34;vflow-report&#34;&gt;&#39;, &#34;&lt;h1&gt;Stability report&lt;/h1&gt;&#34;, &#34;&lt;ul&gt;&#34;]
+        parts += [f&#34;&lt;li&gt;{_md_code_to_html(h)}&lt;/li&gt;&#34; for h in self.headlines]
+        parts.append(&#34;&lt;/ul&gt;&#34;)
+        for title, note, df in self._tables():
+            parts.append(f&#34;&lt;h2&gt;{_md_code_to_html(title)}&lt;/h2&gt;&#34;)
+            if note:
+                parts.append(f&#34;&lt;p&gt;{_md_code_to_html(note)}&lt;/p&gt;&#34;)
+            parts.append(
+                df.to_html(
+                    index=False,
+                    na_rep=&#34;&#34;,
+                    border=0,
+                    classes=&#34;vflow-table&#34;,
+                    float_format=_fmt_float,
+                )
+            )
+        parts.append(&#34;&lt;/div&gt;&#34;)
+        body = &#34;\n&#34;.join(parts)
+        if not full_page:
+            return f&#34;&lt;style&gt;{_CSS}&lt;/style&gt;\n{body}&#34;
+        return (
+            &#39;&lt;!doctype html&gt;\n&lt;html lang=&#34;en&#34;&gt;&lt;head&gt;&lt;meta charset=&#34;utf-8&#34;&gt;&#39;
+            &#39;&lt;meta name=&#34;viewport&#34; content=&#34;width=device-width, initial-scale=1&#34;&gt;&#39;
+            f&#34;&lt;title&gt;Stability report&lt;/title&gt;&lt;style&gt;{_CSS}&lt;/style&gt;&lt;/head&gt;&#34;
+            f&#34;&lt;body&gt;\n{body}\n&lt;/body&gt;&lt;/html&gt;\n&#34;
+        )
+
+    def save(self, path: str) -&gt; str:
+        &#34;&#34;&#34;Write the report to `path`: HTML for a .html or .htm path,
+        markdown otherwise. Returns `path`.&#34;&#34;&#34;
+        is_html = str(path).lower().endswith((&#34;.html&#34;, &#34;.htm&#34;))
+        text = self.to_html() if is_html else self.to_markdown()
+        with open(path, &#34;w&#34;, encoding=&#34;utf-8&#34;) as f:
+            f.write(text)
+        return path
+
+    def _repr_html_(self):
+        return self.to_html(full_page=False)
+
+    def __str__(self):
+        return self.to_markdown()
+
+    __repr__ = __str__
+
+    def _tables(self):
+        &#34;&#34;&#34;(title, note, display DataFrame) for each section of the report.&#34;&#34;&#34;
+        tables = [(&#34;Summary&#34;, None, self.summary)]
+        if len(self.variance):
+            tables.append(
+                (
+                    &#34;Where the variation comes from&#34;,
+                    f&#34;Share of the variance of `{self.wrt}` explained by each &#34;
+                    &#34;Vset on its own.&#34;,
+                    _percent(self.variance, &#34;share&#34;),
+                )
+            )
+        if self.ranking is not None:
+            tables.append(
+                (
+                    f&#34;Ranking of `{self.compare}`&#34;,
+                    f&#34;How often each choice of `{self.compare}` is best (ties &#34;
+                    &#34;count for every tied choice) across the combinations of &#34;
+                    &#34;the other perturbations.&#34;,
+                    _percent(self.ranking, &#34;win_rate&#34;),
+                )
+            )
+        for name, df in self.levels.items():
+            tables.append((f&#34;Results by `{name}`&#34;, None, df))
+        return tables</code></pre>
+</details>
+<h3>Instance variables</h3>
+<dl>
+<dt id="vflow.report.StabilityReport.by"><code class="name">var <span class="ident">by</span> : str | None</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="vflow.report.StabilityReport.compare"><code class="name">var <span class="ident">compare</span> : str | None</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="vflow.report.StabilityReport.headlines"><code class="name">var <span class="ident">headlines</span> : list</code></dt>
+<dd>
+<div class="desc"><p>Plain-language findings, one string each.</p></div>
+</dd>
+<dt id="vflow.report.StabilityReport.levels"><code class="name">var <span class="ident">levels</span> : dict</code></dt>
+<dd>
+<div class="desc"><p>For each perturbed Vset, the results summarized by its choices.</p></div>
+</dd>
+<dt id="vflow.report.StabilityReport.ranking"><code class="name">var <span class="ident">ranking</span> : pandas.DataFrame | None</code></dt>
+<dd>
+<div class="desc"><p>How often each choice of <code>compare</code> is best across the other
+perturbations (None without <code>compare</code>).</p></div>
+</dd>
+<dt id="vflow.report.StabilityReport.results"><code class="name">var <span class="ident">results</span> : pandas.DataFrame</code></dt>
+<dd>
+<div class="desc"><p>The results as a tidy table: one column per perturbed Vset.</p></div>
+</dd>
+<dt id="vflow.report.StabilityReport.summary"><code class="name">var <span class="ident">summary</span> : pandas.DataFrame</code></dt>
+<dd>
+<div class="desc"><p>Number of results and their mean, std, min and max (per <code>by</code> group).</p></div>
+</dd>
+<dt id="vflow.report.StabilityReport.variance"><code class="name">var <span class="ident">variance</span> : pandas.DataFrame</code></dt>
+<dd>
+<div class="desc"><p>Share of the variance of the results explained by each Vset on its
+own; the rest comes from interactions between Vsets.</p></div>
+</dd>
+<dt id="vflow.report.StabilityReport.wrt"><code class="name">var <span class="ident">wrt</span> : str</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="vflow.report.StabilityReport.save"><code class="name flex">
+<span>def <span class="ident">save</span></span>(<span>self, path: str) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Write the report to <code>path</code>: HTML for a .html or .htm path,
+markdown otherwise. Returns <code>path</code>.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def save(self, path: str) -&gt; str:
+    &#34;&#34;&#34;Write the report to `path`: HTML for a .html or .htm path,
+    markdown otherwise. Returns `path`.&#34;&#34;&#34;
+    is_html = str(path).lower().endswith((&#34;.html&#34;, &#34;.htm&#34;))
+    text = self.to_html() if is_html else self.to_markdown()
+    with open(path, &#34;w&#34;, encoding=&#34;utf-8&#34;) as f:
+        f.write(text)
+    return path</code></pre>
+</details>
+</dd>
+<dt id="vflow.report.StabilityReport.to_html"><code class="name flex">
+<span>def <span class="ident">to_html</span></span>(<span>self, full_page: bool = True) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The report as HTML: a full page, or a fragment to embed.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def to_html(self, full_page: bool = True) -&gt; str:
+    &#34;&#34;&#34;The report as HTML: a full page, or a fragment to embed.&#34;&#34;&#34;
+    parts = [&#39;&lt;div class=&#34;vflow-report&#34;&gt;&#39;, &#34;&lt;h1&gt;Stability report&lt;/h1&gt;&#34;, &#34;&lt;ul&gt;&#34;]
+    parts += [f&#34;&lt;li&gt;{_md_code_to_html(h)}&lt;/li&gt;&#34; for h in self.headlines]
+    parts.append(&#34;&lt;/ul&gt;&#34;)
+    for title, note, df in self._tables():
+        parts.append(f&#34;&lt;h2&gt;{_md_code_to_html(title)}&lt;/h2&gt;&#34;)
+        if note:
+            parts.append(f&#34;&lt;p&gt;{_md_code_to_html(note)}&lt;/p&gt;&#34;)
+        parts.append(
+            df.to_html(
+                index=False,
+                na_rep=&#34;&#34;,
+                border=0,
+                classes=&#34;vflow-table&#34;,
+                float_format=_fmt_float,
+            )
+        )
+    parts.append(&#34;&lt;/div&gt;&#34;)
+    body = &#34;\n&#34;.join(parts)
+    if not full_page:
+        return f&#34;&lt;style&gt;{_CSS}&lt;/style&gt;\n{body}&#34;
+    return (
+        &#39;&lt;!doctype html&gt;\n&lt;html lang=&#34;en&#34;&gt;&lt;head&gt;&lt;meta charset=&#34;utf-8&#34;&gt;&#39;
+        &#39;&lt;meta name=&#34;viewport&#34; content=&#34;width=device-width, initial-scale=1&#34;&gt;&#39;
+        f&#34;&lt;title&gt;Stability report&lt;/title&gt;&lt;style&gt;{_CSS}&lt;/style&gt;&lt;/head&gt;&#34;
+        f&#34;&lt;body&gt;\n{body}\n&lt;/body&gt;&lt;/html&gt;\n&#34;
+    )</code></pre>
+</details>
+</dd>
+<dt id="vflow.report.StabilityReport.to_markdown"><code class="name flex">
+<span>def <span class="ident">to_markdown</span></span>(<span>self) ‑> str</span>
+</code></dt>
+<dd>
+<div class="desc"><p>The report as markdown.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def to_markdown(self) -&gt; str:
+    &#34;&#34;&#34;The report as markdown.&#34;&#34;&#34;
+    lines = [&#34;# Stability report&#34;, &#34;&#34;]
+    lines += [f&#34;- {h}&#34; for h in self.headlines] + [&#34;&#34;]
+    for title, note, df in self._tables():
+        lines += [f&#34;## {title}&#34;, &#34;&#34;]
+        if note:
+            lines += [note, &#34;&#34;]
+        lines += [_md_table(df), &#34;&#34;]
+    return &#34;\n&#34;.join(lines)</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<ul id="index">
+<li><h3>Guides</h3>
+<ul class="post-list">
+<li><a href="agents.html" title="PCS for analyses done by AI agents">vflow for agents</a><span class="post-tag" title="Claude Code plugin">new</span><span class="post-date">Oct '26</span></li>
+<li><a href="vflow-internals.html" title="Vset, Vfunc and Subkey">How vflow works internally</a><span class="post-date">'22</span></li>
+</ul>
+</li>
+<li><h3>Notebooks</h3>
+<ul>
+<li><a href="notebooks/00_synthetic_classification.html">Synthetic classification</a></li>
+<li><a href="notebooks/01_enhancer.html">Enhancer genomics</a></li>
+<li><a href="notebooks/02_fmri.html">fMRI voxel prediction</a></li>
+<li><a href="notebooks/03_computer_vision_dnn.html">Fashion-MNIST with DNNs</a></li>
+<li><a href="notebooks/04_feat_importance_stability.html">Feature-importance stability</a></li>
+</ul>
+</li>
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="vflow" href="index.html">vflow</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="vflow.report.stability_report" href="#vflow.report.stability_report">stability_report</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="vflow.report.StabilityReport" href="#vflow.report.StabilityReport">StabilityReport</a></code></h4>
+<ul class="two-column">
+<li><code><a title="vflow.report.StabilityReport.by" href="#vflow.report.StabilityReport.by">by</a></code></li>
+<li><code><a title="vflow.report.StabilityReport.compare" href="#vflow.report.StabilityReport.compare">compare</a></code></li>
+<li><code><a title="vflow.report.StabilityReport.headlines" href="#vflow.report.StabilityReport.headlines">headlines</a></code></li>
+<li><code><a title="vflow.report.StabilityReport.levels" href="#vflow.report.StabilityReport.levels">levels</a></code></li>
+<li><code><a title="vflow.report.StabilityReport.ranking" href="#vflow.report.StabilityReport.ranking">ranking</a></code></li>
+<li><code><a title="vflow.report.StabilityReport.results" href="#vflow.report.StabilityReport.results">results</a></code></li>
+<li><code><a title="vflow.report.StabilityReport.save" href="#vflow.report.StabilityReport.save">save</a></code></li>
+<li><code><a title="vflow.report.StabilityReport.summary" href="#vflow.report.StabilityReport.summary">summary</a></code></li>
+<li><code><a title="vflow.report.StabilityReport.to_html" href="#vflow.report.StabilityReport.to_html">to_html</a></code></li>
+<li><code><a title="vflow.report.StabilityReport.to_markdown" href="#vflow.report.StabilityReport.to_markdown">to_markdown</a></code></li>
+<li><code><a title="vflow.report.StabilityReport.variance" href="#vflow.report.StabilityReport.variance">variance</a></code></li>
+<li><code><a title="vflow.report.StabilityReport.wrt" href="#vflow.report.StabilityReport.wrt">wrt</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>vflow &middot; <a href="https://github.com/Yu-Group/veridical-flow">GitHub</a> &middot; <a href="https://pypi.org/project/vflow/">PyPI</a> &middot; Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.11.6</a></p>
+</footer>
+</body>
+</html>
