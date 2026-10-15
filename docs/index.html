@@ -126,7 +126,23 @@ binary_metrics_set = Vset(
 )
 binary_metrics = binary_metrics_set.evaluate(preds_test, y_test)
 </code></pre>
-<p>Once we've written this pipeline, we can easily measure the stability of metrics (e.g. "Accuracy") to our choice of subsampling or model.</p>
+<p>Once we've written this pipeline, one call reports how stable the metrics
+(e.g. "Accuracy") are to our choice of subsampling or model:</p>
+<pre><code class="language-python">from vflow import stability_report
+
+report = stability_report(binary_metrics, compare=&quot;modeling&quot;)
+print(report)  # or report.save(&quot;stability.html&quot;), or show it in a notebook
+</code></pre>
+<p>which starts, for one run of the random data above, with:</p>
+<pre><code>- `binary_metrics` = Acc: 6 results, mean 0.86 (from 0.8 to 0.92).
+- `binary_metrics` = Acc: most of the variation comes from `modeling` (76% of the variance).
+- `binary_metrics` = Acc: `DT` is best in 3 of 3 perturbations (100%); next is `LR` (0%).
+...
+</code></pre>
+<p>The report gives each metric separately: a summary, the share of the
+variance explained by each Vset, how often each model is best across the
+other perturbations, and the results by each Vset's choices. Its tables are
+DataFrames (<code>report.variance</code>, <code>report.ranking</code>, &hellip;) for further analysis.</p>
 <h1 id="documentation">Documentation</h1>
 <p>See the <a href="https://yu-group.github.io/veridical-flow/">docs</a> for reference on the API</p>
 <blockquote>
@@ -223,6 +239,7 @@ batch.</p>
 <ul>
 <li><code><a title="vflow.helpers" href="helpers.html">vflow.helpers</a></code></li>
 <li><code><a title="vflow.pipeline" href="pipeline.html">vflow.pipeline</a></code></li>
+<li><code><a title="vflow.report" href="report.html">vflow.report</a></code></li>
 <li><code><a title="vflow.subkey" href="subkey.html">vflow.subkey</a></code></li>
 <li><code><a title="vflow.utils" href="utils.html">vflow.utils</a></code></li>
 <li><code><a title="vflow.vfunc" href="vfunc.html">vflow.vfunc</a></code></li>
@@ -246,6 +263,7 @@ batch.</p>
 <li><code><a title="vflow.init_step" href="utils.html#vflow.utils.init_step">init_step</a></code></li>
 <li><code><a title="vflow.perturbation_stats" href="utils.html#vflow.utils.perturbation_stats">perturbation_stats</a></code></li>
 <li><code><a title="vflow.sep_dicts" href="utils.html#vflow.utils.sep_dicts">sep_dicts</a></code></li>
+<li><code><a title="vflow.stability_report" href="report.html#vflow.report.stability_report">stability_report</a></code></li>
 <li><code><a title="vflow.to_list" href="utils.html#vflow.utils.to_list">to_list</a></code></li>
 <li><code><a title="vflow.to_tuple" href="utils.html#vflow.utils.to_tuple">to_tuple</a></code></li>
 </ul>
@@ -264,6 +282,23 @@ batch.</p>
 <ul class="">
 <li><code><a title="vflow.PCSPipeline.generate_names" href="pipeline.html#vflow.pipeline.PCSPipeline.generate_names">generate_names</a></code></li>
 <li><code><a title="vflow.PCSPipeline.run" href="pipeline.html#vflow.pipeline.PCSPipeline.run">run</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="vflow.StabilityReport" href="report.html#vflow.report.StabilityReport">StabilityReport</a></code></h4>
+<ul class="two-column">
+<li><code><a title="vflow.StabilityReport.by" href="report.html#vflow.report.StabilityReport.by">by</a></code></li>
+<li><code><a title="vflow.StabilityReport.compare" href="report.html#vflow.report.StabilityReport.compare">compare</a></code></li>
+<li><code><a title="vflow.StabilityReport.headlines" href="report.html#vflow.report.StabilityReport.headlines">headlines</a></code></li>
+<li><code><a title="vflow.StabilityReport.levels" href="report.html#vflow.report.StabilityReport.levels">levels</a></code></li>
+<li><code><a title="vflow.StabilityReport.ranking" href="report.html#vflow.report.StabilityReport.ranking">ranking</a></code></li>
+<li><code><a title="vflow.StabilityReport.results" href="report.html#vflow.report.StabilityReport.results">results</a></code></li>
+<li><code><a title="vflow.StabilityReport.save" href="report.html#vflow.report.StabilityReport.save">save</a></code></li>
+<li><code><a title="vflow.StabilityReport.summary" href="report.html#vflow.report.StabilityReport.summary">summary</a></code></li>
+<li><code><a title="vflow.StabilityReport.to_html" href="report.html#vflow.report.StabilityReport.to_html">to_html</a></code></li>
+<li><code><a title="vflow.StabilityReport.to_markdown" href="report.html#vflow.report.StabilityReport.to_markdown">to_markdown</a></code></li>
+<li><code><a title="vflow.StabilityReport.variance" href="report.html#vflow.report.StabilityReport.variance">variance</a></code></li>
+<li><code><a title="vflow.StabilityReport.wrt" href="report.html#vflow.report.StabilityReport.wrt">wrt</a></code></li>
 </ul>
 </li>
 <li>

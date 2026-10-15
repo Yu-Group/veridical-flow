@@ -9,6 +9,7 @@ from .helpers import (
     init_args,
 )
 from .pipeline import PCSPipeline, build_graph
+from .report import StabilityReport, stability_report
 from .subkey import Subkey
 from .utils import (
     apply_vfuncs,
@@ -36,6 +37,9 @@ __all__ = [
     # vflow.pipeline
     "PCSPipeline",
     "build_graph",
+    # vflow.report
+    "stability_report",
+    "StabilityReport",
     # vflow.subkey
     "Subkey",
     # vflow.utils

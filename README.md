@@ -73,7 +73,29 @@ binary_metrics_set = Vset(
 binary_metrics = binary_metrics_set.evaluate(preds_test, y_test)
 ```
 
-Once we've written this pipeline, we can easily measure the stability of metrics (e.g. "Accuracy") to our choice of subsampling or model.
+Once we've written this pipeline, one call reports how stable the metrics
+(e.g. "Accuracy") are to our choice of subsampling or model:
+
+```python
+from vflow import stability_report
+
+report = stability_report(binary_metrics, compare="modeling")
+print(report)  # or report.save("stability.html"), or show it in a notebook
+```
+
+which starts, for one run of the random data above, with:
+
+```
+- `binary_metrics` = Acc: 6 results, mean 0.86 (from 0.8 to 0.92).
+- `binary_metrics` = Acc: most of the variation comes from `modeling` (76% of the variance).
+- `binary_metrics` = Acc: `DT` is best in 3 of 3 perturbations (100%); next is `LR` (0%).
+...
+```
+
+The report gives each metric separately: a summary, the share of the
+variance explained by each Vset, how often each model is best across the
+other perturbations, and the results by each Vset's choices. Its tables are
+DataFrames (`report.variance`, `report.ranking`, ...) for further analysis.
 
 # Documentation
 
