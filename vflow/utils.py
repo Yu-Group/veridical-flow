@@ -315,40 +315,43 @@ def perturbation_stats(
     if (isinstance(func, list) and ("mean" in func or "std" in func)) and (
         type(df[wrt].iloc[0]) in [list, np.ndarray]
     ):
-        # iterate the groups (same order as gb.groups); get_group with a single
-        # group key changed meaning in pandas 3
+        unsupported = [f for f in func if f not in ("count", "mean", "std")]
+        if unsupported:
+            raise ValueError(
+                f"for list or array entries in {wrt!r}, func supports only "
+                f"'count', 'mean' and 'std'; got {unsupported}"
+            )
+        # iterating the groups gives the same order as gb.agg; get_group with
+        # a single group key changed meaning in pandas 3
         wrt_arrays = [np.stack(d.tolist()) for _, d in gb]
-        n_cols = wrt_arrays[0].shape[1]
         df_out = pd.DataFrame(gb.agg("count"))
         df_out.columns = [f"{prefix}-count"]
-        if "mean" in func:
+        stats = {
+            "mean": lambda arr: arr.mean(axis=0),
+            "std": lambda arr: arr.std(axis=0, ddof=1),
+        }
+        for stat, compute in stats.items():
+            if stat not in func:
+                continue
+            per_group = [compute(arr) for arr in wrt_arrays]
+            # build on df_out's index: group keys may be tuples, which a fresh
+            # index would turn into a MultiIndex
             if split:
-                col_means = [arr.mean(axis=0) for arr in wrt_arrays]
-                wrt_means = pd.DataFrame(
-                    col_means,
-                    columns=[f"{prefix}{i}-mean" for i in range(n_cols)],
-                    index=gb.groups.keys(),
-                )
-            else:
-                col_means = [{f"{prefix}-mean": arr.mean(axis=0)} for arr in wrt_arrays]
-                wrt_means = pd.DataFrame(col_means, index=gb.groups.keys())
-            wrt_means.index.names = df_out.index.names
-            df_out = df_out.join(wrt_means)
-        if "std" in func:
-            if split:
-                col_stds = [arr.std(axis=0, ddof=1) for arr in wrt_arrays]
-                wrt_stds = pd.DataFrame(
-                    col_stds,
-                    columns=[f"{prefix}{i}-std" for i in range(n_cols)],
-                    index=gb.groups.keys(),
-                )
-            else:
-                col_stds = [
-                    {f"{prefix}-std": arr.std(axis=0, ddof=1)} for arr in wrt_arrays
+                # one column per entry position: out0-mean, ... for 1-D entries,
+                # out0_1-mean, ... for 2-D entries such as predict_proba output
+                cols = [
+                    f"{prefix}{'_'.join(map(str, ix))}-{stat}"
+                    for ix in np.ndindex(per_group[0].shape)
                 ]
-                wrt_stds = pd.DataFrame(col_stds, index=gb.groups.keys())
-            wrt_stds.index.names = df_out.index.names
-            df_out = df_out.join(wrt_stds)
+                block = pd.DataFrame(
+                    [v.reshape(-1) for v in per_group], columns=cols, index=df_out.index
+                )
+            else:
+                cells = np.empty(len(per_group), dtype=object)
+                for i, v in enumerate(per_group):
+                    cells[i] = v
+                block = pd.DataFrame({f"{prefix}-{stat}": cells}, index=df_out.index)
+            df_out = df_out.join(block)
         if "count" not in func:
             df_out = df_out.drop(columns=f"{prefix}-count")
     else:

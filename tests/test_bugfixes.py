@@ -269,3 +269,131 @@ def test_async_detected_from_dict_of_async_vfuncs():
     vset = Vset("s", {(Subkey("s", "s"),): AsyncVfunc("s", np.sum)})
     assert vset._async
     assert values(vset(x)) == [3.0]
+
+
+class TestArrayPerturbationStats:
+    def setup_method(self):
+        # two 3x2 "predict_proba" outputs in one group
+        self.df = pd.DataFrame(
+            {"g": ["a", "a"], "out": [np.zeros((3, 2)), np.ones((3, 2))]}
+        )
+
+    def test_split_flattens_2d_entries(self):
+        out = perturbation_stats(self.df, "g", split=True)
+        assert "out2_1-mean" in out.columns and "out0_0-std" in out.columns
+        assert out["out2_1-mean"].iloc[0] == 0.5
+
+    def test_tuple_group_keys(self):
+        df = self.df.assign(g=[("f", "C=1"), ("f", "C=1")])
+        out = perturbation_stats(df, "g")
+        assert len(out) == 1 and out["out-mean"].iloc[0].shape == (3, 2)
+
+    def test_predict_proba_with_uncertainty_grouped_by_model(self):
+        from sklearn.linear_model import LogisticRegression
+
+        rng = np.random.default_rng(0)
+        X, y = init_args([rng.normal(size=(20, 2)), [0, 1] * 10], names=["X", "y"])
+        boot = build_vset("boot", sklearn_resample, reps=2, seed=0)
+        Xb, yb = boot(X, y)
+        models = build_vset("model", LogisticRegression, param_dict={"C": [0.1, 1]})
+        models.fit(Xb, yb)
+        mean, std, _ = models.predict_proba(
+            X, with_uncertainty=True, group_by=["model"]
+        )
+        assert len(values(mean)) == 2
+
+    def test_unsupported_funcs_raise(self):
+        with pytest.raises(ValueError, match="supports only"):
+            perturbation_stats(self.df, "g", func=["mean", "max"])
+
+
+def sklearn_resample(*arrays, random_state=None):
+    from sklearn.utils import resample
+
+    return resample(*arrays, random_state=random_state)
+
+
+class TestBuildVsetNames:
+    def test_partials_of_one_function_are_kept_apart(self):
+        from functools import partial
+
+        def draw(X, n=1, random_state=None):
+            return n
+
+        vset = build_vset(
+            "d", [partial(draw, n=5), partial(draw, n=10)], reps=2, seed=0
+        )
+        assert len(vset) == 4
+
+    def test_distinct_configs_with_one_key_raise(self):
+        with pytest.raises(ValueError, match="share the key"):
+            build_vset(
+                "m", [lambda x, a: x + a, lambda x, a: x * a], param_dict={"a": [1]}
+            )
+        with pytest.raises(ValueError, match="share the key"):
+            build_vset("n", model, param_dict={"a": [1, "1"]})
+
+
+class TestCacheKeys:
+    def test_equal_copy_of_inputs_hits_the_cache(self, tmp_path):
+        import cloudpickle
+
+        log = str(tmp_path / "calls.txt")
+
+        def stage2(a):
+            with open(log, "a") as f:
+                f.write("x")
+            return a * 2
+
+        (x,) = init_args([np.array([1.0, 2.0])], names=["x"])
+        out1 = Vset("s1", [lambda a: a + 1], vfunc_keys=["p"])(x)
+        v2 = Vset("s2", [stage2], vfunc_keys=["d"], cache_dir=str(tmp_path / "c"))
+        v2(out1)
+        # an output loaded back from a cache is an equal copy, not the object
+        v2(cloudpickle.loads(cloudpickle.dumps(out1)))
+        with open(log) as f:
+            assert f.read() == "x"
+
+    def test_edited_module_function_is_not_served_stale(self, tmp_path, monkeypatch):
+        import importlib
+
+        mod = tmp_path / "vflow_test_mod.py"
+        mod.write_text("def f(x):\n    return float(x.sum())\n")
+        monkeypatch.syspath_prepend(str(tmp_path))
+        m = importlib.import_module("vflow_test_mod")
+        (x,) = init_args([np.array([1.0, 2.0])], names=["x"])
+        cache = str(tmp_path / "c")
+        assert values(Vset("s", [m.f], vfunc_keys=["f"], cache_dir=cache)(x)) == [3.0]
+        mod.write_text("def f(x):\n    return float(x.sum()) * 100\n")
+        m = importlib.reload(m)
+        out = values(Vset("s", [m.f], vfunc_keys=["f"], cache_dir=cache)(x))
+        assert out == [300.0]
+
+
+def test_mlflow_metric_names_from_build_vset_keys(tmp_path):
+    from mlflow.tracking import MlflowClient
+
+    def score(x, scale=1):
+        return float(np.sum(x)) * scale
+
+    (x,) = init_args([np.array([1.0, 2.0])], names=["x"])
+    met = build_vset(
+        "met", score, param_dict={"scale": [1, 2]}, tracking_dir=str(tmp_path)
+    )
+    met(x)
+    (run,) = MlflowClient(tracking_uri=str(tmp_path)).search_runs([met._exp_id])
+    assert run.data.metrics == {"func_score_scale_1": 3.0, "func_score_scale_2": 6.0}
+    assert run.info.status == "FINISHED"
+
+
+def test_pipeline_run_with_a_fitted_step():
+    a = Vset("a", [np.abs], vfunc_keys=["abs"])
+    b = Vset("b", [np.sum], vfunc_keys=["sum"])
+    (x,) = init_args([np.array([-1.0, 2.0])], names=["x"])
+    a.fit(x)
+    assert values(PCSPipeline([a, b]).run(x)) == [3.0]
+
+
+def test_vfunc_keys_that_compare_equal_are_duplicates():
+    with pytest.raises(ValueError, match="unique"):
+        Vset("m", [np.sum, np.mean], vfunc_keys=[1, 1.0])

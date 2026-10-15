@@ -33,7 +33,9 @@ class PCSPipeline:
 
         A step that returns a tuple or list (e.g. one output dict per input)
         passes them on as separate positional arguments. `kwargs` go to every
-        step.
+        step. As when calling a Vset directly, a step given several inputs
+        splits its output into one dict per input; for a step that combines
+        its inputs into one output (e.g. a metric), pass `n_out=1`.
         """
         run_step_cached = self.memory.cache(_run_step)
         outputs = args
@@ -157,7 +159,7 @@ def build_graph(node, draw=True):
 
 
 def _run_step(step, *args, **kwargs):
-    if step._fitted:
-        return step.vfuncs, step
+    # always call the step: returning a fitted step's vfuncs would hand Vfunc
+    # objects, not outputs, to the next step (the pipeline cache avoids rework)
     outputs = step(*args, **kwargs)
     return outputs, step

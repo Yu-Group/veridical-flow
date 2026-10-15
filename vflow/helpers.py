@@ -48,11 +48,32 @@ def _key_origin(vset: Vset) -> str:
 
 
 def _func_name(f) -> str:
-    """A readable name for `f`: a function's __name__, the wrapped function's
-    for a functools.partial, the class name for a callable object."""
+    """A readable name for `f`: a function's __name__, the wrapped function
+    and its bound arguments for a functools.partial (so partials of one
+    function get distinct names), the class name for a callable object."""
     if isinstance(f, partial):
-        return _func_name(f.func)
+        bound = [repr(a) for a in f.args]
+        bound += [f"{k}={v!r}" for k, v in f.keywords.items()]
+        return f"{_func_name(f.func)}({', '.join(bound)})"
     return getattr(f, "__name__", None) or type(f).__name__
+
+
+def _same_config(a, b) -> bool:
+    """Whether two (func, param values) pairs from build_vset are the same."""
+    (fa, va), (fb, vb) = a, b
+    if fa is not fb or len(va) != len(vb):
+        return False
+    for x, y in zip(va, vb):
+        if x is y:
+            continue
+        if type(x) is not type(y):
+            return False
+        try:
+            if not bool(x == y):
+                return False
+        except (TypeError, ValueError):  # e.g. arrays, whose == is elementwise
+            return False
+    return True
 
 
 def _accepts_random_state(f) -> bool:
@@ -158,6 +179,9 @@ def build_vset(
 
     vfuncs = []
     vkeys = []
+    # (func, param values) behind each key, to tell a repeated configuration
+    # from distinct ones that happen to print the same
+    configs = []
 
     if seed is not None:
         if "random_state" in kwargs or any(
@@ -202,6 +226,7 @@ def build_vset(
                     vkeys.append((f"rep={i}",) + vkey_tup)
                 else:
                     vkeys.append(vkey_tup)
+                configs.append((f, tup))
                 rep_kwargs = dict(kwargs_dict)
                 if seed is not None:
                     rep_kwargs["random_state"] = next(seeds)
@@ -218,7 +243,19 @@ def build_vset(
         vkeys = None
     elif len(set(vkeys)) < len(vkeys):
         # overlapping param_dicts repeat a configuration; keep one vfunc per
-        # key (the last, as a dict would), in first-seen order
+        # key (the last, as a dict would), in first-seen order. Distinct
+        # configurations with the same key (two lambdas, partials of one
+        # function, 1 and "1") would be silently dropped, so refuse those.
+        first_config = {}
+        for key, config in zip(vkeys, configs):
+            seen = first_config.setdefault(key, config)
+            if not _same_config(seen, config):
+                raise ValueError(
+                    f"build_vset({name!r}): different functions or parameter "
+                    f"values share the key {key}; give the functions distinct "
+                    "names (e.g. with def instead of lambda or partial) and use "
+                    "parameter values that print differently"
+                )
         merged = dict(zip(vkeys, vfuncs))
         vkeys, vfuncs = list(merged.keys()), list(merged.values())
 

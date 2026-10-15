@@ -75,7 +75,7 @@ class TestSeeding:
         vset = build_vset(
             "boot", partial(resample, replace=True), param_dict={"n_samples": [5]}
         )
-        assert next(iter(vset.vfuncs))[0].value[0] == "func=resample"
+        assert next(iter(vset.vfuncs))[0].value[0] == "func=resample(replace=True)"
 
         class Scale:
             def __call__(self, X, factor=1):

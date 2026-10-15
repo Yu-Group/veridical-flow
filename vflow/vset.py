@@ -3,9 +3,13 @@ Function arguments are each a list
 """
 
 import hashlib
+import inspect
 import os
+import re
+import types
 import warnings
 from copy import deepcopy
+from functools import partial
 
 import joblib
 import numpy as np
@@ -117,13 +121,14 @@ class Vset:
                 assert len(vfuncs) == len(
                     vfunc_keys
                 ), "vfuncs list and vfunc_keys list do not have the same length"
-                if len(set(map(repr, vfunc_keys))) < len(vfunc_keys):
-                    raise ValueError(
-                        f"vfunc_keys must be unique; duplicates would silently "
-                        f"drop vfuncs: {vfunc_keys}"
-                    )
                 # TODO: how best to handle tuple subkeys?
                 vfunc_keys = [(self.__create_subkey(k),) for k in vfunc_keys]
+                # compare as the dict below will (1 and 1.0 are one key)
+                if len(dict.fromkeys(vfunc_keys)) < len(vfunc_keys):
+                    raise ValueError(
+                        f"vfunc_keys must be unique; duplicates would silently "
+                        f"drop vfuncs: {[k[0].value for k in vfunc_keys]}"
+                    )
             else:
                 vfunc_keys = [
                     (self.__create_subkey(f"{name}_{i}"),) for i in range(len(vfuncs))
@@ -172,9 +177,7 @@ class Vset:
             # serve stale results, and it cannot hash lambdas at all. Key the
             # cache on the functions' code and the inputs instead.
             try:
-                cache_key = hashlib.sha256(
-                    cloudpickle.dumps((out_dict, self._async, self._lazy, args))
-                ).hexdigest()
+                cache_key = _cache_key(out_dict, self._async, self._lazy, args)
             except Exception as e:  # noqa: BLE001 - fall back to no caching
                 warnings.warn(
                     f"Vset {self.name!r}: could not fingerprint the inputs for "
@@ -198,36 +201,40 @@ class Vset:
 
         if self._mlflow is not None:
             run_dict = {}
-            # log subkeys as params and value as metric
-            for k, v in out_dict.items():
-                # only numeric scalars are metrics; fitted models, predictions
-                # and lazy promises are not logged
-                if k == PREV_KEY or not _is_numeric_scalar(v):
-                    continue
-                origins = np.array([subk.origin for subk in k])
-                # ignore init origins and the last origin (this Vset)
-                param_idx = [i for i in range(len(k[:-1])) if origins[i] != "init"]
-                # get or create mlflow run
-                run_dict_key = tuple(subk.value for subk in k[:-1])
-                if run_dict_key in run_dict:
-                    run_id = run_dict[run_dict_key]
-                else:
-                    run = self._mlflow.create_run(self._exp_id)
-                    run_id = run.info.run_id
-                    run_dict[run_dict_key] = run_id
-                    # log params
-                    for idx in param_idx:
-                        subkey = k[idx]
-                        param_name = subkey.origin
-                        # check if the origin occurs multiple times
-                        if np.sum(origins == param_name) > 1:
-                            occurence = np.sum(origins[:idx] == param_name)
-                            param_name = param_name + str(occurence)
-                        self._mlflow.log_param(run_id, param_name, subkey.value)
-                self._mlflow.log_metric(run_id, k[-1].value, float(v))
-            # close the runs, or they stay RUNNING forever
-            for run_id in run_dict.values():
-                self._mlflow.set_terminated(run_id)
+            try:
+                # log subkeys as params and value as metric
+                for k, v in out_dict.items():
+                    # only numeric scalars are metrics; fitted models, predictions
+                    # and lazy promises are not logged
+                    if k == PREV_KEY or not _is_numeric_scalar(v):
+                        continue
+                    origins = np.array([subk.origin for subk in k])
+                    # ignore init origins and the last origin (this Vset)
+                    param_idx = [i for i in range(len(k[:-1])) if origins[i] != "init"]
+                    # get or create mlflow run
+                    # Subkeys compare by value and origin, so equal values
+                    # from different Vsets get their own runs
+                    run_dict_key = k[:-1]
+                    if run_dict_key in run_dict:
+                        run_id = run_dict[run_dict_key]
+                    else:
+                        run = self._mlflow.create_run(self._exp_id)
+                        run_id = run.info.run_id
+                        run_dict[run_dict_key] = run_id
+                        # log params
+                        for idx in param_idx:
+                            subkey = k[idx]
+                            param_name = subkey.origin
+                            # check if the origin occurs multiple times
+                            if np.sum(origins == param_name) > 1:
+                                occurence = np.sum(origins[:idx] == param_name)
+                                param_name = param_name + str(occurence)
+                            self._mlflow.log_param(run_id, param_name, subkey.value)
+                    self._mlflow.log_metric(run_id, _metric_name(k[-1].value), float(v))
+            finally:
+                # close the runs, even if logging fails, or they stay RUNNING
+                for run_id in run_dict.values():
+                    self._mlflow.set_terminated(run_id)
         return out_dict
 
     def fit(self, *args):
@@ -354,11 +361,69 @@ class Vset:
         return Subkey(value, self.name, self._output_matching)
 
 
+def _metric_name(value) -> str:
+    """An MLflow metric name for a subkey value: build_vset keys are tuples
+    like ('func=score', 'scale=1'), and MLflow allows only letters, digits,
+    and _ - . / : and spaces."""
+    if isinstance(value, tuple):
+        value = "_".join(map(str, value))
+    return re.sub(r"[^\w\-./: ]", "_", str(value))
+
+
 def _is_numeric_scalar(v) -> bool:
     """Whether `v` can be logged as an MLflow metric."""
     return isinstance(v, (int, float, np.integer, np.floating)) and not isinstance(
         v, bool
     )
+
+
+def _cache_key(out_dict: dict, is_async: bool, lazy: bool, args: tuple) -> str:
+    """A fingerprint of the vfuncs in `out_dict` and the data in `args`.
+
+    The data is hashed with joblib, which hashes by value: a cloudpickle of it
+    would change with object identity (an output loaded back from the cache
+    is an equal copy that shares objects differently), so downstream Vsets
+    would miss the cache. The lineage entry (PREV_KEY) holds Vset objects, not
+    data, and is left out. The vfuncs are pickled with cloudpickle, which
+    pickles lambdas and functions defined in __main__ by value; functions from
+    importable modules are pickled by reference, so their source is added.
+    """
+    data = tuple(
+        {k: v for k, v in a.items() if k != PREV_KEY} if isinstance(a, dict) else a
+        for a in args
+    )
+    try:
+        data_hash = joblib.hash(data)
+    except Exception:  # noqa: BLE001 - e.g. lazy promises holding lambdas
+        data_hash = hashlib.sha256(cloudpickle.dumps(data)).hexdigest()
+    h = hashlib.sha256(cloudpickle.dumps((out_dict, is_async, lazy)))
+    h.update(data_hash.encode())
+    for source in _function_sources(out_dict.values()):
+        h.update(source.encode())
+    return h.hexdigest()
+
+
+def _function_sources(objs) -> list:
+    """Source code of the Python functions reachable from `objs` (unwrapping
+    Vfuncs, bound methods and partials), in a deterministic order."""
+    sources, seen, stack = [], set(), list(objs)[::-1]
+    while stack:
+        obj = stack.pop()
+        if id(obj) in seen:
+            continue
+        seen.add(id(obj))
+        if isinstance(obj, (Vfunc, AsyncVfunc)):
+            stack.append(obj.vfunc)
+        elif isinstance(obj, types.MethodType):
+            stack += [obj.__self__, obj.__func__]
+        elif isinstance(obj, partial):
+            stack += [*obj.keywords.values(), *obj.args, obj.func]
+        elif isinstance(obj, types.FunctionType):
+            try:
+                sources.append(inspect.getsource(obj))
+            except (OSError, TypeError):  # no source file, e.g. in a REPL
+                pass
+    return sources
 
 
 def _apply_func_cached(
