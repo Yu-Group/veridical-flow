@@ -66,11 +66,24 @@ def duration(seconds):
     return f"{h}h{m:02d}m" if h else f"{m}m{s:02d}s" if m else f"{s}s"
 
 
+def glyphs(stream=None):
+    """Block characters for the bar where the output can show them, plain ASCII
+    where it cannot (a Windows console or pipe defaults to cp1252, which has no
+    block characters, and printing one there would crash)."""
+    encoding = getattr(stream or sys.stdout, "encoding", None) or "ascii"
+    try:
+        "█░·".encode(encoding)
+        return "█", "░", "·"
+    except (UnicodeEncodeError, LookupError):
+        return "#", "-", "|"
+
+
 def bar(st, width=24):
+    full, empty, sep = glyphs()
     done = st["answered"] + st["unusable"]
     filled = round(width * done / st["total"]) if st["total"] else width
     parts = [
-        f"[{'█' * filled}{'░' * (width - filled)}]",
+        f"[{full * filled}{empty * (width - filled)}]",
         f"{st['answered']}/{st['total']} answered ({100 * done // max(st['total'], 1)}%)",
     ]
     if st["unusable"]:
@@ -84,7 +97,7 @@ def bar(st, width=24):
         parts.append("done: run summarize.py")
     elif st["eta_s"] is not None:
         parts.append(f"ETA ~{duration(st['eta_s'])}")
-    return " · ".join([parts[0] + " " + parts[1]] + parts[2:])
+    return f" {sep} ".join([parts[0] + " " + parts[1]] + parts[2:])
 
 
 def main(argv=None):

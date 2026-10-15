@@ -526,7 +526,7 @@ class TestHelpers:
         assert_equal(idx0[1], [0, 1, 2])
 
     def test_filter_vset_by_metric(self):
-        X, y = make_classification(n_samples=100, n_features=5)
+        X, y = make_classification(n_samples=100, n_features=5, random_state=13)
         X_train, X_test, y_train, y_test = train_test_split(
             X, y, random_state=42
         )  # ex. with another split?
@@ -549,6 +549,7 @@ class TestHelpers:
             name="DT",
             func=DecisionTreeClassifier,
             param_dict={"criterion": ["gini", "entropy", "log_loss"]},
+            random_state=0,
         )
         dt_set.fit(X_trains, y_trains)
         preds_test = dt_set.predict(X_test)
@@ -571,10 +572,12 @@ class TestHelpers:
             group=False,
         )
 
+        # entropy and log_loss are the same criterion in sklearn, so the best
+        # score is often tied; the filter may keep any configuration that reaches it
         df_bal_acc = df[df["hard_metrics"] == "Bal_Acc"]
-        top_DT = df_bal_acc[df_bal_acc["out"] == df_bal_acc["out"].max()]["DT"].iloc[0]
+        top_DTs = set(df_bal_acc[df_bal_acc["out"] == df_bal_acc["out"].max()]["DT"])
         subkey = next(iter(filtered_dt_set.vfuncs.keys()))[0].value
-        assert top_DT == subkey
+        assert subkey in top_DTs
 
         filtered_dt_set = filter_vset_by_metric(
             metric_dict=hard_metrics,
@@ -586,6 +589,6 @@ class TestHelpers:
 
         df_acc = df[df["hard_metrics"] == "Acc"]
         df_acc_mean = df_acc.groupby("DT").mean(numeric_only=True)
-        top_DT = df_acc_mean[df_acc_mean["out"] == df_acc_mean["out"].max()].index[0]
+        top_DTs = set(df_acc_mean[df_acc_mean["out"] == df_acc_mean["out"].max()].index)
         subkey = next(iter(filtered_dt_set.vfuncs.keys()))[0].value
-        assert top_DT == subkey
+        assert subkey in top_DTs

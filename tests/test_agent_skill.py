@@ -3,6 +3,7 @@
 
 import csv
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -229,6 +230,22 @@ class TestProgress:
         assert (
             ws[5].name not in pending
         ), "a workspace in progress is not handed out again"
+
+    def test_ascii_only_output(self, tmp_path):
+        # a Windows console or pipe defaults to cp1252, which has no block
+        # characters; the bar must fall back to ASCII rather than crash
+        runs = prepare(tmp_path, runs=1, perturbations="none")
+        env = {**os.environ, "PYTHONIOENCODING": "cp1252"}
+        out = subprocess.run(
+            [sys.executable, str(SCRIPTS / "progress.py"), str(runs)],
+            capture_output=True,
+            text=True,
+            encoding="cp1252",
+            env=env,
+            check=False,
+        )
+        assert out.returncode == 0, out.stderr
+        assert out.stdout.startswith("[" + "-" * 24 + "] 0/2 answered (0%) | ")
 
     def test_complete_and_early_summary(self, tmp_path):
         runs = prepare(tmp_path, runs=1, perturbations="none")
