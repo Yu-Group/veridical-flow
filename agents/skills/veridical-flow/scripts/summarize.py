@@ -167,6 +167,20 @@ def main(argv=None):
     }
     (root / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
 
+    # runs an analyst has started but not finished would be counted as missing
+    unfinished = [
+        w["id"]
+        for w in manifest["workspaces"]
+        if not (root / w["id"] / "conclusion.json").exists()
+        and any(
+            p.name not in ("data.csv", "brief.md") for p in (root / w["id"]).iterdir()
+        )
+    ]
+    if unfinished:
+        print(
+            f"Warning: {len(unfinished)} run(s) look unfinished and count as missing below. "
+            "Check progress.py and rerun this once they are in."
+        )
     print(f"Question: {manifest['question']}")
     print(f"{'perturbation':<18}{'real':>6}{'null':>6}{'p':>8}{'overlap':>9}  verdict")
     for name, c in list(per.items()) + [("pooled", pooled)]:

@@ -185,6 +185,65 @@ class TestPrepare:
         assert bad.returncode != 0 and "unknown perturbations" in bad.stderr
 
 
+class TestProgress:
+    def progress(self, runs, *args):
+        out = run("progress.py", runs, *args)
+        assert out.returncode == 0, out.stderr
+        return out.stdout
+
+    def test_fresh_run(self, tmp_path):
+        runs = prepare(tmp_path, runs=2, perturbations="none,lead_yes")
+        line = self.progress(runs)
+        assert "0/8 answered (0%)" in line and "8 not started" in line
+        assert "ETA" not in line, "no runs finished yet, so no rate to extrapolate"
+        listed = self.progress(runs, "--pending", 3).splitlines()[-3:]
+        assert len(listed) == 3
+        assert all(
+            Path(p.strip()).is_dir() and Path(p.strip()).is_absolute() for p in listed
+        )
+
+    def test_counts_and_eta(self, tmp_path):
+        runs = prepare(tmp_path, runs=3, perturbations="none,lead_yes")
+        ws = sorted(p for p in runs.iterdir() if p.is_dir())
+        for w in ws[:4]:
+            (w / "conclusion.json").write_text('{"answer": 70, "explanation": "x"}')
+        (ws[4] / "conclusion.json").write_text('{"answer": "maybe"}')  # unusable
+        (ws[5] / "analysis.py").write_text("print(1)")  # an analyst is working here
+        st = json.loads(self.progress(runs, "--json"))
+        assert (
+            st["answered"],
+            st["unusable"],
+            st["in_progress"],
+            st["not_started"],
+        ) == (
+            4,
+            1,
+            1,
+            6,
+        )
+        assert st["total"] == 12 and not st["complete"] and st["eta_s"] is not None
+        line = self.progress(runs)
+        assert "4/12 answered (41%)" in line and "1 in progress" in line
+        assert "ETA ~" in line
+        pending = self.progress(runs, "--pending", 50)
+        assert (
+            ws[5].name not in pending
+        ), "a workspace in progress is not handed out again"
+
+    def test_complete_and_early_summary(self, tmp_path):
+        runs = prepare(tmp_path, runs=1, perturbations="none")
+        ws = sorted(p for p in runs.iterdir() if p.is_dir())
+        (ws[0] / "notes.txt").write_text("working")
+        early = run("summarize.py", runs)
+        assert "look unfinished" in early.stdout
+        for w in ws:
+            (w / "conclusion.json").write_text('{"answer": 60}')
+        # with nothing left to wait for, --watch returns at once
+        line = self.progress(runs, "--watch", 1)
+        assert "2/2 answered (100%)" in line and "done: run summarize.py" in line
+        assert "look unfinished" not in run("summarize.py", runs).stdout
+
+
 class TestSummarize:
     def test_honest_analyst_gets_stable_yes(self, tmp_path):
         runs = prepare(tmp_path, runs=3)

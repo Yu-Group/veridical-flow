@@ -20,8 +20,10 @@ idea behind veridical-flow, applied to the agent itself:
   question that leans toward one answer.
 
 The workflow: write blinded workspaces, have independent analysts fill them,
-then score the answers. Two bundled scripts (standard-library Python) handle
-the parts that must be exact; you do the orchestration and the reporting.
+then score the answers. Three bundled scripts (standard-library Python) handle
+the parts that must be exact: `prepare.py` writes the workspaces,
+`progress.py` tracks them, and `summarize.py` scores them. You do the
+orchestration and the reporting.
 
 ## 1. Frame the question
 
@@ -41,9 +43,12 @@ The count is `runs x perturbations x 2` (real and shuffled data):
 | Quick look | 3 | all 6 | 36 |
 | A result to report | 10 or more | all 6 | 120 or more |
 
-Tell the user the number of analyst runs and which model the analysts will use,
-and get their go-ahead before launching more than about 20. If they want it
-cheap, a smaller model for the analysts is fine; say which you used.
+Tell the user the number of analyst runs, which model the analysts will use and
+roughly how long it will take, and get their go-ahead before launching more
+than about 20. An analyst run usually takes one to a few minutes, and runs in
+parallel batches, so 36 runs in batches of 8 is on the order of 10 to 20
+minutes. If they want it cheap, a smaller model for the analysts is fine; say
+which you used.
 
 ## 3. Write the workspaces
 
@@ -88,7 +93,32 @@ Independence and blinding are what make the comparison meaningful, so:
 A workspace with no usable `conclusion.json` is fine: it is counted as missing.
 Do not rerun it selectively or fill in an answer.
 
+### Keep the user posted
+
+A full run can take a while, and the user should never have to wonder whether
+it is moving. Work in batches and report after each one:
+
+```bash
+python3 <skill-dir>/scripts/progress.py vflow_runs --pending 8
+```
+
+```
+[██████████░░░░░░░░░░░░░░] 15/36 answered (41%) · 8 in progress · 13 not started · elapsed 6m40s · ETA ~9m
+```
+
+- `--pending 8` lists the next eight untouched workspaces (absolute paths) to
+  hand to the next batch of analysts, so nothing is dispatched twice.
+- After each batch, pass the progress line on to the user as it is, with one
+  sentence on what comes next. If your environment has a task or todo list,
+  track the batches there too.
+- For a long run the user wants to watch themselves, suggest
+  `python3 <skill-dir>/scripts/progress.py vflow_runs --watch 30` in their own
+  terminal; it redraws the bar until every run is in.
+
 ## 5. Score
+
+Score once `progress.py` reports every run answered. If you summarize earlier,
+`summarize.py` warns that unfinished runs are being counted as missing.
 
 ```bash
 python3 <skill-dir>/scripts/summarize.py vflow_runs

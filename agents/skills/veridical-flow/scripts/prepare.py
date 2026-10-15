@@ -16,6 +16,7 @@ import csv
 import json
 import random
 import sys
+import time
 from pathlib import Path
 
 PERTURBATIONS = {
@@ -158,6 +159,7 @@ def main(argv=None):
         "seed": a.seed,
         "runs_per_cell": a.runs,
         "perturbations": perts,
+        "created": time.time(),  # progress.py measures elapsed time and ETA from here
         "workspaces": [],
     }
     width = len(str(len(jobs)))
@@ -179,6 +181,7 @@ def main(argv=None):
         f"{len(jobs)} workspaces in {out}/ ({len(perts)} perturbations x real/null x {a.runs} runs)"
     )
     print(f"key: {out / 'manifest.json'} (do not show it to analysts)")
+    print(f"progress: python3 {Path(__file__).with_name('progress.py')} {out}")
 
 
 if __name__ == "__main__":

@@ -114,10 +114,12 @@ claude --plugin-dir agents
 > Use veridical-flow to check whether bmi affects target in diabetes.csv
 ```
 
-The skill bundles two standard-library scripts: `prepare.py` writes the
-blinded analyst workspaces and `summarize.py` scores the answers. Each
-workspace is a full agent analysis, so start small; the skill asks before
-launching more than about 20 analyst runs.
+The skill bundles three standard-library scripts: `prepare.py` writes the
+blinded analyst workspaces, `progress.py` shows a progress bar with elapsed
+time and an ETA while analysts work, and `summarize.py` scores the answers.
+Each workspace is a full agent analysis, so start small; the skill asks before
+launching more than about 20 analyst runs and reports progress after every
+batch.
 
 ## Installation
 
