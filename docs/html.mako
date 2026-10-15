@@ -402,7 +402,7 @@
   <style media="print">${css.print()}</style>
   <link rel="stylesheet" href="github.css">
   <link rel="stylesheet" href="style.css">
-  <link rel="icon" href="logo_vflow_straight.png">
+  <link rel="icon" type="image/png" href="favicon.png">
 
   % if google_analytics:
     <script>
@@ -443,7 +443,7 @@
   </a>
   <p id="site-tagline"><b>vflow</b> &middot; Stability analysis for data-science pipelines, with PCS.</p>
   <a href="index.html" id="site-logo">
-    <img src="logo_vflow_straight.png" alt="vflow">
+    <img src="vflow_logo.svg" alt="vflow">
   </a>
   <a href="https://github.com/Yu-Group/veridical-flow" class="nav-icon"
      aria-label="View source on GitHub" title="GitHub">

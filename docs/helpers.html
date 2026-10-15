@@ -14,7 +14,7 @@
 <style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
 <link rel="stylesheet" href="github.css">
 <link rel="stylesheet" href="style.css">
-<link rel="icon" href="logo_vflow_straight.png">
+<link rel="icon" type="image/png" href="favicon.png">
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
 <script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
 </head>
@@ -30,7 +30,7 @@ stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 </a>
 <p id="site-tagline"><b>vflow</b> &middot; Stability analysis for data-science pipelines, with PCS.</p>
 <a href="index.html" id="site-logo">
-<img src="logo_vflow_straight.png" alt="vflow">
+<img src="vflow_logo.svg" alt="vflow">
 </a>
 <a href="https://github.com/Yu-Group/veridical-flow" class="nav-icon"
 aria-label="View source on GitHub" title="GitHub">
@@ -102,11 +102,32 @@ def _key_origin(vset: Vset) -&gt; str:
 
 
 def _func_name(f) -&gt; str:
-    &#34;&#34;&#34;A readable name for `f`: a function&#39;s __name__, the wrapped function&#39;s
-    for a functools.partial, the class name for a callable object.&#34;&#34;&#34;
+    &#34;&#34;&#34;A readable name for `f`: a function&#39;s __name__, the wrapped function
+    and its bound arguments for a functools.partial (so partials of one
+    function get distinct names), the class name for a callable object.&#34;&#34;&#34;
     if isinstance(f, partial):
-        return _func_name(f.func)
+        bound = [repr(a) for a in f.args]
+        bound += [f&#34;{k}={v!r}&#34; for k, v in f.keywords.items()]
+        return f&#34;{_func_name(f.func)}({&#39;, &#39;.join(bound)})&#34;
     return getattr(f, &#34;__name__&#34;, None) or type(f).__name__
+
+
+def _same_config(a, b) -&gt; bool:
+    &#34;&#34;&#34;Whether two (func, param values) pairs from build_vset are the same.&#34;&#34;&#34;
+    (fa, va), (fb, vb) = a, b
+    if fa is not fb or len(va) != len(vb):
+        return False
+    for x, y in zip(va, vb):
+        if x is y:
+            continue
+        if type(x) is not type(y):
+            return False
+        try:
+            if not bool(x == y):
+                return False
+        except (TypeError, ValueError):  # e.g. arrays, whose == is elementwise
+            return False
+    return True
 
 
 def _accepts_random_state(f) -&gt; bool:
@@ -212,6 +233,9 @@ def build_vset(
 
     vfuncs = []
     vkeys = []
+    # (func, param values) behind each key, to tell a repeated configuration
+    # from distinct ones that happen to print the same
+    configs = []
 
     if seed is not None:
         if &#34;random_state&#34; in kwargs or any(
@@ -256,6 +280,7 @@ def build_vset(
                     vkeys.append((f&#34;rep={i}&#34;,) + vkey_tup)
                 else:
                     vkeys.append(vkey_tup)
+                configs.append((f, tup))
                 rep_kwargs = dict(kwargs_dict)
                 if seed is not None:
                     rep_kwargs[&#34;random_state&#34;] = next(seeds)
@@ -272,7 +297,19 @@ def build_vset(
         vkeys = None
     elif len(set(vkeys)) &lt; len(vkeys):
         # overlapping param_dicts repeat a configuration; keep one vfunc per
-        # key (the last, as a dict would), in first-seen order
+        # key (the last, as a dict would), in first-seen order. Distinct
+        # configurations with the same key (two lambdas, partials of one
+        # function, 1 and &#34;1&#34;) would be silently dropped, so refuse those.
+        first_config = {}
+        for key, config in zip(vkeys, configs):
+            seen = first_config.setdefault(key, config)
+            if not _same_config(seen, config):
+                raise ValueError(
+                    f&#34;build_vset({name!r}): different functions or parameter &#34;
+                    f&#34;values share the key {key}; give the functions distinct &#34;
+                    &#34;names (e.g. with def instead of lambda or partial) and use &#34;
+                    &#34;parameter values that print differently&#34;
+                )
         merged = dict(zip(vkeys, vfuncs))
         vkeys, vfuncs = list(merged.keys()), list(merged.values())
 
@@ -586,6 +623,9 @@ parameters determined by input keys.</dd>
 
     vfuncs = []
     vkeys = []
+    # (func, param values) behind each key, to tell a repeated configuration
+    # from distinct ones that happen to print the same
+    configs = []
 
     if seed is not None:
         if &#34;random_state&#34; in kwargs or any(
@@ -630,6 +670,7 @@ parameters determined by input keys.</dd>
                     vkeys.append((f&#34;rep={i}&#34;,) + vkey_tup)
                 else:
                     vkeys.append(vkey_tup)
+                configs.append((f, tup))
                 rep_kwargs = dict(kwargs_dict)
                 if seed is not None:
                     rep_kwargs[&#34;random_state&#34;] = next(seeds)
@@ -646,7 +687,19 @@ parameters determined by input keys.</dd>
         vkeys = None
     elif len(set(vkeys)) &lt; len(vkeys):
         # overlapping param_dicts repeat a configuration; keep one vfunc per
-        # key (the last, as a dict would), in first-seen order
+        # key (the last, as a dict would), in first-seen order. Distinct
+        # configurations with the same key (two lambdas, partials of one
+        # function, 1 and &#34;1&#34;) would be silently dropped, so refuse those.
+        first_config = {}
+        for key, config in zip(vkeys, configs):
+            seen = first_config.setdefault(key, config)
+            if not _same_config(seen, config):
+                raise ValueError(
+                    f&#34;build_vset({name!r}): different functions or parameter &#34;
+                    f&#34;values share the key {key}; give the functions distinct &#34;
+                    &#34;names (e.g. with def instead of lambda or partial) and use &#34;
+                    &#34;parameter values that print differently&#34;
+                )
         merged = dict(zip(vkeys, vfuncs))
         vkeys, vfuncs = list(merged.keys()), list(merged.values())
 

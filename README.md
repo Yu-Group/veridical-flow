@@ -1,6 +1,6 @@
 <header>
 <p align="center">
-	<img src="https://yu-group.github.io/veridical-flow/logo_vflow_straight.png" width="70%" alt="vflow logo"> 
+	<img src="https://yu-group.github.io/veridical-flow/vflow_logo.png" width="40%" alt="vflow logo"> 
 </p>
 
   

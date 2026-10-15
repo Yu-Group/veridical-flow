@@ -25,7 +25,7 @@ def drop(pattern, text, what):
 
 # the readme opens with a large centered logo, which the header bar now carries
 data = re.sub(
-    r'<p align="center">\s*<img src="https://yu-group.github.io/veridical-flow/logo_vflow_straight.png"[^>]*>\s*</p>',
+    r'<p align="center">\s*<img src="https://yu-group.github.io/veridical-flow/vflow_logo.png"[^>]*>\s*</p>',
     "",
     data,
     count=1,
