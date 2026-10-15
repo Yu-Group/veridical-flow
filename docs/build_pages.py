@@ -51,6 +51,8 @@ def shared_sidebar(index_html):
 def main():
     index_html = _read("index.html")
     header = shared_block(index_html, '<header id="site-header">', "</header>")
+    # the logo animation is for the home page only
+    header = header.replace('id="site-logo" class="animate"', 'id="site-logo"')
     sidebar = shared_sidebar(index_html)
     footer = shared_block(index_html, '<footer id="footer">', "</footer>")
     for name, (title, extra) in PAGES.items():

@@ -51,6 +51,10 @@ data = drop(
     "the package source toggle",
 )
 
+# animate the o of the header logo on the home page only (build_pages.py
+# removes the class again from the header it copies to the guides)
+data = data.replace('id="site-logo">', 'id="site-logo" class="animate">', 1)
+
 # The sidebar section headings pointed at those sections; keep them as plain
 # labels.
 data = re.sub(r'<h3><a href="#header-[a-z]+">(.*?)</a></h3>', r"<h3>\1</h3>", data)
