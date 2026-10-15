@@ -1,6 +1,6 @@
 <header>
 <p align="center">
-	<img src="https://yu-group.github.io/veridical-flow/logo_vflow_straight.png" width="70%" alt="vflow logo"> 
+	<img src="https://yu-group.github.io/veridical-flow/vflow_logo.png" width="40%" alt="vflow logo"> 
 </p>
 
   
@@ -43,7 +43,7 @@ from sklearn.metrics import accuracy_score, balanced_accuracy_score
 from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier
 
-from vflow import Vset, init_args
+from vflow import Vset, build_vset, init_args
 
 # initialize data
 X, y = make_classification()
@@ -52,10 +52,9 @@ X_train, X_test, y_train, y_test = init_args(
     names=["X_train", "X_test", "y_train", "y_test"],  # optionally name the args
 )
 
-# subsample data
-subsampling_funcs = [sklearn.utils.resample for _ in range(3)]
-subsampling_set = Vset(
-    name="subsampling", vfuncs=subsampling_funcs, output_matching=True
+# subsample data: 3 bootstrap samples, reproducible thanks to the seed
+subsampling_set = build_vset(
+    "subsampling", sklearn.utils.resample, reps=3, seed=0, output_matching=True
 )
 X_trains, y_trains = subsampling_set(X_train, y_train)
 

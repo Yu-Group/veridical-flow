@@ -14,7 +14,7 @@
 <style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
 <link rel="stylesheet" href="github.css">
 <link rel="stylesheet" href="style.css">
-<link rel="icon" href="logo_vflow_straight.png">
+<link rel="icon" type="image/png" href="favicon.png">
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
 <script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
 </head>
@@ -30,7 +30,7 @@ stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 </a>
 <p id="site-tagline"><b>vflow</b> &middot; Stability analysis for data-science pipelines, with PCS.</p>
 <a href="index.html" id="site-logo">
-<img src="logo_vflow_straight.png" alt="vflow">
+<img src="vflow_logo.svg" alt="vflow">
 </a>
 <a href="https://github.com/Yu-Group/veridical-flow" class="nav-icon"
 aria-label="View source on GitHub" title="GitHub">
@@ -283,20 +283,26 @@ def dict_to_df(d: dict, param_key=None):
                 df = df.join(param_df)
             else:
                 param_loc = df.columns.get_loc(param_key)
-                param_key_cols = [
-                    f&#34;{p.split(&#39;=&#39;)[0]}-{param_key}&#34; for p in param_keys[0]
-                ]
-                param_keys = [[s.split(&#34;=&#34;)[1] for s in t] for t in param_keys]
-                df = df.join(pd.DataFrame(param_keys)).drop(columns=param_key)
-                new_cols = df.columns[: len(cols) - 1].tolist() + param_key_cols
-                df = df.set_axis(new_cols, axis=1)
-                new_idx = list(range(len(new_cols)))
-                new_idx = (
-                    new_idx[:param_loc]
-                    + new_idx[len(cols) - 1 :]
-                    + new_idx[param_loc : len(cols) - 1]
+                # parse every row on its own: vfuncs built from different funcs
+                # can have different parameter names
+                rows = []
+                for t in param_keys:
+                    if isinstance(t, str) or not all(
+                        isinstance(s, str) and &#34;=&#34; in s for s in t
+                    ):
+                        raise ValueError(
+                            f&#34;param_key={param_key!r} needs keys that are tuples &#34;
+                            &#34;of &#39;name=value&#39; strings, as build_vset(param_dict=...) &#34;
+                            f&#34;makes; got {t!r}&#34;
+                        )
+                    # split on the first &#39;=&#39; only, so values may contain &#39;=&#39;
+                    rows.append(dict(s.split(&#34;=&#34;, 1) for s in t))
+                param_df = pd.DataFrame(rows, index=df.index)
+                param_df.columns = [f&#34;{c}-{param_key}&#34; for c in param_df.columns]
+                df = pd.concat(
+                    [df.iloc[:, :param_loc], param_df, df.iloc[:, param_loc + 1 :]],
+                    axis=1,
                 )
-                df = df.iloc[:, new_idx]
     return df
 
 
@@ -340,6 +346,11 @@ def perturbation_stats(
     &#34;&#34;&#34;
     if func is None:
         func = [&#34;count&#34;, &#34;mean&#34;, &#34;std&#34;]
+    if isinstance(func, str):
+        func = [func]
+    # for scalar outputs, columns are prefixed only when a prefix is asked for,
+    # so existing callers keep their column names
+    prefix_scalar_cols = prefix is not None
     if prefix is None:
         prefix = wrt
     if isinstance(data, dict):
@@ -355,47 +366,54 @@ def perturbation_stats(
         gb = df.groupby(group_by)[wrt]
     else:
         gb = df.groupby(lambda x: True)[wrt]
-    if (isinstance(func, list) and &#34;mean&#34; in func or &#34;std&#34; in func) and (
+    if (isinstance(func, list) and (&#34;mean&#34; in func or &#34;std&#34; in func)) and (
         type(df[wrt].iloc[0]) in [list, np.ndarray]
     ):
-        # iterate the groups (same order as gb.groups); get_group with a single
-        # group key changed meaning in pandas 3
+        unsupported = [f for f in func if f not in (&#34;count&#34;, &#34;mean&#34;, &#34;std&#34;)]
+        if unsupported:
+            raise ValueError(
+                f&#34;for list or array entries in {wrt!r}, func supports only &#34;
+                f&#34;&#39;count&#39;, &#39;mean&#39; and &#39;std&#39;; got {unsupported}&#34;
+            )
+        # iterating the groups gives the same order as gb.agg; get_group with
+        # a single group key changed meaning in pandas 3
         wrt_arrays = [np.stack(d.tolist()) for _, d in gb]
-        n_cols = wrt_arrays[0].shape[1]
         df_out = pd.DataFrame(gb.agg(&#34;count&#34;))
         df_out.columns = [f&#34;{prefix}-count&#34;]
-        if &#34;mean&#34; in func:
+        stats = {
+            &#34;mean&#34;: lambda arr: arr.mean(axis=0),
+            &#34;std&#34;: lambda arr: arr.std(axis=0, ddof=1),
+        }
+        for stat, compute in stats.items():
+            if stat not in func:
+                continue
+            per_group = [compute(arr) for arr in wrt_arrays]
+            # build on df_out&#39;s index: group keys may be tuples, which a fresh
+            # index would turn into a MultiIndex
             if split:
-                col_means = [arr.mean(axis=0) for arr in wrt_arrays]
-                wrt_means = pd.DataFrame(
-                    col_means,
-                    columns=[f&#34;{prefix}{i}-mean&#34; for i in range(n_cols)],
-                    index=gb.groups.keys(),
-                )
-            else:
-                col_means = [{f&#34;{prefix}-mean&#34;: arr.mean(axis=0)} for arr in wrt_arrays]
-                wrt_means = pd.DataFrame(col_means, index=gb.groups.keys())
-            wrt_means.index.names = df_out.index.names
-            df_out = df_out.join(wrt_means)
-        if &#34;std&#34; in func:
-            if split:
-                col_stds = [arr.std(axis=0, ddof=1) for arr in wrt_arrays]
-                wrt_stds = pd.DataFrame(
-                    col_stds,
-                    columns=[f&#34;{prefix}{i}-std&#34; for i in range(n_cols)],
-                    index=gb.groups.keys(),
-                )
-            else:
-                col_stds = [
-                    {f&#34;{prefix}-std&#34;: arr.std(axis=0, ddof=1)} for arr in wrt_arrays
+                # one column per entry position: out0-mean, ... for 1-D entries,
+                # out0_1-mean, ... for 2-D entries such as predict_proba output
+                cols = [
+                    f&#34;{prefix}{&#39;_&#39;.join(map(str, ix))}-{stat}&#34;
+                    for ix in np.ndindex(per_group[0].shape)
                 ]
-                wrt_stds = pd.DataFrame(col_stds, index=gb.groups.keys())
-            wrt_stds.index.names = df_out.index.names
-            df_out = df_out.join(wrt_stds)
+                block = pd.DataFrame(
+                    [v.reshape(-1) for v in per_group], columns=cols, index=df_out.index
+                )
+            else:
+                cells = np.empty(len(per_group), dtype=object)
+                for i, v in enumerate(per_group):
+                    cells[i] = v
+                block = pd.DataFrame({f&#34;{prefix}-{stat}&#34;: cells}, index=df_out.index)
+            df_out = df_out.join(block)
         if &#34;count&#34; not in func:
-            df_out = df_out.drop(f&#34;{prefix}-count&#34;)
+            df_out = df_out.drop(columns=f&#34;{prefix}-count&#34;)
     else:
         df_out = gb.agg(func)
+        if isinstance(df_out, pd.Series):  # a single callable gives a Series
+            df_out = df_out.to_frame(getattr(func, &#34;__name__&#34;, wrt))
+        if prefix_scalar_cols:
+            df_out.columns = [f&#34;{prefix}-{c}&#34; for c in df_out.columns]
     df_out = df_out.reindex(sorted(df_out.columns), axis=1)
     df_out.reset_index(inplace=True)
     if len(group_by) &gt; 0:
@@ -900,20 +918,26 @@ parameters in <code>param_key</code> if not None</p>
                 df = df.join(param_df)
             else:
                 param_loc = df.columns.get_loc(param_key)
-                param_key_cols = [
-                    f&#34;{p.split(&#39;=&#39;)[0]}-{param_key}&#34; for p in param_keys[0]
-                ]
-                param_keys = [[s.split(&#34;=&#34;)[1] for s in t] for t in param_keys]
-                df = df.join(pd.DataFrame(param_keys)).drop(columns=param_key)
-                new_cols = df.columns[: len(cols) - 1].tolist() + param_key_cols
-                df = df.set_axis(new_cols, axis=1)
-                new_idx = list(range(len(new_cols)))
-                new_idx = (
-                    new_idx[:param_loc]
-                    + new_idx[len(cols) - 1 :]
-                    + new_idx[param_loc : len(cols) - 1]
+                # parse every row on its own: vfuncs built from different funcs
+                # can have different parameter names
+                rows = []
+                for t in param_keys:
+                    if isinstance(t, str) or not all(
+                        isinstance(s, str) and &#34;=&#34; in s for s in t
+                    ):
+                        raise ValueError(
+                            f&#34;param_key={param_key!r} needs keys that are tuples &#34;
+                            &#34;of &#39;name=value&#39; strings, as build_vset(param_dict=...) &#34;
+                            f&#34;makes; got {t!r}&#34;
+                        )
+                    # split on the first &#39;=&#39; only, so values may contain &#39;=&#39;
+                    rows.append(dict(s.split(&#34;=&#34;, 1) for s in t))
+                param_df = pd.DataFrame(rows, index=df.index)
+                param_df.columns = [f&#34;{c}-{param_key}&#34; for c in param_df.columns]
+                df = pd.concat(
+                    [df.iloc[:, :param_loc], param_df, df.iloc[:, param_loc + 1 :]],
+                    axis=1,
                 )
-                df = df.iloc[:, new_idx]
     return df</code></pre>
 </details>
 </dd>
@@ -1028,6 +1052,11 @@ attempt to split the entries into multiple columns for the output.</dd>
     &#34;&#34;&#34;
     if func is None:
         func = [&#34;count&#34;, &#34;mean&#34;, &#34;std&#34;]
+    if isinstance(func, str):
+        func = [func]
+    # for scalar outputs, columns are prefixed only when a prefix is asked for,
+    # so existing callers keep their column names
+    prefix_scalar_cols = prefix is not None
     if prefix is None:
         prefix = wrt
     if isinstance(data, dict):
@@ -1043,47 +1072,54 @@ attempt to split the entries into multiple columns for the output.</dd>
         gb = df.groupby(group_by)[wrt]
     else:
         gb = df.groupby(lambda x: True)[wrt]
-    if (isinstance(func, list) and &#34;mean&#34; in func or &#34;std&#34; in func) and (
+    if (isinstance(func, list) and (&#34;mean&#34; in func or &#34;std&#34; in func)) and (
         type(df[wrt].iloc[0]) in [list, np.ndarray]
     ):
-        # iterate the groups (same order as gb.groups); get_group with a single
-        # group key changed meaning in pandas 3
+        unsupported = [f for f in func if f not in (&#34;count&#34;, &#34;mean&#34;, &#34;std&#34;)]
+        if unsupported:
+            raise ValueError(
+                f&#34;for list or array entries in {wrt!r}, func supports only &#34;
+                f&#34;&#39;count&#39;, &#39;mean&#39; and &#39;std&#39;; got {unsupported}&#34;
+            )
+        # iterating the groups gives the same order as gb.agg; get_group with
+        # a single group key changed meaning in pandas 3
         wrt_arrays = [np.stack(d.tolist()) for _, d in gb]
-        n_cols = wrt_arrays[0].shape[1]
         df_out = pd.DataFrame(gb.agg(&#34;count&#34;))
         df_out.columns = [f&#34;{prefix}-count&#34;]
-        if &#34;mean&#34; in func:
+        stats = {
+            &#34;mean&#34;: lambda arr: arr.mean(axis=0),
+            &#34;std&#34;: lambda arr: arr.std(axis=0, ddof=1),
+        }
+        for stat, compute in stats.items():
+            if stat not in func:
+                continue
+            per_group = [compute(arr) for arr in wrt_arrays]
+            # build on df_out&#39;s index: group keys may be tuples, which a fresh
+            # index would turn into a MultiIndex
             if split:
-                col_means = [arr.mean(axis=0) for arr in wrt_arrays]
-                wrt_means = pd.DataFrame(
-                    col_means,
-                    columns=[f&#34;{prefix}{i}-mean&#34; for i in range(n_cols)],
-                    index=gb.groups.keys(),
-                )
-            else:
-                col_means = [{f&#34;{prefix}-mean&#34;: arr.mean(axis=0)} for arr in wrt_arrays]
-                wrt_means = pd.DataFrame(col_means, index=gb.groups.keys())
-            wrt_means.index.names = df_out.index.names
-            df_out = df_out.join(wrt_means)
-        if &#34;std&#34; in func:
-            if split:
-                col_stds = [arr.std(axis=0, ddof=1) for arr in wrt_arrays]
-                wrt_stds = pd.DataFrame(
-                    col_stds,
-                    columns=[f&#34;{prefix}{i}-std&#34; for i in range(n_cols)],
-                    index=gb.groups.keys(),
-                )
-            else:
-                col_stds = [
-                    {f&#34;{prefix}-std&#34;: arr.std(axis=0, ddof=1)} for arr in wrt_arrays
+                # one column per entry position: out0-mean, ... for 1-D entries,
+                # out0_1-mean, ... for 2-D entries such as predict_proba output
+                cols = [
+                    f&#34;{prefix}{&#39;_&#39;.join(map(str, ix))}-{stat}&#34;
+                    for ix in np.ndindex(per_group[0].shape)
                 ]
-                wrt_stds = pd.DataFrame(col_stds, index=gb.groups.keys())
-            wrt_stds.index.names = df_out.index.names
-            df_out = df_out.join(wrt_stds)
+                block = pd.DataFrame(
+                    [v.reshape(-1) for v in per_group], columns=cols, index=df_out.index
+                )
+            else:
+                cells = np.empty(len(per_group), dtype=object)
+                for i, v in enumerate(per_group):
+                    cells[i] = v
+                block = pd.DataFrame({f&#34;{prefix}-{stat}&#34;: cells}, index=df_out.index)
+            df_out = df_out.join(block)
         if &#34;count&#34; not in func:
-            df_out = df_out.drop(f&#34;{prefix}-count&#34;)
+            df_out = df_out.drop(columns=f&#34;{prefix}-count&#34;)
     else:
         df_out = gb.agg(func)
+        if isinstance(df_out, pd.Series):  # a single callable gives a Series
+            df_out = df_out.to_frame(getattr(func, &#34;__name__&#34;, wrt))
+        if prefix_scalar_cols:
+            df_out.columns = [f&#34;{prefix}-{c}&#34; for c in df_out.columns]
     df_out = df_out.reindex(sorted(df_out.columns), axis=1)
     df_out.reset_index(inplace=True)
     if len(group_by) &gt; 0:
@@ -1330,7 +1366,6 @@ attempt to split the entries into multiple columns for the output.</dd>
 <ul class="post-list">
 <li><a href="agents.html" title="PCS for analyses done by AI agents">vflow for agents</a><span class="post-tag" title="Claude Code plugin">new</span><span class="post-date">Oct '26</span></li>
 <li><a href="vflow-internals.html" title="Vset, Vfunc and Subkey">How vflow works internally</a><span class="post-date">'22</span></li>
-<li><a href="https://github.com/Yu-Group/veridical-flow/blob/master/docs/contributing.md" title="Contributing">Contributing</a></li>
 </ul>
 </li>
 <li><h3>Notebooks</h3>

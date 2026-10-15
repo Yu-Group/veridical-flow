@@ -296,7 +296,6 @@
       <ul class="post-list">
         <li><a href="agents.html" title="PCS for analyses done by AI agents">vflow for agents</a><span class="post-tag" title="Claude Code plugin">new</span><span class="post-date">Oct '26</span></li>
         <li><a href="vflow-internals.html" title="Vset, Vfunc and Subkey">How vflow works internally</a><span class="post-date">'22</span></li>
-        <li><a href="https://github.com/Yu-Group/veridical-flow/blob/master/docs/contributing.md" title="Contributing">Contributing</a></li>
       </ul>
     </li>
     <li><h3>Notebooks</h3>
@@ -403,7 +402,7 @@
   <style media="print">${css.print()}</style>
   <link rel="stylesheet" href="github.css">
   <link rel="stylesheet" href="style.css">
-  <link rel="icon" href="logo_vflow_straight.png">
+  <link rel="icon" type="image/png" href="favicon.png">
 
   % if google_analytics:
     <script>
@@ -444,7 +443,7 @@
   </a>
   <p id="site-tagline"><b>vflow</b> &middot; Stability analysis for data-science pipelines, with PCS.</p>
   <a href="index.html" id="site-logo">
-    <img src="logo_vflow_straight.png" alt="vflow">
+    <img src="vflow_logo.svg" alt="vflow">
   </a>
   <a href="https://github.com/Yu-Group/veridical-flow" class="nav-icon"
      aria-label="View source on GitHub" title="GitHub">

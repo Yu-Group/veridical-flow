@@ -28,16 +28,28 @@ class PCSPipeline:
         self.memory = joblib.Memory(location=cache_dir)
 
     def run(self, *args, **kwargs):
-        """Runs the pipeline"""
+        """Runs the pipeline: each step is called on the previous step's outputs
+        (the first on `args`), and the last step's outputs are returned.
+
+        A step that returns a tuple or list (e.g. one output dict per input)
+        passes them on as separate positional arguments. `kwargs` go to every
+        step. As when calling a Vset directly, a step given several inputs
+        splits its output into one dict per input; for a step that combines
+        its inputs into one output (e.g. a metric), pass `n_out=1`.
+        """
         run_step_cached = self.memory.cache(_run_step)
+        outputs = args
         for i, step in enumerate(self.steps):
             try:
                 step_name = step.name
             except AttributeError:
                 step_name = f"Step {i}"
             print(step_name)
-            _, fitted_step = run_step_cached(step, *args, **kwargs)
+            outputs, fitted_step = run_step_cached(step, *outputs, **kwargs)
             self.steps[i] = fitted_step
+            if not isinstance(outputs, (tuple, list)):
+                outputs = (outputs,)
+        return outputs[0] if len(outputs) == 1 else outputs
 
     def __getitem__(self, i):
         """Accesses ith step of pipeline"""
@@ -47,17 +59,20 @@ class PCSPipeline:
         return len(self.steps)
 
     def generate_names(self, as_pandas=True):
+        """Names for every combination of vfuncs across the steps: a DataFrame
+        with one column per step, or a list of tuples."""
         name_lists = []
-        if as_pandas:
-            for step in self.steps:
-                name_lists.append([f"{i}_{str(mod)[:8]}" for i, mod in enumerate(step)])
-            indexes = list(itertools.product(*name_lists))
-            return pd.DataFrame(indexes, columns=[step.name for step in self.steps])
         for step in self.steps:
+            # a Vset is not iterable; its vfuncs are
+            mods = list(step.vfuncs.values())
+            prefix = "" if as_pandas else f"{step.name}_"
             name_lists.append(
-                [f"{step.name}_{i}_{str(mod)[:8]}" for i, mod in enumerate(step)]
+                [f"{prefix}{i}_{str(mod)[:8]}" for i, mod in enumerate(mods)]
             )
-        return list(itertools.product(*name_lists))
+        indexes = list(itertools.product(*name_lists))
+        if as_pandas:
+            return pd.DataFrame(indexes, columns=[step.name for step in self.steps])
+        return indexes
 
 
 def build_graph(node, draw=True):
@@ -144,7 +159,7 @@ def build_graph(node, draw=True):
 
 
 def _run_step(step, *args, **kwargs):
-    if step._fitted:
-        return step.vfuncs, step
+    # always call the step: returning a fitted step's vfuncs would hand Vfunc
+    # objects, not outputs, to the next step (the pipeline cache avoids rework)
     outputs = step(*args, **kwargs)
     return outputs, step
