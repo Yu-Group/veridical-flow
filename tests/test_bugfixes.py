@@ -334,7 +334,42 @@ class TestBuildVsetNames:
             build_vset("n", model, param_dict={"a": [1, "1"]})
 
 
+CACHE_KEY_SCRIPT = """
+import numpy as np
+from vflow import Vset, init_args
+from vflow.vset import _cache_key
+
+
+def f(a):
+    return a + 1
+
+
+(x,) = init_args([np.array([1.0, 2.0])], names=["x"])
+vset = Vset("s", [f], vfunc_keys=["f"])
+print(_cache_key(vset.vfuncs, False, False, (x,)))
+"""
+
+
 class TestCacheKeys:
+    def test_key_is_the_same_in_a_new_session(self, tmp_path):
+        # a notebook's functions live in a file named per kernel; the same
+        # code run from a different file must give the same key
+        import subprocess
+        import sys
+
+        keys = []
+        for name in ("kernel_a.py", "kernel_b.py"):
+            script = tmp_path / name
+            script.write_text(CACHE_KEY_SCRIPT)
+            run = subprocess.run(
+                [sys.executable, str(script)],
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+            keys.append(run.stdout.strip().splitlines()[-1])
+        assert keys[0] == keys[1]
+
     def test_equal_copy_of_inputs_hits_the_cache(self, tmp_path):
         import cloudpickle
 

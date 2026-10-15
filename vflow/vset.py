@@ -371,17 +371,23 @@ def _cache_key(out_dict: dict, is_async: bool, lazy: bool, args: tuple) -> str:
     would change with object identity (an output loaded back from the cache
     is an equal copy that shares objects differently), so downstream Vsets
     would miss the cache. The lineage entry (PREV_KEY) holds Vset objects, not
-    data, and is left out. The vfuncs are pickled with cloudpickle, which
-    pickles lambdas and functions defined in __main__ by value; functions from
-    importable modules are pickled by reference, so their source is added.
+    data, and is left out.
+
+    The vfuncs are also hashed with joblib, which refers to named functions
+    by module and name, so the key is the same in a new session (cloudpickle
+    would store a notebook function's code with its per-kernel file name).
+    Lambdas and local functions cannot be referred to by name and fall back to
+    cloudpickle, which pickles them by value. The source of every function is
+    added, so redefining or editing one changes the key.
     """
     data = tuple({k: v for k, v in a.items() if k != PREV_KEY} for a in args)
-    try:
-        data_hash = joblib.hash(data)
-    except Exception:  # noqa: BLE001 - e.g. lazy promises holding lambdas
-        data_hash = hashlib.sha256(cloudpickle.dumps(data)).hexdigest()
-    h = hashlib.sha256(cloudpickle.dumps((out_dict, is_async, lazy)))
-    h.update(data_hash.encode())
+    h = hashlib.sha256()
+    for part in (data, (out_dict, is_async, lazy)):
+        try:
+            part_hash = joblib.hash(part)
+        except Exception:  # noqa: BLE001 - e.g. lambdas, lazy promises
+            part_hash = hashlib.sha256(cloudpickle.dumps(part)).hexdigest()
+        h.update(part_hash.encode())
     for source in _function_sources(out_dict.values()):
         h.update(source.encode())
     return h.hexdigest()
