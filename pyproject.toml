@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "vflow"
-version = "0.1.4"
+version = "1.0.0"
 authors = [
   { name="Chandan Singh", email="chandan_singh@berkeley.edu" },
   { name="James Duncan", email="jpduncan@berkeley.edu" },
@@ -19,7 +19,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 classifiers = [
   "Intended Audience :: Science/Research",
-  "Development Status :: 3 - Alpha",
+  "Development Status :: 5 - Production/Stable",
   "License :: OSI Approved :: MIT License",
   "Programming Language :: Python :: 3",
   "Topic :: Scientific/Engineering :: Artificial Intelligence",
@@ -49,9 +49,16 @@ allow-direct-references = true
 files = ["requirements.txt"]
 
 [tool.hatch.build.targets.sdist]
-exclude = [
-  "/.github",
-  "/notebooks",
+# the package, its tests and what the build needs; the docs site and the
+# notebooks (with their example data) live in the repo, not the sdist
+include = [
+  "/vflow",
+  "/tests",
+  "/agents",
+  "/requirements.txt",
+  "/README.md",
+  "/license.md",
+  "/citation.cff",
 ]
 
 [tool.hatch.build.targets.wheel]
