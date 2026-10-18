@@ -1,0 +1,1508 @@
+<title>Implementing PCS in real projects with veridical flow</title>
+<link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMjAgMTIwIiB3aWR0aD0iMTIwIiBoZWlnaHQ9IjEyMCIgcm9sZT0iaW1nIiBhcmlhLWxhYmVsPSJ2ZmxvdyI+PHRpdGxlPnZmbG93PC90aXRsZT48cGF0aCBkPSJNMCwtMTYuNzIgQzQuMTgsLTEwLjI2IDcuNiwtNS4zMTk5OTk5OTk5OTk5OTkgNy42LDAgQTcuNiw3LjYgMCAxIDEgLTcuNiwwIEMtNy42LC01LjMxOTk5OTk5OTk5OTk5OSAtNC4xOCwtMTAuMjYgMCwtMTYuNzIgWiIgZmlsbD0iIzJmODVlNyIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNjAuMCwyMC4wKSByb3RhdGUoLTkwLjApIi8+PHBhdGggZD0iTTAsLTE2LjcyIEM0LjE4LC0xMC4yNiA3LjYsLTUuMzE5OTk5OTk5OTk5OTk5IDcuNiwwIEE3LjYsNy42IDAgMSAxIC03LjYsMCBDLTcuNiwtNS4zMTk5OTk5OTk5OTk5OTkgLTQuMTgsLTEwLjI2IDAsLTE2LjcyIFoiIGZpbGw9IiMyZDljYzYiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDg4LjMsMzEuNykgcm90YXRlKC00NS4wKSIvPjxwYXRoIGQ9Ik0wLC0xNi43MiBDNC4xOCwtMTAuMjYgNy42LC01LjMxOTk5OTk5OTk5OTk5OSA3LjYsMCBBNy42LDcuNiAwIDEgMSAtNy42LDAgQy03LjYsLTUuMzE5OTk5OTk5OTk5OTk5IC00LjE4LC0xMC4yNiAwLC0xNi43MiBaIiBmaWxsPSIjMmJiM2E2IiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxMDAuMCw2MC4wKSByb3RhdGUoMC4wKSIvPjxwYXRoIGQ9Ik0wLC0xNi43MiBDNC4xOCwtMTAuMjYgNy42LC01LjMxOTk5OTk5OTk5OTk5OSA3LjYsMCBBNy42LDcuNiAwIDEgMSAtNy42LDAgQy03LjYsLTUuMzE5OTk5OTk5OTk5OTk5IC00LjE4LC0xMC4yNiAwLC0xNi43MiBaIiBmaWxsPSIjMmJiOGEwIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSg4OC4zLDg4LjMpIHJvdGF0ZSg0NS4wKSIvPjxwYXRoIGQ9Ik0wLC0xNi43MiBDNC4xOCwtMTAuMjYgNy42LC01LjMxOTk5OTk5OTk5OTk5OSA3LjYsMCBBNy42LDcuNiAwIDEgMSAtNy42LDAgQy03LjYsLTUuMzE5OTk5OTk5OTk5OTk5IC00LjE4LC0xMC4yNiAwLC0xNi43MiBaIiBmaWxsPSIjMmJiM2E2IiB0cmFuc2Zvcm09InRyYW5zbGF0ZSg2MC4wLDEwMC4wKSByb3RhdGUoOTAuMCkiLz48cGF0aCBkPSJNMCwtMTYuNzIgQzQuMTgsLTEwLjI2IDcuNiwtNS4zMTk5OTk5OTk5OTk5OTkgNy42LDAgQTcuNiw3LjYgMCAxIDEgLTcuNiwwIEMtNy42LC01LjMxOTk5OTk5OTk5OTk5OSAtNC4xOCwtMTAuMjYgMCwtMTYuNzIgWiIgZmlsbD0iIzJkOWNjNiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMzEuNyw4OC4zKSByb3RhdGUoMTM1LjApIi8+PHBhdGggZD0iTTAsLTE2LjcyIEM0LjE4LC0xMC4yNiA3LjYsLTUuMzE5OTk5OTk5OTk5OTk5IDcuNiwwIEE3LjYsNy42IDAgMSAxIC03LjYsMCBDLTcuNiwtNS4zMTk5OTk5OTk5OTk5OTkgLTQuMTgsLTEwLjI2IDAsLTE2LjcyIFoiIGZpbGw9IiMyZjg1ZTciIHRyYW5zZm9ybT0idHJhbnNsYXRlKDIwLjAsNjAuMCkgcm90YXRlKDE4MC4wKSIvPjxwYXRoIGQ9Ik0wLC0xNi43MiBDNC4xOCwtMTAuMjYgNy42LC01LjMxOTk5OTk5OTk5OTk5OSA3LjYsMCBBNy42LDcuNiAwIDEgMSAtNy42LDAgQy03LjYsLTUuMzE5OTk5OTk5OTk5OTk5IC00LjE4LC0xMC4yNiAwLC0xNi43MiBaIiBmaWxsPSIjMmY4MGVkIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgzMS43LDMxLjcpIHJvdGF0ZSgyMjUuMCkiLz48L3N2Zz4K">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap">
+<style>
+/* Layout: the original Google Slides deck rebuilt on a fixed 1920x1080 stage,
+   scaled to the window. Coordinates come from the deck's own export.
+   Single light theme on purpose: slides keep the deck's print look. */
+:root {
+  color-scheme: light;
+  --ink: #1E2A32;        /* titles, strong text            */
+  --body: #2B3640;       /* running text                   */
+  --slate: #4A5560;      /* secondary text, slate shapes   */
+  --muted: #6B6B6B;      /* footnotes                      */
+  --teal: #1F5FC4;       /* brand accent: deep logo blue   */
+  --tint: #E7EFFC;       /* pale blue panels               */
+  --rule: #DDDAD0;       /* card borders, dividers         */
+  --terra: #C2552F;      /* emphasis numbers, warnings     */
+  --grey: #8C8C8C;       /* connectors                     */
+  --paper: #FFFFFF;
+  --surround: #15191d;   /* outside the slide              */
+  --s1: #2F80ED;         /* demo series 1 (validated pair) */
+  --s2: #C2552F;         /* demo series 2                  */
+  --good: #0ca30c;
+  --warn: #fab219;
+  --serif: "Segoe UI", "Segoe UI Variable Text", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;   /* headings: same Segoe UI family as the body */
+  --sans: "Segoe UI", "Segoe UI Variable Text", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --mono: "Segoe UI Mono", "Cascadia Mono", Consolas, "Roboto Mono", ui-monospace, Menlo, monospace;
+}
+html, body { height: 100%; }
+body { margin: 0; background: var(--surround); color: var(--body); overflow: hidden; font-family: var(--sans); }
+#viewport { position: fixed; inset: 0; }
+#stage { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 0 0; background: var(--paper); overflow: hidden; }
+.slide { position: absolute; inset: 0; background: var(--paper); display: none; font-family: var(--sans); color: var(--body); font-size: 37.3px; }
+.slide.cur { display: block; }
+.slide.section { background: var(--teal); }
+/* the closing slide matches the section title slides: blue, with white text around white cards */
+#s25 { background: var(--teal); }
+#s25 .title, #s25 > .tb.b:not(.mono), #s25 .bul { color: #fff !important; }
+.a { position: absolute; box-sizing: border-box; margin: 0; }
+.tb { padding: 10px 18px; line-height: 1.2; }
+.ctr { display: flex; align-items: center; justify-content: center; text-align: center; flex-direction: column; }
+.vc { display: flex; flex-direction: column; justify-content: center; }
+.serif { font-family: var(--serif); font-weight: 700; }
+.b { font-weight: 700; }
+.mono { font-family: var(--mono); }
+.title { left: 67px; top: 91px; width: 1789px; padding: 6px 18px; font: 700 69.3px/1.2 var(--serif); color: var(--ink); text-wrap: balance; }
+.src { left: 67px; top: 965px; width: 1789px; font-size: 26.7px; color: var(--muted); padding: 10px 18px; }
+.card { background: var(--paper); border: 2px solid var(--rule); }
+.tint { background: var(--tint); }
+.teal { background: var(--teal); color: #fff; }
+.slatebg { background: var(--slate); color: #fff; }
+.pill { border-radius: 12px; }
+.code { background: #F3F5F9; border: 2px solid var(--rule); border-radius: 8px; }
+.codetext { font-family: var(--mono); color: var(--ink); white-space: pre; padding: 10px 18px; }
+.tok-kw { color: #1F5FC4; font-weight: 700; }   /* keywords: from, import, def ... */
+.tok-str { color: #A8452A; }                   /* strings */
+.tok-num { color: #8A5A00; }                   /* numbers */
+.tok-com { color: #646A71; font-style: italic; } /* comments */
+.tok-fn { color: #6E4BA8; }                    /* called functions and classes */
+.tok-arg { color: #4A5560; }                   /* keyword-argument names */
+/* animated terminal (slide a1) */
+.term { font-family: var(--mono); font-size: 21px; line-height: 1.45; color: var(--ink); overflow: hidden; white-space: pre; }
+.term .tl { min-height: 1.45em; }
+.term .t-user { color: #1F5FC4; font-weight: 700; }
+.term .t-mark { color: #1F5FC4; }
+.term .t-dim { color: #646A71; }
+.term .cursor { display: inline-block; width: 0.6em; height: 1.1em; margin-left: 2px; vertical-align: -0.15em; background: #1F5FC4; animation: blink 1s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+.phase { font: 600 24px var(--sans); color: var(--slate); padding: 6px 16px; border-radius: 999px; border: 2px solid var(--rule); background: #fff; }
+.phase.done { color: var(--teal); border-color: #BBD0F2; }
+.phase { cursor: pointer; }
+.phase.on { background: var(--teal); color: #fff; border-color: var(--teal); }
+.phase.on::before { content: ""; display: inline-block; width: .95em; height: .95em; margin-right: 10px; vertical-align: -.15em; background: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMjAgMTIwIiB3aWR0aD0iMTIwIiBoZWlnaHQ9IjEyMCIgcm9sZT0iaW1nIiBhcmlhLWxhYmVsPSJ2ZmxvdyI+PHRpdGxlPnZmbG93PC90aXRsZT48cGF0aCBkPSJNMCwtMTYuNzIgQzQuMTgsLTEwLjI2IDcuNiwtNS4zMTk5OTk5OTk5OTk5OTkgNy42LDAgQTcuNiw3LjYgMCAxIDEgLTcuNiwwIEMtNy42LC01LjMxOTk5OTk5OTk5OTk5OSAtNC4xOCwtMTAuMjYgMCwtMTYuNzIgWiIgZmlsbD0iI2ZmZmZmZiIgZmlsbC1vcGFjaXR5PSIwLjcwIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSg2MC4wLDIwLjApIHJvdGF0ZSgtOTAuMCkiLz48cGF0aCBkPSJNMCwtMTYuNzIgQzQuMTgsLTEwLjI2IDcuNiwtNS4zMTk5OTk5OTk5OTk5OTkgNy42LDAgQTcuNiw3LjYgMCAxIDEgLTcuNiwwIEMtNy42LC01LjMxOTk5OTk5OTk5OTk5OSAtNC4xOCwtMTAuMjYgMCwtMTYuNzIgWiIgZmlsbD0iI2ZmZmZmZiIgZmlsbC1vcGFjaXR5PSIwLjc0IiB0cmFuc2Zvcm09InRyYW5zbGF0ZSg4OC4zLDMxLjcpIHJvdGF0ZSgtNDUuMCkiLz48cGF0aCBkPSJNMCwtMTYuNzIgQzQuMTgsLTEwLjI2IDcuNiwtNS4zMTk5OTk5OTk5OTk5OTkgNy42LDAgQTcuNiw3LjYgMCAxIDEgLTcuNiwwIEMtNy42LC01LjMxOTk5OTk5OTk5OTk5OSAtNC4xOCwtMTAuMjYgMCwtMTYuNzIgWiIgZmlsbD0iI2ZmZmZmZiIgZmlsbC1vcGFjaXR5PSIwLjc5IiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxMDAuMCw2MC4wKSByb3RhdGUoMC4wKSIvPjxwYXRoIGQ9Ik0wLC0xNi43MiBDNC4xOCwtMTAuMjYgNy42LC01LjMxOTk5OTk5OTk5OTk5OSA3LjYsMCBBNy42LDcuNiAwIDEgMSAtNy42LDAgQy03LjYsLTUuMzE5OTk5OTk5OTk5OTk5IC00LjE4LC0xMC4yNiAwLC0xNi43MiBaIiBmaWxsPSIjZmZmZmZmIiBmaWxsLW9wYWNpdHk9IjAuODMiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDg4LjMsODguMykgcm90YXRlKDQ1LjApIi8+PHBhdGggZD0iTTAsLTE2LjcyIEM0LjE4LC0xMC4yNiA3LjYsLTUuMzE5OTk5OTk5OTk5OTk5IDcuNiwwIEE3LjYsNy42IDAgMSAxIC03LjYsMCBDLTcuNiwtNS4zMTk5OTk5OTk5OTk5OTkgLTQuMTgsLTEwLjI2IDAsLTE2LjcyIFoiIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC44NyIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNjAuMCwxMDAuMCkgcm90YXRlKDkwLjApIi8+PHBhdGggZD0iTTAsLTE2LjcyIEM0LjE4LC0xMC4yNiA3LjYsLTUuMzE5OTk5OTk5OTk5OTk5IDcuNiwwIEE3LjYsNy42IDAgMSAxIC03LjYsMCBDLTcuNiwtNS4zMTk5OTk5OTk5OTk5OTkgLTQuMTgsLTEwLjI2IDAsLTE2LjcyIFoiIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC45MSIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMzEuNyw4OC4zKSByb3RhdGUoMTM1LjApIi8+PHBhdGggZD0iTTAsLTE2LjcyIEM0LjE4LC0xMC4yNiA3LjYsLTUuMzE5OTk5OTk5OTk5OTk5IDcuNiwwIEE3LjYsNy42IDAgMSAxIC03LjYsMCBDLTcuNiwtNS4zMTk5OTk5OTk5OTk5OTkgLTQuMTgsLTEwLjI2IDAsLTE2LjcyIFoiIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC45NiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMjAuMCw2MC4wKSByb3RhdGUoMTgwLjApIi8+PHBhdGggZD0iTTAsLTE2LjcyIEM0LjE4LC0xMC4yNiA3LjYsLTUuMzE5OTk5OTk5OTk5OTk5IDcuNiwwIEE3LjYsNy42IDAgMSAxIC03LjYsMCBDLTcuNiwtNS4zMTk5OTk5OTk5OTk5OTkgLTQuMTgsLTEwLjI2IDAsLTE2LjcyIFoiIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMS4wMCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMzEuNywzMS43KSByb3RhdGUoMjI1LjApIi8+PC9zdmc+Cg==) center / contain no-repeat; animation: vring 2.4s linear infinite; }
+@keyframes vring { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .phase.on::before { animation: none; } }
+/* the o of vflow in titles drawn as the logo's ring of drops; the letter stays for search and screen readers */
+.vw { white-space: nowrap; }
+/* the ring o makes one eased turn with a gentle swell as its slide comes on screen; on the title and
+   section slides it repeats after a rest. Turn and swell are separate properties so neither jerks at
+   the other's keyframes. */
+@keyframes vo-turn { 0% { rotate: 0deg; animation-timing-function: cubic-bezier(.65, 0, .35, 1); } 75%, 100% { rotate: 360deg; } }
+@keyframes vo-swell { 0% { scale: 1; animation-timing-function: cubic-bezier(.37, 0, .63, 1); } 37.5% { scale: 1.1; animation-timing-function: cubic-bezier(.37, 0, .63, 1); } 75%, 100% { scale: 1; } }
+.slide.cur .vo, .slide.cur .vspin { animation: vo-turn 3.2s .4s, vo-swell 3.2s .4s; will-change: rotate, scale; }
+#s1.cur .vspin, #s25.cur .vspin, .slide.section.cur .vo, .slide.section.cur .vspin { animation-iteration-count: infinite; }
+.slide.section.cur .vo, .slide.section.cur .vspin { animation-duration: 3.6s; }
+@media (prefers-reduced-motion: reduce) { .slide.cur .vo, .slide.cur .vspin { animation: none; } }
+.vo { display: inline-block; width: .66em; height: .66em; margin: 0 -.02em 0 .01em; vertical-align: -.08em; overflow: hidden; color: transparent; background: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMjAgMTIwIiB3aWR0aD0iMTIwIiBoZWlnaHQ9IjEyMCIgcm9sZT0iaW1nIiBhcmlhLWxhYmVsPSJ2ZmxvdyI+PHRpdGxlPnZmbG93PC90aXRsZT48cGF0aCBkPSJNMCwtMjUuMzAgQzYuMzMsLTE1LjUzIDExLjUwLC04LjA1IDExLjUwLDAgQTExLjUwLDExLjUwIDAgMSAxIC0xMS41MCwwIEMtMTEuNTAsLTguMDUgLTYuMzMsLTE1LjUzIDAsLTI1LjMwIFoiIGZpbGw9IiMyZjg1ZTciIHRyYW5zZm9ybT0idHJhbnNsYXRlKDYwLjAsMjIuMCkgcm90YXRlKC05MC4wKSIvPjxwYXRoIGQ9Ik0wLC0yNS4zMCBDNi4zMywtMTUuNTMgMTEuNTAsLTguMDUgMTEuNTAsMCBBMTEuNTAsMTEuNTAgMCAxIDEgLTExLjUwLDAgQy0xMS41MCwtOC4wNSAtNi4zMywtMTUuNTMgMCwtMjUuMzAgWiIgZmlsbD0iIzJkOWNjNiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoODYuOSwzMy4xKSByb3RhdGUoLTQ1LjApIi8+PHBhdGggZD0iTTAsLTI1LjMwIEM2LjMzLC0xNS41MyAxMS41MCwtOC4wNSAxMS41MCwwIEExMS41MCwxMS41MCAwIDEgMSAtMTEuNTAsMCBDLTExLjUwLC04LjA1IC02LjMzLC0xNS41MyAwLC0yNS4zMCBaIiBmaWxsPSIjMmJiM2E2IiB0cmFuc2Zvcm09InRyYW5zbGF0ZSg5OC4wLDYwLjApIHJvdGF0ZSgwLjApIi8+PHBhdGggZD0iTTAsLTI1LjMwIEM2LjMzLC0xNS41MyAxMS41MCwtOC4wNSAxMS41MCwwIEExMS41MCwxMS41MCAwIDEgMSAtMTEuNTAsMCBDLTExLjUwLC04LjA1IC02LjMzLC0xNS41MyAwLC0yNS4zMCBaIiBmaWxsPSIjMmJiOGEwIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSg4Ni45LDg2LjkpIHJvdGF0ZSg0NS4wKSIvPjxwYXRoIGQ9Ik0wLC0yNS4zMCBDNi4zMywtMTUuNTMgMTEuNTAsLTguMDUgMTEuNTAsMCBBMTEuNTAsMTEuNTAgMCAxIDEgLTExLjUwLDAgQy0xMS41MCwtOC4wNSAtNi4zMywtMTUuNTMgMCwtMjUuMzAgWiIgZmlsbD0iIzJiYjNhNiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNjAuMCw5OC4wKSByb3RhdGUoOTAuMCkiLz48cGF0aCBkPSJNMCwtMjUuMzAgQzYuMzMsLTE1LjUzIDExLjUwLC04LjA1IDExLjUwLDAgQTExLjUwLDExLjUwIDAgMSAxIC0xMS41MCwwIEMtMTEuNTAsLTguMDUgLTYuMzMsLTE1LjUzIDAsLTI1LjMwIFoiIGZpbGw9IiMyZDljYzYiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDMzLjEsODYuOSkgcm90YXRlKDEzNS4wKSIvPjxwYXRoIGQ9Ik0wLC0yNS4zMCBDNi4zMywtMTUuNTMgMTEuNTAsLTguMDUgMTEuNTAsMCBBMTEuNTAsMTEuNTAgMCAxIDEgLTExLjUwLDAgQy0xMS41MCwtOC4wNSAtNi4zMywtMTUuNTMgMCwtMjUuMzAgWiIgZmlsbD0iIzJmODVlNyIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMjIuMCw2MC4wKSByb3RhdGUoMTgwLjApIi8+PHBhdGggZD0iTTAsLTI1LjMwIEM2LjMzLC0xNS41MyAxMS41MCwtOC4wNSAxMS41MCwwIEExMS41MCwxMS41MCAwIDEgMSAtMTEuNTAsMCBDLTExLjUwLC04LjA1IC02LjMzLC0xNS41MyAwLC0yNS4zMCBaIiBmaWxsPSIjMmY4MGVkIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgzMy4xLDMzLjEpIHJvdGF0ZSgyMjUuMCkiLz48L3N2Zz4K) center / contain no-repeat; }
+.slide.section .vo { background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMjAgMTIwIiB3aWR0aD0iMTIwIiBoZWlnaHQ9IjEyMCIgcm9sZT0iaW1nIiBhcmlhLWxhYmVsPSJ2ZmxvdyI+PHRpdGxlPnZmbG93PC90aXRsZT48cGF0aCBkPSJNMCwtMjUuMzAgQzYuMzMsLTE1LjUzIDExLjUwLC04LjA1IDExLjUwLDAgQTExLjUwLDExLjUwIDAgMSAxIC0xMS41MCwwIEMtMTEuNTAsLTguMDUgLTYuMzMsLTE1LjUzIDAsLTI1LjMwIFoiIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC43MCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNjAuMCwyMi4wKSByb3RhdGUoLTkwLjApIi8+PHBhdGggZD0iTTAsLTI1LjMwIEM2LjMzLC0xNS41MyAxMS41MCwtOC4wNSAxMS41MCwwIEExMS41MCwxMS41MCAwIDEgMSAtMTEuNTAsMCBDLTExLjUwLC04LjA1IC02LjMzLC0xNS41MyAwLC0yNS4zMCBaIiBmaWxsPSIjZmZmZmZmIiBmaWxsLW9wYWNpdHk9IjAuNzQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDg2LjksMzMuMSkgcm90YXRlKC00NS4wKSIvPjxwYXRoIGQ9Ik0wLC0yNS4zMCBDNi4zMywtMTUuNTMgMTEuNTAsLTguMDUgMTEuNTAsMCBBMTEuNTAsMTEuNTAgMCAxIDEgLTExLjUwLDAgQy0xMS41MCwtOC4wNSAtNi4zMywtMTUuNTMgMCwtMjUuMzAgWiIgZmlsbD0iI2ZmZmZmZiIgZmlsbC1vcGFjaXR5PSIwLjc5IiB0cmFuc2Zvcm09InRyYW5zbGF0ZSg5OC4wLDYwLjApIHJvdGF0ZSgwLjApIi8+PHBhdGggZD0iTTAsLTI1LjMwIEM2LjMzLC0xNS41MyAxMS41MCwtOC4wNSAxMS41MCwwIEExMS41MCwxMS41MCAwIDEgMSAtMTEuNTAsMCBDLTExLjUwLC04LjA1IC02LjMzLC0xNS41MyAwLC0yNS4zMCBaIiBmaWxsPSIjZmZmZmZmIiBmaWxsLW9wYWNpdHk9IjAuODMiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDg2LjksODYuOSkgcm90YXRlKDQ1LjApIi8+PHBhdGggZD0iTTAsLTI1LjMwIEM2LjMzLC0xNS41MyAxMS41MCwtOC4wNSAxMS41MCwwIEExMS41MCwxMS41MCAwIDEgMSAtMTEuNTAsMCBDLTExLjUwLC04LjA1IC02LjMzLC0xNS41MyAwLC0yNS4zMCBaIiBmaWxsPSIjZmZmZmZmIiBmaWxsLW9wYWNpdHk9IjAuODciIHRyYW5zZm9ybT0idHJhbnNsYXRlKDYwLjAsOTguMCkgcm90YXRlKDkwLjApIi8+PHBhdGggZD0iTTAsLTI1LjMwIEM2LjMzLC0xNS41MyAxMS41MCwtOC4wNSAxMS41MCwwIEExMS41MCwxMS41MCAwIDEgMSAtMTEuNTAsMCBDLTExLjUwLC04LjA1IC02LjMzLC0xNS41MyAwLC0yNS4zMCBaIiBmaWxsPSIjZmZmZmZmIiBmaWxsLW9wYWNpdHk9IjAuOTEiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDMzLjEsODYuOSkgcm90YXRlKDEzNS4wKSIvPjxwYXRoIGQ9Ik0wLC0yNS4zMCBDNi4zMywtMTUuNTMgMTEuNTAsLTguMDUgMTEuNTAsMCBBMTEuNTAsMTEuNTAgMCAxIDEgLTExLjUwLDAgQy0xMS41MCwtOC4wNSAtNi4zMywtMTUuNTMgMCwtMjUuMzAgWiIgZmlsbD0iI2ZmZmZmZiIgZmlsbC1vcGFjaXR5PSIwLjk2IiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgyMi4wLDYwLjApIHJvdGF0ZSgxODAuMCkiLz48cGF0aCBkPSJNMCwtMjUuMzAgQzYuMzMsLTE1LjUzIDExLjUwLC04LjA1IDExLjUwLDAgQTExLjUwLDExLjUwIDAgMSAxIC0xMS41MCwwIEMtMTEuNTAsLTguMDUgLTYuMzMsLTE1LjUzIDAsLTI1LjMwIFoiIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMS4wMCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMzMuMSwzMy4xKSByb3RhdGUoMjI1LjApIi8+PC9zdmc+Cg==); }
+.sec-mark { left: 885px; top: 222px; width: 150px; height: 150px; }
+.btn-replay { margin-left: auto; font: 600 22px var(--sans); color: var(--teal); background: #fff; border: 2px solid var(--rule); border-radius: 8px; padding: 6px 16px; cursor: pointer; }
+.btn-replay:hover { border-color: var(--teal); }
+@media (prefers-reduced-motion: reduce) { .term .cursor { animation: none; } }
+.codetext .ln { display: block; transition: opacity .3s ease; }
+.hline { height: 0; border-top: 2.5px solid var(--grey); }
+.tline { height: 0; border-top: 3px solid var(--teal); }
+.dline { height: 0; border-top: 2px solid var(--rule); }
+.sec-title { left: 65px; width: 1789px; font: 700 96px/1.2 var(--serif); color: #fff; text-align: center; padding: 6px 18px; text-wrap: balance; }
+.sec-sub { left: 65px; width: 1789px; color: #D9E6FA; padding: 10px 18px; text-align: center; }
+ul.bul { list-style: none; padding: 10px 18px; }
+ul.bul li { position: relative; padding-left: 52px; margin-bottom: 26px; line-height: 1.25; }
+ul.bul li::before { content: "●"; position: absolute; left: 0; top: .05em; font-size: .7em; }
+.caps { text-transform: uppercase; letter-spacing: .06em; }
+
+/* builds: clear, not flashy */
+.fx { opacity: 0; transform: translateY(14px); transition: opacity .35s ease, transform .35s ease; }
+.fx.at { opacity: 1; transform: none; }
+.fxo { transition: opacity .3s ease; }
+.fxo.gone { opacity: 0; }
+.grow { transform: scaleY(0); transform-origin: bottom; transition: transform .6s cubic-bezier(.2,.7,.2,1); }
+.grow.at { transform: scaleY(1); }
+.instant .fx, .instant .fxo, .instant .grow, .instant .ln, .instant .pass, .instant .passv { transition: none !important; }
+@media (prefers-reduced-motion: reduce) {
+  .fx, .fx.at, .fxo, .grow, .grow.at, .codetext .ln { transition: none; transform: none; }
+}
+
+/* slide-specific build states */
+#s7[data-step="1"] .ln:not(.g1), #s7[data-step="2"] .ln:not(.g2), #s7[data-step="3"] .ln:not(.g3),
+#s12[data-step="1"] .ln:not(.g1), #s12[data-step="2"] .ln:not(.g2), #s12[data-step="3"] .ln:not(.g3) { opacity: .28; }
+#s22 .pass { fill: #BFBFBF; transition: fill .45s ease; }
+#s22 .passv { fill: var(--muted); transition: fill .45s ease; }
+#s22[data-step="1"] .pass { fill: var(--teal); }
+#s22[data-step="1"] .passv { fill: var(--teal); }
+
+table.t { border-collapse: collapse; width: 100%; font-size: 32px; color: var(--body); }
+table.t th, table.t td { border: 2px solid var(--rule); padding: 12px 18px; text-align: left; font-weight: 400; }
+table.t th { font-weight: 700; color: var(--ink); background: #F4F3EF; }
+table.pert { font-size: 28px; } table.pert th, table.pert td { padding: 8px 16px; }
+table.t td.num { text-align: right; font-variant-numeric: tabular-nums; }
+table.pt { border-collapse: collapse; width: 100%; font-size: 21px; color: var(--body); }
+table.pt th, table.pt td { padding: 3px 10px; border-bottom: 2px solid var(--rule); text-align: left; }
+table.pt th { color: var(--slate); font-weight: 700; font-size: 19px; text-transform: uppercase; letter-spacing: .05em; }
+table.pt td.num { text-align: right; font-variant-numeric: tabular-nums; font-family: var(--mono); font-size: 20px; }
+table.pt tr.pooled td { font-weight: 700; color: var(--ink); border-bottom: 0; }
+.vtag { display: inline-block; padding: 1px 10px; background: #F1F2F0; border-left: 5px solid #A9AFB6; font-size: 19px; }
+.vtag.good { border-left-color: var(--good); }
+.vtag.warn { border-left-color: var(--warn); }
+#d4 .seg button { font-size: 24px; height: 46px; padding: 0 16px; }
+#d4 .ctl { flex-wrap: nowrap; }
+.quote { font-size: 21px; line-height: 1.35; color: var(--body); }
+.quote b { font: 700 34px var(--serif); color: var(--ink); margin-right: 10px; }
+
+/* live demo slides */
+.demo-tag { left: 67px; top: 50px; font: 700 26.7px var(--sans); color: var(--teal); letter-spacing: .08em; padding: 0 18px; }
+.paper-tag { color: var(--slate); }
+.ctl { display: flex; align-items: center; gap: 28px; flex-wrap: wrap; font-size: 28px; color: var(--slate); }
+.ctl label { display: inline-flex; align-items: center; gap: 12px; }
+.ctl select, .ctl button.btn { font: 28px var(--sans); color: var(--ink); background: #fff; border: 2px solid var(--rule); border-radius: 8px; padding: 6px 14px; height: 54px; cursor: pointer; }
+.ctl button.btn { font-weight: 700; }
+.ctl button.btn:hover, .ctl select:hover { border-color: var(--slate); }
+.seg { display: inline-flex; border: 2px solid var(--rule); border-radius: 8px; overflow: hidden; background: #fff; }
+.seg button { font: 28px var(--sans); color: var(--slate); background: none; border: 0; padding: 0 22px; height: 50px; cursor: pointer; }
+.seg button + button { border-left: 2px solid var(--rule); }
+.seg button[aria-pressed="true"] { background: var(--tint); color: var(--ink); font-weight: 700; }
+.ctl input[type="range"] { width: 420px; accent-color: var(--teal); height: 40px; }
+.ctl output { font: 700 28px var(--mono); color: var(--ink); min-width: 5.5ch; }
+:focus-visible { outline: 3px solid var(--teal); outline-offset: 3px; }
+.panel { background: #fff; border: 2px solid var(--rule); padding: 22px 26px; display: flex; flex-direction: column; gap: 12px; }
+.panel h3 { margin: 0; font: 700 32px var(--sans); color: var(--ink); }
+.panel .sub { font-size: 25px; color: var(--slate); line-height: 1.3; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 28px; font-size: 24px; color: var(--slate); }
+.key { display: inline-flex; align-items: center; gap: 10px; }
+.sw { width: 18px; height: 18px; border-radius: 50%; display: inline-block; }
+.sw.ring { border: 3px solid var(--ink); }
+.sw.hollow { border: 3px solid #A9AFB6; }
+svg text { font-family: var(--sans); }
+.says { font-size: 30px; color: var(--body); line-height: 1.3; }
+.says b { color: var(--ink); }
+.stat { display: flex; flex-direction: column; gap: 4px; border-top: 4px solid var(--rule); padding-top: 10px; }
+.stat .v { font: 700 56px/1 var(--serif); color: var(--ink); font-variant-numeric: tabular-nums; }
+.stat .k { font-size: 23px; color: var(--slate); line-height: 1.25; }
+.chips { display: flex; flex-wrap: wrap; gap: 12px; }
+.chip { display: inline-flex; align-items: center; gap: 10px; font: 700 26px var(--sans); padding: 6px 16px; border-radius: 999px; background: #F1F2F0; color: var(--ink); }
+.chip .ic { font-family: var(--mono); }
+.chip.pass .ic { color: var(--good); }
+.chip.fail .ic { color: var(--muted); }
+.verdict { display: inline-flex; font: 700 30px var(--sans); color: var(--ink); padding: 10px 20px; background: #F1F2F0; border-left: 8px solid #A9AFB6; }
+.verdict.good { border-left-color: var(--good); }
+.verdict.warn { border-left-color: var(--warn); }
+pre.tree { margin: 0; font: 19px/1.5 var(--mono); color: var(--ink); background: #F7F7F4; border: 2px solid var(--rule); padding: 14px 18px; overflow: hidden; }
+.tag { font: 700 22px var(--mono); padding: 4px 12px; background: #F1F2F0; color: var(--ink); }
+.tag.kept { box-shadow: inset 6px 0 0 var(--good); }
+.tag.dropped { box-shadow: inset 6px 0 0 var(--warn); }
+#tip { position: absolute; z-index: 50; pointer-events: none; background: var(--ink); color: #fff; font: 22px/1.4 var(--mono); padding: 10px 14px; border-radius: 6px; white-space: pre-line; max-width: 560px; }
+
+/* slide overview (Esc): live miniatures, one block of columns per section */
+body.ov #stage { position: fixed; inset: 0; left: 0 !important; top: 0 !important; width: auto; height: auto; transform: none !important; overflow: auto; background: var(--surround); }
+body.ov .slide { display: block; cursor: pointer; }
+body.ov .slide * { pointer-events: none; }
+body.ov .slide.sel { outline: calc(var(--k, 1) * 5px) solid #E2774F; }
+body.ov .slide:not(.sel):hover { outline: calc(var(--k, 1) * 4px) solid rgba(255,255,255,.45); }
+body.ov #tip { display: none; }
+.ovh { position: absolute; margin: 0; font: 700 18px/1 var(--sans); color: #9AA4AE; letter-spacing: .04em; white-space: nowrap; }
+
+/* viewer chrome */
+#chrome { position: fixed; right: 16px; bottom: 16px; display: flex; align-items: center; gap: 6px; padding: 6px; background: rgba(21,25,29,.82); border-radius: 10px; transition: opacity .3s; z-index: 10; }
+#chrome.idle { opacity: 0; }
+#chrome button { font: 600 14px var(--sans); color: #fff; background: transparent; border: 1px solid rgba(255,255,255,.25); border-radius: 6px; min-width: 36px; height: 32px; cursor: pointer; padding: 0 10px; }
+#chrome button:hover { background: rgba(255,255,255,.12); }
+#chrome button:focus-visible { outline: 2px solid #A9C6F2; outline-offset: 2px; }
+#count { color: #fff; font: 600 14px var(--sans); font-variant-numeric: tabular-nums; min-width: 64px; text-align: center; }
+#hint { position: fixed; left: 16px; bottom: 16px; color: rgba(255,255,255,.75); font: 13px var(--sans); background: rgba(21,25,29,.82); padding: 8px 12px; border-radius: 8px; transition: opacity .3s; z-index: 10; max-width: calc(100% - 300px); }
+#hint.idle { opacity: 0; }
+@media (max-width: 640px) { #hint { display: none; } }
+</style>
+
+<div id="viewport"><div id="stage">
+
+<!-- 1 · Title -->
+<section class="slide" id="s1">
+  <img class="a" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzNDAgMTI0IiB3aWR0aD0iMzQwIiBoZWlnaHQ9IjEyNCIgcm9sZT0iaW1nIiBhcmlhLWxhYmVsPSJ2ZmxvdyI+PHRpdGxlPnZmbG93PC90aXRsZT48ZyB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxNCwxMCkiPjxwYXRoIGQ9Ik02LDQwIEwzMSwxMDAgTDU2LDQwIE04NCwxMDAgVjMwIFE4NCw0IDExMCw0IE02OCw0NiBIMTA0IE0xMzIsMiBWODIgUTEzMiwxMDAgMTUwLDEwMCBNMjM2LDQwIEwyNTQsMTAwIEwyNzEsNTIgTDI4OCwxMDAgTDMwNiw0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMUYyQTMzIiBzdHJva2Utd2lkdGg9IjEzIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48L2c+PC9zdmc+Cg==" alt="vflow" style="left:754px;top:132px;width:412px;height:150px">
+  <img class="a vspin" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMjAgMTIwIiB3aWR0aD0iMTIwIiBoZWlnaHQ9IjEyMCIgcm9sZT0iaW1nIiBhcmlhLWxhYmVsPSJ2ZmxvdyI+PHRpdGxlPnZmbG93PC90aXRsZT48cGF0aCBkPSJNMCwtMTYuNzIgQzQuMTgsLTEwLjI2IDcuNiwtNS4zMTk5OTk5OTk5OTk5OTkgNy42LDAgQTcuNiw3LjYgMCAxIDEgLTcuNiwwIEMtNy42LC01LjMxOTk5OTk5OTk5OTk5OSAtNC4xOCwtMTAuMjYgMCwtMTYuNzIgWiIgZmlsbD0iIzJmODVlNyIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNjAuMCwyMC4wKSByb3RhdGUoLTkwLjApIi8+PHBhdGggZD0iTTAsLTE2LjcyIEM0LjE4LC0xMC4yNiA3LjYsLTUuMzE5OTk5OTk5OTk5OTk5IDcuNiwwIEE3LjYsNy42IDAgMSAxIC03LjYsMCBDLTcuNiwtNS4zMTk5OTk5OTk5OTk5OTkgLTQuMTgsLTEwLjI2IDAsLTE2LjcyIFoiIGZpbGw9IiMyZDljYzYiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDg4LjMsMzEuNykgcm90YXRlKC00NS4wKSIvPjxwYXRoIGQ9Ik0wLC0xNi43MiBDNC4xOCwtMTAuMjYgNy42LC01LjMxOTk5OTk5OTk5OTk5OSA3LjYsMCBBNy42LDcuNiAwIDEgMSAtNy42LDAgQy03LjYsLTUuMzE5OTk5OTk5OTk5OTk5IC00LjE4LC0xMC4yNiAwLC0xNi43MiBaIiBmaWxsPSIjMmJiM2E2IiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxMDAuMCw2MC4wKSByb3RhdGUoMC4wKSIvPjxwYXRoIGQ9Ik0wLC0xNi43MiBDNC4xOCwtMTAuMjYgNy42LC01LjMxOTk5OTk5OTk5OTk5OSA3LjYsMCBBNy42LDcuNiAwIDEgMSAtNy42LDAgQy03LjYsLTUuMzE5OTk5OTk5OTk5OTk5IC00LjE4LC0xMC4yNiAwLC0xNi43MiBaIiBmaWxsPSIjMmJiOGEwIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSg4OC4zLDg4LjMpIHJvdGF0ZSg0NS4wKSIvPjxwYXRoIGQ9Ik0wLC0xNi43MiBDNC4xOCwtMTAuMjYgNy42LC01LjMxOTk5OTk5OTk5OTk5OSA3LjYsMCBBNy42LDcuNiAwIDEgMSAtNy42LDAgQy03LjYsLTUuMzE5OTk5OTk5OTk5OTk5IC00LjE4LC0xMC4yNiAwLC0xNi43MiBaIiBmaWxsPSIjMmJiM2E2IiB0cmFuc2Zvcm09InRyYW5zbGF0ZSg2MC4wLDEwMC4wKSByb3RhdGUoOTAuMCkiLz48cGF0aCBkPSJNMCwtMTYuNzIgQzQuMTgsLTEwLjI2IDcuNiwtNS4zMTk5OTk5OTk5OTk5OTkgNy42LDAgQTcuNiw3LjYgMCAxIDEgLTcuNiwwIEMtNy42LC01LjMxOTk5OTk5OTk5OTk5OSAtNC4xOCwtMTAuMjYgMCwtMTYuNzIgWiIgZmlsbD0iIzJkOWNjNiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMzEuNyw4OC4zKSByb3RhdGUoMTM1LjApIi8+PHBhdGggZD0iTTAsLTE2LjcyIEM0LjE4LC0xMC4yNiA3LjYsLTUuMzE5OTk5OTk5OTk5OTk5IDcuNiwwIEE3LjYsNy42IDAgMSAxIC03LjYsMCBDLTcuNiwtNS4zMTk5OTk5OTk5OTk5OTkgLTQuMTgsLTEwLjI2IDAsLTE2LjcyIFoiIGZpbGw9IiMyZjg1ZTciIHRyYW5zZm9ybT0idHJhbnNsYXRlKDIwLjAsNjAuMCkgcm90YXRlKDE4MC4wKSIvPjxwYXRoIGQ9Ik0wLC0xNi43MiBDNC4xOCwtMTAuMjYgNy42LC01LjMxOTk5OTk5OTk5OTk5OSA3LjYsMCBBNy42LDcuNiAwIDEgMSAtNy42LDAgQy03LjYsLTUuMzE5OTk5OTk5OTk5OTk5IC00LjE4LC0xMC4yNiAwLC0xNi43MiBaIiBmaWxsPSIjMmY4MGVkIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgzMS43LDMxLjcpIHJvdGF0ZSgyMjUuMCkiLz48L3N2Zz4K" alt="" style="left:947px;top:174px;width:109px;height:109px">
+  <h1 class="a vc" style="left:65px;top:156px;width:1789px;height:431px;justify-content:flex-end;text-align:center;font:700 85.3px/1.25 var(--serif);color:var(--ink);padding:10px 18px">Implementing PCS in real projects with veridical flow</h1>
+  <p class="a tb" style="left:65px;top:595px;width:1789px;text-align:center;font-size:42.7px;color:var(--slate)">Chandan Singh</p>
+  <p class="a tb" style="left:65px;top:672px;width:1789px;text-align:center;font-size:32px;color:var(--slate)">Duncan, Kapoor, Agarwal, Singh &amp; Yu, 2022  ·  JOSS</p>
+  <p class="a tb" style="left:65px;top:752px;width:1789px;text-align:center;font-size:34.7px">
+    <a href="https://github.com/Yu-Group/veridical-flow" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:16px;color:var(--teal);text-decoration:none;font-family:var(--mono)">
+      <svg viewBox="0 0 16 16" width="40" height="40" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"></path></svg>
+      github.com/Yu-Group/veridical-flow
+    </a>
+  </p>
+</section>
+
+<!-- 2 · Agenda -->
+<section class="slide" id="s2">
+  <h2 class="a title">Agenda</h2>
+  <div class="a tb vc serif" style="left:67px;top:299px;width:160px;height:128px;font-size:74.7px;color:var(--teal)">01</div>
+  <div class="a tb vc b" style="left:253px;top:299px;width:613px;height:128px;font-size:53.3px;color:var(--ink)">Veridical flow</div>
+  <div class="a tb vc" style="left:880px;top:299px;width:976px;height:128px;font-size:42.7px;color:var(--slate)">Stability for whole pipelines</div>
+  <div class="a dline" style="left:253px;top:445px;width:1603px"></div>
+  <div class="a tb vc serif" style="left:67px;top:464px;width:160px;height:128px;font-size:74.7px;color:var(--teal)">02</div>
+  <div class="a tb vc b" style="left:253px;top:464px;width:613px;height:128px;font-size:53.3px;color:var(--ink)">Using agents with vflow</div>
+  <div class="a tb vc" style="left:880px;top:464px;width:976px;height:128px;font-size:42.7px;color:var(--slate)">Checking and running analyses with AI agents</div>
+  <div class="a dline" style="left:253px;top:611px;width:1603px"></div>
+  <div class="a tb vc serif" style="left:67px;top:629px;width:160px;height:128px;font-size:74.7px;color:var(--teal)">03</div>
+  <div class="a tb vc b" style="left:253px;top:629px;width:613px;height:128px;font-size:53.3px;color:var(--ink)">Stable interpretable modeling</div>
+  <div class="a tb vc" style="left:880px;top:629px;width:976px;height:128px;font-size:42.7px;color:var(--slate)">PCS for the rules a model reports</div>
+</section>
+
+<!-- 5 · Section: Veridical flow -->
+<section class="slide section" id="s5">
+  <img class="a sec-mark vspin" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMjAgMTIwIiB3aWR0aD0iMTIwIiBoZWlnaHQ9IjEyMCIgcm9sZT0iaW1nIiBhcmlhLWxhYmVsPSJ2ZmxvdyI+PHRpdGxlPnZmbG93PC90aXRsZT48cGF0aCBkPSJNMCwtMTYuNzIgQzQuMTgsLTEwLjI2IDcuNiwtNS4zMTk5OTk5OTk5OTk5OTkgNy42LDAgQTcuNiw3LjYgMCAxIDEgLTcuNiwwIEMtNy42LC01LjMxOTk5OTk5OTk5OTk5OSAtNC4xOCwtMTAuMjYgMCwtMTYuNzIgWiIgZmlsbD0iI2ZmZmZmZiIgZmlsbC1vcGFjaXR5PSIwLjcwIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSg2MC4wLDIwLjApIHJvdGF0ZSgtOTAuMCkiLz48cGF0aCBkPSJNMCwtMTYuNzIgQzQuMTgsLTEwLjI2IDcuNiwtNS4zMTk5OTk5OTk5OTk5OTkgNy42LDAgQTcuNiw3LjYgMCAxIDEgLTcuNiwwIEMtNy42LC01LjMxOTk5OTk5OTk5OTk5OSAtNC4xOCwtMTAuMjYgMCwtMTYuNzIgWiIgZmlsbD0iI2ZmZmZmZiIgZmlsbC1vcGFjaXR5PSIwLjc0IiB0cmFuc2Zvcm09InRyYW5zbGF0ZSg4OC4zLDMxLjcpIHJvdGF0ZSgtNDUuMCkiLz48cGF0aCBkPSJNMCwtMTYuNzIgQzQuMTgsLTEwLjI2IDcuNiwtNS4zMTk5OTk5OTk5OTk5OTkgNy42LDAgQTcuNiw3LjYgMCAxIDEgLTcuNiwwIEMtNy42LC01LjMxOTk5OTk5OTk5OTk5OSAtNC4xOCwtMTAuMjYgMCwtMTYuNzIgWiIgZmlsbD0iI2ZmZmZmZiIgZmlsbC1vcGFjaXR5PSIwLjc5IiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxMDAuMCw2MC4wKSByb3RhdGUoMC4wKSIvPjxwYXRoIGQ9Ik0wLC0xNi43MiBDNC4xOCwtMTAuMjYgNy42LC01LjMxOTk5OTk5OTk5OTk5OSA3LjYsMCBBNy42LDcuNiAwIDEgMSAtNy42LDAgQy03LjYsLTUuMzE5OTk5OTk5OTk5OTk5IC00LjE4LC0xMC4yNiAwLC0xNi43MiBaIiBmaWxsPSIjZmZmZmZmIiBmaWxsLW9wYWNpdHk9IjAuODMiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDg4LjMsODguMykgcm90YXRlKDQ1LjApIi8+PHBhdGggZD0iTTAsLTE2LjcyIEM0LjE4LC0xMC4yNiA3LjYsLTUuMzE5OTk5OTk5OTk5OTk5IDcuNiwwIEE3LjYsNy42IDAgMSAxIC03LjYsMCBDLTcuNiwtNS4zMTk5OTk5OTk5OTk5OTkgLTQuMTgsLTEwLjI2IDAsLTE2LjcyIFoiIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC44NyIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNjAuMCwxMDAuMCkgcm90YXRlKDkwLjApIi8+PHBhdGggZD0iTTAsLTE2LjcyIEM0LjE4LC0xMC4yNiA3LjYsLTUuMzE5OTk5OTk5OTk5OTk5IDcuNiwwIEE3LjYsNy42IDAgMSAxIC03LjYsMCBDLTcuNiwtNS4zMTk5OTk5OTk5OTk5OTkgLTQuMTgsLTEwLjI2IDAsLTE2LjcyIFoiIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC45MSIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMzEuNyw4OC4zKSByb3RhdGUoMTM1LjApIi8+PHBhdGggZD0iTTAsLTE2LjcyIEM0LjE4LC0xMC4yNiA3LjYsLTUuMzE5OTk5OTk5OTk5OTk5IDcuNiwwIEE3LjYsNy42IDAgMSAxIC03LjYsMCBDLTcuNiwtNS4zMTk5OTk5OTk5OTk5OTkgLTQuMTgsLTEwLjI2IDAsLTE2LjcyIFoiIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC45NiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMjAuMCw2MC4wKSByb3RhdGUoMTgwLjApIi8+PHBhdGggZD0iTTAsLTE2LjcyIEM0LjE4LC0xMC4yNiA3LjYsLTUuMzE5OTk5OTk5OTk5OTk5IDcuNiwwIEE3LjYsNy42IDAgMSAxIC03LjYsMCBDLTcuNiwtNS4zMTk5OTk5OTk5OTk5OTkgLTQuMTgsLTEwLjI2IDAsLTE2LjcyIFoiIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMS4wMCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMzEuNywzMS43KSByb3RhdGUoMjI1LjApIi8+PC9zdmc+Cg==" alt="">
+  <h2 class="a sec-title" style="top:400px">Veridical flow</h2>
+  <p class="a sec-sub" style="top:576px;font-size:48px">Stability analysis for whole pipelines  ·  pip install vflow</p>
+  <p class="a sec-sub" style="top:667px;font-size:42.7px">Duncan, Kapoor, Agarwal, Singh &amp; Yu, 2022  ·  JOSS</p>
+</section>
+
+<!-- 8 · What vflow handles -->
+<section class="slide" id="s8">
+  <h2 class="a title"><span class="vw">vfl<span class="vo">o</span>w</span> handles computation, tracking, filtering and stability</h2>
+  <div class="a card" style="left:67px;top:315px;width:424px;height:629px"></div>
+  <img class="a" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFAAAABQCAYAAACOEfKtAAAC4UlEQVR4nO2csW7UMBzGPyruAaoOZfMDcAMP4CGteAEGkFCHbDxEl3JLH4LNA0IiAysDojdkYmKgUyez0AXYOQaUq1O5p6RnYjsXJ99POl0UJ1byv9j+/v6cAwghhBBCyBR5EKNSkZcvATyzdp1oJVem7L19rFbyhdk/A/DWKvqklXwTo76QPEQc/gJ4vnlTFnVZYR2zEnl5e45dFqG+YOzFqHRKMICeMICeMIADHUQ+Api3lJ0DWJjtw40y+5zrwPVdOVw3IVMW0iIvM7NZfw+RpVZyObgAirx8DeAMabDQSlbXO4wAipsn7wJpcRTiSQwlYzJMlK0yRuTlKwC/G4q+aCU10qX60ddPoMjLAwDHTQdpJQtfHfjUTuQt5hgPjwDcmdUxVMG7N4DMRDxhAD1xacInDfNvXViiX5wHNq3kZZMiMZOyfgGsZ34DiNcj9IjIywtfdeBy72zCPciYptGp4lwr+RUjQOTlEwCnTWXbui/X6awmGbNAR0RefkMEtJJdpdWq5R6LXc0HuvAYYakGgt5xDWDTLzHDeDjs6tq5jMIhJMyg0Up+BlB9/huOwp5sDaCLmBwrQYR0tTxiw+GvmRsFnzwiL6sBrUkZVP3ivV0Ym7AnDKAnLk34Q8sQ/x3j4aqlqe6HkDHvMHK0kn+66kA2YU+m7IncQk/EH3oiu4J9YEKeyGDx8UT2evJEkoSeSA/QE0GCnsgASdITucQI2Iknoru7Z7GgJ+IDPZGBj8KzAFowM2tV+qSXVbN9eiIZEvREtskY5sKeMIA9NOFiAp7IdUxPpHBcfXqGRNFK/qQnsqMlx0H6QH3zxk9KuXH1qtdyqC8bZhgu66CFfNmQkHH+8c6BsQrX2BmLmbysU8OZvVDdZAQ1v7SSP2LUl4KQPjapUf2xObX2b84C2+fIiPUFg5mIJwygJwygJwygJ7FMpX07t2yYlC1aVgEULdd2p74GXOojhBBCCCEEofgHCnYb1L4RlbgAAAAASUVORK5CYII=" alt="" style="left:99px;top:357px;width:107px;height:107px">
+  <div class="a tb b" style="left:99px;top:501px;width:360px;font-size:40px;color:var(--ink)">Computation</div>
+  <div class="a tb" style="left:99px;top:587px;width:360px">Parallel with Ray, cached with joblib</div>
+  <div class="a card" style="left:523px;top:315px;width:424px;height:629px"></div>
+  <img class="a" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFAAAABQCAYAAACOEfKtAAABkklEQVR4nO3czY2CQBxA8b8b+5hGTBYqoRSkFCtZTGiETjYketnouvD4GNb3O3lAMA9mhosTIUmStnGITKSqK8Yc319ObWTgkEm4OiJGBbwptw75Edv7mhgvbuHjbQOmkcP2gWKGc+z+CXym6S+nYYoph8+RKTwHJvYE3Oe/R/HOP67zbKgPcSfNg3PMn0fy5VR154Xmoc8Rx9ZTf0Oquoc3a5UhvGC8Z5aa62oyio4rPSVTFofhBt2H2NI3ajh/u/oQXtjkobmmuQO2fzhm6deOVX/D3AGbVyvbL6vpHNr+cipfXL+Y8/o5vwfuggEhA0JbrMLXnZ47j4A9eOvPkUMYMiBkQMiAkAEhA0IGhAwIGRAyIGRAyICQASEDQgaEDAgZEDIgZEDIgJABIQNCBoQMCBkQMiBkQMiAkAEhA0IGhAwIGRAyIGRAyICQASEDQgaEDAgZEDIgZEDIgJABM/u3Zp2qLvuNInIOWMSbcQhvGLCJ/+O6esDb9iZN7B/aO2uWHSzTxnv4EVvvgClJkmKib9mgSxodnYjgAAAAAElFTkSuQmCC" alt="" style="left:555px;top:357px;width:107px;height:107px">
+  <div class="a tb b" style="left:555px;top:501px;width:360px;font-size:40px;color:var(--ink)">Reproducibility</div>
+  <div class="a tb" style="left:555px;top:587px;width:360px">Every run tracked in MLflow</div>
+  <div class="a card" style="left:979px;top:315px;width:424px;height:629px"></div>
+  <img class="a" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFAAAABQCAYAAACOEfKtAAABW0lEQVR4nO3by00EMRBFUYPIg0RmQSaEAhXKZMKCRCYThNRrhPu5fu5717ZKPlvbYxAREREREVGznmY3vL5/v42Ne9xvXzPrX07M+AX8GHtmY4wpwOfZCY/77fMYtFt2nG24Am6KaGfwTgNuhmhn8STATRBNwZMBmyPKeEsAmyIuwVsG2AxxGd5SwCaIS/GWAxZHXI7nAlgU0QXPDbAYohueK2ARRFc8d8BkRHe8EMAkxBC8MMBgxDC8UMAgxFC8cEBnxHC8FEAnxBS8NMDFiGl4qYCLEFPx0gFFxHS8EoAnEUvglQGcRCyDVwrwn4il8MoBHv11sT116X1VwFYBKAagGIBiAIoBKAagGIBiAIoBKAagGIBiAIoBKAagGIBiAIoBKAagGIBiAIoBKAagGIAXArTZ7/gRdQG0ak86OgFaVbwOgFYZrzqgVcerDGgd8IiIiIiIiIjGBfsBkFOcfprGV60AAAAASUVORK5CYII=" alt="" style="left:1011px;top:357px;width:107px;height:107px">
+  <div class="a tb b" style="left:1011px;top:501px;width:360px;font-size:40px;color:var(--ink)">Prediction</div>
+  <div class="a tb" style="left:1011px;top:587px;width:360px">Filter paths by validation score</div>
+  <div class="a tint" style="left:1435px;top:315px;width:424px;height:629px"></div>
+  <img class="a" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFAAAABQCAYAAACOEfKtAAACv0lEQVR4nO2cAW6DMAxFw7R7cJFKsJNwFNqj9CSjEhfhJJsymSr1SIhjGgL6T9qkbiVtH3ZwTDZjAAAAAAAAAGIqUxh1N7bGGPvVsF897LfpfrmagqgKktaTuBhupYjcXWDdjVeSl8LuIquC5Q1O6jaB6NxVYlWYvIGEDCvz47/jpvvlyxxFoDNnxfIixSMvOpJijk94j4+USK5yzFnT/VKtHP/li7qV9/LNUvtlnLobf4RDiqeDDyNHOuHfVo73pqwLRZR0bOlJ6T2vs41A6eAcij7xGfdFPYl3JbbsPXLBm5MSgSKmgCCNPDaGG2k9EyyNwvdFYAIDe9xLooPJ+1uJRKDKEinvFvhIPVB4sbptOdUUlcKBD+VNrYQS5C0nsSiBnJSyJcdYhxFYb5hmOVM2t8Am5SCnPBkiy512r4j8zPVC0/0y1N3o/sjOcd4PumGDIOkklhKBLXv8rsgIlUftoefA2r8ysKsGdZSFxsgxN+a4iPSBlYF47blWK7LUP4XAVtgAiMJTK24ydnFlTO2kmacB8CNJZ3qubWWF+oHXM9WBvZuqCw2A+TnXUErb31EPcOtmavlljGFli23BL8xhPYk09Nz5fogR3hPJIi/3SqTlaUUf3NeVcW91Rsuj1zhfM8FNU+NgBVDLX9L8HKh9vyQvW/TlTmFXYsPvopEMOwfOUpZ2JgyBO3b8/shpBT6vvEspKF3CJexqOIXAmfmCcThxpQg085xl0zq0gcgpb+Y5bldxJQmceV5t627s3fQmebxwLoLdGqoR7NZlPovAQwCBSiBQCQQqgUAlEKgEApVAoBIIVAKBSiBQCQQqgUAlEKgEApVAoBIIVAKBSiBQCQQqgUAlEKgEApVAoBIIVAKBSiBQCQQq9+SIBC78icLZiPoHGKrtbXbLGW2KbMy5dmuJ5QEAAAAAAABMGr9dyS/eX9cptQAAAABJRU5ErkJggg==" alt="" style="left:1467px;top:357px;width:107px;height:107px">
+  <div class="a tb b" style="left:1467px;top:501px;width:360px;font-size:40px;color:var(--ink)">Stability</div>
+  <div class="a tb" style="left:1467px;top:587px;width:360px">Swap a function for a set, compare results</div>
+</section>
+
+<!-- 6 · vflow fan-out (build: each Vset multiplies the paths) -->
+<section class="slide" id="s6" data-steps="4">
+  <h2 class="a title"><span class="vw">vfl<span class="vo">o</span>w</span> turns each judgment call into a set and runs every path</h2>
+  <svg class="a" style="left:0;top:0" width="1920" height="1080" aria-hidden="true">
+    <defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#8C8C8C"/></marker></defs>
+    <line x1="312" y1="568" x2="381" y2="568" stroke="#8C8C8C" stroke-width="2.5" marker-end="url(#arr)"/>
+    <line class="fx" data-at="1" x1="712" y1="568" x2="781" y2="568" stroke="#8C8C8C" stroke-width="2.5" marker-end="url(#arr)"/>
+    <line class="fx" data-at="2" x1="1112" y1="568" x2="1181" y2="568" stroke="#8C8C8C" stroke-width="2.5" marker-end="url(#arr)"/>
+    <line class="fx" data-at="3" x1="1512" y1="568" x2="1583" y2="568" stroke="#8C8C8C" stroke-width="2.5" marker-end="url(#arr)"/>
+  </svg>
+  <div class="a ctr slatebg pill b" style="left:67px;top:509px;width:240px;height:117px;font-size:34.7px">Training data</div>
+  <div>
+    <div class="a pill" style="left:387px;top:341px;width:320px;height:453px;border:3px dashed var(--teal)"></div>
+    <div class="a ctr b" style="left:360px;top:357px;width:373px;height:59px;font-size:29.3px;color:var(--teal)">Vset: subsampling</div>
+    <div class="a ctr tint pill b" style="left:419px;top:461px;width:256px;height:80px;font-size:32px;color:var(--teal)">resample 1</div>
+    <div class="a ctr tint pill b" style="left:419px;top:568px;width:256px;height:80px;font-size:32px;color:var(--teal)">resample 2</div>
+    <div class="a ctr tint pill b" style="left:419px;top:675px;width:256px;height:80px;font-size:32px;color:var(--teal)">resample 3</div>
+    <div class="a ctr b" style="left:387px;top:811px;width:320px;height:64px;color:var(--slate)">3</div>
+  </div>
+  <div class="fx" data-at="1">
+    <div class="a pill" style="left:787px;top:341px;width:320px;height:453px;border:3px dashed var(--teal)"></div>
+    <div class="a ctr b" style="left:760px;top:357px;width:373px;height:59px;font-size:29.3px;color:var(--teal)">Vset: modeling</div>
+    <div class="a ctr tint pill b" style="left:819px;top:515px;width:256px;height:80px;font-size:32px;color:var(--teal)">LR</div>
+    <div class="a ctr tint pill b" style="left:819px;top:621px;width:256px;height:80px;font-size:32px;color:var(--teal)">DT</div>
+    <div class="a ctr b" style="left:787px;top:811px;width:320px;height:64px;color:var(--slate)">× 2</div>
+  </div>
+  <div class="fx" data-at="2">
+    <div class="a pill" style="left:1187px;top:341px;width:320px;height:453px;border:3px dashed var(--teal)"></div>
+    <div class="a ctr b" style="left:1160px;top:357px;width:373px;height:59px;font-size:29.3px;color:var(--teal)">Vset: metrics</div>
+    <div class="a ctr tint pill b" style="left:1219px;top:515px;width:256px;height:80px;font-size:32px;color:var(--teal)">Acc</div>
+    <div class="a ctr tint pill b" style="left:1219px;top:621px;width:256px;height:80px;font-size:32px;color:var(--teal)">Bal_Acc</div>
+    <div class="a ctr b" style="left:1187px;top:811px;width:320px;height:64px;color:var(--slate)">× 2</div>
+  </div>
+  <div class="fx" data-at="3">
+    <div class="a pill" style="left:1589px;top:341px;width:267px;height:453px;border:3px solid var(--teal)"></div>
+    <div class="a ctr b" style="left:1589px;top:352px;width:267px;height:84px;font-size:27px;line-height:1.2;color:var(--teal)">12 results<br><span style="font-weight:400;font-size:23px">keyed by path</span></div>
+    <svg class="a" style="left:1589px;top:341px" width="267" height="453" aria-hidden="true"><text x="16" y="183" font-size="21" font-weight="700" fill="#1E2A32">LR · Acc</text><line x1="178.0" y1="175" x2="243.0" y2="175" stroke="#1F5FC4" stroke-opacity=".3" stroke-width="10" stroke-linecap="round"/><circle cx="178.0" cy="173.2" r="7" fill="#1F5FC4" fill-opacity=".85"/><circle cx="212.0" cy="171.4" r="7" fill="#1F5FC4" fill-opacity=".85"/><circle cx="243.0" cy="177.4" r="7" fill="#1F5FC4" fill-opacity=".85"/><line x1="211.0" y1="157" x2="211.0" y2="193" stroke="#1F5FC4" stroke-width="4" stroke-linecap="round"/><text x="16" y="253" font-size="21" font-weight="700" fill="#1E2A32">LR · Bal</text><line x1="152.0" y1="245" x2="228.0" y2="245" stroke="#1F5FC4" stroke-opacity=".3" stroke-width="10" stroke-linecap="round"/><circle cx="152.0" cy="245.9" r="7" fill="#1F5FC4" fill-opacity=".85"/><circle cx="190.0" cy="246.9" r="7" fill="#1F5FC4" fill-opacity=".85"/><circle cx="228.0" cy="244.1" r="7" fill="#1F5FC4" fill-opacity=".85"/><line x1="190.0" y1="227" x2="190.0" y2="263" stroke="#1F5FC4" stroke-width="4" stroke-linecap="round"/><text x="16" y="323" font-size="21" font-weight="700" fill="#1E2A32">DT · Acc</text><line x1="118.0" y1="315" x2="206.0" y2="315" stroke="#4A5560" stroke-opacity=".3" stroke-width="10" stroke-linecap="round"/><circle cx="118.0" cy="316.7" r="7" fill="#4A5560" fill-opacity=".85"/><circle cx="160.0" cy="310.5" r="7" fill="#4A5560" fill-opacity=".85"/><circle cx="206.0" cy="318.9" r="7" fill="#4A5560" fill-opacity=".85"/><line x1="161.3" y1="297" x2="161.3" y2="333" stroke="#4A5560" stroke-width="4" stroke-linecap="round"/><text x="16" y="393" font-size="21" font-weight="700" fill="#1E2A32">DT · Bal</text><line x1="108.0" y1="385" x2="186.0" y2="385" stroke="#4A5560" stroke-opacity=".3" stroke-width="10" stroke-linecap="round"/><circle cx="108.0" cy="387.3" r="7" fill="#4A5560" fill-opacity=".85"/><circle cx="140.0" cy="380.8" r="7" fill="#4A5560" fill-opacity=".85"/><circle cx="186.0" cy="387.9" r="7" fill="#4A5560" fill-opacity=".85"/><line x1="144.7" y1="367" x2="144.7" y2="403" stroke="#4A5560" stroke-width="4" stroke-linecap="round"/><line x1="108" y1="420" x2="243" y2="420" stroke="#8C8C8C" stroke-width="2"/><text x="176" y="444" font-size="20" fill="#6B6B6B" text-anchor="middle">score →</text></svg>
+  </div>
+  <p class="a tb fx" data-at="4" style="left:67px;top:896px;width:1789px;font-size:40px">The spread across paths is the stability analysis.</p>
+</section>
+
+<!-- 6b · A fuller vflow workflow: screen on prediction, then interpret (build: columns in order) -->
+<section class="slide" id="s6b" data-steps="5">
+  <h2 class="a title">Screen paths on prediction, then interpret only the survivors</h2>
+  <svg class="a" style="left:0;top:0" width="1920" height="1080" aria-hidden="true">
+    <defs><marker id="arr6b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#8C8C8C"/></marker></defs>
+    <line x1="270" y1="568" x2="311" y2="568" stroke="#8C8C8C" stroke-width="2.5" marker-end="url(#arr6b)"/>
+    <line class="fx" data-at="1" x1="570" y1="568" x2="611" y2="568" stroke="#8C8C8C" stroke-width="2.5" marker-end="url(#arr6b)"/>
+    <line class="fx" data-at="2" x1="870" y1="568" x2="911" y2="568" stroke="#8C8C8C" stroke-width="2.5" marker-end="url(#arr6b)"/>
+    <line class="fx" data-at="3" x1="1220" y1="568" x2="1261" y2="568" stroke="#8C8C8C" stroke-width="2.5" marker-end="url(#arr6b)"/>
+    <line class="fx" data-at="4" x1="1520" y1="568" x2="1561" y2="568" stroke="#8C8C8C" stroke-width="2.5" marker-end="url(#arr6b)"/>
+  </svg>
+  <div class="a ctr slatebg pill b" style="left:67px;top:509px;width:198px;height:117px;font-size:29px">Training data</div>
+  <div>
+    <div class="a pill" style="left:317px;top:341px;width:250px;height:453px;border:3px dashed var(--teal)"></div>
+    <div class="a ctr b" style="left:297px;top:357px;width:290px;height:59px;font-size:25px;color:var(--teal)">Vset: subsampling</div>
+    <div class="a ctr tint pill b" style="left:337px;top:455px;width:210px;height:72px;font-size:28px;color:var(--teal)">resample 1</div>
+    <div class="a ctr tint pill b" style="left:337px;top:551px;width:210px;height:72px;font-size:28px;color:var(--teal)">resample 2</div>
+    <div class="a ctr tint pill b" style="left:337px;top:647px;width:210px;height:72px;font-size:28px;color:var(--teal)">resample 3</div>
+    <div class="a ctr b" style="left:317px;top:811px;width:250px;height:64px;font-size:30px;color:var(--slate)">3</div>
+  </div>
+  <div class="fx" data-at="1">
+    <div class="a pill" style="left:617px;top:341px;width:250px;height:453px;border:3px dashed var(--teal)"></div>
+    <div class="a ctr b" style="left:597px;top:357px;width:290px;height:59px;font-size:25px;color:var(--teal)">Vset: modeling</div>
+    <div class="a ctr tint pill b" style="left:637px;top:436px;width:210px;height:66px;font-size:28px;color:var(--teal)">Lasso</div>
+    <div class="a ctr tint pill b" style="left:637px;top:516px;width:210px;height:66px;font-size:28px;color:var(--teal)">RF</div>
+    <div class="a ctr tint pill b" style="left:637px;top:596px;width:210px;height:66px;font-size:28px;color:var(--teal)">kNN</div>
+    <div class="a ctr tint pill b" style="left:637px;top:676px;width:210px;height:66px;font-size:28px;color:var(--teal)">Tree</div>
+    <div class="a ctr b" style="left:617px;top:811px;width:250px;height:64px;font-size:30px;color:var(--slate)">× 4 = 12 paths</div>
+  </div>
+  <div class="fx" data-at="2">
+    <div class="a" style="left:637px;top:596px;width:210px;height:146px;background:rgba(255,255,255,.72)"></div>
+    <div class="a pill" style="left:917px;top:341px;width:300px;height:453px;border:3px solid var(--slate)"></div>
+    <div class="a ctr b" style="left:917px;top:357px;width:300px;height:59px;font-size:25px;color:var(--slate)">Screen: validation R²</div>
+    <svg class="a" style="left:917px;top:341px" width="300" height="453" aria-hidden="true"><text x="22" y="144" font-size="26" font-weight="700" fill="#1E2A32">Lasso</text><rect x="98" y="122" width="160" height="26" rx="5" fill="#1F5FC4"/><text x="276" y="145" font-size="30" font-weight="700" text-anchor="middle" fill="#1F5FC4">✓</text><text x="22" y="214" font-size="26" font-weight="700" fill="#1E2A32">RF</text><rect x="98" y="192" width="132" height="26" rx="5" fill="#1F5FC4"/><text x="276" y="215" font-size="30" font-weight="700" text-anchor="middle" fill="#1F5FC4">✓</text><text x="22" y="284" font-size="26" font-weight="700" fill="#1E2A32">kNN</text><rect x="98" y="262" width="48" height="26" rx="5" fill="#C9CDD1"/><text x="276" y="285" font-size="30" font-weight="700" text-anchor="middle" fill="#C2552F">✕</text><text x="22" y="354" font-size="26" font-weight="700" fill="#1E2A32">Tree</text><rect x="98" y="332" width="14" height="26" rx="5" fill="#C9CDD1"/><text x="276" y="355" font-size="30" font-weight="700" text-anchor="middle" fill="#C2552F">✕</text><line x1="198" y1="102" x2="198" y2="378" stroke="#4A5560" stroke-width="2.5" stroke-dasharray="7 6"/><text x="198" y="96" font-size="20" fill="#4A5560" text-anchor="middle">cut-off</text></svg>
+    <div class="a ctr b" style="left:887px;top:811px;width:360px;height:64px;font-size:30px;color:var(--slate)">keep top 2 → 6 paths</div>
+  </div>
+  <div class="fx" data-at="3">
+    <div class="a pill" style="left:1267px;top:341px;width:250px;height:453px;border:3px dashed var(--teal)"></div>
+    <div class="a ctr b" style="left:1247px;top:357px;width:290px;height:59px;font-size:25px;color:var(--teal)">Vset: interpretation</div>
+    <div class="a ctr tint pill b" style="left:1287px;top:507px;width:210px;height:72px;font-size:28px;color:var(--teal)">permutation</div>
+    <div class="a ctr tint pill b" style="left:1287px;top:613px;width:210px;height:72px;font-size:28px;color:var(--teal)">SHAP</div>
+    <div class="a ctr b" style="left:1267px;top:811px;width:250px;height:64px;font-size:30px;color:var(--slate)">on kept paths</div>
+  </div>
+  <div class="fx" data-at="4">
+    <div class="a pill" style="left:1567px;top:341px;width:289px;height:453px;border:3px solid var(--teal)"></div>
+    <div class="a ctr b" style="left:1567px;top:352px;width:289px;height:84px;font-size:25px;line-height:1.2;color:var(--teal)">Importance across<br>kept paths</div>
+    <svg class="a" style="left:1567px;top:341px" width="289" height="453" aria-hidden="true"><line x1="90" y1="140" x2="90" y2="398" stroke="#8C8C8C" stroke-width="2" stroke-dasharray="6 6"/><text x="90" y="425" font-size="20" fill="#6B6B6B" text-anchor="middle">0</text><text x="22" y="179" font-size="26" font-weight="700" fill="#1E2A32">x₁</text><line x1="120.0" y1="170" x2="250.0" y2="170" stroke="#1F5FC4" stroke-opacity=".3" stroke-width="10" stroke-linecap="round"/><circle cx="215.2" cy="176.0" r="5.5" fill="#1F5FC4" fill-opacity=".8"/><circle cx="206.5" cy="171.1" r="5.5" fill="#1F5FC4" fill-opacity=".8"/><circle cx="181.9" cy="170.8" r="5.5" fill="#1F5FC4" fill-opacity=".8"/><circle cx="168.5" cy="163.3" r="5.5" fill="#1F5FC4" fill-opacity=".8"/><circle cx="188.2" cy="175.0" r="5.5" fill="#1F5FC4" fill-opacity=".8"/><circle cx="180.7" cy="167.2" r="5.5" fill="#1F5FC4" fill-opacity=".8"/><circle cx="208.9" cy="170.2" r="5.5" fill="#1F5FC4" fill-opacity=".8"/><circle cx="172.5" cy="171.9" r="5.5" fill="#1F5FC4" fill-opacity=".8"/><circle cx="185.9" cy="171.0" r="5.5" fill="#1F5FC4" fill-opacity=".8"/><circle cx="193.0" cy="169.3" r="5.5" fill="#1F5FC4" fill-opacity=".8"/><circle cx="120.0" cy="165.5" r="5.5" fill="#1F5FC4" fill-opacity=".8"/><circle cx="250.0" cy="166.5" r="5.5" fill="#1F5FC4" fill-opacity=".8"/><line x1="189.3" y1="153" x2="189.3" y2="187" stroke="#1F5FC4" stroke-width="4" stroke-linecap="round"/><text x="22" y="244" font-size="26" font-weight="700" fill="#1E2A32">x₂</text><line x1="150.0" y1="235" x2="212.0" y2="235" stroke="#1F5FC4" stroke-opacity=".3" stroke-width="10" stroke-linecap="round"/><circle cx="166.3" cy="240.5" r="5.5" fill="#1F5FC4" fill-opacity=".8"/><circle cx="195.2" cy="229.4" r="5.5" fill="#1F5FC4" fill-opacity=".8"/><circle cx="191.0" cy="234.4" r="5.5" fill="#1F5FC4" fill-opacity=".8"/><circle cx="172.5" cy="229.9" r="5.5" fill="#1F5FC4" fill-opacity=".8"/><circle cx="181.4" cy="238.0" r="5.5" fill="#1F5FC4" fill-opacity=".8"/><circle cx="179.9" cy="231.5" r="5.5" fill="#1F5FC4" fill-opacity=".8"/><circle cx="186.5" cy="236.5" r="5.5" fill="#1F5FC4" fill-opacity=".8"/><circle cx="192.2" cy="241.0" r="5.5" fill="#1F5FC4" fill-opacity=".8"/><circle cx="163.6" cy="229.3" r="5.5" fill="#1F5FC4" fill-opacity=".8"/><circle cx="157.5" cy="231.5" r="5.5" fill="#1F5FC4" fill-opacity=".8"/><circle cx="150.0" cy="228.1" r="5.5" fill="#1F5FC4" fill-opacity=".8"/><circle cx="212.0" cy="239.6" r="5.5" fill="#1F5FC4" fill-opacity=".8"/><line x1="179.0" y1="218" x2="179.0" y2="252" stroke="#1F5FC4" stroke-width="4" stroke-linecap="round"/><text x="22" y="309" font-size="26" font-weight="700" fill="#1E2A32">x₃</text><line x1="58.0" y1="300" x2="165.0" y2="300" stroke="#8C8C8C" stroke-opacity=".3" stroke-width="10" stroke-linecap="round"/><circle cx="149.2" cy="300.7" r="5.5" fill="#8C8C8C" fill-opacity=".8"/><circle cx="147.8" cy="303.8" r="5.5" fill="#8C8C8C" fill-opacity=".8"/><circle cx="76.1" cy="301.9" r="5.5" fill="#8C8C8C" fill-opacity=".8"/><circle cx="80.1" cy="305.7" r="5.5" fill="#8C8C8C" fill-opacity=".8"/><circle cx="134.5" cy="304.4" r="5.5" fill="#8C8C8C" fill-opacity=".8"/><circle cx="126.3" cy="299.6" r="5.5" fill="#8C8C8C" fill-opacity=".8"/><circle cx="121.7" cy="303.0" r="5.5" fill="#8C8C8C" fill-opacity=".8"/><circle cx="100.2" cy="306.6" r="5.5" fill="#8C8C8C" fill-opacity=".8"/><circle cx="117.7" cy="298.6" r="5.5" fill="#8C8C8C" fill-opacity=".8"/><circle cx="117.8" cy="299.7" r="5.5" fill="#8C8C8C" fill-opacity=".8"/><circle cx="58.0" cy="300.8" r="5.5" fill="#8C8C8C" fill-opacity=".8"/><circle cx="165.0" cy="298.0" r="5.5" fill="#8C8C8C" fill-opacity=".8"/><line x1="116.2" y1="283" x2="116.2" y2="317" stroke="#8C8C8C" stroke-width="4" stroke-linecap="round"/><text x="22" y="374" font-size="26" font-weight="700" fill="#1E2A32">x₄</text><line x1="74.0" y1="365" x2="110.0" y2="365" stroke="#8C8C8C" stroke-opacity=".3" stroke-width="10" stroke-linecap="round"/><circle cx="86.4" cy="371.0" r="5.5" fill="#8C8C8C" fill-opacity=".8"/><circle cx="92.8" cy="365.1" r="5.5" fill="#8C8C8C" fill-opacity=".8"/><circle cx="89.5" cy="366.0" r="5.5" fill="#8C8C8C" fill-opacity=".8"/><circle cx="94.0" cy="358.0" r="5.5" fill="#8C8C8C" fill-opacity=".8"/><circle cx="94.4" cy="363.2" r="5.5" fill="#8C8C8C" fill-opacity=".8"/><circle cx="80.5" cy="362.4" r="5.5" fill="#8C8C8C" fill-opacity=".8"/><circle cx="76.9" cy="364.1" r="5.5" fill="#8C8C8C" fill-opacity=".8"/><circle cx="99.7" cy="365.8" r="5.5" fill="#8C8C8C" fill-opacity=".8"/><circle cx="87.0" cy="372.0" r="5.5" fill="#8C8C8C" fill-opacity=".8"/><circle cx="86.3" cy="366.4" r="5.5" fill="#8C8C8C" fill-opacity=".8"/><circle cx="74.0" cy="370.9" r="5.5" fill="#8C8C8C" fill-opacity=".8"/><circle cx="110.0" cy="367.2" r="5.5" fill="#8C8C8C" fill-opacity=".8"/><line x1="89.3" y1="348" x2="89.3" y2="382" stroke="#8C8C8C" stroke-width="4" stroke-linecap="round"/></svg>
+    <div class="a ctr b" style="left:1547px;top:811px;width:329px;height:64px;font-size:30px;color:var(--slate)">spread = stability</div>
+  </div>
+  <p class="a tb fx" data-at="5" style="left:67px;top:896px;width:1789px;font-size:38px">Interpreting a model that cannot predict explains noise.</p>
+</section>
+
+<!-- 7 · 25 lines of code (build: each block lights up with its note) -->
+<section class="slide" id="s7" data-steps="4">
+  <h2 class="a title">A full PCS pipeline in about 25 lines of sklearn-style code</h2>
+  <div class="a code" style="left:67px;top:292px;width:1173px;height:684px"></div>
+  <div class="a codetext" style="left:88px;top:306px;width:1141px;font-size:21.3px;line-height:1.221"><span class="ln">from sklearn.model_selection import train_test_split</span><span class="ln">from sklearn.utils import resample</span><span class="ln">from sklearn.linear_model import LogisticRegression</span><span class="ln">from sklearn.tree import DecisionTreeClassifier</span><span class="ln">from sklearn.metrics import accuracy_score, balanced_accuracy_score</span><span class="ln">from vflow import Vset, init_args</span><span class="ln"> </span><span class="ln">X_train, X_test, y_train, y_test = init_args(</span><span class="ln">    train_test_split(X, y),</span><span class="ln">    names=["X_train", "X_test", "y_train", "y_test"])</span><span class="ln"> </span><span class="ln g1">subsampling = Vset(name="subsampling",</span><span class="ln g1">    vfuncs=[resample] * 3, output_matching=True)</span><span class="ln g1">X_trains, y_trains = subsampling(X_train, y_train)</span><span class="ln"> </span><span class="ln g2">modeling = Vset(name="modeling",</span><span class="ln g2">    vfuncs=[LogisticRegression(), DecisionTreeClassifier()],</span><span class="ln g2">    vfunc_keys=["LR", "DT"])</span><span class="ln g2">modeling.fit(X_trains, y_trains)</span><span class="ln g2">preds = modeling.predict(X_test)</span><span class="ln"> </span><span class="ln g3">metrics = Vset(name="metrics",</span><span class="ln g3">    vfuncs=[accuracy_score, balanced_accuracy_score],</span><span class="ln g3">    vfunc_keys=["Acc", "Bal_Acc"])</span><span class="ln g3">results = metrics.evaluate(preds, y_test)</span></div>
+  <div class="fx" data-at="1"><div class="a tline" style="left:1253px;top:641px;width:53px"></div><div class="a tb vc" style="left:1320px;top:583px;width:536px;height:117px;color:var(--ink)">3 bootstrap subsamples</div></div>
+  <div class="fx" data-at="2"><div class="a tline" style="left:1253px;top:771px;width:53px"></div><div class="a tb vc" style="left:1320px;top:713px;width:536px;height:117px;color:var(--ink)">2 models, fit on each subsample</div></div>
+  <div class="fx" data-at="3"><div class="a tline" style="left:1253px;top:914px;width:53px"></div><div class="a tb vc" style="left:1320px;top:856px;width:536px;height:117px;color:var(--ink)">2 metrics: 12 results</div></div>
+</section>
+
+<!-- 7b · vflow under the hood -->
+<section class="slide" id="s7b">
+  <h2 class="a title"><span class="vw">vfl<span class="vo">o</span>w</span>: under the hood</h2>
+  <div class="a tb b" style="left:67px;top:296px;width:900px;font-size:32px;color:var(--teal)">Every result is keyed by the path that made it</div>
+  <div class="a ctr tint pill mono b" style="left:67px;top:370px;width:210px;height:66px;font-size:27px;color:var(--teal)">resample_1</div>
+  <div class="a ctr" style="left:57px;top:442px;width:230px;height:34px;font-size:22px;color:var(--muted)">subsampling</div>
+  <div class="a ctr b" style="left:281px;top:370px;width:50px;height:66px;font-size:34px;color:var(--slate)">·</div>
+  <div class="a ctr tint pill mono b" style="left:335px;top:370px;width:150px;height:66px;font-size:27px;color:var(--teal)">LR</div>
+  <div class="a ctr" style="left:325px;top:442px;width:170px;height:34px;font-size:22px;color:var(--muted)">modeling</div>
+  <div class="a ctr b" style="left:489px;top:370px;width:50px;height:66px;font-size:34px;color:var(--slate)">·</div>
+  <div class="a ctr tint pill mono b" style="left:543px;top:370px;width:150px;height:66px;font-size:27px;color:var(--teal)">Acc</div>
+  <div class="a ctr" style="left:533px;top:442px;width:170px;height:34px;font-size:22px;color:var(--muted)">metrics</div>
+  <div class="a ctr b" style="left:697px;top:370px;width:60px;height:66px;font-size:34px;color:var(--slate)">→</div>
+  <div class="a ctr teal pill mono b" style="left:761px;top:370px;width:196px;height:66px;font-size:27px;color:#fff">result</div>
+  <div class="a tb b" style="left:67px;top:530px;width:900px;font-size:32px;color:var(--teal)">Inputs combine only when their keys agree</div>
+  <div class="a ctr tint pill mono b" style="left:67px;top:600px;width:250px;height:66px;font-size:27px;color:var(--teal)">X · resample_1</div>
+  <div class="a ctr b" style="left:321px;top:600px;width:50px;height:66px;font-size:34px;color:var(--slate)">+</div>
+  <div class="a ctr tint pill mono b" style="left:375px;top:600px;width:250px;height:66px;font-size:27px;color:var(--teal)">y · resample_1</div>
+  <div class="a ctr b" style="left:629px;top:600px;width:60px;height:66px;font-size:34px;color:var(--slate)">→</div>
+  <div class="a ctr b" style="left:693px;top:600px;width:50px;height:66px;font-size:40px;color:var(--teal)">✓</div>
+  <div class="a tb vc" style="left:747px;top:600px;width:220px;height:66px;font-size:28px;color:var(--ink)">fit</div>
+  <div class="a ctr tint pill mono b" style="left:67px;top:690px;width:250px;height:66px;font-size:27px;color:var(--teal)">X · resample_1</div>
+  <div class="a ctr b" style="left:321px;top:690px;width:50px;height:66px;font-size:34px;color:var(--slate)">+</div>
+  <div class="a ctr tint pill mono b" style="left:375px;top:690px;width:250px;height:66px;font-size:27px;color:var(--teal)">y · resample_2</div>
+  <div class="a ctr b" style="left:629px;top:690px;width:60px;height:66px;font-size:34px;color:var(--slate)">→</div>
+  <div class="a ctr b" style="left:693px;top:690px;width:50px;height:66px;font-size:40px;color:var(--terra)">✕</div>
+  <div class="a tb vc" style="left:747px;top:690px;width:220px;height:66px;font-size:28px;color:var(--ink)">never paired</div>
+  <p class="a tb" style="left:67px;top:800px;width:900px;font-size:28px;color:var(--slate)"><span class="mono" style="color:var(--teal)">dict_to_df</span> turns the keys into columns: one per Vset, plus the output.</p>
+  <div class="a card pill" style="left:1010px;top:300px;width:413px;height:185px"></div>
+  <div class="a tb b" style="left:1024px;top:312px;width:385px;font-size:30px;color:var(--ink)">Lazy</div>
+  <div class="a tb mono b" style="left:1024px;top:356px;width:385px;font-size:22px;color:var(--teal)">lazy=True</div>
+  <div class="a tb" style="left:1024px;top:394px;width:385px;font-size:24px;line-height:1.25;color:var(--slate)">Steps become promises that run only when a result is needed</div>
+  <div class="a card pill" style="left:1443px;top:300px;width:413px;height:185px"></div>
+  <div class="a tb b" style="left:1457px;top:312px;width:385px;font-size:30px;color:var(--ink)">Cached</div>
+  <div class="a tb mono b" style="left:1457px;top:356px;width:385px;font-size:22px;color:var(--teal)">cache_dir=…</div>
+  <div class="a tb" style="left:1457px;top:394px;width:385px;font-size:24px;line-height:1.25;color:var(--slate)">joblib skips paths it has already computed</div>
+  <div class="a card pill" style="left:1010px;top:505px;width:413px;height:185px"></div>
+  <div class="a tb b" style="left:1024px;top:517px;width:385px;font-size:30px;color:var(--ink)">Parallel</div>
+  <div class="a tb mono b" style="left:1024px;top:561px;width:385px;font-size:22px;color:var(--teal)">is_async=True</div>
+  <div class="a tb" style="left:1024px;top:599px;width:385px;font-size:24px;line-height:1.25;color:var(--slate)">Each function runs as a Ray task</div>
+  <div class="a card pill" style="left:1443px;top:505px;width:413px;height:185px"></div>
+  <div class="a tb b" style="left:1457px;top:517px;width:385px;font-size:30px;color:var(--ink)">Tracked</div>
+  <div class="a tb mono b" style="left:1457px;top:561px;width:385px;font-size:22px;color:var(--teal)">tracking_dir=…</div>
+  <div class="a tb" style="left:1457px;top:599px;width:385px;font-size:24px;line-height:1.25;color:var(--slate)">MLflow: one experiment per Vset, one run per path</div>
+  <div class="a card pill" style="left:1010px;top:710px;width:413px;height:185px"></div>
+  <div class="a tb b" style="left:1024px;top:722px;width:385px;font-size:30px;color:var(--ink)">Graph</div>
+  <div class="a tb mono b" style="left:1024px;top:766px;width:385px;font-size:22px;color:var(--teal)">build_graph(out)</div>
+  <div class="a tb" style="left:1024px;top:804px;width:385px;font-size:24px;line-height:1.25;color:var(--slate)">Every output remembers the Vsets upstream of it</div>
+  <div class="a card pill" style="left:1443px;top:710px;width:413px;height:185px"></div>
+  <div class="a tb b" style="left:1457px;top:722px;width:385px;font-size:30px;color:var(--ink)">Tables</div>
+  <div class="a tb mono b" style="left:1457px;top:766px;width:385px;font-size:22px;color:var(--teal)">perturbation_stats</div>
+  <div class="a tb" style="left:1457px;top:804px;width:385px;font-size:24px;line-height:1.25;color:var(--slate)">Mean and spread of results, grouped by any Vset</div>
+</section>
+
+<!-- 9 · Notebooks -->
+<section class="slide" id="s9">
+  <h2 class="a title"><span class="vw">vfl<span class="vo">o</span>w</span> notebooks span genomics, fMRI, vision and clinical rules</h2>
+  <div class="a card" style="left:67px;top:320px;width:568px;height:277px;border-left:11px solid var(--teal)"></div>
+  <div class="a tb b caps" style="left:109px;top:357px;width:493px;font-size:29.3px;color:var(--teal)">Biology</div>
+  <div class="a tb b" style="left:109px;top:421px;width:493px;font-size:45.3px;color:var(--ink)">Enhancer genomics</div>
+  <div class="a card" style="left:677px;top:320px;width:568px;height:277px;border-left:11px solid var(--teal)"></div>
+  <div class="a tb b caps" style="left:720px;top:357px;width:493px;font-size:29.3px;color:var(--teal)">Neuroscience</div>
+  <div class="a tb b" style="left:720px;top:421px;width:493px;font-size:45.3px;color:var(--ink)">fMRI voxel prediction</div>
+  <div class="a card" style="left:1288px;top:320px;width:568px;height:277px;border-left:11px solid var(--teal)"></div>
+  <div class="a tb b caps" style="left:1331px;top:357px;width:493px;font-size:29.3px;color:var(--teal)">Computer vision</div>
+  <div class="a tb b" style="left:1331px;top:421px;width:493px;font-size:45.3px;color:var(--ink)">Fashion-MNIST with DNNs</div>
+  <div class="a card" style="left:67px;top:635px;width:568px;height:277px;border-left:11px solid var(--teal)"></div>
+  <div class="a tb b caps" style="left:109px;top:672px;width:493px;font-size:29.3px;color:var(--teal)">Interpretation</div>
+  <div class="a tb b" style="left:109px;top:736px;width:493px;font-size:45.3px;color:var(--ink)">Feature-importance stability</div>
+  <div class="a card" style="left:677px;top:635px;width:568px;height:277px;border-left:11px solid var(--teal)"></div>
+  <div class="a tb b caps" style="left:720px;top:672px;width:493px;font-size:29.3px;color:var(--teal)">Medicine</div>
+  <div class="a tb b" style="left:720px;top:736px;width:493px;font-size:45.3px;color:var(--ink)">Clinical decision rule vetting</div>
+  <div class="a card" style="left:1288px;top:635px;width:568px;height:277px;border-left:11px solid var(--teal)"></div>
+  <div class="a tb b caps" style="left:1331px;top:672px;width:493px;font-size:29.3px;color:var(--teal)">Tutorial</div>
+  <div class="a tb b" style="left:1331px;top:736px;width:493px;font-size:45.3px;color:var(--ink)">Synthetic classification</div>
+  <p class="a src">Notebooks: yu-group.github.io/veridical-flow</p>
+</section>
+
+<!-- 10 · Worked example (build: the factors multiply) -->
+<section class="slide" id="s10" data-steps="3">
+  <h2 class="a title">Worked example: is feature importance stable to the analyst’s choices?</h2>
+  <div class="a card pill" style="left:67px;top:290px;width:1789px;height:112px"></div>
+  <div class="a ctr slatebg pill b caps" style="left:89px;top:316px;width:120px;height:60px;font-size:24px">Data</div>
+  <p class="a tb" style="left:230px;top:300px;width:1610px;font-size:30px;line-height:1.3;color:var(--ink)"><b>Diabetes progression:</b> 442 patients × 10 baseline measurements (age, sex, BMI, blood pressure, six serum tests); target: progression after one year. 10% of values blanked, so the imputer matters.</p>
+  <div class="a tint" style="left:67px;top:430px;width:568px;height:320px"></div>
+  <div class="a tb serif" style="left:109px;top:440px;width:483px;font-size:76px;color:var(--teal)">100</div>
+  <div class="a tb b" style="left:109px;top:560px;width:483px;font-size:40px;color:var(--ink)">bootstrap samples</div>
+  <div class="a tb" style="left:109px;top:622px;width:483px;color:var(--slate)">of the training data</div>
+  <div class="fx" data-at="1">
+    <div class="a ctr" style="left:635px;top:550px;width:43px;height:80px;font-size:53.3px;color:var(--slate)">×</div>
+    <div class="a tint" style="left:677px;top:430px;width:568px;height:320px"></div>
+    <div class="a tb serif" style="left:720px;top:440px;width:483px;font-size:76px;color:var(--teal)">3</div>
+    <div class="a tb b" style="left:720px;top:560px;width:483px;font-size:40px;color:var(--ink)">imputers</div>
+    <div class="a tb" style="left:720px;top:622px;width:483px;color:var(--slate)">mean, median, KNN</div>
+  </div>
+  <div class="fx" data-at="2">
+    <div class="a ctr" style="left:1245px;top:550px;width:43px;height:80px;font-size:53.3px;color:var(--slate)">×</div>
+    <div class="a tint" style="left:1288px;top:430px;width:568px;height:320px"></div>
+    <div class="a tb serif" style="left:1331px;top:440px;width:483px;font-size:76px;color:var(--teal)">4</div>
+    <div class="a tb b" style="left:1331px;top:560px;width:483px;font-size:40px;color:var(--ink)">forest settings</div>
+    <div class="a tb" style="left:1331px;top:622px;width:483px;color:var(--slate)">100 or 300 trees ×<br>min split 2 or 10</div>
+  </div>
+  <div class="fx" data-at="3">
+    <p class="a tb b" style="left:67px;top:780px;width:1789px;font-size:40px;color:var(--ink)">= 1,200 forests, each scored by permutation importance</p>
+    <p class="a tb" style="left:67px;top:855px;width:1789px;color:var(--slate)">Which features stay important across all 1,200, and which hinge on one choice?</p>
+  </div>
+</section>
+
+<!-- 11 · Steps 1-3 -->
+<section class="slide" id="s11">
+  <h2 class="a title">Steps 1–3: each judgment call becomes one Vset</h2>
+  <div class="a code" style="left:67px;top:293px;width:1173px;height:640px"></div>
+  <div class="a codetext" style="left:88px;top:309px;width:1131px;font-size:28px;line-height:1.36"><span class="ln">preproc_set = Vset('preproc',</span><span class="ln">    [SimpleImputer(strategy='mean'),</span><span class="ln">     SimpleImputer(strategy='median'),</span><span class="ln">     KNNImputer()],</span><span class="ln">    ['mean', 'med', 'knn'],</span><span class="ln">    output_matching=True)</span><span class="ln"> </span><span class="ln">RF_set = build_vset('RF', RandomForestRegressor,</span><span class="ln">    param_dict={'n_estimators': [100, 300],</span><span class="ln">                'min_samples_split': [2, 10]})</span><span class="ln"> </span><span class="ln">boot_set = build_vset('boot', resample,</span><span class="ln">                      reps=100, lazy=True)</span><span class="ln"> </span><span class="ln">feat_imp_set = build_vset('feat_imp',</span><span class="ln">    permutation_importance, n_repeats=4)</span></div>
+  <div class="a tline" style="left:1253px;top:400px;width:53px"></div>
+  <div class="a tb vc" style="left:1320px;top:347px;width:536px;height:107px;font-size:34.7px;color:var(--ink)">3 imputers, matched on train and validation</div>
+  <div class="a tline" style="left:1253px;top:603px;width:53px"></div>
+  <div class="a tb vc" style="left:1320px;top:549px;width:536px;height:107px;font-size:34.7px;color:var(--ink)">2 × 2 grid gives 4 forests</div>
+  <div class="a tline" style="left:1253px;top:752px;width:53px"></div>
+  <div class="a tb vc" style="left:1320px;top:699px;width:536px;height:107px;font-size:34.7px;color:var(--ink)">100 resamples, drawn only when needed</div>
+  <div class="a tline" style="left:1253px;top:875px;width:53px"></div>
+  <div class="a tb vc" style="left:1320px;top:821px;width:536px;height:107px;font-size:34.7px;color:var(--ink)">Stability target: permutation importance</div>
+</section>
+
+<!-- 12 · Step 4 (build: the counter grows with each call) -->
+<section class="slide" id="s12" data-steps="4">
+  <h2 class="a title">Step 4: three calls fit all 1,200 forests</h2>
+  <div class="a code" style="left:67px;top:293px;width:1173px;height:640px"></div>
+  <div class="a codetext" style="left:88px;top:309px;width:1131px;font-size:29.3px;line-height:1.5"><span class="ln">X_train, y_train, X_val, y_val = init_args(</span><span class="ln">    [X_train, y_train, X_val, y_val])</span><span class="ln"> </span><span class="ln g1"># 100 bootstrap samples</span><span class="ln g1">X_trains, y_trains = boot_set(X_train, y_train)</span><span class="ln"> </span><span class="ln g2"># × 3 imputers</span><span class="ln g2">X_trains = preproc_set.fit_transform(X_trains)</span><span class="ln"> </span><span class="ln g3"># × 4 forests</span><span class="ln g3">RF_set.fit(X_trains, y_trains)</span><span class="ln"> </span><span class="ln">build_graph(RF_set)  # draw the pipeline</span></div>
+  <div class="fx" data-at="1">
+    <div class="a tint" style="left:1320px;top:315px;width:536px;height:149px"></div>
+    <div class="a tb vc serif" style="left:1347px;top:315px;width:213px;height:149px;font-size:53.3px;color:var(--teal)">100</div>
+    <div class="a tb vc" style="left:1560px;top:315px;width:288px;height:149px;font-size:34.7px;color:var(--ink)">training sets</div>
+  </div>
+  <div class="fx" data-at="2">
+    <div class="a" style="left:1586px;top:469px;width:3px;height:53px;background:var(--teal)"></div>
+    <div class="a tint" style="left:1320px;top:528px;width:536px;height:149px"></div>
+    <div class="a tb vc serif" style="left:1347px;top:528px;width:213px;height:149px;font-size:53.3px;color:var(--teal)">300</div>
+    <div class="a tb vc" style="left:1560px;top:528px;width:288px;height:149px;font-size:34.7px;color:var(--ink)">imputed training sets</div>
+  </div>
+  <div class="fx" data-at="3">
+    <div class="a" style="left:1586px;top:683px;width:3px;height:53px;background:var(--teal)"></div>
+    <div class="a teal" style="left:1320px;top:741px;width:536px;height:149px"></div>
+    <div class="a tb vc serif" style="left:1347px;top:741px;width:213px;height:149px;font-size:53.3px;color:#fff">1,200</div>
+    <div class="a tb vc" style="left:1560px;top:741px;width:288px;height:149px;font-size:34.7px;color:#fff">fitted forests</div>
+  </div>
+  <p class="a tb fx" data-at="4" style="left:1320px;top:901px;width:536px;font-size:26.7px;color:var(--slate)">Ray parallelizes; joblib caches</p>
+</section>
+
+<!-- 13 · Step 5 (build: output, then what stable means) -->
+<section class="slide" id="s13" data-steps="2">
+  <h2 class="a title">Step 5: summarize importance across bootstraps, for each path</h2>
+  <div class="a code" style="left:67px;top:315px;width:960px;height:400px"></div>
+  <div class="a codetext" style="left:88px;top:331px;width:917px;font-size:28px;line-height:1.5"><span class="ln">importances = feat_imp_set(RF_set.out,</span><span class="ln">    preproc_set.fit_transform(X_val), y_val)</span><span class="ln"> </span><span class="ln">df = dict_to_df(importances, param_key='out')</span><span class="ln"> </span><span class="ln">perturbation_stats(df, 'preproc', 'RF',</span><span class="ln">    wrt='out-importances_mean',</span><span class="ln">    prefix='X', split=True)</span></div>
+  <div class="fx" data-at="1">
+    <div class="a tb b" style="left:1080px;top:299px;width:776px;font-size:34.7px;color:var(--ink)">Output: one row per path</div>
+    <div class="a" style="left:1080px;top:368px;width:776px">
+      <table class="t"><tr><th>preproc</th><th>RF</th><th>count</th><th>X2-mean</th><th>X2-std</th></tr>
+      <tr><td>mean</td><td>RF_0</td><td class="num">100</td><td class="num">μ</td><td class="num">σ</td></tr>
+      <tr><td>knn</td><td>RF_3</td><td class="num">100</td><td class="num">μ</td><td class="num">σ</td></tr>
+      <tr><td>… 12 rows</td><td></td><td></td><td></td><td></td></tr></table>
+    </div>
+  </div>
+  <div class="fx" data-at="2">
+    <div class="a tint" style="left:67px;top:757px;width:1789px;height:187px"></div>
+    <div class="a tb b" style="left:109px;top:779px;width:1704px;font-size:40px;color:var(--ink)">Stable feature: high mean, small std, similar across all 12 rows</div>
+    <div class="a tb" style="left:109px;top:848px;width:1704px">filter_vset_by_metric keeps the most stable paths for the test set.</div>
+  </div>
+  <p class="a src">X2 is bmi (features are numbered from 0); μ, σ stand for the computed values</p>
+</section>
+
+<!-- 13b · vflow stability across 60 pipelines (one analyst ringed) -->
+<section class="slide" id="d1" data-steps="1">
+  <h2 class="a title">“BMI matters” is stable; which BMI column wins is not</h2>
+  <div class="a panel" style="left:67px;top:225px;width:1789px;height:740px;flex-direction:row;gap:40px">
+    <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:10px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:20px">
+        <h3>Permutation importance in all 60 pipelines</h3>
+        <div class="legend">
+          <span class="key"><span class="sw" style="background:var(--s1)"></span>bmi</span>
+          <span class="key"><span class="sw" style="background:var(--s2)"></span>bmi_copy</span>
+          <span class="key"><span class="sw" style="background:#B9BEC4"></span>other features</span>
+          <span class="key"><span class="sw ring"></span>one analyst</span>
+        </div>
+      </div>
+      <div id="d1-strip"></div>
+    </div>
+    <div class="fx" data-at="1" style="width:330px;display:flex;flex-direction:column;justify-content:center;gap:22px">
+      <div class="stat" style="border-top-color:var(--s1)"><span class="v" id="d1-st-bmi"></span><span class="k">bmi in top 3</span></div>
+      <div class="stat" style="border-top-color:var(--s2)"><span class="v" id="d1-st-copy"></span><span class="k">bmi_copy in top 3</span></div>
+      <div class="stat" style="border-top-color:var(--ink)"><span class="v" id="d1-st-either"></span><span class="k">either in top 3</span></div>
+      <div class="stat"><span class="v" id="d1-st-flip"></span><span class="k">copy outranks bmi</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 18 · Section: using agents with vflow -->
+<section class="slide section" id="s18">
+  <img class="a sec-mark vspin" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMjAgMTIwIiB3aWR0aD0iMTIwIiBoZWlnaHQ9IjEyMCIgcm9sZT0iaW1nIiBhcmlhLWxhYmVsPSJ2ZmxvdyI+PHRpdGxlPnZmbG93PC90aXRsZT48cGF0aCBkPSJNMCwtMTYuNzIgQzQuMTgsLTEwLjI2IDcuNiwtNS4zMTk5OTk5OTk5OTk5OTkgNy42LDAgQTcuNiw3LjYgMCAxIDEgLTcuNiwwIEMtNy42LC01LjMxOTk5OTk5OTk5OTk5OSAtNC4xOCwtMTAuMjYgMCwtMTYuNzIgWiIgZmlsbD0iI2ZmZmZmZiIgZmlsbC1vcGFjaXR5PSIwLjcwIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSg2MC4wLDIwLjApIHJvdGF0ZSgtOTAuMCkiLz48cGF0aCBkPSJNMCwtMTYuNzIgQzQuMTgsLTEwLjI2IDcuNiwtNS4zMTk5OTk5OTk5OTk5OTkgNy42LDAgQTcuNiw3LjYgMCAxIDEgLTcuNiwwIEMtNy42LC01LjMxOTk5OTk5OTk5OTk5OSAtNC4xOCwtMTAuMjYgMCwtMTYuNzIgWiIgZmlsbD0iI2ZmZmZmZiIgZmlsbC1vcGFjaXR5PSIwLjc0IiB0cmFuc2Zvcm09InRyYW5zbGF0ZSg4OC4zLDMxLjcpIHJvdGF0ZSgtNDUuMCkiLz48cGF0aCBkPSJNMCwtMTYuNzIgQzQuMTgsLTEwLjI2IDcuNiwtNS4zMTk5OTk5OTk5OTk5OTkgNy42LDAgQTcuNiw3LjYgMCAxIDEgLTcuNiwwIEMtNy42LC01LjMxOTk5OTk5OTk5OTk5OSAtNC4xOCwtMTAuMjYgMCwtMTYuNzIgWiIgZmlsbD0iI2ZmZmZmZiIgZmlsbC1vcGFjaXR5PSIwLjc5IiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxMDAuMCw2MC4wKSByb3RhdGUoMC4wKSIvPjxwYXRoIGQ9Ik0wLC0xNi43MiBDNC4xOCwtMTAuMjYgNy42LC01LjMxOTk5OTk5OTk5OTk5OSA3LjYsMCBBNy42LDcuNiAwIDEgMSAtNy42LDAgQy03LjYsLTUuMzE5OTk5OTk5OTk5OTk5IC00LjE4LC0xMC4yNiAwLC0xNi43MiBaIiBmaWxsPSIjZmZmZmZmIiBmaWxsLW9wYWNpdHk9IjAuODMiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDg4LjMsODguMykgcm90YXRlKDQ1LjApIi8+PHBhdGggZD0iTTAsLTE2LjcyIEM0LjE4LC0xMC4yNiA3LjYsLTUuMzE5OTk5OTk5OTk5OTk5IDcuNiwwIEE3LjYsNy42IDAgMSAxIC03LjYsMCBDLTcuNiwtNS4zMTk5OTk5OTk5OTk5OTkgLTQuMTgsLTEwLjI2IDAsLTE2LjcyIFoiIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC44NyIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNjAuMCwxMDAuMCkgcm90YXRlKDkwLjApIi8+PHBhdGggZD0iTTAsLTE2LjcyIEM0LjE4LC0xMC4yNiA3LjYsLTUuMzE5OTk5OTk5OTk5OTk5IDcuNiwwIEE3LjYsNy42IDAgMSAxIC03LjYsMCBDLTcuNiwtNS4zMTk5OTk5OTk5OTk5OTkgLTQuMTgsLTEwLjI2IDAsLTE2LjcyIFoiIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC45MSIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMzEuNyw4OC4zKSByb3RhdGUoMTM1LjApIi8+PHBhdGggZD0iTTAsLTE2LjcyIEM0LjE4LC0xMC4yNiA3LjYsLTUuMzE5OTk5OTk5OTk5OTk5IDcuNiwwIEE3LjYsNy42IDAgMSAxIC03LjYsMCBDLTcuNiwtNS4zMTk5OTk5OTk5OTk5OTkgLTQuMTgsLTEwLjI2IDAsLTE2LjcyIFoiIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC45NiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMjAuMCw2MC4wKSByb3RhdGUoMTgwLjApIi8+PHBhdGggZD0iTTAsLTE2LjcyIEM0LjE4LC0xMC4yNiA3LjYsLTUuMzE5OTk5OTk5OTk5OTk5IDcuNiwwIEE3LjYsNy42IDAgMSAxIC03LjYsMCBDLTcuNiwtNS4zMTk5OTk5OTk5OTk5OTkgLTQuMTgsLTEwLjI2IDAsLTE2LjcyIFoiIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMS4wMCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMzEuNywzMS43KSByb3RhdGUoMjI1LjApIi8+PC9zdmc+Cg==" alt="">
+  <h2 class="a sec-title" style="top:400px">Using agents with <span class="vw">vfl<span class="vo">o</span>w</span></h2>
+  <p class="a sec-sub" style="top:576px;font-size:48px">Checking AI analysts, and running PCS with agents</p>
+</section>
+
+<!-- 19 · Coding agents -->
+<section class="slide" id="s19" data-steps="3">
+  <div class="a demo-tag paper-tag">PAPER · SANITY CHECKS FOR AGENTIC DATA SCIENCE (REWOLINSKI ET AL., 2026)</div>
+  <h2 class="a title">Coding agents do end-to-end analyses</h2>
+  <div class="a card pill" style="left:67px;top:285px;width:1789px;height:160px"></div>
+  <div class="a tb b caps" style="left:95px;top:301px;width:1700px;font-size:24px;color:var(--slate)">Yes/no question</div>
+  <div class="a tb b" style="left:95px;top:336px;width:1700px;font-size:46px;color:var(--ink)">Does BMI affect diabetes progression?</div>
+  <div class="a tb" style="left:95px;top:398px;width:1700px;font-size:27px;color:var(--slate)">The agent answers with a 0–100 score for “yes”.</div>
+  <div class="fx" data-at="1">
+    <div class="a card" style="left:67px;top:480px;width:568px;height:430px"></div>
+    <img class="a" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEwAAABMCAYAAADHl1ErAAAFH0lEQVR4Aeyai1HbQBBAJRqCBgi4h5B2gHZCegBCA9AQip8yC5r13k/3sSzLM2vp7vb287R3sjS+6LZPEoENWBKurtuAbcASCSSqbxW2AUskkKh+tAp7+3l1mxjrItSrAwPM293ls8jfu8sBGfrhmaMI46+/rh6QRZBxBFEFmEACBmCGrrsVccTRMd4Pwz3CPMAhLv1j9RcFJqAEUk5SgEMEXo6tknOLACsJykpuSeCygbFsYiuq77oXZOj7RxHaSBfxARz+IlSrqWQBI3iScEUHiFGGfvfj6aO/fvrYITe/3x9EaCOM93s9QLrs0Y8//HJ+DJkNjLsawVtBCyRAjPLn/cXS+9/3/X291wMk8Hzg8It/toLv2W3OZgEjWO5qVohUSQokywZ9IXCj/364R7elJANjOYzBqii/qmpfJWooqwk4LgL2tSHi4OLp/prtJGDAYjnogEimRFVpu9JmqWLfWqZAIy7RrX2MBkZQFiySIJnagWJ/rLb9nZbzqRBXq/0sGtg0QDmnskhC2i2OXBz8HvhqtJ9FAXNVF8EfBN6iY+gftZtWSzMKGCV/EOD+x6fua9VmT2Mr0P6sOLVObjsIjOqynLReijoG/FtLs/ZeFgSmA6VtXV36m4uxNLvKe1kQmFXmXN3mcAyHLE1dZexlNavMC8xajoupLgNgiy4vMCuAi88u6rmwa/VpvCy9wC6G4UbnzTLQfcdsW/GwLJNiSlD2AtOO9X6R4Keqasu4vMCqZnmixpOAffb966nkWetO6QRWy2EN4C0vpBOYtZnWSPbUbDqBWYlYd01Lr3Vfy7iSgLUGkeOv1grxAtO3a/0zIyehknNbxuUFZiW1tJuB9fimL7SVx9w+P7DGjx1zk9Dzat41vcBq7QM6wZy29Tal5vOuFxiJ6PJmv1jKsrSWIzHXvNBBYN2Cl6VVXbVfPwWBcbVmVBkXuqq4qqv2y80gsDFro8r4x86xliZ+j1FdsIgCZlUZk2u/Px99GF9cLKO7q11d+IwChqK1l403gLvL53G80ZfrvxS19y5JLxoYVWYFBTTXfiJOSh2BhT9tj7haVBd+o4GhTFD6BkA/+wnJsLfQLi3Yxb4FC1+Lfvjm7wEWNJJhbyldbdjDLvaBYwljALXGSvclVdiX8/1d04LGONVW4p/PUlXYw25IWkGbBYz9jEpj73AlQqICjipx6U37BRLVEqqq6Tw5F2j4E5GxUsdZwMQ5e5oPGnqAQ4AHCESS4VyEcYFE4sy1hMpGrDH6mIs/Eezjj7ESkgWMAGKgoYeQDCLJcC7CeEj46yaVjfigTe1gH3+loGUDIzighf75jN5cAQ722QrERgo05pSCVgQYASFTcCRJ31xhPst9BPX0sbPsHANaUWCSFOBIhmRJGpEx3xFILDuE+djx6TPmflnI6KHkVloVYNMwSRoBnghApiL9QGLZIVMbpc9zoFUHZiULkKlYOrF9c9+uzoV2FGCxMGL0AM9SjtHVOnOgnTywEcL+yWM8zvhKhbYKYFRZ7I3FYpoCbRXAgMCNpQW01QArBY3nWWy5ZFXASDK30kKv3VcHLBcaz57YcMkqgZFsTqX5luVqgeVCY74lqwZGwnMqjZ8pzLVk9cBIOgVa6KdJEjCcn6rEQOMRCz1fjmcDDAjA4M0IYGhPhcribcm0zzo/K2ACADAjuKHf8ZqJc2DKuO94lsAECJs7Iu2Y41kDiwGkdTZgmkigvQELANLDGzBNJNDegAUA6eF/AAAA///i+VPKAAAABklEQVQDAODM97f2UBQnAAAAAElFTkSuQmCC" alt="" style="left:104px;top:510px;width:90px;height:90px">
+    <div class="a tb b" style="left:104px;top:618px;width:493px;font-size:40px;color:var(--ink)">Over-reads weak evidence</div>
+    <div class="a tb" style="left:104px;top:740px;width:493px">Calls non-significant estimates findings</div>
+  </div>
+  <div class="fx" data-at="2">
+    <div class="a card" style="left:677px;top:480px;width:568px;height:430px"></div>
+    <img class="a" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEwAAABMCAYAAADHl1ErAAAE9klEQVR4AeycgXHdIAxA8V+oWSBNskPTdZKu02SHJM0CyULf/c899SgHWDLG4Kv/nQ4MQkjPYGSn15M7fiYCBzATLucOYAcwIwGj+rHCDmBGAkb1Y4UdwIwEjOqqFfb+7er2/f7Ly6/7L2NNeft+9Wj0f3N1FTA3jA+jc7eu8m8YxwduTOVpiszPAmN1bQFLothyLpnTUs4CsxhbS5ebtJatte0UARucex3G4e7r0+elGH64md9F6a8uY2fUu+wuAnYehrfr549XIrv5+fE4Dmlo9Pm6bhRdRu9HioCdzm6C5RS/UPd8ctUPEVfhVwSM01Pt0+WkVet2rFgEjBON3AkhHSAtSMWKLjoa3ZSNHtqLgBEAkBCAcJ0TdLS6OTst+4qBtXS+xdybA9trOiE3pwgYwVtyK3Svnz7vKBkrTuypLAIW5mFcp4L387ApHzvysBSqP+1HHgYHS25l0cV2p1K0JUkT+D5GfoWQMqTiFN3/Pg8DEDAQ6nMCVK3unK0W/UUrrIXDVeY0GF0FmCVFsOga4thMtQgYqQI5FbkV38RyMOjT6m4W/YKJioAx35RTUUEyuRU5mlYXU71KETBLbmXR1cDiMzYnM8LJqxmzhk4RsPB72Gkcb5JOrZiHAWgcxhdOW4STF3DJuVfsKAKGs5KHUXKd8o0+dAiMkiBTurl2YMXGYh/bubFr9BUBEwdwVupzpUU3tJWCJXrYrg1tFtg/D2rxrHIZm3MOlrhUG9osMBwhHaDcQmJzaWGJfzWhqYBxx8mzyLtqCaCYg7kkcEorLMYgtaCpgOEAwt8ea0kIivk0sCQh5kYyxpca0EzAfGdq1zWw8IG3DGBzI1mltPmyNrQugWlhsbp8OIAL2+hfE1otYPi5SLSwMA4ISl9ibfTTvkbK0RUwCywgIIxB5FWJtpSsAa0bYAQdy+BTwUs7YxB5VZL2VFkKrQtgGlg8m3iok3rETsQUoFh7CbTmwDSwCNr/PMSJ2ApaU2BaWAALPw/RphFZmQCm7o9ZstKaAbPAmoIMPg9lPyVNA5wDkJ+nxf4RnxVaM2A8qJ3hJ4GRGiBczw1nG/s65Gn+tdSxhU25zpVNgLG6ck6xMhC2ka9HYCJ+e6oersLcvNhN2fHbmwDzHYjVp2309HnHw52TMaajaQMCkERCgBoboU4TYLkHeLiqUtsoDIRrViVCXYStLwJAaQ/LcN6wX66bAANCysGlqwB7sjLJ1SRAbclq1ug2AYZjOEiQ1H1hFbCFaNO87qCHYI9SJFxp0h4rLdu+GTAcJ8gYNLYQfyjRvu5gK5TzMLyFbbFrYLHiY32xtqbAcCgFjT6LyKpkDCsT6NRzYoWFrebAcGINaABiVZJPsTKxm5MlsLDXBTAcsUDj+UTAse3MMxB7OWGsZRv6troBhlMaaECaTsPnj1f0CZ6xWkF/KSzm6AoYDgEBKNQ1Ygm+FBb+dAcMp3LQwjzNf9gzNiVrwMJ2l8BwLAWNZ5RAqnka4kNMugWGsylociLWPA2ZPyZdA8PhFDT65mStbejP0z0wnF0CrQYsfNkFMBy1QKsFCz92AwxnNdBqwsKHXQHD4Ry02rCY3wSMAT2IQJtekfivIC7CNzBLErs0jl0CI1igTa9Il0/ZlLRtIbsFtgWc2BwHsBiVTNsBLAMn1nUAi1HJtB3AMnBiXQewGJVM2wEsAyfW9RsAAP//wU7euwAAAAZJREFUAwDCIEjGGMypiwAAAABJRU5ErkJggg==" alt="" style="left:715px;top:510px;width:90px;height:90px">
+    <div class="a tb b" style="left:715px;top:618px;width:493px;font-size:40px;color:var(--ink)">Shops for p-values</div>
+    <div class="a tb" style="left:715px;top:740px;width:493px">Anchors on the lowest p-value</div>
+  </div>
+  <div class="fx" data-at="3">
+    <div class="a card" style="left:1288px;top:480px;width:568px;height:430px"></div>
+    <img class="a" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEwAAABMCAYAAADHl1ErAAAFCklEQVR4AeyZjVXcMAyAnVsIFqDADqXrAOuU7gCUBWAh0nz30D3HJztW/svTPYQdW7akz7IIcAj+MRFwYCZcITgwB2YkYFT3DHNgRgJGdc8wB2YkYFT3DHNgRgJGdc8wB2YkYFT3DPv/gBk93ljdM8x4AA7MgRkJGNU9wxyYkYBRfbMMe/t5eYO8/rp8QN7uLp5F/t5dtCIyho6IMcZZ1VcFBiAB0DbtM9K07T3ShnAjEkcoY+iIAJN9tgC4OLAzSF9gYihj+oCMAQJvzD7WNYsBE1BkEcEhVucs+sAj8wCHWNZadGcHloKyOJPqNiG8BOMHcAjQ8MW4fFB9VmDUFcmoIcvAaJvmsWmbW+TH00eDMCZrP5vmlTEEHeYQ1opOrgUavgAupzNmfBZgnCTXoebaETgArp4+bq9/vz9c/Xl/QYacRwd9hLXsUQMPcPg2F7jJwHCEkxwKeIl54NUc0qBtg8IkYMDiBHP2yAAyIZ7/PISbUPgAgTUI/YJqwH48zxpsxmP0GRvaC70aGQ2MepWDRY3h6omTPNc4M0UHKKzHJn2xSZ8x5lKhlCDpeOl5FDBg5a4CDlJjqDknw23zyHgM8TQ3oQMIySr6shV9fCjZAxTZ3vNTNii0ZmBcgxysnIM4dQyiK/AFX0ZPsbe2GLvaODEAK7dOWyNjJmAY0q4h6Q+snINibA8tMeDHGFisqwaGIQ0Wm+Qyjrk9CaXk0LbXY2ERSxUw7nsOFpsgvFqgR3+PAiwOlto2xb8qYMDQjFDI43HqQvy8hz6HyIsrsCgbmk/oAFSbS8cGgXEV00U8A4vUpo2f6e9FACGHjZ9ajRUdgOZijeMZBKZdRYwDi41oOTlanvciBB/D0vwTWOIzsTImz1pbBIbRdFEMS+a0k5O5LVr8Jnhsa/4yfpSmvT+28TdtLJovAhOjkX44fAbzn1zCih9qkfjN646WWSd3uhfqU/+rw9UsZVkWGKf0tcep4bT2lk3iHEECi4BlbOgnIrEAVfRPbSHLVGAYl1M6bdJ1iqfVzUdfq3bxl3oVw6KuVjlhzDIVmPZ6oJ5ElUfLKnETgBVbsd4ELTaNATZUYLwNMxkLp8f7DA5yovHcVn18SW8CsGpuAjEcrzD/ver+MZPGoDFARwUGHCY1SR3UdNYYmwJL/CvFyRxQRVfaM2A4IpPSxilLn2Ipc1u0ZEZ6cLWZJf4SA7HIc9yXMe1angET5V7bFUb5u1Po+r25FR84cWBx+rFZgq25hvGaY7+LhR8OxKbFpV3LM2DpybExp0GLU9LneU0BFsU9hXX0oQv82Bq/EQvCMmnpi2i2esBwSpSlJdWlv1VLmQCWZh//tGA13aExMjXVSZn0gKXKe3gGlpb1+AYssp7+LFKRqT1gapHb8Fch6tVqsDLEUyY9YJk1qw9zDYCl1RCcmT2z2LRSBoHNVR8q/QnAol7lYFFnZr2GkWNarOlPyh6wdDLaa5Uu9QpYJWNDv1CX1s4x1wM2x4ZT9sjVK9mTdybpD7fLaOwGGFexFCJ1S7sypTVLzO0GWCk4YC1Vt0p2tbndACN7KOipk3uChW89YBRUfq+KBaW1BPsAEnv0186sOHb6+CT+0PaAMbC1AAhHEfpb+5Pa3x2w1MG9PTsw44k4MAdmJGBU9wxzYEYCRnXPMAdmJGBUN2WYce9vqe7AjMfqwByYkYBR3TPMgRkJGNU9wxyYkYBR3TPMCOwfAAAA//9Xle8QAAAABklEQVQDAJH42LcUrab/AAAAAElFTkSuQmCC" alt="" style="left:1325px;top:510px;width:90px;height:90px">
+    <div class="a tb b" style="left:1325px;top:618px;width:493px;font-size:40px;color:var(--ink)">Misjudges its own certainty</div>
+    <div class="a tb" style="left:1325px;top:740px;width:493px">Confidence barely tracks stability</div>
+  </div>
+  <p class="a src fx" data-at="3">Observed with GPT-5.2-Codex on BLADE benchmark datasets</p>
+</section>
+
+<!-- 20 · Perturbations -->
+<section class="slide" id="s20">
+  <div class="a demo-tag paper-tag">PAPER · REWOLINSKI ET AL., 2026</div>
+  <h2 class="a title">Shuffling removes the signal; nothing else should change the answer</h2>
+  <div>
+    <div class="a pill" style="left:67px;top:430px;width:560px;height:340px;background:#F6E3DC"></div>
+    <div class="a tb b caps" style="left:99px;top:462px;width:500px;font-size:24px;color:#A8452A">Removes the signal</div>
+    <div class="a tb b" style="left:99px;top:540px;width:500px;font-size:46px;color:var(--ink)">Shuffle the values</div>
+    <div class="a tb" style="left:99px;top:660px;width:500px;font-size:28px;color:var(--slate)">Defines what “no effect” looks like</div>
+    <div class="a pill" style="left:667px;top:430px;width:1189px;height:340px;background:var(--tint)"></div>
+    <div class="a tb b caps" style="left:699px;top:462px;width:1100px;font-size:24px;color:var(--teal)">Should not change the answer</div>
+    <div class="a" style="left:717px;top:540px;width:1112px;display:grid;grid-template-columns:1fr 1fr;gap:30px 40px;font-size:40px;font-weight:700;color:var(--ink)">
+      <span>Add noise columns</span><span>Anonymize column names</span><span>Shuffle column names</span><span>Lead the question</span>
+    </div>
+  </div>
+</section>
+
+<!-- 21 · Two checks (build: the yes check alone, then the overlap check splits it) -->
+<section class="slide" id="s21" data-steps="1">
+  <div class="a demo-tag paper-tag">PAPER · REWOLINSKI ET AL., 2026</div>
+  <h2 class="a title">A “yes” must pass two checks</h2>
+  <div class="a card pill" style="left:67px;top:310px;width:860px;height:400px"></div>
+  <div class="a tb serif" style="left:107px;top:330px;width:200px;font-size:90px;color:var(--teal)">1</div>
+  <div class="a tb b" style="left:107px;top:470px;width:780px;font-size:46px;color:var(--ink)">It says yes</div>
+  <div class="a tb" style="left:107px;top:550px;width:780px;font-size:34px;color:var(--slate)">Mean score on the real data is above 50</div>
+  <div class="fx" data-at="1">
+    <div class="a card pill" style="left:997px;top:310px;width:860px;height:400px"></div>
+    <div class="a tb serif" style="left:1037px;top:330px;width:200px;font-size:90px;color:var(--teal)">2</div>
+    <div class="a tb b" style="left:1037px;top:470px;width:780px;font-size:46px;color:var(--ink)">It differs from noise</div>
+    <div class="a tb" style="left:1037px;top:550px;width:780px;font-size:34px;color:var(--slate)">Real and shuffled-data scores overlap less than 0.2</div>
+    <div class="a ctr teal pill b" style="left:67px;top:770px;width:1789px;height:120px;font-size:44px">Pass both → a stable yes</div>
+  </div>
+</section>
+
+<!-- 22 · OVL bars (build: then the threshold separates the five) -->
+<section class="slide" id="s22" data-steps="1">
+  <div class="a demo-tag paper-tag">PAPER · REWOLINSKI ET AL., 2026</div>
+  <h2 class="a title">Only 5 of the 11 conclusions pass both checks</h2>
+  <p class="a tb" style="left:373px;top:290px;width:1300px;font-size:34.7px">Score overlap, real vs shuffled data <span style="color:var(--slate)">(0 = fully separated, 1 = identical)</span></p>
+  <svg class="a" id="s22-chart" style="left:373px;top:354px" width="1173" height="619" aria-label="Overlap per dataset: boxes 0.84, affairs 0.75, reading 0.68, hurricane 0.55, crofoot 0.54, caschools 0.28, mortgage 0.10, panda_nuts 0.07, soccer 0.05, amtl 0.02, teachingratings 0.00"></svg>
+</section>
+
+<!-- 23 · Single runs mislead -->
+<section class="slide" id="s23" data-steps="1">
+  <div class="a demo-tag paper-tag">PAPER · REWOLINSKI ET AL., 2026</div>
+  <h2 class="a title">A single run said yes on all 11 datasets; 6 of those yeses fail a check</h2>
+  <div class="a tb serif" style="left:67px;top:430px;width:800px;font-size:150px;color:var(--ink)">11 of 11</div>
+  <div class="a tb" style="left:67px;top:630px;width:800px;font-size:40px;color:var(--slate)">datasets got a “yes” from one run</div>
+  <div class="a ctr fx" data-at="1" style="left:880px;top:480px;width:140px;height:140px;font-size:90px;color:var(--slate)">→</div>
+  <div class="fx" data-at="1">
+    <div class="a tb serif" style="left:1060px;top:430px;width:800px;font-size:150px;color:var(--terra)">6 of 11</div>
+    <div class="a tb" style="left:1060px;top:630px;width:800px;font-size:40px;color:var(--slate)">fail a check once runs are repeated</div>
+  </div>
+</section>
+
+<!-- 23b · Shuffle check (build: shuffled-data means and verdicts) -->
+<section class="slide" id="d3" data-steps="1">
+  <h2 class="a title">A “yes” only counts if it beats the same analyst on shuffled data</h2>
+  <div class="a legend" style="left:85px;top:290px;width:1771px;font-size:28px">
+    <span class="key"><span class="sw" style="background:var(--s1)"></span>real data</span>
+    <span class="key fx" data-at="1"><span class="sw" style="background:var(--s2)"></span>outcome shuffled</span>
+    <span class="key" style="color:var(--muted)">mean “yes” score over 20 runs</span>
+  </div>
+  <div class="a" id="d3-chart" style="left:67px;top:345px;width:1789px"></div>
+  <p class="a tb fx" data-at="1" style="left:67px;top:900px;width:1789px;font-size:34px;color:var(--ink)">The shopper still scores 73–82 on shuffled data; only the PCS analyst’s BMI yes stands clear of its baseline.</p>
+</section>
+
+<!-- 24 · Conclusion step (build: the conclusion bar, then humans vs agents) -->
+<section class="slide" id="s24" data-steps="1">
+  <div class="a demo-tag paper-tag">PAPER · REWOLINSKI ET AL., 2026</div>
+  <h2 class="a title">Agent answers vary most at the conclusion step</h2>
+  <div class="a" style="left:430px;top:0;width:0;height:0">
+  <p class="a tb" style="left:67px;top:288px;width:1067px;font-size:34.7px">Where perturbations change agent outputs</p>
+  <div class="a" style="left:67px;top:720px;width:224px;height:107px;background:#D9D9D9"></div>
+  <div class="a tb" style="left:51px;top:837px;width:256px;text-align:center;font-size:32px">Independent<br>variables</div>
+  <div class="a" style="left:333px;top:613px;width:224px;height:213px;background:#BFBFBF"></div>
+  <div class="a tb" style="left:317px;top:837px;width:256px;text-align:center;font-size:32px">Control<br>variables</div>
+  <div class="a" style="left:600px;top:493px;width:224px;height:333px;background:#A6A6A6"></div>
+  <div class="a tb" style="left:584px;top:837px;width:256px;text-align:center;font-size:32px">Model<br>spec</div>
+  <div class="a grow" data-at="1" style="left:867px;top:360px;width:224px;height:467px;background:var(--terra)"></div>
+  <div class="a tb b fx" data-at="1" style="left:851px;top:837px;width:256px;text-align:center;font-size:32px;color:#A8452A">Conclusion</div>
+  <div class="a" style="left:67px;top:826px;width:1024px;height:2px;background:#BFBFBF"></div>
+  <p class="a tb" style="left:67px;top:928px;width:1067px;font-size:29.3px;color:var(--muted)">Bar heights show rank order only.</p>
+  </div>
+</section>
+
+<!-- 24c · DEMO: a replayed session (install, ask, confirm, run, verdict), stepped with the arrows -->
+<section class="slide" id="a1" data-steps="4">
+  <div class="a demo-tag">DEMO</div>
+  <h2 class="a title">Install, ask, and watch the analysts report in</h2>
+  <div class="a" id="a1-phases" style="left:67px;top:292px;width:1789px;display:flex;gap:12px;align-items:center">
+    <span class="phase" data-i="0">1 · Install</span><span class="phase" data-i="1">2 · Ask</span><span class="phase" data-i="2">3 · Confirm</span><span class="phase" data-i="3">4 · Run</span><span class="phase" data-i="4">5 · Verdict</span>
+    <button type="button" class="btn-replay" id="a1-replay">↻ Replay step</button>
+  </div>
+  <div class="a code" style="left:67px;top:358px;width:1180px;height:586px"></div>
+  <div class="a term" id="a1-term" style="left:84px;top:370px;width:1150px;height:562px;font-size:16.5px"><div id="a1-lines"></div></div>
+  <div class="a panel" style="left:1277px;top:358px;width:579px;height:586px;gap:12px">
+    <h3>How it works</h3>
+    <ol style="margin:0;padding-left:30px;font-size:24px;line-height:1.35;color:var(--body);display:grid;gap:10px">
+      <li><span class="mono b" style="color:var(--teal)">prepare.py</span> makes blinded workspaces: real data, every column shuffled, 6 perturbations</li>
+      <li>One fresh analyst per workspace sees only <span class="mono">brief.md</span> and <span class="mono">data.csv</span>, and writes <span class="mono">conclusion.json</span></li>
+      <li><span class="mono b" style="color:var(--teal)">summarize.py</span> turns signal and separation into a verdict</li>
+    </ol>
+    <div style="border-top:2px solid var(--rule);margin-top:8px;padding-top:14px">
+      <h3 style="font-size:28px">One real run</h3>
+      <p class="sub" style="margin:4px 0 10px">2 Claude (haiku) analysts, toy dose–response data</p>
+      <div style="display:flex;gap:36px;align-items:baseline">
+        <div><span style="font:700 56px var(--sans);color:var(--s1)">96</span><div class="sub">on real data</div></div>
+        <div><span style="font:700 56px var(--sans);color:var(--s2)">15</span><div class="sub">on shuffled data</div></div>
+      </div>
+    </div>
+  </div>
+  <p class="a src">A replay: real script outputs on diabetes data; scripted analysts stand in for Claude, and times are staged.</p>
+</section>
+
+<!-- 14 · Section: interpretable models as a PCS example -->
+<section class="slide section" id="s14">
+  <h2 class="a sec-title" style="top:300px">Stable interpretable modeling with <span class="vw">vfl<span class="vo">o</span>w</span>+imodels</h2>
+  <p class="a sec-sub" style="top:600px;font-size:44px"><a href="https://github.com/csinva/imodels" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;font-family:var(--mono)">github.com/csinva/imodels</a></p>
+  <p class="a sec-sub" style="top:690px;font-size:42.7px">Singh, Nasseri, Tan, Tang &amp; Yu, 2021  ·  JOSS</p>
+</section>
+
+<!-- 14b · imodels: the API (build: then the printed model) -->
+<section class="slide" id="i1" data-steps="1">
+  <h2 class="a title">imodels offers interpretable models with an sklearn API</h2>
+  <div class="a code" style="left:67px;top:300px;width:1100px;height:286px"></div>
+  <div class="a codetext" style="left:84px;top:312px;width:1076px;font-size:24px;line-height:1.5"><span class="ln">from sklearn.datasets import load_breast_cancer</span><span class="ln">from imodels import FIGSClassifier</span><span class="ln"> </span><span class="ln">X, y = load_breast_cancer(return_X_y=True, as_frame=True)</span><span class="ln">model = FIGSClassifier(max_rules=4).fit(X, y)</span><span class="ln">print(model)                # the whole model, as text</span><span class="ln">model.predict_proba(X)      # and the usual sklearn API</span></div>
+  <div class="fx" data-at="1">
+    <div class="a code" style="left:67px;top:606px;width:1100px;height:344px;background:#fff"></div>
+    <div class="a term" id="i1-printed" style="left:84px;top:618px;width:1076px;height:322px;font-size:21px;white-space:pre"></div>
+  </div>
+  <div class="a" style="left:1230px;top:300px;width:626px;display:grid;gap:26px">
+    <div class="stat" style="border-top-color:var(--teal)"><span class="v" id="i1-n" style="font-size:72px"></span><span class="k" style="font-size:28px">interpretable model classes: rule sets, rule lists, trees, sums of trees, scores, GAMs</span></div>
+    <div class="stat" style="border-top-color:var(--teal)"><span class="v" style="font-size:72px">1 API</span><span class="k" style="font-size:28px">fit, predict and predict_proba, so they drop into existing scikit-learn code</span></div>
+    <div class="stat" style="border-top-color:var(--teal)"><span class="v" style="font-size:72px">1,627</span><span class="k" style="font-size:28px">GitHub stars, October 2026</span></div>
+  </div>
+  <p class="a src">Printed model: FIGS with 4 rules on scikit-learn’s breast-cancer data</p>
+</section>
+
+<!-- 14c · imodels: accuracy vs rules (build: CART, HS tree, FIGS) -->
+<section class="slide" id="i2" data-steps="3">
+  <h2 class="a title">A handful of rules gets most of the way to a 300-tree random forest</h2>
+  <svg class="a" id="i2-chart" style="left:67px;top:290px" width="1180" height="650" aria-label="Test AUC against number of rules for CART, HS tree and FIGS, with a random forest reference line"></svg>
+  <div class="a" style="left:1290px;top:300px;width:566px;display:grid;gap:30px">
+    <div class="fx" data-at="1"><div class="tline" style="width:80px;margin-bottom:12px;border-top-color:#8C8C8C"></div><p class="b" style="margin:0;font-size:34px;color:var(--ink)">CART</p><p id="i2-t1" style="margin:4px 0 0;font-size:29px;line-height:1.3"></p></div>
+    <div class="fx" data-at="2"><div class="tline" style="width:80px;margin-bottom:12px;border-top-color:var(--terra)"></div><p class="b" style="margin:0;font-size:34px;color:var(--ink)">Hierarchical shrinkage</p><p id="i2-t2" style="margin:4px 0 0;font-size:29px;line-height:1.3"></p></div>
+    <div class="fx" data-at="3"><div class="tline" style="width:80px;margin-bottom:12px;border-top-color:#2F80ED"></div><p class="b" style="margin:0;font-size:34px;color:var(--ink)">FIGS</p><p id="i2-t3" style="margin:4px 0 0;font-size:29px;line-height:1.3"></p></div>
+  </div>
+  <p class="a src" id="i2-src"></p>
+</section>
+
+<!-- 15 · Simple models -->
+<section class="slide" id="s15">
+  <h2 class="a title">An interpretable model turns predictions into checkable claims</h2>
+  <svg class="a" style="left:0;top:0" width="1920" height="1080" aria-label="A four-leaf HSTree: FocalNeuroFindings2, then HighriskDiving, then Torticollis2, with leaf risks 0.42, 0.68, 0.10 and 0.30">
+    <g stroke="#8C8C8C" stroke-width="2.5">
+      <line x1="626" y1="395" x2="386" y2="475"/><line x1="626" y1="395" x2="920" y2="475"/>
+      <line x1="386" y1="566" x2="226" y2="645"/><line x1="386" y1="566" x2="573" y2="645"/>
+      <line x1="226" y1="736" x2="133" y2="816"/><line x1="226" y1="736" x2="347" y2="816"/>
+    </g>
+    <g font-size="29.3" fill="#6B6B6B">
+      <text x="470" y="440" text-anchor="end">no</text><text x="790" y="440">yes</text>
+      <text x="282" y="610" text-anchor="end">no</text><text x="500" y="610">yes</text>
+      <text x="160" y="780" text-anchor="end">no</text><text x="306" y="780">yes</text>
+    </g>
+  </svg>
+  <div class="a ctr card pill b" style="left:400px;top:304px;width:453px;height:91px;font-size:32px;color:var(--ink);border-color:#8C8C8C">FocalNeuroFindings2</div>
+  <div class="a ctr card pill b" style="left:221px;top:475px;width:331px;height:91px;font-size:32px;color:var(--ink);border-color:#8C8C8C">HighriskDiving</div>
+  <div class="a ctr tint pill b" style="left:840px;top:475px;width:160px;height:91px;color:var(--teal)">0.42</div>
+  <div class="a ctr card pill b" style="left:61px;top:645px;width:331px;height:91px;font-size:32px;color:var(--ink);border-color:#8C8C8C">Torticollis2</div>
+  <div class="a ctr teal pill b" style="left:493px;top:645px;width:160px;height:91px">0.68</div>
+  <div class="a ctr tint pill b" style="left:53px;top:816px;width:160px;height:91px;color:var(--teal)">0.10</div>
+  <div class="a ctr tint pill b" style="left:267px;top:816px;width:160px;height:91px;color:var(--teal)">0.30</div>
+  <p class="a tb" style="left:67px;top:928px;width:1093px;font-size:29.3px;color:var(--muted)">Leaf value = predicted risk. 4-leaf HSTree on a clinical dataset bundled with imodels.</p>
+  <ul class="a bul" style="left:1240px;top:315px;width:616px;font-size:40px">
+    <li>Each split is a claim a clinician can read and question</li>
+    <li>print(model) shows every claim; fit and predict like sklearn</li>
+    <li class="b" style="color:var(--ink)">PCS asks which claims predict, reproduce and survive perturbation</li>
+  </ul>
+</section>
+
+<!-- 16 · Families -->
+<section class="slide" id="s16">
+  <h2 class="a title">Choosing a model family is a judgment call, so perturb it too</h2>
+  <div class="a tb b" style="left:67px;top:299px;width:424px;font-size:45.3px;color:var(--ink)">Rule set</div>
+  <div class="a tline" style="left:67px;top:373px;width:424px"></div>
+  <div class="a tb" style="left:67px;top:389px;width:424px;line-height:1.4">RuleFit<br>Skope rules<br>Boosted rules<br>SLIPPER<br>Bayesian rule set</div>
+  <div class="a tb b" style="left:523px;top:299px;width:424px;font-size:45.3px;color:var(--ink)">Rule list</div>
+  <div class="a tline" style="left:523px;top:373px;width:424px"></div>
+  <div class="a tb" style="left:523px;top:389px;width:424px;line-height:1.4">Bayesian rule list<br>Greedy rule list<br>Fast-and-frugal tree<br>OneR</div>
+  <div class="a tb b" style="left:979px;top:299px;width:424px;font-size:45.3px;color:var(--ink)">Rule tree</div>
+  <div class="a tline" style="left:979px;top:373px;width:424px"></div>
+  <div class="a tb" style="left:979px;top:389px;width:424px;line-height:1.4">CART<br>C4.5<br>TAO</div>
+  <div class="a tb b" style="left:1435px;top:299px;width:424px;font-size:45.3px;color:var(--ink)">Algebraic</div>
+  <div class="a tline" style="left:1435px;top:373px;width:424px"></div>
+  <div class="a tb" style="left:1435px;top:389px;width:424px;line-height:1.4">Sparse integer linear (SLIM)<br>Tree GAM<br>GP GAM</div>
+  <div class="a tint" style="left:67px;top:725px;width:1789px;height:219px"></div>
+  <div class="a tb b caps" style="left:107px;top:747px;width:800px;font-size:29.3px;color:var(--teal)">Perturbed in the demo</div>
+  <div class="a tb b" style="left:107px;top:800px;width:547px;color:var(--ink)">FIGS / sums of small trees</div>
+  <div class="a tb b" style="left:691px;top:800px;width:547px;color:var(--ink)">Hierarchical shrinkage (HS) trees</div>
+  <div class="a tb" style="left:1275px;top:800px;width:547px;color:var(--body)">One sklearn interface, so families swap inside one Vset</div>
+  <p class="a src">All in imodels, along with RF+ / MDI+, distillation, AutoML and more</p>
+</section>
+
+<!-- 17 · imodels inside vflow (build: the four steps in order) -->
+<section class="slide" id="s17" data-steps="4">
+  <h2 class="a title">PCS for a tree: report only rules that survive perturbation</h2>
+  <div>
+    <div class="a ctr slatebg pill b" style="left:67px;top:325px;width:413px;height:117px;font-size:42.7px">Perturb</div>
+    <div class="a tb" style="left:67px;top:469px;width:413px">Bootstrap and cleaning choices</div>
+    <div class="a tb b" style="left:67px;top:688px;width:413px;font-size:29.3px;color:var(--teal)">PCS: P · S</div>
+  </div>
+  <div class="fx" data-at="1">
+    <div class="a hline" style="left:485px;top:384px;width:32px"></div>
+    <div class="a ctr slatebg pill b" style="left:523px;top:325px;width:413px;height:117px;font-size:42.7px">Fit</div>
+    <div class="a tb" style="left:523px;top:469px;width:413px">FIGS and HS trees as one Vset</div>
+    <div class="a tb b" style="left:523px;top:688px;width:413px;font-size:29.3px;color:var(--teal)">PCS: C</div>
+  </div>
+  <div class="fx" data-at="2">
+    <div class="a hline" style="left:941px;top:384px;width:32px"></div>
+    <div class="a ctr slatebg pill b" style="left:979px;top:325px;width:413px;height:117px;font-size:42.7px">Screen</div>
+    <div class="a tb" style="left:979px;top:469px;width:413px">Drop paths that predict poorly</div>
+    <div class="a tb b" style="left:979px;top:688px;width:413px;font-size:29.3px;color:var(--teal)">PCS: P</div>
+  </div>
+  <div class="fx" data-at="3">
+    <div class="a hline" style="left:1397px;top:384px;width:32px"></div>
+    <div class="a ctr teal pill b" style="left:1435px;top:325px;width:413px;height:117px;font-size:42.7px">Compare</div>
+    <div class="a tb" style="left:1435px;top:469px;width:413px">Find splits that recur</div>
+    <div class="a tb b" style="left:1435px;top:688px;width:413px;font-size:29.3px;color:var(--teal)">PCS: S</div>
+  </div>
+  <div class="fx" data-at="4">
+    <div class="a card" style="left:67px;top:779px;width:1789px;height:165px"></div>
+    <div class="a tb vc" style="left:107px;top:795px;width:1709px;height:133px;color:var(--ink)">Report each rule with how often it recurs and how well it predicts.</div>
+  </div>
+</section>
+
+<!-- 17b · DEMO: stable rules -->
+<section class="slide" id="d2" data-steps="1">
+  <div class="a demo-tag">DEMO</div>
+  <h2 class="a title">One tree looks convincing; most of its splits do not recur</h2>
+  <div class="a ctl" style="left:85px;top:282px;width:1771px">
+    <label for="d2-cut">Keep models with validation AUC ≥ <input type="range" id="d2-cut"><output id="d2-cut-out" for="d2-cut"></output></label>
+    <div class="seg" id="d2-fam" role="group" aria-label="Model family">
+      <button type="button" data-v="all" aria-pressed="true">Both</button>
+      <button type="button" data-v="FIGS" aria-pressed="false">FIGS</button>
+      <button type="button" data-v="HS" aria-pressed="false">HS tree</button>
+    </div>
+    <span id="d2-kept" class="b" style="color:var(--ink)"></span>
+  </div>
+  <div class="a panel" style="left:67px;top:362px;width:1789px;height:208px;padding:14px 26px;gap:4px">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:20px">
+      <h3>P · Screen: validation AUC of all 40 fitted models</h3>
+      <div class="legend">
+        <span class="key"><span class="sw" style="background:var(--s1)"></span>kept</span>
+        <span class="key"><span class="sw hollow"></span>screened out</span>
+        <span class="key"><span class="sw ring"></span>example tree</span>
+      </div>
+    </div>
+    <div id="d2-auc"></div>
+  </div>
+  <div class="a panel" style="left:1123px;top:592px;width:733px;height:420px">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px"><h3>The tree one analysis would report</h3><span class="tag" id="d2-ex-tag"></span></div>
+    <pre class="tree" id="d2-tree"></pre>
+  </div>
+  <div class="a panel fx" data-at="1" style="left:67px;top:592px;width:1034px;height:420px;gap:6px">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px"><h3>S · How often each split recurs in kept models</h3><span class="sub">◆ in the example tree</span></div>
+    <div id="d2-bars"></div>
+  </div>
+</section>
+
+<!-- 25 · Getting started -->
+<section class="slide" id="s25">
+  <h2 class="a title">Getting started</h2>
+  <div class="a tb b" style="left:67px;top:299px;width:853px;font-size:48px;color:var(--ink)">Try it</div>
+  <div class="a card" style="left:67px;top:389px;width:853px;height:122px"></div>
+  <div class="a tb mono b" style="left:99px;top:399px;width:800px;font-size:32px;color:var(--teal)">pip install vflow</div>
+  <div class="a tb" style="left:99px;top:451px;width:800px;font-size:34.7px">Stability analysis for pipelines</div>
+  <div class="a card" style="left:67px;top:529px;width:853px;height:122px"></div>
+  <div class="a tb mono b" style="left:99px;top:539px;width:800px;font-size:32px;color:var(--teal)">pip install imodels</div>
+  <div class="a tb" style="left:99px;top:591px;width:800px;font-size:34.7px">Interpretable, sklearn-compatible models</div>
+  <div class="a card" style="left:67px;top:669px;width:853px;height:122px"></div>
+  <a class="a tb mono b" href="https://yu-group.github.io/veridical-flow/agents.html" target="_blank" rel="noopener" style="left:99px;top:679px;width:800px;font-size:28px;color:var(--teal);text-decoration:none">yu-group.github.io/veridical-flow/agents.html</a>
+  <div class="a tb" style="left:99px;top:731px;width:800px;font-size:34.7px">Guide: vflow for agents</div>
+  <img class="a" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzNDAgMTI0IiB3aWR0aD0iMzQwIiBoZWlnaHQ9IjEyNCIgcm9sZT0iaW1nIiBhcmlhLWxhYmVsPSJ2ZmxvdyI+PHRpdGxlPnZmbG93PC90aXRsZT48ZyB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxNCwxMCkiPjxwYXRoIGQ9Ik02LDQwIEwzMSwxMDAgTDU2LDQwIE04NCwxMDAgVjMwIFE4NCw0IDExMCw0IE02OCw0NiBIMTA0IE0xMzIsMiBWODIgUTEzMiwxMDAgMTUwLDEwMCBNMjM2LDQwIEwyNTQsMTAwIEwyNzEsNTIgTDI4OCwxMDAgTDMwNiw0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRkZGRkZGIiBzdHJva2Utd2lkdGg9IjEzIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48L2c+PC9zdmc+Cg==" alt="vflow" style="left:1080px;top:430px;width:700px;height:255px">
+  <img class="a vspin" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMjAgMTIwIiB3aWR0aD0iMTIwIiBoZWlnaHQ9IjEyMCIgcm9sZT0iaW1nIiBhcmlhLWxhYmVsPSJ2ZmxvdyI+PHRpdGxlPnZmbG93PC90aXRsZT48cGF0aCBkPSJNMCwtMTYuNzIgQzQuMTgsLTEwLjI2IDcuNiwtNS4zMTk5OTk5OTk5OTk5OTkgNy42LDAgQTcuNiw3LjYgMCAxIDEgLTcuNiwwIEMtNy42LC01LjMxOTk5OTk5OTk5OTk5OSAtNC4xOCwtMTAuMjYgMCwtMTYuNzIgWiIgZmlsbD0iI2ZmZmZmZiIgZmlsbC1vcGFjaXR5PSIwLjcwIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSg2MC4wLDIwLjApIHJvdGF0ZSgtOTAuMCkiLz48cGF0aCBkPSJNMCwtMTYuNzIgQzQuMTgsLTEwLjI2IDcuNiwtNS4zMTk5OTk5OTk5OTk5OTkgNy42LDAgQTcuNiw3LjYgMCAxIDEgLTcuNiwwIEMtNy42LC01LjMxOTk5OTk5OTk5OTk5OSAtNC4xOCwtMTAuMjYgMCwtMTYuNzIgWiIgZmlsbD0iI2ZmZmZmZiIgZmlsbC1vcGFjaXR5PSIwLjc0IiB0cmFuc2Zvcm09InRyYW5zbGF0ZSg4OC4zLDMxLjcpIHJvdGF0ZSgtNDUuMCkiLz48cGF0aCBkPSJNMCwtMTYuNzIgQzQuMTgsLTEwLjI2IDcuNiwtNS4zMTk5OTk5OTk5OTk5OTkgNy42LDAgQTcuNiw3LjYgMCAxIDEgLTcuNiwwIEMtNy42LC01LjMxOTk5OTk5OTk5OTk5OSAtNC4xOCwtMTAuMjYgMCwtMTYuNzIgWiIgZmlsbD0iI2ZmZmZmZiIgZmlsbC1vcGFjaXR5PSIwLjc5IiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxMDAuMCw2MC4wKSByb3RhdGUoMC4wKSIvPjxwYXRoIGQ9Ik0wLC0xNi43MiBDNC4xOCwtMTAuMjYgNy42LC01LjMxOTk5OTk5OTk5OTk5OSA3LjYsMCBBNy42LDcuNiAwIDEgMSAtNy42LDAgQy03LjYsLTUuMzE5OTk5OTk5OTk5OTk5IC00LjE4LC0xMC4yNiAwLC0xNi43MiBaIiBmaWxsPSIjZmZmZmZmIiBmaWxsLW9wYWNpdHk9IjAuODMiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDg4LjMsODguMykgcm90YXRlKDQ1LjApIi8+PHBhdGggZD0iTTAsLTE2LjcyIEM0LjE4LC0xMC4yNiA3LjYsLTUuMzE5OTk5OTk5OTk5OTk5IDcuNiwwIEE3LjYsNy42IDAgMSAxIC03LjYsMCBDLTcuNiwtNS4zMTk5OTk5OTk5OTk5OTkgLTQuMTgsLTEwLjI2IDAsLTE2LjcyIFoiIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC44NyIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNjAuMCwxMDAuMCkgcm90YXRlKDkwLjApIi8+PHBhdGggZD0iTTAsLTE2LjcyIEM0LjE4LC0xMC4yNiA3LjYsLTUuMzE5OTk5OTk5OTk5OTk5IDcuNiwwIEE3LjYsNy42IDAgMSAxIC03LjYsMCBDLTcuNiwtNS4zMTk5OTk5OTk5OTk5OTkgLTQuMTgsLTEwLjI2IDAsLTE2LjcyIFoiIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC45MSIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMzEuNyw4OC4zKSByb3RhdGUoMTM1LjApIi8+PHBhdGggZD0iTTAsLTE2LjcyIEM0LjE4LC0xMC4yNiA3LjYsLTUuMzE5OTk5OTk5OTk5OTk5IDcuNiwwIEE3LjYsNy42IDAgMSAxIC03LjYsMCBDLTcuNiwtNS4zMTk5OTk5OTk5OTk5OTkgLTQuMTgsLTEwLjI2IDAsLTE2LjcyIFoiIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC45NiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMjAuMCw2MC4wKSByb3RhdGUoMTgwLjApIi8+PHBhdGggZD0iTTAsLTE2LjcyIEM0LjE4LC0xMC4yNiA3LjYsLTUuMzE5OTk5OTk5OTk5OTk5IDcuNiwwIEE3LjYsNy42IDAgMSAxIC03LjYsMCBDLTcuNiwtNS4zMTk5OTk5OTk5OTk5OTkgLTQuMTgsLTEwLjI2IDAsLTE2LjcyIFoiIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMS4wMCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMzEuNywzMS43KSByb3RhdGUoMjI1LjApIi8+PC9zdmc+Cg==" alt="" style="left:1407px;top:502px;width:185px;height:185px">
+</section>
+
+<div id="tip" hidden></div>
+</div></div>
+
+<div id="chrome">
+  <button type="button" id="prev" aria-label="Previous">‹</button>
+  <span id="count"></span>
+  <button type="button" id="next" aria-label="Next">›</button>
+  <button type="button" id="ovbtn" aria-label="Slide overview">▦</button>
+  <button type="button" id="fs" aria-label="Full screen">⛶</button>
+</div>
+<div id="hint"></div>
+
+<script>
+const DATA = {"d1":{"features":["age","sex","bmi","bp","s1","s2","s3","s4","s5","s6","bmi_copy"],"paths":[{"boot":"b0","preproc":"mean","RF":"min_samples_leaf=1","imp":[-0.00365,0.00308,0.06885,0.04338,-0.01842,-0.01667,0.04406,-0.01102,0.06477,0.0069,0.14459]},{"boot":"b1","preproc":"mean","RF":"min_samples_leaf=1","imp":[0.00794,0.0065,0.11372,0.02599,-0.00042,0.00026,0.03646,-0.00913,0.09875,0.00868,0.03829]},{"boot":"b2","preproc":"mean","RF":"min_samples_leaf=1","imp":[-0.00847,-3e-05,0.03793,0.03153,-0.01888,0.00761,0.01003,0.00608,0.01347,-0.01861,0.03477]},{"boot":"b3","preproc":"mean","RF":"min_samples_leaf=1","imp":[-0.00025,-0.00119,0.05756,0.03343,-0.00797,-0.00505,0.06502,-0.00635,0.07106,-0.00446,0.10291]},{"boot":"b4","preproc":"mean","RF":"min_samples_leaf=1","imp":[0.02082,0.00268,0.11507,0.02715,-0.02912,-0.00357,0.00939,-0.01728,0.06145,0.00707,0.01521]},{"boot":"b5","preproc":"mean","RF":"min_samples_leaf=1","imp":[0.00422,0.00091,0.14872,0.03558,-0.00396,0.01119,0.02429,-0.01846,0.03079,0.0095,0.03174]},{"boot":"b6","preproc":"mean","RF":"min_samples_leaf=1","imp":[-0.00481,-0.00935,0.16362,0.05535,-0.00677,-6e-05,0.0537,0.0029,-0.01442,0.01307,0.12315]},{"boot":"b7","preproc":"mean","RF":"min_samples_leaf=1","imp":[0.00091,0.00487,0.08214,0.07999,-0.00602,-0.01057,0.01445,0.04125,0.06259,0.01634,0.10427]},{"boot":"b8","preproc":"mean","RF":"min_samples_leaf=1","imp":[-0.00111,0.00541,0.0545,0.05452,-0.0144,-0.01715,0.04193,-0.02312,0.02657,0.01337,0.0143]},{"boot":"b9","preproc":"mean","RF":"min_samples_leaf=1","imp":[0.01213,0.00734,0.06021,0.04186,-0.01164,-0.00476,0.0026,-0.00501,0.06738,0.00025,0.00586]},{"boot":"b0","preproc":"med","RF":"min_samples_leaf=1","imp":[-0.00362,0.00534,0.06471,0.01533,-0.01618,-0.01904,0.05079,-0.00744,0.07727,0.00926,0.11156]},{"boot":"b1","preproc":"med","RF":"min_samples_leaf=1","imp":[0.00744,-0.0014,0.07832,0.02544,-0.02069,-0.00275,0.02341,-0.01886,0.07957,0.00486,0.02491]},{"boot":"b2","preproc":"med","RF":"min_samples_leaf=1","imp":[-0.00348,0.00322,0.06636,0.04004,-0.0048,0.00902,0.0293,0.01419,0.03044,-0.00685,0.07944]},{"boot":"b3","preproc":"med","RF":"min_samples_leaf=1","imp":[0.00886,-0.00436,0.09653,0.04504,-0.0003,-0.00328,0.06482,0.00111,0.09064,-0.00652,0.1155]},{"boot":"b4","preproc":"med","RF":"min_samples_leaf=1","imp":[0.01854,-0.00284,0.08226,0.03824,-0.02777,-0.01256,0.01172,-0.01892,0.03777,0.01087,0.02177]},{"boot":"b5","preproc":"med","RF":"min_samples_leaf=1","imp":[0.00538,-0.00202,0.1759,0.03279,-0.00077,0.00525,0.0176,-0.0059,0.06822,-0.00152,0.03969]},{"boot":"b6","preproc":"med","RF":"min_samples_leaf=1","imp":[-0.01177,-0.00155,0.14307,0.05918,-0.00148,0.00369,0.04304,0.00347,-0.03733,0.01649,0.12623]},{"boot":"b7","preproc":"med","RF":"min_samples_leaf=1","imp":[-0.00992,-0.00147,0.10089,0.05623,-0.02461,-0.01891,0.01183,0.01465,0.08749,0.02198,0.14202]},{"boot":"b8","preproc":"med","RF":"min_samples_leaf=1","imp":[0.00259,-0.00513,0.05309,0.05884,-0.00487,-0.00517,0.04491,-0.02797,0.03913,0.00516,0.06122]},{"boot":"b9","preproc":"med","RF":"min_samples_leaf=1","imp":[0.00809,-0.00125,0.09292,0.02744,-0.01013,0.0167,0.00116,-0.00283,0.05214,-0.01015,0.02007]},{"boot":"b0","preproc":"knn","RF":"min_samples_leaf=1","imp":[0.00232,0.00572,0.01584,0.01527,-0.00601,0.01585,0.03445,-0.00812,0.09689,0.01085,0.09572]},{"boot":"b1","preproc":"knn","RF":"min_samples_leaf=1","imp":[0.01871,0.00872,-0.00222,0.02878,-0.00321,-0.00995,0.01035,-0.01484,0.11247,-0.01075,0.09661]},{"boot":"b2","preproc":"knn","RF":"min_samples_leaf=1","imp":[-0.00504,0.00988,0.01352,0.02268,-0.00052,0.0021,0.03983,-0.00591,0.02043,-0.0046,0.10503]},{"boot":"b3","preproc":"knn","RF":"min_samples_leaf=1","imp":[-0.01279,0.00597,0.05974,0.01315,-0.01441,0.00572,0.0452,-0.01433,0.06331,-0.01178,0.03563]},{"boot":"b4","preproc":"knn","RF":"min_samples_leaf=1","imp":[0.02208,0.00133,-0.01028,0.01763,-0.03516,-0.01525,-0.00248,-0.03348,0.00761,0.00271,0.04494]},{"boot":"b5","preproc":"knn","RF":"min_samples_leaf=1","imp":[0.00029,-0.00406,0.07363,0.04016,0.00317,0.00294,-0.00455,-0.01854,0.03359,-0.02261,0.00161]},{"boot":"b6","preproc":"knn","RF":"min_samples_leaf=1","imp":[0.00418,-0.00152,0.07096,0.04472,0.00507,0.00738,0.05027,-0.00837,-0.02912,0.01123,0.12478]},{"boot":"b7","preproc":"knn","RF":"min_samples_leaf=1","imp":[-0.01694,0.00101,-0.01877,0.00621,-0.01626,-0.0145,0.01283,0.01521,0.02402,-0.00493,0.00913]},{"boot":"b8","preproc":"knn","RF":"min_samples_leaf=1","imp":[-0.01142,-0.00189,-0.01608,0.01307,-0.02884,-0.01268,0.00932,-0.04769,-0.03515,-0.0054,-0.01523]},{"boot":"b9","preproc":"knn","RF":"min_samples_leaf=1","imp":[0.00918,0.00667,0.07903,0.00333,0.00016,0.00306,0.01143,-0.02278,0.08842,-0.00159,0.02346]},{"boot":"b0","preproc":"mean","RF":"min_samples_leaf=10","imp":[0.00038,0.00451,0.03344,0.04041,-0.00387,-0.00863,0.02544,0.00214,0.07873,0.01642,0.10659]},{"boot":"b1","preproc":"mean","RF":"min_samples_leaf=10","imp":[0.00599,0.00664,0.09252,0.02714,-0.00299,-0.00711,0.00832,-0.00134,0.09126,0.01242,0.01984]},{"boot":"b2","preproc":"mean","RF":"min_samples_leaf=10","imp":[-0.00141,0.00036,0.04708,0.02239,-0.00142,0.00577,0.01449,0.01184,0.06161,0.00557,0.03538]},{"boot":"b3","preproc":"mean","RF":"min_samples_leaf=10","imp":[-0.00149,0.00444,0.07725,0.03364,-0.00506,0.00039,0.03656,0.00393,0.07167,0.00108,0.06151]},{"boot":"b4","preproc":"mean","RF":"min_samples_leaf=10","imp":[0.00883,0.00435,0.09509,0.02613,-0.00418,0.00079,0.00886,0.0006,0.06499,0.0094,0.02223]},{"boot":"b5","preproc":"mean","RF":"min_samples_leaf=10","imp":[-0.00173,0.00302,0.1464,0.04147,-0.00438,-0.00197,0.02334,0.00353,0.05899,0.00306,0.00067]},{"boot":"b6","preproc":"mean","RF":"min_samples_leaf=10","imp":[-0.00084,0.00137,0.12458,0.04332,0.00013,-0.01151,0.04144,0.01042,0.00297,0.01336,0.03122]},{"boot":"b7","preproc":"mean","RF":"min_samples_leaf=10","imp":[-0.01038,0.01128,0.07162,0.0434,-0.00509,-0.00036,0.00153,0.046,0.08142,0.00013,0.08067]},{"boot":"b8","preproc":"mean","RF":"min_samples_leaf=10","imp":[0.00268,0.00595,0.06629,0.0633,-0.00371,-0.00403,0.01983,-0.01318,0.05048,0.00611,0.01317]},{"boot":"b9","preproc":"mean","RF":"min_samples_leaf=10","imp":[0.00553,0.00654,0.07718,0.06051,-0.0004,-0.00174,0.00494,0.00108,0.08224,-0.00229,0.00305]},{"boot":"b0","preproc":"med","RF":"min_samples_leaf=10","imp":[-0.00256,0.00143,0.01133,0.02494,-0.00624,-0.01178,0.023,0.00218,0.07567,0.01516,0.08972]},{"boot":"b1","preproc":"med","RF":"min_samples_leaf=10","imp":[0.00204,0.00497,0.07169,0.02322,-0.00224,-0.00824,0.01078,-0.00069,0.08284,0.00989,0.01458]},{"boot":"b2","preproc":"med","RF":"min_samples_leaf=10","imp":[-0.00249,-0.0008,0.07232,0.019,0.00078,0.00811,0.01542,0.0187,0.06903,0.00683,0.03077]},{"boot":"b3","preproc":"med","RF":"min_samples_leaf=10","imp":[0.00056,0.00274,0.06628,0.03143,-0.00293,-0.0003,0.0393,0.00214,0.06708,0.00026,0.06324]},{"boot":"b4","preproc":"med","RF":"min_samples_leaf=10","imp":[0.01019,-0.0,0.10277,0.02288,-0.00604,-0.00232,0.00705,-0.0006,0.051,0.00668,0.02148]},{"boot":"b5","preproc":"med","RF":"min_samples_leaf=10","imp":[-0.00152,0.00416,0.16093,0.03614,-0.00287,-0.00302,0.02136,0.00058,0.06894,-0.00182,0.00189]},{"boot":"b6","preproc":"med","RF":"min_samples_leaf=10","imp":[-0.00065,-0.00265,0.13044,0.04846,-0.00148,-0.0125,0.04445,0.00958,-0.00296,0.01951,0.03727]},{"boot":"b7","preproc":"med","RF":"min_samples_leaf=10","imp":[-0.01341,0.00764,0.07099,0.03021,-0.00675,0.00241,0.00421,0.03034,0.08882,-0.00322,0.09035]},{"boot":"b8","preproc":"med","RF":"min_samples_leaf=10","imp":[0.00125,0.00058,0.06993,0.06345,-0.00374,0.00082,0.02272,-0.00965,0.05674,-0.00056,0.02136]},{"boot":"b9","preproc":"med","RF":"min_samples_leaf=10","imp":[0.00521,0.00558,0.09881,0.06178,-0.00213,-0.00126,0.01153,-0.00316,0.10595,0.00011,0.01171]},{"boot":"b0","preproc":"knn","RF":"min_samples_leaf=10","imp":[-0.00484,0.00113,-0.00201,0.01413,-0.00283,-0.00793,0.01554,-0.00397,0.09286,0.00915,0.09637]},{"boot":"b1","preproc":"knn","RF":"min_samples_leaf=10","imp":[0.00783,0.01422,0.02116,0.02134,0.00273,-0.00684,-0.0033,0.00169,0.1172,0.01122,0.03743]},{"boot":"b2","preproc":"knn","RF":"min_samples_leaf=10","imp":[0.00201,0.00485,0.01271,0.0182,0.00287,0.00417,0.02056,0.01398,0.06304,0.00063,0.05421]},{"boot":"b3","preproc":"knn","RF":"min_samples_leaf=10","imp":[0.00702,0.00815,0.09335,0.01918,-0.0015,0.00074,0.05069,0.00537,0.0722,-0.00468,0.0211]},{"boot":"b4","preproc":"knn","RF":"min_samples_leaf=10","imp":[0.01127,0.00492,0.01058,0.00924,-0.00744,-0.002,0.00648,-0.00427,0.03959,0.00866,0.06196]},{"boot":"b5","preproc":"knn","RF":"min_samples_leaf=10","imp":[-0.00123,0.00308,0.1102,0.03333,0.00096,-0.00271,0.00601,0.00425,0.04583,-0.01596,-0.01136]},{"boot":"b6","preproc":"knn","RF":"min_samples_leaf=10","imp":[-0.00039,0.00239,0.00577,0.01706,0.00375,-0.00611,0.03674,0.00511,-0.00332,0.01131,0.05641]},{"boot":"b7","preproc":"knn","RF":"min_samples_leaf=10","imp":[-0.0091,0.01259,-0.00385,0.01985,-0.00716,-0.00329,0.00266,0.04238,0.04671,-0.00323,0.04022]},{"boot":"b8","preproc":"knn","RF":"min_samples_leaf=10","imp":[0.00062,0.00391,0.00147,0.0373,-0.00383,0.00999,0.01537,-0.02097,0.01329,-0.00776,-0.01809]},{"boot":"b9","preproc":"knn","RF":"min_samples_leaf=10","imp":[0.00884,0.0064,0.08117,0.00759,-0.00098,-0.00504,0.0125,-0.00861,0.10129,0.00171,-0.00205]}]},"d2":{"example":{"boot":"b0","model":"FIGS","text":"FIGSClassifier\n  FIGS: a sum of small trees.\n  depth 3  \u00b7  5 leaves  \u00b7  398 training samples  \u00b7  classes: 0, 1\n  Each tree adds the value of the leaf a sample reaches; P(1) = sigmoid(sum).\n\n  mean concave points \u2264 0.0516 ?               398 samples\n  \u251c\u2500 yes area error \u2264 43.97 ?                  252\n  \u2502  \u251c\u2500 yes \u2192 +0.9512                          246\n  \u2502  \u2514\u2500 no  \u2192 -0.6667                            6\n  \u2514\u2500 no  fractal dimension error \u2264 0.01078 ?   146\n     \u251c\u2500 yes worst texture \u2264 16.33 ?            141\n     \u2502  \u251c\u2500 yes \u2192 +1                              3\n     \u2502  \u2514\u2500 no  \u2192 -0.971                        138\n     \u2514\u2500 no  \u2192 +1                                 5"},"paths":[{"boot":"b0","model":"FIGS","auc":0.8491,"splits":[["mean concave points",0.0516],["fractal dimension error",0.0108],["worst texture",16.325],["area error",43.965]]},{"boot":"b1","model":"FIGS","auc":0.9444,"splits":[["worst perimeter",114.65],["mean concavity",0.1197],["concavity error",0.068],["area error",34.405]]},{"boot":"b2","model":"FIGS","auc":0.9102,"splits":[["mean concave points",0.0539],["worst perimeter",103.7],["worst area",952.9],["worst texture",26.74]]},{"boot":"b3","model":"FIGS","auc":0.9617,"splits":[["worst concave points",0.1291],["worst perimeter",97.155],["worst concavity",0.2085],["worst area",869.25]]},{"boot":"b4","model":"FIGS","auc":0.9032,"splits":[["mean concave points",0.0489],["worst concave points",0.1223],["mean area",746.95],["area error",42.19]]},{"boot":"b5","model":"FIGS","auc":0.9493,"splits":[["worst area",865.65],["texture error",0.4645],["worst concave points",0.1626],["worst concave points",0.1352]]},{"boot":"b6","model":"FIGS","auc":0.9644,"splits":[["mean concave points",0.0513],["worst texture",20.625],["worst area",951.85],["worst radius",17.535]]},{"boot":"b7","model":"FIGS","auc":0.9598,"splits":[["worst concave points",0.1465],["worst concavity",0.2034],["worst area",952.9],["area error",34.405]]},{"boot":"b8","model":"FIGS","auc":0.9446,"splits":[["worst concave points",0.1455],["worst radius",12.13],["area error",35.63],["worst texture",22.58]]},{"boot":"b9","model":"FIGS","auc":0.9451,"splits":[["worst concave points",0.1416],["radius error",0.1784],["worst radius",16.8],["worst texture",21.69]]},{"boot":"b10","model":"FIGS","auc":0.9036,"splits":[["worst radius",17.56],["worst concavity",0.3967],["worst texture",23.47],["smoothness error",0.0033]]},{"boot":"b11","model":"FIGS","auc":0.9166,"splits":[["worst concave points",0.1108],["texture error",0.4923],["worst perimeter",98.1],["area error",55.685]]},{"boot":"b12","model":"FIGS","auc":0.9436,"splits":[["worst concave points",0.1415],["area error",13.93],["worst area",952.9],["perimeter error",6.5975]]},{"boot":"b13","model":"FIGS","auc":0.9108,"splits":[["worst concave points",0.1423],["area error",13.93],["area error",43.965],["worst texture",22.76]]},{"boot":"b14","model":"FIGS","auc":0.8986,"splits":[["worst concave points",0.1423],["area error",13.93],["worst perimeter",127.65],["perimeter error",6.5405]]},{"boot":"b15","model":"FIGS","auc":0.9443,"splits":[["worst perimeter",114.65],["worst smoothness",0.1772],["area error",35.26],["worst concave points",0.1471]]},{"boot":"b16","model":"FIGS","auc":0.9257,"splits":[["mean concave points",0.0489],["worst perimeter",97.49],["worst texture",25.925],["area error",42.19]]},{"boot":"b17","model":"FIGS","auc":0.9034,"splits":[["worst concave points",0.1416],["area error",13.93],["worst concavity",0.2051],["area error",43.965]]},{"boot":"b18","model":"FIGS","auc":0.9117,"splits":[["mean concavity",0.0936],["worst perimeter",97.155],["worst perimeter",127.65],["smoothness error",0.0034]]},{"boot":"b19","model":"FIGS","auc":0.8869,"splits":[["worst perimeter",105.95],["mean concave points",0.0495],["mean texture",19.485],["worst smoothness",0.1776]]},{"boot":"b0","model":"HS","auc":0.8488,"splits":[["mean concave points",0.0516],["area error",43.965],["fractal dimension error",0.0108],["worst texture",16.325]]},{"boot":"b1","model":"HS","auc":0.9566,"splits":[["worst perimeter",114.65],["mean concavity",0.1197],["area error",34.405],["concavity error",0.068]]},{"boot":"b2","model":"HS","auc":0.9454,"splits":[["mean concave points",0.0539],["worst area",952.9],["worst perimeter",103.7],["mean texture",18.96]]},{"boot":"b3","model":"HS","auc":0.9617,"splits":[["worst concave points",0.1291],["worst area",869.25],["worst perimeter",97.155],["worst concavity",0.2085]]},{"boot":"b4","model":"HS","auc":0.8948,"splits":[["mean concave points",0.0489],["area error",42.19],["worst concave points",0.1223],["mean area",746.95]]},{"boot":"b5","model":"HS","auc":0.9562,"splits":[["worst perimeter",113.4],["worst concave points",0.1626],["worst concave points",0.1352],["worst texture",30.07]]},{"boot":"b6","model":"HS","auc":0.9618,"splits":[["mean concave points",0.0513],["worst area",939.85],["worst texture",20.625],["worst perimeter",119.7]]},{"boot":"b7","model":"HS","auc":0.9598,"splits":[["worst concave points",0.1465],["worst area",952.9],["worst concavity",0.2034],["area error",34.405]]},{"boot":"b8","model":"HS","auc":0.9417,"splits":[["worst concave points",0.1455],["area error",35.63],["mean radius",10.4055],["worst texture",22.58]]},{"boot":"b9","model":"HS","auc":0.955,"splits":[["worst concave points",0.1416],["worst area",869.25],["radius error",0.1784],["mean texture",16.875]]},{"boot":"b10","model":"HS","auc":0.9009,"splits":[["worst radius",17.56],["worst concavity",0.3967],["smoothness error",0.0033],["worst texture",23.47]]},{"boot":"b11","model":"HS","auc":0.9166,"splits":[["worst concave points",0.1108],["area error",55.685],["texture error",0.4923],["worst perimeter",98.1]]},{"boot":"b12","model":"HS","auc":0.9436,"splits":[["worst concave points",0.1415],["worst area",952.9],["area error",13.93],["worst fractal dimension",0.057]]},{"boot":"b13","model":"HS","auc":0.9084,"splits":[["worst concave points",0.1423],["area error",43.965],["area error",13.93],["worst texture",22.76]]},{"boot":"b14","model":"HS","auc":0.8986,"splits":[["worst concave points",0.1423],["worst perimeter",127.65],["area error",13.93],["worst fractal dimension",0.0551]]},{"boot":"b15","model":"HS","auc":0.9453,"splits":[["worst perimeter",114.65],["worst smoothness",0.1772],["area error",35.26],["mean concave points",0.0608]]},{"boot":"b16","model":"HS","auc":0.9257,"splits":[["mean concave points",0.0489],["area error",42.19],["worst perimeter",97.49],["worst texture",25.925]]},{"boot":"b17","model":"HS","auc":0.9084,"splits":[["worst concave points",0.1416],["area error",43.965],["area error",13.93],["worst concavity",0.2051]]},{"boot":"b18","model":"HS","auc":0.9117,"splits":[["mean concavity",0.0936],["worst perimeter",127.65],["worst perimeter",97.155],["smoothness error",0.0034]]},{"boot":"b19","model":"HS","auc":0.9082,"splits":[["worst perimeter",105.95],["worst smoothness",0.1776],["mean concave points",0.0495],["mean texture",19.485]]}]},"d3":[{"question":"Does BMI affect diabetes progression?","analyst":"shopper","real":[100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0],"shuffled":[77.27,95.82,88.03,71.4,90.89,57.44,71.2,94.09,78.83,85.44,60.13,75.55,91.78,72.72,77.66,81.67,92.86,99.64,92.79,93.78]},{"question":"Does BMI affect diabetes progression?","analyst":"PCS","real":[100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0,100.0],"shuffled":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,8.33,0.0,0.0,8.33]},{"question":"Does sex affect diabetes progression?","analyst":"shopper","real":[100.0,100.0,100.0,100.0,100.0,100.0,100.0,99.98,100.0,99.94,100.0,100.0,100.0,100.0,99.99,100.0,99.99,100.0,100.0,100.0],"shuffled":[82.32,89.55,70.96,90.22,62.08,65.69,72.12,78.29,37.55,45.77,38.47,66.0,72.46,99.94,93.31,55.01,80.32,45.55,96.45,45.32]},{"question":"Does sex affect diabetes progression?","analyst":"PCS","real":[66.67,0.0,0.0,0.0,50.0,25.0,50.0,8.33,0.0,16.67,33.33,50.0,50.0,33.33,50.0,41.67,50.0,33.33,25.0,25.0],"shuffled":[0.0,0.0,0.0,0.0,20.83,100.0,0.0,25.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,8.33,0.0,0.0,0.0]},{"question":"Does birth month affect diabetes progression?","analyst":"shopper","real":[87.62,99.89,94.18,83.57,99.63,98.99,99.54,98.16,87.61,99.89,97.18,99.78,92.12,80.44,99.68,67.49,81.86,98.63,99.36,88.11],"shuffled":[77.94,74.51,67.35,85.14,65.73,92.34,63.74,96.31,74.31,87.26,59.23,94.71,65.04,86.28,71.36,61.27,51.39,45.93,52.24,92.68]},{"question":"Does birth month affect diabetes progression?","analyst":"PCS","real":[4.17,25.0,33.33,0.0,0.0,29.17,0.0,0.0,0.0,33.33,0.0,25.0,0.0,25.0,20.83,4.17,0.0,33.33,4.17,8.33],"shuffled":[0.0,0.0,0.0,0.0,4.17,0.0,4.17,0.0,0.0,0.0,0.0,0.0,25.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]}],"d5":{"question":"Does BMI affect diabetes progression?","prepare":["36 workspaces in vflow_runs/ (6 perturbations x real/null x 3 runs)","progress: python3 progress.py vflow_runs"],"progress":["[\u2588\u2588\u2588\u2588\u2588\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591] 8/36 answered (22%) \u00b7 8 in progress \u00b7 20 not started \u00b7 elapsed 3m30s \u00b7 ETA ~12m15s","[\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591] 16/36 answered (44%) \u00b7 8 in progress \u00b7 12 not started \u00b7 elapsed 7m00s \u00b7 ETA ~8m45s","[\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591] 24/36 answered (66%) \u00b7 8 in progress \u00b7 4 not started \u00b7 elapsed 10m30s \u00b7 ETA ~5m15s","[\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2591\u2591\u2591] 32/36 answered (88%) \u00b7 4 in progress \u00b7 elapsed 14m00s \u00b7 ETA ~1m45s","[\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588] 36/36 answered (100%) \u00b7 elapsed 15m45s \u00b7 done: run summarize.py"],"summary":["Question: Does BMI affect diabetes progression?","perturbation        real  null       p  overlap  verdict","none                92.0  12.0  0.0001     0.00  stable yes","extra_columns       92.0  12.0  0.0001     0.00  stable yes","anonymized_names    92.0  30.3  0.0001     0.02  stable yes","shuffled_names      92.0  12.0  0.0001     0.00  stable yes","lead_yes            92.0  12.0  0.0001     0.00  stable yes","lead_no             92.0  12.0  0.0001     0.00  stable yes","pooled              92.0  15.7  0.0001     0.00  stable yes","","Verdict: stable yes  (0 of 36 runs gave no answer)"],"pooled":{"n_real":15,"n_null":15,"mean_real":92.0,"mean_null":15.666666666666666,"p_signal":9.999000099990002e-05,"signal":true,"overlap":0.00039024987076808054,"separation":true,"verdict":"stable yes","enough_runs":true,"missing":0,"total":36}},"d6":{"dataset":"heart","n":270,"p":15,"seeds":10,"rf":{"auc":0.9075617283950617,"sd":0.021193727773481545},"models":{"CART":[{"rules":1,"auc":0.7208333333333334,"sd":0.035185794341705476},{"rules":2,"auc":0.75,"sd":0.03841991375446425},{"rules":4,"auc":0.7917283950617284,"sd":0.037176383953433007},{"rules":8,"auc":0.7845061728395062,"sd":0.05829916041301169},{"rules":16,"auc":0.7678395061728394,"sd":0.05976695456860531},{"rules":32,"auc":0.7476543209876544,"sd":0.03139215115912248}],"HS tree":[{"rules":1,"auc":0.7208333333333334,"sd":0.035185794341705476},{"rules":2,"auc":0.75,"sd":0.03841991375446425},{"rules":4,"auc":0.7964814814814815,"sd":0.03782953567310197},{"rules":8,"auc":0.790462962962963,"sd":0.05245160382475505},{"rules":16,"auc":0.7844135802469135,"sd":0.06302122244114218},{"rules":32,"auc":0.8171604938271605,"sd":0.03381713377577136}],"FIGS":[{"rules":1,"auc":0.7208333333333334,"sd":0.035185794341705476},{"rules":2,"auc":0.8183641975308641,"sd":0.023762726317028214},{"rules":4,"auc":0.8441666666666666,"sd":0.03111608634037868},{"rules":8,"auc":0.8560802469135803,"sd":0.03167666737373287},{"rules":16,"auc":0.8363580246913582,"sd":0.027729656534963086},{"rules":32,"auc":0.8033333333333331,"sd":0.04170661094033703}]},"figs_printed":"FIGSClassifier\n  FIGS: a sum of small trees.\n  depth 3  \u00b7  5 leaves  \u00b7  569 training samples  \u00b7  classes: 0, 1\n  Each tree adds the value of the leaf a sample reaches; P(1) = sigmoid(sum).\n\n  worst radius \u2264 16.8 ?                    569 samples\n  \u251c\u2500 yes worst concave points \u2264 0.1358 ?   379\n  \u2502  \u251c\u2500 yes \u2192 +0.97                        333\n  \u2502  \u2514\u2500 no  worst texture \u2264 25.67 ?         46\n  \u2502     \u251c\u2500 yes \u2192 +0.5789                    19\n  \u2502     \u2514\u2500 no  \u2192 -0.7778                    27\n  \u2514\u2500 no  mean texture \u2264 16.11 ?            190\n     \u251c\u2500 yes \u2192 +0.05882                      17\n     \u2514\u2500 no  \u2192 -0.9769                      173","n_estimators":38}};
+const NS = "http://www.w3.org/2000/svg";
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+
+// ---- syntax highlighting for the Python code panels
+const PY_KW = new Set(["from", "import", "as", "def", "return", "for", "in", "if", "else", "elif",
+  "lambda", "True", "False", "None", "with", "class", "and", "or", "not", "is"]);
+const escHtml = (t) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+function highlightPy(line) {
+  // comment | string | number | name before "(" | name before "=" (a keyword argument) | other name
+  const re = /(#.*$)|('(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*")|(\b\d+(?:\.\d+)?\b)|([A-Za-z_]\w*)(?=\s*\()|([A-Za-z_]\w*)(?==(?!=))|([A-Za-z_]\w*)/g;
+  let out = "", last = 0, m;
+  while ((m = re.exec(line))) {
+    out += escHtml(line.slice(last, m.index));
+    const t = escHtml(m[0]);
+    if (m[1]) out += `<span class="tok-com">${t}</span>`;
+    else if (m[2]) out += `<span class="tok-str">${t}</span>`;
+    else if (m[3]) out += `<span class="tok-num">${t}</span>`;
+    else if (m[4]) out += `<span class="${PY_KW.has(m[4]) ? "tok-kw" : "tok-fn"}">${t}</span>`;
+    else if (m[5]) out += `<span class="tok-arg">${t}</span>`;
+    else out += PY_KW.has(m[6]) ? `<span class="tok-kw">${t}</span>` : t;
+    last = re.lastIndex;
+  }
+  return out + escHtml(line.slice(last));
+}
+$$(".codetext:not([data-lang]) .ln").forEach((ln) => { ln.innerHTML = highlightPy(ln.textContent); });
+
+// ======================================================================
+// Deck engine: fixed 1920x1080 stage, builds via data-at / data-until
+// ======================================================================
+const stage = $("#stage"), slides = $$(".slide");
+let cur = 0, step = 0, scale = 1;
+const stepsOf = (s) => +(s.dataset.steps || 0);
+
+function fit() {
+  const w = innerWidth, h = innerHeight;
+  scale = Math.min(w / 1920, h / 1080);
+  stage.style.transform = `scale(${scale})`;
+  stage.style.left = (w - 1920 * scale) / 2 + "px";
+  stage.style.top = (h - 1080 * scale) / 2 + "px";
+}
+function applyStep(s, k) {
+  s.dataset.step = k;
+  $$("[data-at]", s).forEach((e) => e.classList.toggle("at", k >= +e.dataset.at));
+  $$("[data-until]", s).forEach((e) => e.classList.toggle("gone", k >= +e.dataset.until));
+}
+function show(i, k) {
+  i = Math.max(0, Math.min(slides.length - 1, i));
+  if (i !== cur && document.activeElement && stage.contains(document.activeElement)) document.activeElement.blur();
+  slides[cur].classList.remove("cur");
+  cur = i;
+  const s = slides[cur];
+  step = Math.max(0, Math.min(stepsOf(s), k));
+  s.classList.add("cur", "instant");
+  applyStep(s, step);
+  void s.offsetWidth;            // commit the state before re-enabling transitions
+  s.classList.remove("instant");
+  $("#count").textContent = `${cur + 1} / ${slides.length}`;
+  setHash();
+  const r = renderers[s.id];
+  if (r) r();
+  $("#tip").hidden = true;
+}
+function setHash() { try { history.replaceState(null, "", "#" + (cur + 1) + (step ? "." + step : "")); } catch (e) {} }
+const steppers = {};   // per-slide hooks run when → / ← change the build step
+function next() { if (step < stepsOf(slides[cur])) { step++; applyStep(slides[cur], step); setHash(); steppers[slides[cur].id]?.(step, true); } else if (cur < slides.length - 1) show(cur + 1, 0); }
+function prev() { if (step > 0) { step--; applyStep(slides[cur], step); setHash(); steppers[slides[cur].id]?.(step, false); } else if (cur > 0) show(cur - 1, stepsOf(slides[cur - 1])); }
+
+const FORM = /^(INPUT|SELECT|TEXTAREA|BUTTON)$/, FIELD = /^(INPUT|SELECT|TEXTAREA)$/;
+addEventListener("keydown", (e) => {
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  if (ov) return ovKey(e);
+  const tag = (e.target && e.target.tagName) || "", inForm = FORM.test(tag);
+  if (e.key === "Escape") {
+    e.preventDefault();
+    if (FIELD.test(tag)) { e.target.blur(); return; }   // first Esc leaves a demo control
+    if (document.activeElement) document.activeElement.blur();
+    return openOv();
+  }
+  if ((e.key === "o" || e.key === "O") && !FIELD.test(tag)) { e.preventDefault(); return openOv(); }
+  // clickers send PageUp/PageDown: always navigate
+  if (e.key === "PageDown") { e.preventDefault(); return next(); }
+  if (e.key === "PageUp") { e.preventDefault(); return prev(); }
+  if (inForm) return;
+  if (["ArrowRight", "ArrowDown", " ", "Enter"].includes(e.key)) { e.preventDefault(); next(); }
+  else if (["ArrowLeft", "ArrowUp", "Backspace"].includes(e.key)) { e.preventDefault(); prev(); }
+  else if (e.key === "Home") show(0, 0);
+  else if (e.key === "End") show(slides.length - 1, 0);
+  else if (e.key === "f" || e.key === "F") toggleFs();
+});
+function toggleFs() {
+  try {
+    if (document.fullscreenElement) document.exitFullscreen();
+    else document.documentElement.requestFullscreen().catch(() => {});
+  } catch (e) {}
+}
+$("#next").addEventListener("click", next);
+$("#prev").addEventListener("click", prev);
+$("#fs").addEventListener("click", toggleFs);
+$("#ovbtn").addEventListener("click", (e) => { e.currentTarget.blur(); ov ? closeOv(cur, ovStep) : openOv(); });
+// swipe on touch screens
+let tx = null;
+addEventListener("touchstart", (e) => { tx = ov || FORM.test(e.target.tagName) ? null : e.touches[0].clientX; }, { passive: true });
+addEventListener("touchend", (e) => { if (tx === null) return; const dx = e.changedTouches[0].clientX - tx; if (Math.abs(dx) > 50) (dx < 0 ? next : prev)(); tx = null; });
+// hide chrome when idle
+let idleT;
+function wake() { $("#chrome").classList.remove("idle"); $("#hint").classList.remove("idle"); clearTimeout(idleT); idleT = setTimeout(() => { $("#chrome").classList.add("idle"); $("#hint").classList.add("idle"); }, 2500); }
+addEventListener("mousemove", wake);
+addEventListener("resize", () => (ov ? layoutOv() : fit()));
+
+// ======================================================================
+// Slide overview: Esc / O / the ▦ button. Arrows choose, Enter opens, Esc returns.
+// ======================================================================
+const HINT = "→ / Space next · ← back · Esc slide overview · F full screen";
+const OV_HINT = "← → ↑ ↓ choose · Enter or click opens · Esc returns";
+$("#hint").textContent = HINT;
+const SECTIONS = [["", "s1"], ["1 · Veridical flow", "s5"], ["2 · Using agents with vflow", "s18"], ["3 · Stable interpretable modeling", "s14"]];
+const starts = SECTIONS.map(([, id]) => slides.findIndex((x) => x.id === id));
+const secs = starts.map((a, j) => [a, j + 1 < starts.length ? starts[j + 1] : slides.length]);
+let ov = false, sel = 0, ovStep = 0, pos = [], ovExtra = [];
+
+function layoutOv() {
+  ovExtra.forEach((x) => x.remove()); ovExtra = [];
+  const W = stage.clientWidth, S = secs.length, T = Math.max(S + 2, Math.floor(W / 280));
+  const g = 24, sg = 64, hh = 44, ns = secs.map(([a, b]) => b - a);
+  // split T columns among sections so the tallest block has the fewest rows
+  let cs = null, best = Infinity;
+  (function rec(k, left, acc) {
+    if (k === S - 1) { const a = acc.concat([left]); if (left < 1) return; const r = Math.max(...a.map((c, j) => Math.ceil(ns[j] / c))); if (r < best) { best = r; cs = a; } return; }
+    for (let c = 1; c <= left - (S - 1 - k); c++) rec(k + 1, left - c, acc.concat([c]));
+  })(0, T, []);
+  const tw = (W - 2 * g - (S - 1) * sg - (T - S) * g) / T, sc = tw / 1920, th = 1080 * sc;
+  stage.style.setProperty("--k", 1 / sc);
+  let x0 = g, bottom = 0;
+  secs.forEach(([a, b], si) => {
+    if (SECTIONS[si][0]) { const h = document.createElement("p"); h.className = "ovh"; h.textContent = SECTIONS[si][0]; h.style.left = x0 + "px"; h.style.top = g + "px"; stage.appendChild(h); ovExtra.push(h); }
+    for (let t = a; t < b; t++) {
+      const k = t - a, r = Math.floor(k / cs[si]), c = k % cs[si], d = slides[t];
+      pos[t] = { si, cs: cs[si] };
+      // stagger later columns downward so the reading order (across, then
+      // down) shows as a staircase: with two columns the second sits half a row lower
+      const top = g + hh + r * (th + g) + (c * (th + g)) / cs[si];
+      Object.assign(d.style, { left: x0 + c * (tw + g) + "px", top: top + "px", right: "auto", bottom: "auto", width: "1920px", height: "1080px", transformOrigin: "0 0", transform: `scale(${sc})` });
+      d.classList.toggle("sel", t === sel);
+      bottom = Math.max(bottom, top + th);
+    }
+    x0 += cs[si] * tw + (cs[si] - 1) * g + sg;
+  });
+  const pad = document.createElement("div"); pad.style.cssText = `position:absolute;left:0;top:${bottom}px;width:1px;height:${g}px`;
+  stage.appendChild(pad); ovExtra.push(pad);
+}
+function markSel() { slides.forEach((d, t) => d.classList.toggle("sel", t === sel)); slides[sel].scrollIntoView({ block: "nearest", inline: "nearest" }); }
+function openOv() {
+  ov = true; sel = cur; ovStep = step;
+  document.body.classList.add("ov");
+  slides.forEach((d) => { d.classList.add("instant"); applyStep(d, stepsOf(d)); });   // thumbnails show the finished slide
+  Object.values(renderers).forEach((r) => r());
+  layoutOv();
+  slides[sel].scrollIntoView({ block: "center" });
+  $("#count").textContent = "Overview"; $("#hint").textContent = OV_HINT; wake();
+}
+function closeOv(j, k) {
+  ov = false;
+  document.body.classList.remove("ov");
+  ovExtra.forEach((x) => x.remove()); ovExtra = [];
+  slides.forEach((d) => { d.removeAttribute("style"); d.classList.remove("sel", "instant"); });
+  stage.scrollTop = 0; stage.scrollLeft = 0;
+  $("#hint").textContent = HINT;
+  fit(); show(j, k);
+}
+function ovKey(e) {
+  const k = e.key;
+  if (k === "Escape" || k === "o" || k === "O") closeOv(cur, ovStep);
+  else if (k === "Enter" || k === " ") closeOv(sel, sel === cur ? ovStep : 0);
+  else if (k === "ArrowRight" || k === "PageDown") sel = Math.min(slides.length - 1, sel + 1);
+  else if (k === "ArrowLeft" || k === "PageUp") sel = Math.max(0, sel - 1);
+  else if (k === "ArrowDown" || k === "ArrowUp") { const p = pos[sel], [a, b] = secs[p.si], t = sel + (k === "ArrowDown" ? 1 : -1) * p.cs; if (t >= a && t < b) sel = t; }
+  else if (k === "Home") sel = 0;
+  else if (k === "End") sel = slides.length - 1;
+  else return;
+  e.preventDefault();
+  if (ov) markSel();
+}
+stage.addEventListener("click", (e) => {
+  if (!ov) return;
+  const d = e.target.closest(".slide"); if (!d) return;
+  const j = slides.indexOf(d); closeOv(j, j === cur ? ovStep : 0);
+});
+
+// ======================================================================
+// SVG helpers and the tooltip (positioned in stage pixels)
+// ======================================================================
+function el(tag, attrs, parent) { const e = document.createElementNS(NS, tag); for (const k in attrs || {}) if (attrs[k] != null && attrs[k] !== "") e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; }
+function text(parent, x, y, s, attrs) { const t = el("text", Object.assign({ x, y }, attrs || {}), parent); t.textContent = s; return t; }
+function svgIn(host, w, h) { host.innerHTML = ""; return el("svg", { width: w, height: h, viewBox: `0 0 ${w} ${h}`, role: "img" }, host); }
+const lin = (d0, d1, r0, r1) => (v) => r0 + ((v - d0) / (d1 - d0)) * (r1 - r0);
+function niceTicks(a, b, n) {
+  const span = b - a, raw = span / n, mag = Math.pow(10, Math.floor(Math.log10(raw)));
+  const step = [1, 2, 2.5, 5, 10].map((m) => m * mag).find((s) => span / s <= n) || 10 * mag;
+  const out = []; for (let v = Math.ceil(a / step) * step; v <= b + 1e-9; v += step) out.push(+v.toFixed(10)); return out;
+}
+const pct = (x) => `${Math.round(x * 100)}%`;
+const mean = (a) => a.reduce((s, v) => s + v, 0) / a.length;
+function quantile(a, q) { const s = [...a].sort((x, y) => x - y), pos = (s.length - 1) * q, lo = Math.floor(pos); return lo + 1 < s.length ? s[lo] + (pos - lo) * (s[lo + 1] - s[lo]) : s[lo]; }
+function dodge(points, px, r) {
+  const placed = [];
+  for (const p of points) {
+    const x = px(p); let lvl = 0;
+    for (let k = 0; k < 15; k++) { const c = k === 0 ? 0 : k % 2 ? (k + 1) / 2 : -k / 2; if (!placed.some((q) => q.lvl === c && Math.abs(q.x - x) < 2 * r + 0.5)) { lvl = c; break; } lvl = c; }
+    placed.push({ x, lvl }); p._lvl = lvl;
+  }
+}
+const C = { ink: "#1E2A32", slate: "#4A5560", muted: "#6B6B6B", grid: "#ECEBE6", rule: "#DDDAD0", dot: "#B9BEC4", s1: "#2F80ED", s2: "#C2552F", teal: "#1F5FC4", paper: "#FFFFFF" };
+const tip = $("#tip");
+stage.addEventListener("pointermove", (e) => {
+  const t = e.target.closest && e.target.closest("[data-tip]");
+  if (!t) { tip.hidden = true; return; }
+  tip.textContent = t.getAttribute("data-tip"); tip.hidden = false;
+  const r = stage.getBoundingClientRect();
+  let x = (e.clientX - r.left) / scale + 20, y = (e.clientY - r.top) / scale + 20;
+  if (x + tip.offsetWidth > 1900) x -= tip.offsetWidth + 40;
+  if (y + tip.offsetHeight > 1070) y -= tip.offsetHeight + 40;
+  tip.style.left = x + "px"; tip.style.top = y + "px";
+});
+stage.addEventListener("pointerleave", () => (tip.hidden = true));
+
+const renderers = {};
+
+// ======================================================================
+// Slide 22: OVL bars, redrawn from Rewolinski et al. Table A3
+// ======================================================================
+(() => {
+  const rows = [["boxes", .84], ["affairs", .75], ["reading", .68], ["hurricane", .55], ["crofoot", .54], ["caschools", .28], ["mortgage", .10], ["panda_nuts", .07], ["soccer", .05], ["amtl", .02], ["teachingratings", .00]];
+  const s = $("#s22-chart"), x0 = 330, unit = 870, rowH = 52, top = 14;
+  rows.forEach(([name, v], i) => {
+    const y = top + i * rowH, pass = v < 0.2;
+    text(s, x0 - 20, y + rowH / 2 + 11, name, { "text-anchor": "end", "font-size": 32, fill: C.ink });
+    el("rect", { x: x0, y: y + 9, width: Math.max(2, v * unit), height: rowH - 18, class: pass ? "pass" : "", fill: pass ? null : "#BFBFBF" }, s);
+    text(s, x0 + v * unit + 10, y + rowH / 2 + 11, v.toFixed(2), { "font-size": 30, class: pass ? "passv" : "", fill: pass ? null : C.muted });
+  });
+  el("line", { x1: x0, x2: x0, y1: top, y2: top + rows.length * rowH, stroke: "#BFBFBF", "stroke-width": 2 }, s);
+  const g = el("g", { class: "fx", "data-at": 1 }, s);
+  el("line", { x1: x0 + 0.2 * unit, x2: x0 + 0.2 * unit, y1: 0, y2: top + rows.length * rowH + 6, stroke: C.s2, "stroke-width": 3, "stroke-dasharray": "8 7" }, g);
+  text(g, x0 + 0.2 * unit + 14, top + 10 * rowH + rowH / 2 + 10, "Pass threshold 0.2", { "font-size": 29.3, fill: C.s2 });
+})();
+
+// ======================================================================
+// Demo 1: vflow feature importance
+// ======================================================================
+const D1 = DATA.d1, F = D1.features, iBmi = F.indexOf("bmi"), iCopy = F.indexOf("bmi_copy");
+const fCol = (f) => (f === "bmi" ? C.s1 : f === "bmi_copy" ? C.s2 : C.dot);
+D1.paths.forEach((p) => (p.top = p.imp.map((v, i) => [v, i]).sort((a, b) => b[0] - a[0]).slice(0, 3).map((d) => d[1])));
+const rfLabel = (s) => s.split("=").pop(), preLabel = { mean: "mean", med: "median", knn: "KNN" };
+(() => {
+  const n = D1.paths.length, inTop = (i) => D1.paths.filter((p) => p.top.includes(i)).length / n;
+  $("#d1-st-bmi").textContent = pct(inTop(iBmi));
+  $("#d1-st-copy").textContent = pct(inTop(iCopy));
+  $("#d1-st-either").textContent = pct(D1.paths.filter((p) => p.top.includes(iBmi) || p.top.includes(iCopy)).length / n);
+  $("#d1-st-flip").textContent = pct(D1.paths.filter((p) => p.imp[iCopy] > p.imp[iBmi]).length / n);
+})();
+const allImp = D1.paths.flatMap((q) => q.imp), impLo = Math.min(0, ...allImp), impHi = Math.max(...allImp);
+
+// The strip of all 60 paths is drawn once; one ring per feature row marks a single analyst,
+// and the rings glide to another analyst's values every few seconds while the slide is up.
+const d1 = (() => {
+  const fOrder = F.map((f, i) => i).sort((a, b) => mean(D1.paths.map((q) => q.imp[b])) - mean(D1.paths.map((q) => q.imp[a])));
+  const W = 1340, rowH = 54, top = 8, H = top + fOrder.length * rowH + 36;
+  const s = svgIn($("#d1-strip"), W, H), left = 170, right = W - 16, x = lin(impLo, impHi, left, right);
+  for (const t of niceTicks(impLo, impHi, 5)) { el("line", { x1: x(t), x2: x(t), y1: top, y2: H - 32, stroke: C.grid, "stroke-width": 2 }, s); text(s, x(t), H - 6, t.toFixed(2), { "font-size": 22, fill: C.muted, "text-anchor": "middle", "font-family": "'Segoe UI Mono', 'Cascadia Mono', Consolas, 'Roboto Mono', ui-monospace, Menlo, monospace" }); }
+  el("line", { x1: x(0), x2: x(0), y1: top, y2: H - 32, stroke: C.slate, "stroke-width": 2 }, s);
+  const labels = {}, rows = {};
+  fOrder.forEach((i, row) => {
+    const cy = top + row * rowH + rowH / 2;
+    rows[i] = cy;
+    labels[i] = text(s, left - 14, cy + 8, F[i], { "text-anchor": "end", "font-size": 24, fill: C.slate });
+    const pts = D1.paths.map((q) => ({ q, v: q.imp[i] })).sort((a, b) => a.v - b.v);
+    dodge(pts, (d) => x(d.v), 5);
+    for (const d of pts) el("circle", { cx: x(d.v), cy: cy + Math.max(-3, Math.min(3, d._lvl)) * 5, r: 5.5, fill: fCol(F[i]), "fill-opacity": 0.55, "data-tip": `${F[i]} · ${d.v.toFixed(3)}\n${d.q.boot} · ${preLabel[d.q.preproc]} · leaf ${rfLabel(d.q.RF)}` }, s);
+  });
+  const rings = {};
+  for (const i of fOrder) {
+    const g = el("g", {}, s);
+    el("circle", { cx: 0, cy: 0, r: 11, fill: fCol(F[i]), stroke: C.ink, "stroke-width": 3.5 }, g);
+    rings[i] = g;
+  }
+  return { x, rows, labels, rings };
+})();
+
+// one analyst's values, ringed: one whose top 3 has the noisy copy instead of the real bmi
+function placeD1(p, animate) {
+  for (const i of F.keys()) {
+    const g = d1.rings[i];
+    g.style.transition = animate ? "transform .9s cubic-bezier(.45, 0, .25, 1)" : "none";
+    g.style.transform = `translate(${d1.x(p.imp[i])}px, ${d1.rows[i]}px)`;
+    g.setAttribute("data-tip", `${F[i]} · ${p.imp[i].toFixed(3)}\nthis analyst`);
+    d1.labels[i].setAttribute("font-weight", p.top.includes(i) ? 700 : 400);
+    d1.labels[i].setAttribute("fill", p.top.includes(i) ? C.ink : C.slate);
+  }
+}
+const d1Pools = [D1.paths.filter((p) => p.top.includes(iBmi) && !p.top.includes(iCopy)), D1.paths.filter((p) => p.top.includes(iCopy) && !p.top.includes(iBmi))].map((pool) => (pool.length ? pool : D1.paths));
+renderers.d1 = () => placeD1(d1Pools[1][0], false);
+
+// ======================================================================
+// Demo 2: stable rules
+// ======================================================================
+const D2 = DATA.d2;
+const isEx = (p) => p.boot === D2.example.boot && p.model === D2.example.model;
+const exPath = D2.paths.find(isEx), exFeats = [...new Set(exPath.splits.map((s) => s[0]))];
+const aucs = D2.paths.map((p) => p.auc), cut = $("#d2-cut");
+cut.min = Math.min(...aucs).toFixed(3); cut.max = Math.max(...aucs).toFixed(3); cut.step = "0.001";
+cut.value = quantile(aucs, 0.25).toFixed(3);
+let fam = "all";
+cut.addEventListener("input", renderD2);
+$("#d2-fam").addEventListener("click", (e) => { const b = e.target.closest("button"); if (!b) return; fam = b.dataset.v; $$("#d2-fam button").forEach((x) => x.setAttribute("aria-pressed", x === b)); renderD2(); });
+$("#d2-tree").textContent = D2.example.text.split("\n").filter((l) => /[├└│]|\?\s/.test(l) || /samples$/.test(l.trim())).map((l) => l.replace(/^  /, "")).join("\n");
+
+function renderD2() {
+  const c = +cut.value;
+  $("#d2-cut-out").textContent = c.toFixed(3);
+  const pool = D2.paths.filter((p) => fam === "all" || p.model === fam), kept = pool.filter((p) => p.auc >= c - 1e-9);
+  $("#d2-kept").textContent = `kept ${kept.length} of ${pool.length}`;
+  const exKept = exPath.auc >= c - 1e-9, tag = $("#d2-ex-tag");
+  tag.textContent = `AUC ${exPath.auc.toFixed(3)} · ${exKept ? "kept" : "screened out"}`;
+  tag.className = "tag " + (exKept ? "kept" : "dropped");
+  { // AUC strip
+    const W = 1733, rowH = 52, top = 8, fams = ["FIGS", "HS"], H = top + fams.length * rowH + 32;
+    const s = svgIn($("#d2-auc"), W, H), left = 130, right = W - 10, lo = Math.floor(Math.min(...aucs) * 100) / 100, x = lin(lo, 1, left, right);
+    el("rect", { x: left, y: top, width: Math.max(0, x(c) - left), height: fams.length * rowH, fill: "#F3F3EF" }, s);
+    for (const t of niceTicks(lo, 1, 8)) { el("line", { x1: x(t), x2: x(t), y1: top, y2: H - 28, stroke: C.grid, "stroke-width": 2 }, s); text(s, x(t), H - 4, t.toFixed(2), { "font-size": 20, fill: C.muted, "text-anchor": "middle", "font-family": "'Segoe UI Mono', 'Cascadia Mono', Consolas, 'Roboto Mono', ui-monospace, Menlo, monospace" }); }
+    el("line", { x1: x(c), x2: x(c), y1: top - 4, y2: H - 28, stroke: C.ink, "stroke-width": 3, "stroke-dasharray": "8 6" }, s);
+    fams.forEach((f, row) => {
+      const cy = top + row * rowH + rowH / 2;
+      text(s, left - 16, cy + 8, f === "HS" ? "HS tree" : f, { "text-anchor": "end", "font-size": 24, fill: C.ink, "font-weight": 700 });
+      const pts = D2.paths.filter((p) => p.model === f).sort((a, b) => a.auc - b.auc);
+      dodge(pts, (p) => x(p.auc), 8);
+      for (const p of pts) {
+        const inPool = fam === "all" || p.model === fam, k = inPool && p.auc >= c - 1e-9;
+        const a = { cx: x(p.auc), cy: cy + Math.max(-1, Math.min(1, p._lvl)) * 17, r: 8, "data-tip": `${p.model === "HS" ? "HS tree" : "FIGS"} · bootstrap ${p.boot}\nAUC ${p.auc.toFixed(3)} · ${k ? "kept" : "screened out"}\nsplits: ${[...new Set(p.splits.map((q) => q[0]))].join(", ")}` };
+        Object.assign(a, k ? { fill: C.s1 } : { fill: C.paper, stroke: "#A9AFB6", "stroke-width": 3 });
+        if (!inPool) a.opacity = 0.3;
+        el("circle", a, s);
+        if (isEx(p)) el("circle", { cx: a.cx, cy: a.cy, r: 15, fill: "none", stroke: C.ink, "stroke-width": 3 }, s);
+      }
+    });
+  }
+  { // recurrence bars
+    const host = $("#d2-bars");
+    if (!kept.length) { host.innerHTML = `<p class="says">No models pass this cutoff. Lower it to see recurring splits.</p>`; return; }
+    const counts = {};
+    for (const p of kept) for (const f of new Set(p.splits.map((q) => q[0]))) counts[f] = (counts[f] || 0) + 1;
+    let rows = Object.keys(counts).map((f) => ({ f, share: counts[f] / kept.length, n: counts[f] })).sort((a, b) => b.share - a.share || a.f.localeCompare(b.f)).slice(0, 8);
+    const extra = exFeats.filter((f) => !rows.some((r) => r.f === f)).map((f) => ({ f, share: (counts[f] || 0) / kept.length, n: counts[f] || 0, extra: true }));
+    rows = rows.concat(extra);
+    const W = 980, gap = extra.length ? 12 : 0, rowH = Math.min(32, (330 - gap) / rows.length), top = 2, H = top + rows.length * rowH + gap + 30;
+    const s = svgIn(host, W, H), left = 330, right = W - 80, x = lin(0, 1, left, right);
+    for (const t of [0, .25, .5, .75, 1]) { el("line", { x1: x(t), x2: x(t), y1: top, y2: H - 28, stroke: C.grid, "stroke-width": 2 }, s); text(s, x(t), H - 4, pct(t), { "font-size": 20, fill: C.muted, "text-anchor": "middle", "font-family": "'Segoe UI Mono', 'Cascadia Mono', Consolas, 'Roboto Mono', ui-monospace, Menlo, monospace" }); }
+    rows.forEach((r, k) => {
+      const y = top + k * rowH + (r.extra ? gap : 0), mine = exFeats.includes(r.f);
+      const g = el("g", { "data-tip": `${r.f}\nin ${r.n} of ${kept.length} kept models` }, s);
+      el("rect", { x: 0, y, width: W, height: rowH, fill: "transparent" }, g);
+      if (r.share > 0) el("rect", { x: x(0), y: y + 5, width: Math.max(3, x(r.share) - x(0)), height: rowH - 10, rx: 3, fill: C.s1 }, g);
+      text(g, left - 12, y + rowH / 2 + 8, (mine ? "◆ " : "") + r.f, { "text-anchor": "end", "font-size": 22, fill: C.ink, "font-weight": mine ? 700 : 400 });
+      text(g, x(r.share) + 8, y + rowH / 2 + 7, pct(r.share), { "font-size": 20, fill: C.muted, "font-family": "'Segoe UI Mono', 'Cascadia Mono', Consolas, 'Roboto Mono', ui-monospace, Menlo, monospace" });
+    });
+    if (extra.length) { const y = top + (rows.length - extra.length) * rowH + gap / 2; el("line", { x1: 0, x2: W, y1: y, y2: y, stroke: C.rule, "stroke-width": 2, "stroke-dasharray": "5 5" }, s); }
+  }
+}
+renderers.d2 = renderD2;
+
+// ======================================================================
+// Demo 3: shuffle check
+// ======================================================================
+const D3 = DATA.d3, questions = [...new Set(D3.map((r) => r.question))];
+const qShort = (q) => q.replace(/^Does /, "").replace(/ affect diabetes progression\?$/, "");
+const qNotes = { bmi: "Ground truth: BMI has a strong, well-known effect on diabetes progression.", sex: "Ground truth is murky: the sign of the sex effect flips depending on which covariates are adjusted for.", "birth month": "Ground truth: no effect. birth_month is a random column added for this demo." };
+function overlap(a, b) { const h = (v) => { const c = new Array(20).fill(0); v.forEach((x) => c[Math.min(19, Math.floor(x / 5))]++); return c.map((k) => k / v.length); }; const pa = h(a), pb = h(b); return pa.reduce((s, v, i) => s + Math.min(v, pb[i]), 0); }
+function verdictOf(real, shuf) {
+  const m = mean(real), ovl = overlap(real, shuf), yes = m > 50, ov = ovl < 0.2;
+  const v = yes && ov ? ["Stable yes", "good"] : yes ? ["“Yes” may not come from the data", "warn"] : ov ? ["Some signal, not enough for yes", ""] : ["No evidence for yes", ""];
+  return { m, ms: mean(shuf), ovl, yes, ov, label: v[0], cls: v[1] };
+}
+// One chart, drawn once: per question, each analyst's mean score on real data, and (build step 1)
+// on shuffled-outcome data, with the verdict from both checks.
+(() => {
+  const truth = { bmi: "real effect", sex: "murky effect", "birth month": "no effect: a random column" };
+  const qs = questions.filter((q) => !/sex/i.test(q));
+  const W = 1789, groupH = 236, headH = 56, rowH = 78, top = 4, H = top + qs.length * groupH + 34;
+  const s = svgIn($("#d3-chart"), W, H), left = 330, right = 1250, x = lin(0, 100, left, right), vx = 1300;
+  for (const t of [0, 25, 50, 75, 100]) { el("line", { x1: x(t), x2: x(t), y1: top, y2: H - 30, stroke: C.grid, "stroke-width": 2 }, s); text(s, x(t), H - 4, t, { "font-size": 22, fill: C.muted, "text-anchor": "middle", "font-family": "'Segoe UI Mono', 'Cascadia Mono', Consolas, 'Roboto Mono', ui-monospace, Menlo, monospace" }); }
+  el("line", { x1: x(50), x2: x(50), y1: top, y2: H - 30, stroke: C.slate, "stroke-width": 2.5, "stroke-dasharray": "8 6" }, s);
+  text(s, x(50) + 8, H - 38, "yes threshold", { "font-size": 20, fill: C.slate });
+  const late = el("g", { class: "fx", "data-at": 1 }, s);
+  qs.forEach((q, gi) => {
+    const y0 = top + gi * groupH, name = qShort(q);
+    const head = el("text", { x: 0, y: y0 + 32 }, s);
+    el("tspan", { "font-size": 30, "font-weight": 700, fill: C.ink }, head).textContent = name.replace(/^./, (c) => c.toUpperCase());
+    el("tspan", { "font-size": 24, fill: C.slate, dx: 14 }, head).textContent = `· ${truth[name.toLowerCase()] || ""}`;
+    D3.filter((r) => r.question === q).sort((a, b) => (a.analyst === "PCS") - (b.analyst === "PCS")).forEach((r, k) => {
+      const cy = y0 + headH + k * rowH + rowH / 2, v = verdictOf(r.real, r.shuffled);
+      text(s, 24, cy + 9, r.analyst === "PCS" ? "PCS analyst" : "p-value shopper", { "font-size": 26, fill: C.ink });
+      el("line", { x1: x(v.ms), x2: x(v.m), y1: cy, y2: cy, stroke: "#C9CDD1", "stroke-width": 6, "stroke-linecap": "round" }, late);
+      el("circle", { cx: x(v.ms), cy, r: 13, fill: C.s2, stroke: C.paper, "stroke-width": 3, "data-tip": `${r.analyst === "PCS" ? "PCS analyst" : "p-value shopper"} · ${name}\nshuffled mean ${v.ms.toFixed(1)}` }, late);
+      el("circle", { cx: x(v.m), cy, r: 13, fill: C.s1, stroke: C.paper, "stroke-width": 3, "data-tip": `${r.analyst === "PCS" ? "PCS analyst" : "p-value shopper"} · ${name}\nreal-data mean ${v.m.toFixed(1)}` }, s);
+      const col = v.cls === "good" ? "#0ca30c" : v.cls === "warn" ? "#B07A00" : C.slate;
+      el("rect", { x: vx, y: cy - 22, width: 6, height: 44, fill: col }, late);
+      text(late, vx + 20, cy + 9, v.label, { "font-size": 27, "font-weight": 700, fill: v.cls ? C.ink : C.slate });
+    });
+  });
+})();
+
+
+// ======================================================================
+// Slide a1: an animated veridical-flow session, replayed from real outputs
+// ======================================================================
+const D5 = DATA.d5;
+const a1Term = $("#a1-term"), a1Lines = $("#a1-lines");
+let a1Token = 0;
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const REDUCED = !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
+
+function a1Phase(i) {
+  $$("#a1-phases .phase").forEach((el) => {
+    const k = +el.dataset.i;
+    el.classList.toggle("on", k === i);
+    el.classList.toggle("done", k < i);
+  });
+}
+function a1Line(html) {
+  const d = document.createElement("div");
+  d.className = "tl";
+  d.innerHTML = html;
+  a1Lines.appendChild(d);
+  a1Term.scrollTop = a1Term.scrollHeight;
+  return d;
+}
+// colour one line of script output: progress bars, numbers, verdicts
+function a1Out(t) {
+  let h = escHtml(t);
+  h = h.replace(/\[[█░]+\]/, (m) => `<span class="tok-kw">${m}</span>`);
+  h = h.replace(/(stable yes|yes, but no different from shuffled data|no evidence for yes|some signal, not enough for yes)/g, '<span class="tok-kw">$1</span>');
+  h = h.replace(/(ETA ~\S+|done: run summarize\.py)/, '<span class="tok-str">$1</span>');
+  return h;
+}
+
+// The session is stepped with the arrow keys: one build step per phase. Earlier phases
+// appear at once; the current phase types itself out (or appears at once going back).
+const A1_PHASES = [
+  async ({ type, say, wait }) => {   // 0 · Install
+    if (!(await type("$ ", "git clone https://github.com/Yu-Group/veridical-flow", "t-user"))) return false;
+    say(`<span class="t-dim">Cloning into 'veridical-flow'... done.</span>`);
+    await wait(500);
+    return type("$ ", "claude --plugin-dir veridical-flow/agents", "t-user");
+  },
+  async ({ type, say, wait }) => {   // 1 · Ask
+    const q = D5.question;
+    if (!(await type("> ", `Use veridical-flow: ${q.replace(/^Does/, "does")} (diabetes.csv)`, "t-user"))) return false;
+    await wait(500);
+    say(`<span class="t-mark">⏺</span> <span class="tok-fn">Skill</span>(veridical-flow)`);
+    await wait(500);
+    say(`<span class="t-mark">⏺</span> <span class="tok-fn">Bash</span>(python3 prepare.py --data diabetes.csv --question "${escHtml(q)}" --out vflow_runs --runs 3)`);
+    await wait(700);
+    say(`  <span class="t-dim">⎿</span>  ${a1Out(D5.prepare[0])}`);
+    return true;
+  },
+  async ({ type, say, wait }) => {   // 2 · Confirm
+    say(`<span class="t-mark">⏺</span> That is 36 analyst runs (6 perturbations × real and shuffled data × 3 runs),`);
+    say(`  about 15 minutes with 8 analysts at a time. Go ahead?`);
+    await wait(1100);
+    return type("> ", "yes", "t-user");
+  },
+  async ({ say, wait, live }) => {   // 3 · Run
+    const n = D5.progress.length;
+    const disp = say(""), prog = say("");
+    for (let i = 0; i < n; i++) {
+      if (!live()) return false;
+      const batch = i < n - 1 ? `analysts for batch ${i + 1} of ${n - 1}` : "all batches in";
+      disp.innerHTML = `<span class="t-mark">⏺</span> <span class="tok-fn">Agent</span> × 8 · ${batch} · <span class="tok-fn">Bash</span>(python3 progress.py vflow_runs)`;
+      prog.innerHTML = `  <span class="t-dim">⎿</span>  ${a1Out(D5.progress[i])}`;
+      if (i < n - 1) await wait(1300);
+    }
+    return true;
+  },
+  async ({ say, wait, live }) => {   // 4 · Verdict
+    const p = D5.pooled;
+    say(`<span class="t-mark">⏺</span> <span class="tok-fn">Bash</span>(python3 summarize.py vflow_runs)`);
+    await wait(600);
+    for (const [i, l] of D5.summary.entries()) {
+      if (!live()) return false;
+      say(`  ${i === 0 ? '<span class="t-dim">⎿</span>  ' : "   "}${a1Out(l)}`);
+      await wait(120);
+    }
+    await wait(700);
+    if (!live()) return false;
+    say(`<span class="t-mark">⏺</span> <b>Stable yes.</b> Answers on the real data (mean ${p.mean_real.toFixed(0)}) stand apart from those on shuffled data`);
+    say(`  (mean ${p.mean_null.toFixed(1)}, overlap ${p.overlap.toFixed(2)}), and the answer held under all five perturbations.`);
+    return true;
+  },
+];
+
+// Draw phases 0..k: all but the last at once; the last animated if `animate`.
+async function renderA1(k, animate) {
+  const tok = ++a1Token;
+  const live = () => tok === a1Token;
+  a1Lines.innerHTML = "";
+  for (let i = 0; i <= k; i++) {
+    const instant = !(animate && i === k);
+    const wait = (ms) => (instant ? Promise.resolve() : sleep(ms));
+    async function type(prefix, text, cls) {
+      if (!live()) return false;   // a newer render has taken over
+      const d = a1Line(`<span class="${cls}">${escHtml(prefix)}</span>`);
+      const span = document.createElement("span");
+      span.className = cls;
+      d.appendChild(span);
+      if (instant) { span.textContent = text; return live(); }
+      const cur = document.createElement("span");
+      cur.className = "cursor";
+      d.appendChild(cur);
+      for (const ch of text) {
+        if (!live()) return false;
+        span.textContent += ch;
+        await sleep(22);
+      }
+      await wait(350);
+      cur.remove();
+      return live();
+    }
+    const say = (html) => (live() ? a1Line(html) : null);
+    a1Phase(i);
+    if (!(await A1_PHASES[i]({ type, say, wait, live }))) return;
+    if (!live()) return;
+  }
+  if (live() && k === A1_PHASES.length - 1) a1Line(`<span class="t-user">&gt; </span><span class="cursor"></span>`);
+}
+const a1Animate = () => !(REDUCED || ov);
+$("#a1-replay").addEventListener("click", (e) => { e.currentTarget.blur(); renderA1(step, a1Animate()); });
+$$("#a1-phases .phase").forEach((el) => el.addEventListener("click", () => {
+  if (slides[cur].id !== "a1") return;
+  step = +el.dataset.i; applyStep(slides[cur], step); setHash(); renderA1(step, a1Animate());
+}));
+// entering the slide forward animates the install; returning to it shows the finished state
+renderers.a1 = () => renderA1(step, step === 0 && a1Animate());
+steppers.a1 = (k, forward) => renderA1(k, forward && a1Animate());
+
+// ======================================================================
+// Section 3 intro: the imodels API slide (i1) and the accuracy chart (i2)
+// ======================================================================
+const D6 = DATA.d6;
+(() => {
+  // printed FIGS model, as imodels prints it
+  const all = D6.figs_printed.split("\n").map((l) => l.replace(/^  /, ""));
+  const lines = all.slice(all.findIndex((l) => /\?\s+\d+ samples$/.test(l)));
+  $("#i1-printed").innerHTML = lines.map((l) => {
+    let h = escHtml(l);
+    h = h.replace(/([+-]\d+(?:\.\d+)?)(?=\s|$)/g, '<span class="tok-num">$1</span>');
+    h = h.replace(/(≤ [\d.]+ \?)/g, '<span class="tok-kw">$1</span>');
+    return `<div class="tl">${h || " "}</div>`;
+  }).join("");
+  $("#i1-n").textContent = D6.n_estimators;
+
+  // accuracy against rules, with the forest as the reference
+  const s = $("#i2-chart"), W = 1180, H = 650, L = 110, R = 1010, T = 30, B = 560;
+  const x = (k) => L + (Math.log2(k) / Math.log2(32)) * (R - L), y = lin(0.70, 0.92, B, T);
+  for (const v of [0.70, 0.75, 0.80, 0.85, 0.90]) {
+    el("line", { x1: L, x2: R, y1: y(v), y2: y(v), stroke: C.grid, "stroke-width": 2 }, s);
+    text(s, L - 16, y(v) + 8, v.toFixed(2), { "text-anchor": "end", "font-size": 22, fill: C.muted, "font-family": "'Segoe UI Mono', 'Cascadia Mono', Consolas, 'Roboto Mono', ui-monospace, Menlo, monospace" });
+  }
+  for (const k of [1, 2, 4, 8, 16, 32]) text(s, x(k), B + 36, k, { "text-anchor": "middle", "font-size": 22, fill: C.muted, "font-family": "'Segoe UI Mono', 'Cascadia Mono', Consolas, 'Roboto Mono', ui-monospace, Menlo, monospace" });
+  text(s, (L + R) / 2, B + 76, "number of rules (splits)", { "text-anchor": "middle", "font-size": 24, fill: C.slate });
+  text(s, 20, T - 4, "test AUC", { "font-size": 24, fill: C.slate });
+  el("line", { x1: L, x2: R, y1: y(D6.rf.auc), y2: y(D6.rf.auc), stroke: C.ink, "stroke-width": 3, "stroke-dasharray": "10 8" }, s);
+  text(s, R + 12, y(D6.rf.auc) + 8, `random forest`, { "font-size": 22, fill: C.ink, "font-weight": 700 });
+  text(s, R + 12, y(D6.rf.auc) + 36, `300 trees: ${D6.rf.auc.toFixed(3)}`, { "font-size": 22, fill: C.slate });
+  const series = [["CART", "#8C8C8C", 1], ["HS tree", C.s2, 2], ["FIGS", C.s1, 3]];
+  const ends = [];
+  for (const [name, col, at] of series) {
+    const rows = D6.models[name];
+    const g = el("g", { class: "fx", "data-at": at }, s);
+    el("polyline", { points: rows.map((r) => `${x(r.rules)},${y(r.auc)}`).join(" "), fill: "none", stroke: col, "stroke-width": name === "FIGS" ? 5 : 4, "stroke-linejoin": "round" }, g);
+    for (const r of rows) el("circle", { cx: x(r.rules), cy: y(r.auc), r: 8, fill: col, stroke: C.paper, "stroke-width": 3, "data-tip": `${name} · ${r.rules} rules\nAUC ${r.auc.toFixed(3)} ± ${r.sd.toFixed(3)}` }, g);
+    ends.push({ g, name, y: y(rows[rows.length - 1].auc) });
+  }
+  ends.sort((a, b) => a.y - b.y);
+  for (let i = 1; i < ends.length; i++) ends[i].y = Math.max(ends[i].y, ends[i - 1].y + 28);
+  for (const e of ends) text(e.g, R + 12, e.y + 8, e.name, { "font-size": 22, fill: C.ink, "font-weight": 700 });
+  const best = (name) => D6.models[name].reduce((a, b) => (b.auc > a.auc ? b : a));
+  const at = (name, k) => D6.models[name].find((r) => r.rules === k);
+  const cart = best("CART"), figs = best("FIGS");
+  const g3 = el("g", { class: "fx", "data-at": 3 }, s);
+  el("circle", { cx: x(figs.rules), cy: y(figs.auc), r: 16, fill: "none", stroke: C.s1, "stroke-width": 3 }, g3);
+  text(g3, x(figs.rules), y(figs.auc) - 28, `${figs.rules} rules: ${figs.auc.toFixed(3)}`, { "text-anchor": "middle", "font-size": 24, fill: C.ink, "font-weight": 700 });
+  $("#i2-t1").textContent = `Peaks at ${cart.auc.toFixed(2)} with ${cart.rules} rules, then overfits as it grows (${at("CART", 32).auc.toFixed(2)} at 32).`;
+  $("#i2-t2").textContent = `Shrinking each leaf toward its parents keeps a 32-rule tree from overfitting: ${at("HS tree", 32).auc.toFixed(2)}.`;
+  $("#i2-t3").textContent = `Sums of small trees reach ${figs.auc.toFixed(2)} with ${figs.rules} rules, within ${(D6.rf.auc - figs.auc).toFixed(2)} of the forest and readable end to end.`;
+  $("#i2-src").textContent = `UCI heart disease (${D6.n} patients, ${D6.p} features), bundled with imodels · test AUC, mean of ${D6.seeds} random 70/30 splits`;
+})();
+
+// ======================================================================
+// Boot
+// ======================================================================
+fit();
+const [hs, hk] = (location.hash || "").slice(1).split(".").map((v) => parseInt(v, 10));
+show(Number.isFinite(hs) ? hs - 1 : 0, Number.isFinite(hk) ? hk : 0);
+wake();
+</script>
