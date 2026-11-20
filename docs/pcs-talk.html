@@ -566,6 +566,14 @@ body.ov #tip { display: none; }
   </div>
 </section>
 
+<!-- 18b · The simplest way in: ask an agent to use vflow -->
+<section class="slide" id="s18b">
+  <h2 class="a title">Simplest start: tell your agent to use <span class="vw">vfl<span class="vo">o</span>w</span></h2>
+  <div class="a code" style="left:67px;top:330px;width:1789px;height:330px;border-radius:12px"></div>
+  <div class="a tb caps b" style="left:89px;top:356px;width:1700px;font-size:24px;color:var(--slate)">Prompt</div>
+  <p class="a" style="left:107px;top:408px;width:1700px;margin:0;font:400 38px/1.45 var(--mono);color:var(--ink)"><span style="color:var(--teal);font-weight:700">&gt;</span> Does BMI affect diabetes progression? Use vflow to structure the analysis: make each judgment call (imputation, model, bootstrap sample) a Vset, run every path, and report which conclusions hold across all of them.</p>
+</section>
+
 <!-- 18 · Section: using agents with vflow -->
 <section class="slide section" id="s18">
   <img class="a sec-mark vspin" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMjAgMTIwIiB3aWR0aD0iMTIwIiBoZWlnaHQ9IjEyMCIgcm9sZT0iaW1nIiBhcmlhLWxhYmVsPSJ2ZmxvdyI+PHRpdGxlPnZmbG93PC90aXRsZT48cGF0aCBkPSJNMCwtMTYuNzIgQzQuMTgsLTEwLjI2IDcuNiwtNS4zMTk5OTk5OTk5OTk5OTkgNy42LDAgQTcuNiw3LjYgMCAxIDEgLTcuNiwwIEMtNy42LC01LjMxOTk5OTk5OTk5OTk5OSAtNC4xOCwtMTAuMjYgMCwtMTYuNzIgWiIgZmlsbD0iI2ZmZmZmZiIgZmlsbC1vcGFjaXR5PSIwLjcwIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSg2MC4wLDIwLjApIHJvdGF0ZSgtOTAuMCkiLz48cGF0aCBkPSJNMCwtMTYuNzIgQzQuMTgsLTEwLjI2IDcuNiwtNS4zMTk5OTk5OTk5OTk5OTkgNy42LDAgQTcuNiw3LjYgMCAxIDEgLTcuNiwwIEMtNy42LC01LjMxOTk5OTk5OTk5OTk5OSAtNC4xOCwtMTAuMjYgMCwtMTYuNzIgWiIgZmlsbD0iI2ZmZmZmZiIgZmlsbC1vcGFjaXR5PSIwLjc0IiB0cmFuc2Zvcm09InRyYW5zbGF0ZSg4OC4zLDMxLjcpIHJvdGF0ZSgtNDUuMCkiLz48cGF0aCBkPSJNMCwtMTYuNzIgQzQuMTgsLTEwLjI2IDcuNiwtNS4zMTk5OTk5OTk5OTk5OTkgNy42LDAgQTcuNiw3LjYgMCAxIDEgLTcuNiwwIEMtNy42LC01LjMxOTk5OTk5OTk5OTk5OSAtNC4xOCwtMTAuMjYgMCwtMTYuNzIgWiIgZmlsbD0iI2ZmZmZmZiIgZmlsbC1vcGFjaXR5PSIwLjc5IiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxMDAuMCw2MC4wKSByb3RhdGUoMC4wKSIvPjxwYXRoIGQ9Ik0wLC0xNi43MiBDNC4xOCwtMTAuMjYgNy42LC01LjMxOTk5OTk5OTk5OTk5OSA3LjYsMCBBNy42LDcuNiAwIDEgMSAtNy42LDAgQy03LjYsLTUuMzE5OTk5OTk5OTk5OTk5IC00LjE4LC0xMC4yNiAwLC0xNi43MiBaIiBmaWxsPSIjZmZmZmZmIiBmaWxsLW9wYWNpdHk9IjAuODMiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDg4LjMsODguMykgcm90YXRlKDQ1LjApIi8+PHBhdGggZD0iTTAsLTE2LjcyIEM0LjE4LC0xMC4yNiA3LjYsLTUuMzE5OTk5OTk5OTk5OTk5IDcuNiwwIEE3LjYsNy42IDAgMSAxIC03LjYsMCBDLTcuNiwtNS4zMTk5OTk5OTk5OTk5OTkgLTQuMTgsLTEwLjI2IDAsLTE2LjcyIFoiIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC44NyIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNjAuMCwxMDAuMCkgcm90YXRlKDkwLjApIi8+PHBhdGggZD0iTTAsLTE2LjcyIEM0LjE4LC0xMC4yNiA3LjYsLTUuMzE5OTk5OTk5OTk5OTk5IDcuNiwwIEE3LjYsNy42IDAgMSAxIC03LjYsMCBDLTcuNiwtNS4zMTk5OTk5OTk5OTk5OTkgLTQuMTgsLTEwLjI2IDAsLTE2LjcyIFoiIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC45MSIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMzEuNyw4OC4zKSByb3RhdGUoMTM1LjApIi8+PHBhdGggZD0iTTAsLTE2LjcyIEM0LjE4LC0xMC4yNiA3LjYsLTUuMzE5OTk5OTk5OTk5OTk5IDcuNiwwIEE3LjYsNy42IDAgMSAxIC03LjYsMCBDLTcuNiwtNS4zMTk5OTk5OTk5OTk5OTkgLTQuMTgsLTEwLjI2IDAsLTE2LjcyIFoiIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC45NiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMjAuMCw2MC4wKSByb3RhdGUoMTgwLjApIi8+PHBhdGggZD0iTTAsLTE2LjcyIEM0LjE4LC0xMC4yNiA3LjYsLTUuMzE5OTk5OTk5OTk5OTk5IDcuNiwwIEE3LjYsNy42IDAgMSAxIC03LjYsMCBDLTcuNiwtNS4zMTk5OTk5OTk5OTk5OTkgLTQuMTgsLTEwLjI2IDAsLTE2LjcyIFoiIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMS4wMCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMzEuNywzMS43KSByb3RhdGUoMjI1LjApIi8+PC9zdmc+Cg==" alt="">
@@ -649,14 +657,6 @@ body.ov #tip { display: none; }
   <div class="a" style="left:67px;top:826px;width:1024px;height:2px;background:#BFBFBF"></div>
   <p class="a tb" style="left:67px;top:928px;width:1067px;font-size:29.3px;color:var(--muted)">Bar heights show rank order only.</p>
   </div>
-</section>
-
-<!-- 18b · The simplest way in: ask an agent to use vflow -->
-<section class="slide" id="s18b">
-  <h2 class="a title">Simplest start: tell your agent to use <span class="vw">vfl<span class="vo">o</span>w</span></h2>
-  <div class="a code" style="left:67px;top:330px;width:1789px;height:330px;border-radius:12px"></div>
-  <div class="a tb caps b" style="left:89px;top:356px;width:1700px;font-size:24px;color:var(--slate)">Prompt</div>
-  <p class="a" style="left:107px;top:408px;width:1700px;margin:0;font:400 38px/1.45 var(--mono);color:var(--ink)"><span style="color:var(--teal);font-weight:700">&gt;</span> Does BMI affect diabetes progression? Use vflow to structure the analysis: make each judgment call (imputation, model, bootstrap sample) a Vset, run every path, and report which conclusions hold across all of them.</p>
 </section>
 
 <!-- 24c · DEMO: a replayed session (install, ask, confirm, run, verdict), stepped with the arrows -->
